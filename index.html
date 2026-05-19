@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Pozo Cuichapa — Registro de Visita</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#0d1f35;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+  .card{background:#fff;border-radius:20px;padding:28px 22px;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+  .badge{background:#0d1f35;color:#fff;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:5px 12px;border-radius:20px;display:inline-block;margin-bottom:10px}
+  .well-num{font-size:52px;font-weight:900;color:#0d1f35;line-height:1;margin-bottom:2px}
+  .well-sub{font-size:13px;color:#888;margin-bottom:18px}
+  .divider{height:3px;background:linear-gradient(90deg,#e8a020,#f5d080);border-radius:3px;margin-bottom:20px}
+  .status-box{background:#f4f8ff;border-radius:12px;padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:12px;min-height:72px}
+  .sicon{font-size:26px;flex-shrink:0}
+  .stext{font-size:13px;color:#444;line-height:1.5}
+  .stext strong{color:#0d1f35;display:block;font-size:14px;margin-bottom:1px}
+  .coords{font-family:monospace;font-size:11px;color:#1a5276;background:#eef4fb;padding:10px 12px;border-radius:8px;margin-bottom:16px;line-height:1.7;display:none}
+  .gps-badge{display:inline-flex;align-items:center;gap:5px;background:#e8f5e0;color:#2e7d32;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:16px}
+  label{font-size:11px;font-weight:700;color:#0d1f35;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:7px}
+  input,textarea{width:100%;padding:11px 14px;border:2px solid #dde4f0;border-radius:10px;font-size:16px;color:#0d1f35;outline:none;font-family:inherit;transition:border-color .2s;margin-bottom:16px}
+  input:focus,textarea:focus{border-color:#2e6da4}
+  textarea{resize:none;height:75px}
+  .btn{width:100%;padding:15px;background:#25D366;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .2s,transform .1s;margin-bottom:12px}
+  .btn:active{transform:scale(.98)}
+  .btn:disabled{background:#bbb;cursor:not-allowed}
+  .maps-btn{display:none;width:100%;padding:11px;background:#f0f6ff;color:#2e6da4;border:2px solid #c0d8f0;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none}
+  .err{background:#fff0f0;border:1px solid #ffaaaa;border-radius:10px;padding:12px;font-size:13px;color:#c00;margin-bottom:14px;display:none}
+  .no-well{text-align:center;padding:40px 20px}
+  .no-well h2{color:#c00;margin-bottom:10px}
+</style>
+</head>
+<body>
+<div class="card" id="mainCard">
+  <span class="badge">Campo Cuichapa</span>
+  <div class="well-num" id="wellNum">---</div>
+  <div class="well-sub" id="wellSub">Cargando...</div>
+  <div class="divider"></div>
+  <div class="gps-badge">📍 Verificación GPS activa</div>
+  <div class="status-box" id="statusBox">
+    <span class="sicon">📡</span>
+    <div class="stext"><strong>Obteniendo ubicación GPS...</strong>Por favor espera, activa el GPS si se solicita.</div>
+  </div>
+  <div class="coords" id="coordsBox"></div>
+  <div class="err" id="errBox"></div>
+  <label>Tu nombre *</label>
+  <input id="nameInput" type="text" placeholder="Ej: Manrique López" autocomplete="name">
+  <label>Observaciones</label>
+  <textarea id="obsInput" placeholder="Ej: Pozo operando normal, sin anomalías..."></textarea>
+  <button class="btn" id="sendBtn" disabled>
+    <span>💬</span> Obteniendo ubicación...
+  </button>
+  <a class="maps-btn" id="mapsBtn" href="#" target="_blank">📍 Ver mi ubicación en Google Maps</a>
+</div>
+
+<script>
+// Read well number from URL param ?w=XXX
+const params = new URLSearchParams(window.location.search);
+const well = params.get('w') || params.get('well');
+const PHONE = '522293735876';
+
+if (!well) {
+  document.getElementById('mainCard').innerHTML =
+    '<div class="no-well"><h2>⚠️ Error</h2><p>No se especificó el número de pozo.<br>Escanea el código QR del pozo.</p></div>';
+} else {
+  document.getElementById('wellNum').textContent = 'C-' + well;
+  document.getElementById('wellSub').textContent = 'Pozo Cuichapa ' + well;
+}
+
+let lat = null, lng = null, acc = null;
+
+function setStatus(icon, title, body) {
+  document.getElementById('statusBox').innerHTML =
+    `<span class="sicon">${icon}</span><div class="stext"><strong>${title}</strong>${body}</div>`;
+}
+
+function enableSend(withGPS) {
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = false;
+  btn.innerHTML = withGPS
+    ? '<span>💬</span> Enviar visita + ubicación a WhatsApp'
+    : '<span>💬</span> Enviar sin ubicación GPS';
+}
+
+navigator.geolocation
+  ? navigator.geolocation.getCurrentPosition(
+      pos => {
+        lat = pos.coords.latitude;
+        lng = pos.coords.longitude;
+        acc = Math.round(pos.coords.accuracy);
+        setStatus('✅','¡Ubicación capturada!',`Precisión: ±${acc} metros`);
+        const cb = document.getElementById('coordsBox');
+        cb.style.display='block';
+        cb.innerHTML=`📍 <b>Latitud:</b> ${lat.toFixed(6)}<br>📍 <b>Longitud:</b> ${lng.toFixed(6)}<br>🎯 <b>Precisión:</b> ±${acc} m`;
+        const mb = document.getElementById('mapsBtn');
+        mb.href=`https://maps.google.com/?q=${lat},${lng}`;
+        mb.style.display='block';
+        enableSend(true);
+      },
+      err => {
+        const msgs={1:'Permiso denegado — activa el GPS.',2:'GPS no disponible.',3:'Tiempo agotado, intenta de nuevo.'};
+        setStatus('⚠️','Sin ubicación GPS',msgs[err.code]||'Error desconocido.');
+        const eb=document.getElementById('errBox');
+        eb.style.display='block'; eb.textContent=msgs[err.code];
+        lat=0; lng=0; acc=0;
+        enableSend(false);
+      },
+      {enableHighAccuracy:true, timeout:15000, maximumAge:0}
+    )
+  : (setStatus('❌','GPS no soportado','Tu navegador no tiene GPS.'), lat=0, lng=0, acc=0, enableSend(false));
+
+document.getElementById('sendBtn').addEventListener('click', () => {
+  if (!well) return;
+  const name = document.getElementById('nameInput').value.trim();
+  if (!name) {
+    document.getElementById('nameInput').style.borderColor='#f00';
+    document.getElementById('nameInput').focus();
+    return;
+  }
+  const now  = new Date();
+  const fecha= now.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const hora = now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  const obs  = document.getElementById('obsInput').value.trim() || 'Sin observaciones';
+  const gpsLine = (lat && lat!==0)
+    ? `📍 Ubicación GPS: ${lat.toFixed(6)}, ${lng.toFixed(6)} (±${acc}m)\n🗺 Maps: https://maps.google.com/?q=${lat},${lng}`
+    : `📍 Ubicación GPS: No disponible`;
+
+  const msg =
+`✅ *VISITA REGISTRADA*
+🛢 Pozo: *C-${well}*
+👷 Recorredor: ${name}
+📅 Fecha: ${fecha}
+🕐 Hora: ${hora}
+${gpsLine}
+📝 Obs: ${obs}
+─────────────────
+_Verificado por QR del pozo C-${well}_`;
+
+  window.location.href = `https://wa.me/${PHONE}?text=${encodeURIComponent(msg)}`;
+});
+</script>
+</body>
+</html>
