@@ -525,6 +525,44 @@ body.night .chk-row.on{background:#052e1640}
 .send-wrap{max-width:420px;margin:0 auto}
 .send-btn{width:100%;padding:16px;background:var(--send);color:#fff;border:none;border-radius:13px;font-size:16px;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;box-shadow:0 4px 16px rgba(22,163,74,.3)}
 .send-btn:hover{transform:translateY(-1px)}.send-btn:active{transform:scale(.98)}
+
+/* ══ CONFIRM MODAL ══ */
+.confirm-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:800;
+  display:none;align-items:flex-end;justify-content:center;
+  backdrop-filter:blur(3px);
+}
+.confirm-overlay.open{display:flex}
+.confirm-sheet{
+  background:var(--surface);border-radius:20px 20px 0 0;
+  padding:24px 20px 36px;width:100%;max-width:480px;
+  animation:slideUp .35s cubic-bezier(.34,1.2,.64,1);
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.confirm-title{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent);letter-spacing:1px;margin-bottom:4px}
+.confirm-sub{font-size:13px;color:var(--txt2);margin-bottom:16px}
+.confirm-detail{
+  background:var(--surface2);border-radius:12px;padding:14px;
+  margin-bottom:18px;border:1.5px solid var(--border);
+  font-size:13px;line-height:1.8;color:var(--txt);
+  white-space:pre-wrap;word-break:break-word;max-height:180px;overflow-y:auto;
+}
+.confirm-btns{display:flex;gap:10px}
+.confirm-cancel{flex:1;padding:14px;background:var(--surface2);color:var(--txt2);border:1.5px solid var(--border);border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif}
+.confirm-send{flex:2;padding:14px;background:#16a34a;color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 4px 16px rgba(22,163,74,.3)}
+
+/* ══ RESULT SCREEN ══ */
+.result-view{
+  display:none;position:fixed;inset:0;z-index:700;
+  background:var(--bg);align-items:center;justify-content:center;
+  flex-direction:column;padding:24px;text-align:center;
+}
+.result-view.open{display:flex}
+.result-icon{font-size:80px;margin-bottom:16px;animation:popIn .5s cubic-bezier(.34,1.56,.64,1)}
+.result-title{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:1px;margin-bottom:8px}
+.result-sub{font-size:14px;color:var(--txt2);max-width:300px;line-height:1.6;margin-bottom:28px}
+.result-back{padding:14px 32px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif}
+
 </style>
 </head>
 <body>
@@ -881,7 +919,7 @@ body.night .chk-row.on{background:#052e1640}
     <input type="hidden" id="coEstatus">
   </div>
   <div class="field">
-    <div class="lbl">Flujo <span class="req">*</span></div>
+    <div class="lbl">Fluye <span class="req">*</span></div>
     <div class="btn-group">
       <button class="opt-btn" onclick="selOpt(this,'coFlujo','FT','sel-b')">🛢 FT</button>
       <button class="opt-btn" onclick="selOpt(this,'coFlujo','BSC','sel-b')">⛽ BSC</button>
@@ -889,7 +927,11 @@ body.night .chk-row.on{background:#052e1640}
     <input type="hidden" id="coFlujo">
   </div>
   <div class="field">
-    <div class="lbl">Sistema de Recuperación <span class="req">*</span></div>
+    <div class="lbl">Estrangulador (pulgadas)</div>
+    <input type="number" id="coEstrangulador" placeholder="Ej: 1.5" step="0.01">
+  </div>
+  <div class="field">
+    <div class="lbl">SAP <span class="req">*</span></div>
     <div class="btn-group">
       <button class="opt-btn" onclick="selSys(this,'BN')">BN</button>
       <button class="opt-btn" onclick="selSys(this,'BM')">BM</button>
@@ -1206,10 +1248,31 @@ body.night .chk-row.on{background:#052e1640}
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="send-fixed">
+<div class="send-fixed" id="sendFixed">
   <div class="send-wrap">
-    <button class="send-btn" id="sendBtn" onclick="enviarTodo()">📤 Enviar reporte a WhatsApp</button>
+    <button class="send-btn" id="sendBtn" onclick="mostrarConfirmacion()">📤 Enviar reporte a WhatsApp</button>
   </div>
+</div>
+
+<!-- ══ MODAL CONFIRMACIÓN ══ -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-sheet">
+    <div class="confirm-title">📋 Confirmar envío</div>
+    <div class="confirm-sub">Revisa el reporte antes de enviarlo a WhatsApp</div>
+    <div class="confirm-detail" id="confirmDetail"></div>
+    <div class="confirm-btns">
+      <button class="confirm-cancel" onclick="cerrarConfirmacion()">✕ Cancelar</button>
+      <button class="confirm-send" onclick="confirmarEnvio()">📤 Enviar ahora</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PANTALLA DE RESULTADO ══ -->
+<div class="result-view" id="resultView">
+  <div class="result-icon" id="resultIcon"></div>
+  <div class="result-title" id="resultTitle"></div>
+  <div class="result-sub" id="resultSub"></div>
+  <button class="result-back" onclick="cerrarResultado()">Volver al registro</button>
 </div>
 
 <script>
@@ -1478,7 +1541,14 @@ function renderFotos(){
 }
 
 
-function enviarTodo(){
+var msgPendiente = '';
+
+function mostrarConfirmacion(){
+  // Build message first (reuse existing logic)
+  enviarTodo(true);
+}
+
+function enviarTodo(soloPreview){
   if(!REC){alert('Selecciona tu nombre primero');return}
   var ci=getCicloInfo(REC);
   if(!ci.trabajando&&!confirm('Estás en día de descanso. ¿Registrar de todas formas?'))return;
@@ -1487,12 +1557,12 @@ function enviarTodo(){
   var est=v('coEstatus'),flu=v('coFlujo'),sis=v('coSistema');
   if(est||flu||sis){
     if(!est){alert('C.O.: Selecciona Estatus');return}
-    if(!flu){alert('C.O.: Selecciona Flujo');return}
-    if(!sis){alert('C.O.: Selecciona Sistema');return}
+    if(!flu){alert('C.O.: Selecciona Fluye');return}
+    if(!sis){alert('C.O.: Selecciona SAP');return}
     var d='';
     if(sis==='BN'||sis==='FY'){var tp=v('coTP'),ld=v('coLDD'),tr=v('coTR');if(!tp||!ld||!tr){alert('C.O.: Falta PTP, LDD o PTR');return}var lbn=v('coLBN');d='PTP: '+tp+' · LDD: '+ld+' · PTR: '+tr+' kg/cm²'+(lbn&&sis==='BN'?' · LBN: '+lbn+' kg/cm²':'');}
     else if(sis==='BM'){var p2=v('coPresion'),ptr2=v('coPTR_bm'),e2=v('coEmb'),c2=v('coCarrera');if(!p2||!ptr2||!e2||!c2){alert('C.O.: Falta PTP, PTR, Velocidad EPM o Carrera');return}d='PTP: '+p2+' · PTR: '+ptr2+' kg/cm² · Vel: '+e2+' EPM · Car: '+c2+' pulg';}
-    msg+='══════════════════\n🔧 *CONTROL OPERATIVO*\n📌 Estatus: '+est+'\n💧 Flujo: '+flu+'\n⚙️ Sistema: '+sis+'\n'+d+'\n'+(v('coObs')?'📝 '+v('coObs')+'\n':'');ok=true;
+    msg+='══════════════════\n🔧 *CONTROL OPERATIVO*\n📌 Estatus: '+est+'\n💧 Fluye: '+flu+'\n📏 Estrangulador: '+(v('coEstrangulador')||'N/A')+' pulg\n⚙️ SAP: '+sis+'\n'+d+'\n'+(v('coObs')?'📝 '+v('coObs')+'\n':'');ok=true;
   }
   var ctm=v('nivCTM'),bls=v('nivBLS');
   if(ctm||bls){
@@ -1514,21 +1584,56 @@ function enviarTodo(){
   }
   if(!ok){alert('Llena al menos un apartado antes de enviar');return}
   msg+='══════════════════\n'+gpsLine()+'\n';
-  if(fotos.length) msg+='📸 Evidencia: '+fotos.length+' foto'+(fotos.length===1?'':'s')+' adjunta'+(fotos.length===1?'':'s')+(fotos.length?' (ver galería del celular)':'')+'\n';
+  if(fotos.length) msg+='📸 Evidencia: '+fotos.length+' foto'+(fotos.length===1?'':'s')+'\n';
   msg+='_QR C-'+W+'_';
 
-  // ── Confirmación antes de enviar ──
-  var resumen='📋 Reporte listo para C-'+W+'\n👷 Recorredor: '+REC+'\n📅 '+now();
-  if(!confirm(resumen+'\n\n¿Confirmas el envío a WhatsApp?')) return;
-
-  // Registrar visita
-  agregarVisita(REC,W); mostrarContador(REC);
-  var n=getVisitas(REC).length;
-  showToast('✅ C-'+W+' registrado · '+REC+': '+n+(n===1?' pozo':' pozos'));
-  var waURL='https://api.whatsapp.com/send?phone=522293735876&text='+encodeURIComponent(msg);
-  // Redirige directamente — funciona en celular y laptop
-  setTimeout(function(){ location.href=waURL; }, 600);
+  // Guardar mensaje y mostrar modal de confirmación
+  msgPendiente = msg;
+  document.getElementById('confirmDetail').textContent = msg;
+  document.getElementById('confirmOverlay').classList.add('open');
 }
+
+function cerrarConfirmacion(){
+  document.getElementById('confirmOverlay').classList.remove('open');
+  msgPendiente = '';
+}
+
+function confirmarEnvio(){
+  document.getElementById('confirmOverlay').classList.remove('open');
+  // Registrar visita
+  agregarVisita(REC, W);
+  mostrarContador(REC);
+  var n = getVisitas(REC).length;
+  // Construir URL
+  var waURL = 'https://api.whatsapp.com/send?phone=522293735876&text=' + encodeURIComponent(msgPendiente);
+  // Intentar abrir WhatsApp
+  try {
+    location.href = waURL;
+    // Mostrar pantalla de éxito tras breve delay
+    setTimeout(function(){
+      mostrarResultado(true, n);
+    }, 1500);
+  } catch(e) {
+    mostrarResultado(false, 0);
+  }
+}
+
+function mostrarResultado(exito, n){
+  var rv = document.getElementById('resultView');
+  document.getElementById('resultIcon').textContent  = exito ? '✅' : '❌';
+  document.getElementById('resultTitle').textContent = exito ? '¡Reporte enviado!' : 'Error al enviar';
+  document.getElementById('resultTitle').style.color = exito ? 'var(--green)' : 'var(--red)';
+  document.getElementById('resultSub').textContent   = exito
+    ? 'C-'+W+' registrado · '+REC+': '+n+(n===1?' pozo':' pozos')+' este ciclo.\nRevisa tu WhatsApp para confirmar la recepción.'
+    : 'No se pudo abrir WhatsApp. Intenta de nuevo o verifica la conexión.';
+  rv.classList.add('open');
+}
+
+function cerrarResultado(){
+  document.getElementById('resultView').classList.remove('open');
+  msgPendiente = '';
+}
+
 
 // ══ COORDENADAS DE POZOS (del archivo KMZ) ══
 var WELL_COORDS={
@@ -1847,6 +1952,9 @@ function switchView(id){
   document.querySelectorAll('.sidebar-icon').forEach(function(i){i.classList.remove('active')});
   var el=document.getElementById('view-'+id);
   if(el) el.classList.add('active');
+  // Show send button ONLY in registro de visitas
+  var sf=document.getElementById('sendFixed');
+  if(sf) sf.style.display=(id==='visitas'?'block':'none');
   if(id==='visitas'){
     var ic=document.getElementById('icon-visitas');
     if(ic) ic.classList.add('active');
