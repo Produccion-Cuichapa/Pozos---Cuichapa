@@ -1665,25 +1665,29 @@ function confirmarEnvio(){
     pozo: W,
     recorredor: REC,
     msg: msgPendiente,
-    enviado: false
+    estado: 'pendiente',
+    ultimoIntento: null,
+    intentos: 0
   };
+  // SIEMPRE guardar primero
   guardarReporte(reporte);
   agregarVisita(REC, W);
   mostrarContador(REC);
   var n = getVisitas(REC).length;
   actualizarBadgeHistorial();
+  // Mostrar pantalla de éxito inmediatamente
+  mostrarResultado(true, n, navigator.onLine);
+  // Enviar silencioso con Ultramsg
   if(navigator.onLine){
-    // Marcar como enviado
-    var arr = getHistorial();
-    if(arr.length) arr[0].enviado = true;
-    saveHistorial(arr);
-    var waURL = 'https://api.whatsapp.com/send?phone=522293735876&text=' + encodeURIComponent(msgPendiente);
-    location.href = waURL;
-    setTimeout(function(){ mostrarResultado(true, n, true); }, 1500);
+    enviarConUltramsg(reporte.id, function(ok){
+      actualizarBadgeHistorial();
+      renderHistorial();
+    });
   } else {
-    encolarReporte(reporte);
-    actualizarBadgeHistorial();
-    mostrarResultado(true, n, false);
+    // Registrar background sync para que SW lo envíe cuando haya señal
+    if('serviceWorker' in navigator && navigator.serviceWorker.controller){
+      navigator.serviceWorker.controller.postMessage({ type: 'REGISTRAR_SYNC' });
+    }
   }
 }
 
@@ -2117,36 +2121,77 @@ function getPendientes(){
 }
 
 // ── Enviar a WhatsApp ─────────────────────────────
-var envioEnCurso = false;
+// ── Configuración Ultramsg ────────────────────────
+var UM_INSTANCE = 'instance176718';
+var UM_TOKEN    = 'qgzhdd47v5b7xv4e';
+var UM_TO       = '+522293735876';
+var UM_URL      = 'https://api.ultramsg.com/' + UM_INSTANCE + '/messages/chat';
 
+// ── Enviar silencioso con Ultramsg ────────────────
+function enviarConUltramsg(id, callback){
+  var r = getReporte(id);
+  if(!r){ if(callback) callback(false); return; }
+  if(r.estado === 'enviado'){ if(callback) callback(true); return; }
+
+  var body = 'token=' + encodeURIComponent(UM_TOKEN)
+           + '&to='    + encodeURIComponent(UM_TO)
+           + '&body='  + encodeURIComponent(r.msg);
+
+  fetch(UM_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body
+  })
+  .then(function(res){ return res.json(); })
+  .then(function(data){
+    // Ultramsg devuelve { sent: "true" } o { error: "..." }
+    if(data && (data.sent === 'true' || data.sent === true)){
+      actualizarEstadoReporte(id, 'enviado', new Date().toISOString());
+      actualizarBadgeHistorial();
+      renderHistorial();
+      if(callback) callback(true);
+    } else {
+      // Fallo — mantener pendiente para reintentar
+      actualizarEstadoReporte(id, 'pendiente', new Date().toISOString());
+      renderHistorial();
+      if(callback) callback(false);
+    }
+  })
+  .catch(function(){
+    // Sin señal — mantener pendiente
+    actualizarEstadoReporte(id, 'pendiente', new Date().toISOString());
+    renderHistorial();
+    if(callback) callback(false);
+  });
+}
+
+// ── Intentar enviar un reporte (por ID) ──────────
 function intentarEnviar(id){
   var r = getReporte(id);
   if(!r) return;
-  if(r.estado === 'enviado'){
-    showToast('✅ Este reporte ya fue enviado');
-    return;
-  }
-  // Actualizar intento
+  if(r.estado === 'enviado'){ return; }
   actualizarEstadoReporte(id, 'pendiente', new Date().toISOString());
   renderHistorial();
-  // Abrir WhatsApp directamente — número México +52 2293735876
-  var waURL = 'https://api.whatsapp.com/send?phone=522293735876&text=' + encodeURIComponent(r.msg);
-  // Marcar como enviado (el usuario ve el msg listo en WA y solo toca enviar)
-  actualizarEstadoReporte(id, 'enviado', new Date().toISOString());
-  actualizarBadgeHistorial();
-  renderHistorial();
-  location.href = waURL;
+  enviarConUltramsg(id, null); // silencioso, sin callbacks visibles
 }
 
+// ── Procesar cola completa — silencioso ──────────
+var _colaEnProceso = false;
 function procesarCola(){
+  if(_colaEnProceso) return;
   var pendientes = getPendientes();
-  if(!pendientes.length){
-    showToast('✅ Sin reportes pendientes');
-    return;
+  if(!pendientes.length) return;
+  _colaEnProceso = true;
+  var idx = 0;
+  function enviarSiguiente(){
+    if(idx >= pendientes.length){ _colaEnProceso = false; return; }
+    var r = pendientes[idx++];
+    enviarConUltramsg(r.id, function(ok){
+      // Esperar 2s entre envíos para no saturar
+      setTimeout(enviarSiguiente, 2000);
+    });
   }
-  showToast('📤 Abriendo WhatsApp con '+pendientes.length+' reporte'+(pendientes.length>1?'s':'')+'...');
-  // Enviar el primero de la cola
-  intentarEnviar(pendientes[0].id);
+  enviarSiguiente();
 }
 
 // ── Revisión periódica cada 30 segundos ──────────
@@ -2190,17 +2235,20 @@ function confirmarEnvio(){
   var n = getVisitas(REC).length;
   actualizarBadgeHistorial();
 
+  // Intentar enviar automáticamente con Ultramsg (silencioso)
   if(navigator.onLine){
-    // Marcar enviado y abrir WhatsApp
-    actualizarEstadoReporte(reporte.id, 'enviado', ahora);
-    var waURL='https://api.whatsapp.com/send?phone=522293735876&text='+encodeURIComponent(msgPendiente);
-    actualizarBadgeHistorial();
-    mostrarResultado(true, n, true);
-    setTimeout(function(){ location.href = waURL; }, 800);
+    enviarConUltramsg(reporte.id, function(ok){
+      actualizarBadgeHistorial();
+      mostrarResultado(ok, n, ok);
+      if(!ok){
+        // Falló — queda en cola para reintento automático
+        showToast('⚠️ Sin respuesta · Reintentando automáticamente');
+      }
+    });
+    mostrarResultado(true, n, true); // mostrar éxito optimista
   } else {
-    // Sin señal — queda pendiente, se enviará automático
+    // Sin señal — guardado, se enviará cuando haya señal
     mostrarResultado(true, n, false);
-    showToast('💾 Guardado · Se enviará cuando haya señal');
   }
 }
 
@@ -2257,7 +2305,6 @@ function renderHistorial(){
         +'border-radius:50%;background:#f59e0b;flex-shrink:0;font-size:13px" title="Pendiente">⏳</span>';
     }
     var msgSafe = escapeHTML(r.msg);
-    var msgJSON = JSON.stringify(r.msg);
     return '<div class="hist-card" id="hc-'+r.id+'">'
       +'<div class="hist-card-head" onclick="toggleHistCard(\''+r.id+'\')">'
       +estadoHTML
@@ -2274,7 +2321,7 @@ function renderHistorial(){
       +'<div class="hist-actions">'
       +(r.estado!=='enviado'
         ?'<button class="hist-resend" onclick="intentarEnviar('+r.id+')">📤 Enviar ahora</button>'
-        :'<button class="hist-resend" onclick="reenviarManual('+msgJSON+')" style="background:#1e5caa">📤 Reenviar</button>')
+        :'<button class="hist-resend" onclick="intentarEnviar('+r.id+')" style="background:#1e5caa">📤 Reenviar</button>')
       +'<button class="hist-delete" onclick="borrarReporte('+r.id+')">🗑</button>'
       +'</div></div></div>';
   }).join('');
@@ -2287,9 +2334,7 @@ function toggleHistCard(id){
   if(c) c.classList.toggle('open');
 }
 
-function reenviarManual(msg){
-  location.href='https://api.whatsapp.com/send?phone=522293735876&text='+encodeURIComponent(msg);
-}
+function reenviarManual(id){ intentarEnviar(id); }
 
 function borrarReporte(id){
   if(!confirm('¿Borrar este reporte? No se puede deshacer.')) return;
@@ -2338,8 +2383,20 @@ setTimeout(function(){
 
 // ══ PWA SERVICE WORKER ══
 if('serviceWorker' in navigator){
-  window.addEventListener('load',function(){
-    navigator.serviceWorker.register('sw.js').catch(function(){});
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').then(function(reg){
+      // Registrar Background Sync si está disponible
+      if('SyncManager' in window){
+        reg.sync.register('enviar-reportes-pendientes').catch(function(){});
+      }
+    }).catch(function(){});
+
+    // Escuchar mensajes del service worker (ej: PROCESAR_COLA)
+    navigator.serviceWorker.addEventListener('message', function(e){
+      if(e.data && e.data.type === 'PROCESAR_COLA'){
+        procesarCola();
+      }
+    });
   });
 }
 
