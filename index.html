@@ -1712,173 +1712,6 @@ function cerrarResultado(){
   msgPendiente = '';
 }
 
-// ══ HISTORIAL DE REPORTES ══
-var HIST_KEY  = 'cuichapa_historial';
-var QUEUE_KEY = 'cuichapa_cola_pendiente';
-
-function getHistorial(){
-  try{ return JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); }catch(e){ return []; }
-}
-function saveHistorial(arr){
-  try{ localStorage.setItem(HIST_KEY, JSON.stringify(arr)); }catch(e){}
-}
-function guardarReporte(reporte){
-  var arr = getHistorial();
-  arr.unshift(reporte); // más reciente primero
-  if(arr.length > 200) arr = arr.slice(0,200);
-  saveHistorial(arr);
-}
-
-// Cola offline
-function getQueue(){
-  try{ return JSON.parse(localStorage.getItem(QUEUE_KEY)||'[]'); }catch(e){ return []; }
-}
-function saveQueue(arr){
-  try{ localStorage.setItem(QUEUE_KEY, JSON.stringify(arr)); }catch(e){}
-}
-function encolarReporte(reporte){
-  var q = getQueue(); q.push(reporte); saveQueue(q);
-}
-function procesarCola(){
-  var q = getQueue();
-  if(!q.length || !navigator.onLine) return;
-  var pendiente = q[0];
-  var waURL='https://api.whatsapp.com/send?phone=522293735876&text='+encodeURIComponent(pendiente.msg);
-  location.href = waURL;
-  // Marcar como enviado y remover de la cola
-  var arr = getHistorial();
-  for(var i=0;i<arr.length;i++){
-    if(arr[i].id===pendiente.id){ arr[i].enviado=true; break; }
-  }
-  saveHistorial(arr);
-  q.shift(); saveQueue(q);
-}
-
-// Detectar cuando vuelve internet
-window.addEventListener('online', function(){
-  var q = getQueue();
-  if(q.length){
-    showToast('📶 Señal recuperada — '+q.length+' reporte'+(q.length>1?'s':'')+' pendiente'+(q.length>1?'s':'')+' en cola');
-    setTimeout(procesarCola, 1500);
-  }
-});
-
-// Renderizar historial
-var histFiltro = 'todos';
-function filtrarHist(f, btn){
-  histFiltro = f;
-  document.querySelectorAll('.hist-filter').forEach(function(b){ b.classList.remove('active'); });
-  btn.classList.add('active');
-  renderHistorial();
-}
-
-function renderHistorial(){
-  var arr = getHistorial();
-  var cola = getQueue();
-  if(histFiltro !== 'todos') arr = arr.filter(function(r){ return r.recorredor === histFiltro; });
-  var list = document.getElementById('histList');
-  var countEl = document.getElementById('histCount');
-  if(!list) return;
-
-  // Badge cola pendiente
-  var queueBadge = '';
-  if(cola.length){
-    queueBadge = '<div style="background:#f59e0b;color:#fff;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;font-weight:700;">'+
-      '⏳ '+cola.length+' reporte'+(cola.length>1?'s':'')+' en cola · Se enviarán cuando haya señal'+
-      '<button onclick="procesarCola()" style="margin-left:10px;background:#fff;color:#f59e0b;border:none;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:800;cursor:pointer;">Enviar ahora</button></div>';
-  }
-
-  if(!arr.length){
-    list.innerHTML = queueBadge+'<div class="hist-empty"><div class="hist-empty-icon">📋</div><div class="hist-empty-txt">No hay reportes guardados</div></div>';
-    countEl.textContent = '';
-    return;
-  }
-
-  countEl.textContent = arr.length + ' reporte'+(arr.length===1?'':'s');
-  list.innerHTML = queueBadge + arr.map(function(r, i){
-    var fecha = new Date(r.fecha);
-    var fechaStr = fecha.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'})
-      +' '+fecha.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
-    var estadoBadge = r.enviado
-      ? '<span style="font-size:10px;background:#dcfce7;color:#16a34a;border-radius:10px;padding:2px 8px;font-weight:700;margin-left:8px">✅ Enviado</span>'
-      : '<span style="font-size:10px;background:#fef9c3;color:#b45309;border-radius:10px;padding:2px 8px;font-weight:700;margin-left:8px">💾 Local</span>';
-    return '<div class="hist-card" id="hcard-'+i+'">'
-      +'<div class="hist-card-head" onclick="toggleHCard('+i+')">'
-      +'<div class="hist-card-well">C-'+r.pozo+'</div>'
-      +'<div class="hist-card-info">'
-      +'<span class="hist-card-rec">'+r.recorredor+estadoBadge+'</span>'
-      +'<span class="hist-card-date">📅 '+fechaStr+'</span>'
-      +'</div>'
-      +'<span class="hist-card-arrow">›</span>'
-      +'</div>'
-      +'<div class="hist-card-body">'
-      +'<div class="hist-msg">'+escapeHTML(r.msg)+'</div>'
-      +'<div class="hist-actions">'
-      +'<button class="hist-resend" onclick="reenviarReporte('+i+')">📤 Enviar a WhatsApp</button>'
-      +'<button class="hist-delete" onclick="borrarReporte('+i+')">🗑 Borrar</button>'
-      +'</div>'
-      +'</div>'
-      +'</div>';
-  }).join('');
-}
-
-function escapeHTML(str){
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-function toggleHCard(i){
-  var card = document.getElementById('hcard-'+i);
-  if(card) card.classList.toggle('open');
-}
-function reenviarReporte(i){
-  var arr = getHistorial();
-  if(histFiltro !== 'todos') arr = arr.filter(function(r){ return r.recorredor === histFiltro; });
-  if(!arr[i]) return;
-  var r = arr[i];
-  if(!navigator.onLine){
-    showToast('⚠️ Sin internet — reporte guardado en cola');
-    encolarReporte(r); return;
-  }
-  var waURL='https://api.whatsapp.com/send?phone=522293735876&text='+encodeURIComponent(r.msg);
-  // Marcar como enviado
-  var full = getHistorial();
-  for(var j=0;j<full.length;j++){ if(full[j].id===r.id){ full[j].enviado=true; break; } }
-  saveHistorial(full);
-  location.href = waURL;
-}
-function borrarReporte(i){
-  if(!confirm('¿Borrar este reporte?')) return;
-  var arr = getHistorial();
-  var filtrado = histFiltro !== 'todos' ? arr.filter(function(r){ return r.recorredor === histFiltro; }) : arr;
-  var target = filtrado[i];
-  var newArr = arr.filter(function(r){ return r.id !== target.id; });
-  saveHistorial(newArr);
-  renderHistorial();
-}
-function borrarTodoHistorial(){
-  if(!confirm('¿Borrar TODO el historial? Esta acción no se puede deshacer.')) return;
-  saveHistorial([]); saveQueue([]);
-  renderHistorial();
-  showToast('🗑 Historial borrado');
-}
-
-// Conectar pendientes en cola al badge de historial
-function actualizarBadgeHistorial(){
-  var q = getQueue();
-  var ic = document.getElementById('icon-historial');
-  if(!ic) return;
-  var badge = ic.querySelector('.hist-badge');
-  if(q.length){
-    if(!badge){
-      badge = document.createElement('div');
-      badge.className='hist-badge';
-      badge.style.cssText='position:absolute;top:4px;right:4px;background:#f59e0b;color:#fff;border-radius:50%;width:14px;height:14px;font-size:9px;font-weight:900;display:flex;align-items:center;justify-content:center;';
-      ic.style.position='relative'; ic.appendChild(badge);
-    }
-    badge.textContent = q.length;
-  } else if(badge){ badge.remove(); }
-}
-setInterval(actualizarBadgeHistorial, 3000);
-actualizarBadgeHistorial();
 
 var WELL_COORDS={
   "111":{"lat":17.955585,"lon":-94.290644},
@@ -2230,86 +2063,274 @@ function switchView(id){
 
 renderWellList(WELLS);
 
-// ══ HISTORIAL DE REPORTES ══
-var HIST_KEY='cuichapa_historial';
-var histFiltroActual='todos';
+// ════════════════════════════════════════════════
+// ══  SISTEMA DE HISTORIAL ROBUSTO  ══════════════
+// ════════════════════════════════════════════════
+// Prioridad máxima: NUNCA perder un reporte.
+// Cada reporte tiene estados: 'enviado' | 'pendiente' | 'fallido'
+// La cola persiste en localStorage aunque se cierre la app.
 
-function guardarReporte(reporte){
-  try{
-    var arr=getHistorial();
-    arr.unshift(reporte);
-    if(arr.length>500) arr=arr.slice(0,500);
-    localStorage.setItem(HIST_KEY,JSON.stringify(arr));
-  }catch(e){}
-}
+var HIST_KEY  = 'cuichapa_historial_v2';
+var histFiltro = 'todos';
 
+// ── Storage ──────────────────────────────────────
 function getHistorial(){
-  try{var d=localStorage.getItem(HIST_KEY);return d?JSON.parse(d):[];}catch(e){return [];}
+  try{ return JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); }
+  catch(e){ return []; }
+}
+function saveHistorial(arr){
+  try{ localStorage.setItem(HIST_KEY, JSON.stringify(arr)); }
+  catch(e){ console.warn('localStorage lleno'); }
+}
+function getReporte(id){
+  return getHistorial().filter(function(r){ return r.id===id; })[0] || null;
 }
 
-function borrarReporte(id){
-  if(!confirm('¿Borrar este reporte?'))return;
-  var arr=getHistorial().filter(function(r){return r.id!==id;});
-  try{localStorage.setItem(HIST_KEY,JSON.stringify(arr));}catch(e){}
-  renderHistorial(histFiltroActual);
+// ── Guardar (SIEMPRE, primero) ────────────────────
+function guardarReporte(reporte){
+  // reporte = { id, fecha, pozo, recorredor, msg, estado, ultimoIntento, intentos }
+  var arr = getHistorial();
+  var idx = arr.findIndex(function(r){ return r.id===reporte.id; });
+  if(idx >= 0) arr[idx] = reporte;   // actualizar si ya existe
+  else arr.unshift(reporte);          // nuevo al principio
+  if(arr.length > 500) arr = arr.slice(0, 500);
+  saveHistorial(arr);
 }
 
-function borrarTodoHistorial(){
-  if(!confirm('¿Borrar TODOS los reportes? No se puede deshacer.'))return;
-  try{localStorage.removeItem(HIST_KEY);}catch(e){}
-  renderHistorial(histFiltroActual);
+// ── Actualizar estado de un reporte ──────────────
+function actualizarEstadoReporte(id, estado, ultimoIntento){
+  var arr = getHistorial();
+  for(var i=0; i<arr.length; i++){
+    if(arr[i].id === id){
+      arr[i].estado = estado;
+      arr[i].ultimoIntento = ultimoIntento || new Date().toISOString();
+      if(estado==='pendiente') arr[i].intentos = (arr[i].intentos||0) + 1;
+      break;
+    }
+  }
+  saveHistorial(arr);
 }
 
-function reenviarReporte(msg){
-  var waURL='https://api.whatsapp.com/send?phone=522293735876&text='+encodeURIComponent(msg);
-  location.href=waURL;
+// ── Cola: pendientes por enviar ───────────────────
+function getPendientes(){
+  return getHistorial().filter(function(r){ return r.estado==='pendiente'||r.estado==='fallido'; });
 }
 
-function filtrarHist(filtro,btn){
-  histFiltroActual=filtro;
-  document.querySelectorAll('.hist-filter').forEach(function(b){b.classList.remove('active');});
+// ── Enviar a WhatsApp ─────────────────────────────
+var envioEnCurso = false;
+function intentarEnviar(id){
+  if(envioEnCurso || !navigator.onLine) return;
+  var r = getReporte(id);
+  if(!r || r.estado==='enviado') return;
+  envioEnCurso = true;
+  actualizarEstadoReporte(id, 'pendiente', new Date().toISOString());
+  renderHistorial();
+  var waURL = 'https://api.whatsapp.com/send?phone=522293735876&text='+encodeURIComponent(r.msg);
+  location.href = waURL;
+  // Marcar como enviado tras 3s (si WhatsApp abrió OK)
+  setTimeout(function(){
+    actualizarEstadoReporte(id, 'enviado', new Date().toISOString());
+    envioEnCurso = false;
+    actualizarBadgeHistorial();
+    renderHistorial();
+  }, 3000);
+}
+
+// ── Reintentar toda la cola ───────────────────────
+function procesarCola(){
+  if(!navigator.onLine) return;
+  var pendientes = getPendientes();
+  if(!pendientes.length) return;
+  // Notificación interna
+  showToast('📶 Señal detectada · Enviando '+pendientes.length+' reporte'+(pendientes.length>1?'s':'')+'...');
+  // Enviar el primero (los siguientes se enviarán en las próximas revisiones)
+  setTimeout(function(){ intentarEnviar(pendientes[0].id); }, 1500);
+}
+
+// ── Revisión periódica cada 30 segundos ──────────
+setInterval(function(){
+  if(navigator.onLine && getPendientes().length) procesarCola();
+}, 30000);
+
+// ── Detección inmediata de señal ─────────────────
+window.addEventListener('online', function(){
+  setTimeout(procesarCola, 800);
+});
+window.addEventListener('offline', function(){
+  showToast('⚠️ Sin señal — los reportes se guardarán localmente');
+  actualizarBadgeHistorial();
+});
+
+// ── Confirmar envío (llamado desde modal) ─────────
+function confirmarEnvio(){
+  document.getElementById('confirmOverlay').classList.remove('open');
+  var ahora = new Date().toISOString();
+  var reporte = {
+    id: Date.now(),
+    fecha: ahora,
+    pozo: W,
+    recorredor: REC,
+    msg: msgPendiente,
+    estado: 'pendiente',      // siempre empieza pendiente
+    ultimoIntento: null,
+    intentos: 0
+  };
+  // 1. SIEMPRE guardar primero — nunca perder
+  guardarReporte(reporte);
+  agregarVisita(REC, W);
+  mostrarContador(REC);
+  var n = getVisitas(REC).length;
+  actualizarBadgeHistorial();
+
+  if(navigator.onLine){
+    // Intentar enviar ahora
+    actualizarEstadoReporte(reporte.id, 'pendiente', ahora);
+    var waURL='https://api.whatsapp.com/send?phone=522293735876&text='+encodeURIComponent(msgPendiente);
+    location.href = waURL;
+    // Asumir éxito tras 3s (WhatsApp abrió)
+    setTimeout(function(){
+      actualizarEstadoReporte(reporte.id, 'enviado', new Date().toISOString());
+      actualizarBadgeHistorial();
+      mostrarResultado(true, n, true);
+    }, 3000);
+  } else {
+    // Sin señal — queda en cola automáticamente
+    mostrarResultado(true, n, false);
+    showToast('💾 Reporte guardado · Se enviará cuando haya señal');
+  }
+}
+
+// ── Renderizar historial ──────────────────────────
+function filtrarHist(f, btn){
+  histFiltro = f;
+  document.querySelectorAll('.hist-filter').forEach(function(b){ b.classList.remove('active'); });
   if(btn) btn.classList.add('active');
-  renderHistorial(filtro);
+  renderHistorial();
 }
 
-function renderHistorial(filtro){
-  var arr=getHistorial();
-  if(filtro&&filtro!=='todos') arr=arr.filter(function(r){return r.recorredor===filtro;});
-  var list=document.getElementById('histList');
-  var countEl=document.getElementById('histCount');
-  if(!list)return;
-  if(countEl) countEl.textContent=arr.length?arr.length+' reporte'+(arr.length===1?'':'s'):'';
+function renderHistorial(){
+  var arr = getHistorial();
+  var pendientes = getPendientes();
+  if(histFiltro !== 'todos') arr = arr.filter(function(r){ return r.recorredor===histFiltro; });
+  var list    = document.getElementById('histList');
+  var countEl = document.getElementById('histCount');
+  if(!list) return;
+
+  // Badge cola
+  var qBadge = '';
+  if(pendientes.length){
+    qBadge = '<div style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#78350f,#92400e);color:#fef3c7;'
+      +'border-radius:12px;padding:12px 16px;margin-bottom:12px;font-size:13px;font-weight:700;">'
+      +'<span style="font-size:20px">⏳</span>'
+      +'<div><div>'+pendientes.length+' reporte'+(pendientes.length>1?'s':'')+' pendiente'+(pendientes.length>1?'s':'')+' de envío</div>'
+      +'<div style="font-size:11px;opacity:.8;margin-top:2px">Se enviarán automáticamente cuando haya señal</div></div>'
+      +'<button onclick="procesarCola()" style="margin-left:auto;background:#f59e0b;color:#fff;border:none;border-radius:8px;'
+      +'padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer">Enviar ya</button></div>';
+  }
+
+  if(countEl) countEl.textContent = arr.length ? arr.length+' reporte'+(arr.length===1?'':'s') : '';
+
   if(!arr.length){
-    list.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">📭</div>'
-      +'<div class="hist-empty-txt">No hay reportes guardados'+(filtro!=='todos'?' para '+filtro:'')+'</div></div>';
+    list.innerHTML = qBadge+'<div class="hist-empty"><div class="hist-empty-icon">📭</div>'
+      +'<div class="hist-empty-txt">Sin reportes guardados'+(histFiltro!=='todos'?' para '+histFiltro:'')+'</div></div>';
     return;
   }
-  list.innerHTML=arr.map(function(r){
-    var fecha=new Date(r.fecha);
-    var fs=fecha.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'})
-      +' '+fecha.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
-    var msgSafe=r.msg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    var msgJSON=JSON.stringify(r.msg);
+
+  list.innerHTML = qBadge + arr.map(function(r){
+    var fecha = new Date(r.fecha);
+    var fechaStr = fecha.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'})
+      +' · '+fecha.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+    var ultimo = r.ultimoIntento
+      ? 'Último intento: '+new Date(r.ultimoIntento).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})
+      : 'Sin intentos aún';
+    // Estado visual
+    var estadoHTML = '';
+    if(r.estado==='enviado'){
+      estadoHTML = '<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;'
+        +'border-radius:50%;background:#16a34a;flex-shrink:0" title="Enviado">✓</span>';
+    } else {
+      estadoHTML = '<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;'
+        +'border-radius:50%;background:#f59e0b;flex-shrink:0;font-size:13px" title="Pendiente">⏳</span>';
+    }
+    var msgSafe = escapeHTML(r.msg);
+    var msgJSON = JSON.stringify(r.msg);
     return '<div class="hist-card" id="hc-'+r.id+'">'
-      +'<div class="hist-card-head" onclick="toggleHistCard('+r.id+')">'
+      +'<div class="hist-card-head" onclick="toggleHistCard(\''+r.id+'\')">'
+      +estadoHTML
       +'<div class="hist-card-well">C-'+r.pozo+'</div>'
       +'<div class="hist-card-info">'
-      +'<span class="hist-card-rec">👷 '+r.recorredor+'</span>'
-      +'<span class="hist-card-date">📅 '+fs+'</span>'
-      +'</div><div class="hist-card-arrow">›</div></div>'
+      +'<span class="hist-card-rec">'+r.recorredor+'</span>'
+      +'<span class="hist-card-date">'+fechaStr+'</span>'
+      +'<span style="font-size:10px;color:var(--txt2)">'+ultimo+(r.intentos?' ('+r.intentos+' intento'+(r.intentos>1?'s':'')+')':"")+'</span>'
+      +'</div>'
+      +'<span class="hist-card-arrow">›</span>'
+      +'</div>'
       +'<div class="hist-card-body">'
-      +'<div class="hist-msg">'+msgSafe+'</div>'
+      +'<pre class="hist-msg">'+msgSafe+'</pre>'
       +'<div class="hist-actions">'
-      +'<button class="hist-resend" onclick="reenviarReporte('+msgJSON+')">📤 Reenviar a WhatsApp</button>'
+      +(r.estado!=='enviado'
+        ?'<button class="hist-resend" onclick="intentarEnviar('+r.id+')">📤 Enviar ahora</button>'
+        :'<button class="hist-resend" onclick="reenviarManual('+msgJSON+')" style="background:#1e5caa">📤 Reenviar</button>')
       +'<button class="hist-delete" onclick="borrarReporte('+r.id+')">🗑</button>'
       +'</div></div></div>';
   }).join('');
 }
 
+function escapeHTML(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
 function toggleHistCard(id){
-  var card=document.getElementById('hc-'+id);
-  if(card) card.classList.toggle('open');
+  var c = document.getElementById('hc-'+id);
+  if(c) c.classList.toggle('open');
 }
+
+function reenviarManual(msg){
+  location.href='https://api.whatsapp.com/send?phone=522293735876&text='+encodeURIComponent(msg);
+}
+
+function borrarReporte(id){
+  if(!confirm('¿Borrar este reporte? No se puede deshacer.')) return;
+  saveHistorial(getHistorial().filter(function(r){ return r.id!==id; }));
+  renderHistorial(); actualizarBadgeHistorial();
+}
+
+function borrarTodoHistorial(){
+  if(!confirm('¿Borrar TODOS los reportes?\nEsta acción es permanente.')) return;
+  saveHistorial([]);
+  renderHistorial(); actualizarBadgeHistorial();
+  showToast('🗑 Historial borrado');
+}
+
+// ── Badge en ícono de historial ───────────────────
+function actualizarBadgeHistorial(){
+  var pendientes = getPendientes().length;
+  var ic = document.getElementById('icon-historial');
+  if(!ic) return;
+  var badge = ic.querySelector('.hbadge');
+  if(pendientes > 0){
+    if(!badge){
+      badge = document.createElement('div');
+      badge.className='hbadge';
+      badge.style.cssText='position:absolute;top:3px;right:3px;background:#ef4444;color:#fff;'
+        +'border-radius:50%;width:15px;height:15px;font-size:9px;font-weight:900;'
+        +'display:flex;align-items:center;justify-content:center;border:1.5px solid #080f1e;';
+      ic.style.position='relative'; ic.appendChild(badge);
+    }
+    badge.textContent = pendientes > 9 ? '9+' : pendientes;
+  } else {
+    if(badge) badge.remove();
+  }
+}
+
+// ── Arrancar sistema al cargar ────────────────────
+actualizarBadgeHistorial();
+setInterval(actualizarBadgeHistorial, 5000);
+// Procesar cola al abrir la app (reportes del turno anterior)
+setTimeout(function(){
+  if(navigator.onLine && getPendientes().length){
+    showToast('📶 Procesando '+getPendientes().length+' reporte'+(getPendientes().length>1?'s':'')+' pendiente'+(getPendientes().length>1?'s':'')+'...');
+    setTimeout(procesarCola, 2000);
+  }
+}, 3000);
 
 // ══ PWA SERVICE WORKER ══
 if('serviceWorker' in navigator){
