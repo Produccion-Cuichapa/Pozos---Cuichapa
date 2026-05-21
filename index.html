@@ -1268,8 +1268,14 @@ body.night .chk-row.on{background:#052e1640}
 <div class="view" id="view-historial">
 
   <div class="hist-header">
-    <h2>📋 Historial de Reportes</h2>
-    <p>Reportes guardados en este dispositivo</p>
+    <h2>📋 Historial Central</h2>
+    <p id="histHeaderSub">🔄 Sincronizando con Firebase...</p>
+  </div>
+
+  <!-- Estado de sincronización -->
+  <div id="histSyncBar" style="display:none;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:8px">
+    <span id="histSyncIcon">🔄</span>
+    <span id="histSyncTxt">Conectando a Firebase...</span>
   </div>
 
   <!-- Filtros por recorredor -->
@@ -2160,14 +2166,16 @@ var fbDB  = null;
 
 function initFirebase(){
   try{
-    if(typeof firebase === 'undefined') return;
+    if(typeof firebase === 'undefined'){ actualizarSyncBar('local'); return; }
     if(fbApp){ escucharFirebase(); return; }
     fbApp = firebase.initializeApp(FB_CONFIG);
     fbDB  = firebase.database(fbApp);
-    // Configurar reglas de acceso
     sincronizarAFirebase();
     escucharFirebase();
-  } catch(e){ console.warn('Firebase:', e); }
+  } catch(e){
+    console.warn('Firebase:', e);
+    actualizarSyncBar('local');
+  }
 }
 
 // Guardar reporte en Firebase
@@ -2211,35 +2219,79 @@ function sincronizarAFirebase(){
 }
 
 // Escuchar Firebase → actualizar local en tiempo real
+function actualizarSyncBar(estado){
+  var sub  = document.getElementById('histHeaderSub');
+  var icon = document.getElementById('histSyncIcon');
+  var txt  = document.getElementById('histSyncTxt');
+  var bar  = document.getElementById('histSyncBar');
+  if(estado === 'conectado'){
+    if(sub)  sub.textContent = '🌐 Historial de todos los dispositivos · Firebase';
+    if(icon) icon.textContent = '✅';
+    if(txt)  txt.textContent  = 'Sincronizado con Firebase — datos de todos los dispositivos';
+    if(bar)  bar.style.borderColor = 'rgba(34,197,94,.4)';
+  } else if(estado === 'local'){
+    if(sub)  sub.textContent = '💾 Solo datos locales · Sin conexión a Firebase';
+    if(icon) icon.textContent = '⚠️';
+    if(txt)  txt.textContent  = 'Sin conexión — mostrando reportes de este dispositivo';
+    if(bar)  bar.style.borderColor = 'rgba(245,158,11,.4)';
+  } else {
+    if(sub)  sub.textContent = '🔄 Conectando a Firebase...';
+    if(icon) icon.textContent = '🔄';
+    if(txt)  txt.textContent  = 'Conectando...';
+  }
+}
+
 function escucharFirebase(){
   if(!fbDB) return;
-  // Evitar múltiples listeners
   try{ fbDB.ref('reportes').off('value'); }catch(e){}
+
   fbDB.ref('reportes').orderByChild('fecha').on('value', function(snapshot){
+    actualizarSyncBar('conectado');
     var data = snapshot.val();
-    if(!data) return;
-    var remotos = Object.values(data);
-    var locales  = getHistorial();
-    // Mapa por ID para merge sin duplicados
-    var mapa = {};
-    locales.forEach(function(r){ mapa[r.id] = r; });
-    remotos.forEach(function(r){
-      if(!r || !r.id) return;
-      if(mapa[r.id]){
-        // Actualizar estado si Firebase tiene info más reciente
-        if(r.estado === 'enviado') mapa[r.id].estado = 'enviado';
-        if(r.ultimoIntento) mapa[r.id].ultimoIntento = r.ultimoIntento;
-      } else {
-        // Reporte de otro dispositivo — sin fotos (no se guardan en Firebase)
-        mapa[r.id] = r;
-      }
-    });
-    var merged = Object.values(mapa);
+
+    // Obtener locales (solo de ESTE dispositivo, con fotos)
+    var locales = getHistorial();
+    var localMap = {};
+    locales.forEach(function(r){ localMap[r.id] = r; });
+
+    if(data){
+      var remotos = Object.values(data);
+      remotos.forEach(function(r){
+        if(!r || !r.id) return;
+        if(localMap[r.id]){
+          // Actualizar estado desde Firebase
+          if(r.estado === 'enviado') localMap[r.id].estado = 'enviado';
+          if(r.ultimoIntento) localMap[r.id].ultimoIntento = r.ultimoIntento;
+        } else {
+          // Reporte de OTRO dispositivo — agregar sin fotos
+          localMap[r.id] = {
+            id:            r.id,
+            fecha:         r.fecha,
+            pozo:          r.pozo,
+            recorredor:    r.recorredor,
+            msg:           r.msg,
+            nFotos:        r.nFotos || 0,
+            fotos:         [],  // fotos no se sincronizan (muy pesadas)
+            estado:        r.estado,
+            ultimoIntento: r.ultimoIntento || null,
+            intentos:      r.intentos || 0,
+            otroDisp:      true  // marca que viene de otro dispositivo
+          };
+        }
+      });
+    }
+
+    // Ordenar por fecha descendente
+    var merged = Object.values(localMap);
     merged.sort(function(a,b){ return new Date(b.fecha)-new Date(a.fecha); });
     saveHistorial(merged);
     renderHistorial();
     actualizarBadgeHistorial();
-  }, function(err){ console.warn('Firebase escuchar error:', err); });
+
+  }, function(err){
+    console.warn('Firebase error:', err);
+    actualizarSyncBar('local');
+  });
 }
 
 // Inicializar Firebase cuando cargue la app
@@ -2564,7 +2616,11 @@ function renderHistorial(){
       +estadoHTML
       +'<div class="hist-card-well">C-'+r.pozo+'</div>'
       +'<div class="hist-card-info">'
-      +'<span class="hist-card-rec">'+r.recorredor+'</span>'
+      +'<span class="hist-card-rec">'+r.recorredor
+      +(r.otroDisp
+        ? '<span style="font-size:10px;background:#dbeafe;color:#1d4ed8;border-radius:10px;padding:2px 8px;font-weight:700;margin-left:6px">📱 Otro dispositivo</span>'
+        : '')
+      +'</span>'
       +'<span class="hist-card-date">'+fechaStr+'</span>'
       +'<span style="font-size:10px;color:var(--txt2)">'+ultimo+(r.intentos?' ('+r.intentos+' intento'+(r.intentos>1?'s':'')+')':"")+'</span>'
       +'</div>'
