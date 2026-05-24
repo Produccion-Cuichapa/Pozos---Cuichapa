@@ -2213,7 +2213,7 @@ document.title='C-'+W;
 
 ['Manrique','Cirilo','Juan Carlos'].forEach(function(n){
   var i=getCicloInfo(n);
-  document.getElementById('dot-'+n).className='dot '+(i.trabajando?'dot-green':'dot-yellow');
+  var dotEl=document.getElementById('dot-'+n);if(dotEl)dotEl.className='dot '+(i.trabajando?'dot-green':'dot-yellow');
 });
 
 function toggleMode(){
@@ -2226,7 +2226,7 @@ try{if(localStorage.getItem('cuichapa_mode')==='night'){nightMode=true;document.
 
 function gpsOk(p){
   la=p.coords.latitude;lo=p.coords.longitude;ac=Math.round(p.coords.accuracy);
-  document.getElementById('gpsBar').className='gps-bar ok';
+  var gb=document.getElementById('gpsBar');if(gb)gb.className='gps-bar ok';
   document.getElementById('gpsBar').innerHTML='✅ GPS listo · ±'+ac+' metros';
   document.getElementById('gpsCoords').style.display='block';
   document.getElementById('gpsCoords').textContent='📍 '+la.toFixed(6)+', '+lo.toFixed(6);
@@ -2234,7 +2234,7 @@ function gpsOk(p){
   document.getElementById('mapsLink').href='https://maps.google.com/?q='+la+','+lo;
 }
 function gpsErr(){
-  document.getElementById('gpsBar').className='gps-bar err';
+  var gb2=document.getElementById('gpsBar');if(gb2)gb2.className='gps-bar err';
   document.getElementById('gpsBar').innerHTML='⚠️ Sin GPS — activa ubicación en tu celular';
 }
 navigator.geolocation?navigator.geolocation.getCurrentPosition(gpsOk,gpsErr,{enableHighAccuracy:true,timeout:15000,maximumAge:0}):gpsErr();
@@ -2385,8 +2385,8 @@ function selFlujoTipo(btn, tipo){
   });
   btn.classList.add('active');
   document.getElementById('coFlujoTipo').value = tipo;
-  document.getElementById('cond-estrangulador').className = 'cond' + (tipo==='estrangulador'?' show':'');
-  document.getElementById('cond-franco').className        = 'cond' + (tipo==='franco'?' show':'');
+  var ce=document.getElementById('cond-estrangulador');if(ce)ce.className='cond'+(tipo==='estrangulador'?' show':'');
+  var cf=document.getElementById('cond-franco');if(cf)cf.className='cond'+(tipo==='franco'?' show':'');
 }
 
 // ── Fluye: muestra/oculta Nivel Frac Tank ────────
@@ -2445,8 +2445,8 @@ function selSys(btn,val){
   });
   btn.classList.add('active');
   document.getElementById('coSistema').value = val;
-  document.getElementById('cond-bnfy').className='cond'+(val==='BN'||val==='FY'?' show':'');
-  document.getElementById('cond-bm').className='cond'+(val==='BM'?' show':'');
+  var cbnfy=document.getElementById('cond-bnfy');if(cbnfy)cbnfy.className='cond'+(val==='BN'||val==='FY'?' show':'');
+  var cbm=document.getElementById('cond-bm');if(cbm)cbm.className='cond'+(val==='BM'?' show':'');
   var lbnField=document.getElementById('lbn-field');
   if(lbnField) lbnField.style.visibility=(val==='BN'?'visible':'hidden');
   var bnExtra=document.getElementById('cond-bn-extra');
@@ -2510,7 +2510,7 @@ function guardarVacaciones(){
   // Refresh dots and counter
   ['Manrique','Cirilo','Juan Carlos'].forEach(function(n){
     var i = getCicloInfo(n);
-    document.getElementById('dot-'+n).className = 'dot '+(i.trabajando?'dot-green':'dot-yellow');
+    var dotEl2=document.getElementById('dot-'+n);if(dotEl2)dotEl2.className='dot '+(i.trabajando?'dot-green':'dot-yellow');
   });
   if(REC) mostrarContador(REC);
   showToast('✅ Vacaciones guardadas para '+vacRecSel);
