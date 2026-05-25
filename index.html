@@ -2170,7 +2170,7 @@ body.night .chk-row.on{background:#052e1640}
 <div class="toast" id="toast"></div>
 <div class="send-fixed" id="sendFixed">
   <div class="send-wrap">
-    <button class="send-btn" id="sendBtn" onclick="mostrarConfirmacion()">📤 Enviar reporte a WhatsApp</button>
+    <button class="send-btn" id="sendBtn" onclick="mostrarConfirmacion()" style="opacity:.45;pointer-events:none">📤 Enviar reporte a WhatsApp</button>
   </div>
 </div>
 
@@ -2760,6 +2760,8 @@ function mostrarConfirmacion(){
 
 function enviarTodo(soloPreview){
   if(!REC){alert('Selecciona tu nombre primero');return}
+  // Validar que se haya escogido un pozo
+  if(!W || W==='???'){alert('Selecciona el pozo antes de enviar');return}
   var ci=getCicloInfo(REC);
   if(!ci.trabajando&&!confirm('Estás en día de descanso. ¿Registrar de todas formas?'))return;
 
@@ -2768,12 +2770,18 @@ function enviarTodo(soloPreview){
     var medBls=v('medBarriles'), medCm=v('medCentimetros');
     if(!medBls && !medCm){ alert('Llena al menos Barriles o Centímetros'); return; }
     var hr2=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+    // GPS en tiempo real del recorredor
+    var gpsLinea2 = la
+      ? '📍 Ubicación: '+la.toFixed(6)+', '+lo.toFixed(6)+'\n'
+        +'🗺 maps.google.com/?q='+la+','+lo+'\n'
+      : '';
     var msg2='🌙 *NIVELES DE GUARDIA*\n🛢 Pozo: *C-'+W+'*\n👷 Recorredor: '+REC+'\n📅 '+now()+'\n'
       +'══════════════════\n'
       +(medBls?'🛢 Barriles: '+medBls+'\n':'')
       +(medCm?'📐 Centímetros: '+medCm+'\n':'')
       +'🕐 '+hr2+'\n'
       +(v('medObs')?'📝 '+v('medObs')+'\n':'')
+      +gpsLinea2
       +'_C-'+W+'_';
     var rep2={id:Date.now(),fecha:new Date().toISOString(),pozo:W,recorredor:REC,
       msg:msg2,fotos:[],estado:'pendiente',ultimoIntento:null,intentos:0};
@@ -4886,7 +4894,8 @@ function toggleWellList(){
 }
 
 function setWellFromPicker(num){
-  W=String(parseInt(num));
+  // Keep original value (preserves 106D etc)
+  W = String(num);
   document.getElementById('wellTitle').textContent='C-'+W;
   document.title='C-'+W+' · Cuichapa';
   try{
@@ -4899,6 +4908,9 @@ function setWellFromPicker(num){
     picker.style.transition='opacity .3s';picker.style.opacity='0';
     setTimeout(function(){picker.classList.remove('show');picker.style.opacity='';},300);
   }
+  // Enable send button now that well is selected
+  var sb=document.getElementById('sendBtn');
+  if(sb){ sb.style.opacity='1'; sb.style.pointerEvents='auto'; }
   showToast('✅ Pozo C-'+W+' seleccionado');
 }
 
