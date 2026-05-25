@@ -1378,6 +1378,34 @@ body.night .chk-row.on{background:#052e1640}
   </div>
 </div><!-- /profilePicker -->
 
+<!-- Status bar permisos -->
+<div id="permsStatusBar" style="display:none;margin:8px 0 4px;background:rgba(10,22,40,.85);border-radius:14px;padding:12px 16px;border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(4px)">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <span style="font-size:12px;font-weight:800;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase">Estado de permisos</span>
+    <button onclick="verificarPermisos()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:rgba(255,255,255,.6);font-size:11px;padding:4px 10px;cursor:pointer;font-family:'Inter',sans-serif">↻ Verificar</button>
+  </div>
+  <div style="display:flex;gap:8px">
+    <div style="flex:1;background:rgba(255,255,255,.05);border-radius:10px;padding:10px 8px;text-align:center;border:1px solid rgba(255,255,255,.08)">
+      <div style="font-size:22px" id="psGpsIcon">⏳</div>
+      <div style="font-size:10px;font-weight:800;color:rgba(255,255,255,.5);margin-top:3px;letter-spacing:.5px">UBICACIÓN</div>
+      <div style="font-size:10px;margin-top:2px" id="psGpsTxt" style="color:rgba(255,255,255,.3)">Verificando...</div>
+    </div>
+    <div style="flex:1;background:rgba(255,255,255,.05);border-radius:10px;padding:10px 8px;text-align:center;border:1px solid rgba(255,255,255,.08)">
+      <div style="font-size:22px" id="psNotifIcon">⏳</div>
+      <div style="font-size:10px;font-weight:800;color:rgba(255,255,255,.5);margin-top:3px;letter-spacing:.5px">ALERTAS</div>
+      <div style="font-size:10px;margin-top:2px" id="psNotifTxt">Verificando...</div>
+    </div>
+    <div style="flex:1;background:rgba(255,255,255,.05);border-radius:10px;padding:10px 8px;text-align:center;border:1px solid rgba(255,255,255,.08)">
+      <div style="font-size:22px" id="psGpsValIcon">⏳</div>
+      <div style="font-size:10px;font-weight:800;color:rgba(255,255,255,.5);margin-top:3px;letter-spacing:.5px">GPS ACTIVO</div>
+      <div style="font-size:10px;margin-top:2px" id="psGpsValTxt">Esperando...</div>
+    </div>
+  </div>
+  <button onclick="activarTodo()" id="psActivarBtn" style="width:100%;margin-top:10px;padding:12px;background:#FF7A00;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif;display:none">
+    ⚡ Activar GPS y notificaciones
+  </button>
+</div>
+
 <!-- ══ FORMULARIO (oculto hasta elegir perfil) ══ -->
 <div id="formContent" style="display:none">
 
@@ -2508,6 +2536,121 @@ function mostrarContador(nombre){
     document.getElementById('cnt-bar').style.cssText='width:100%;background:linear-gradient(90deg,#f59e0b,#fcd34d)';
   }
 }
+
+// ── Barra de estado de permisos ──────────────────
+function verificarPermisos(){
+  var bar = document.getElementById('permsStatusBar');
+  if(bar) bar.style.display = 'block';
+
+  // GPS permission
+  var gpsIcon = document.getElementById('psGpsIcon');
+  var gpsTxt  = document.getElementById('psGpsTxt');
+  var gpsValIcon = document.getElementById('psGpsValIcon');
+  var gpsValTxt  = document.getElementById('psGpsValTxt');
+  var notifIcon = document.getElementById('psNotifIcon');
+  var notifTxt  = document.getElementById('psNotifTxt');
+  var btn = document.getElementById('psActivarBtn');
+
+  var needsAction = false;
+
+  // Check GPS
+  if(navigator.permissions){
+    navigator.permissions.query({name:'geolocation'}).then(function(r){
+      if(r.state === 'granted'){
+        if(gpsIcon) gpsIcon.textContent = '✅';
+        if(gpsTxt)  gpsTxt.style.color = '#4ade80';
+        if(gpsTxt)  gpsTxt.textContent = 'Activada';
+        // Check if we have actual coords
+        if(la !== 0 && lo !== 0){
+          if(gpsValIcon) gpsValIcon.textContent = '✅';
+          if(gpsValTxt)  gpsValTxt.style.color = '#4ade80';
+          if(gpsValTxt)  gpsValTxt.textContent = '±'+ac+'m';
+        } else {
+          if(gpsValIcon) gpsValIcon.textContent = '⚠️';
+          if(gpsValTxt)  gpsValTxt.style.color = '#facc15';
+          if(gpsValTxt)  gpsValTxt.textContent = 'Buscando...';
+          navigator.geolocation.getCurrentPosition(
+            function(p){ la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy);
+              if(gpsValIcon) gpsValIcon.textContent='✅';
+              if(gpsValTxt){ gpsValTxt.style.color='#4ade80'; gpsValTxt.textContent='±'+ac+'m'; }
+            },
+            function(){
+              if(gpsValIcon) gpsValIcon.textContent='❌';
+              if(gpsValTxt){ gpsValTxt.style.color='#f87171'; gpsValTxt.textContent='Sin señal'; }
+            },
+            {enableHighAccuracy:true,timeout:8000,maximumAge:0}
+          );
+        }
+      } else {
+        if(gpsIcon) gpsIcon.textContent = '❌';
+        if(gpsTxt){ gpsTxt.style.color='#f87171'; gpsTxt.textContent='Desactivada'; }
+        if(gpsValIcon) gpsValIcon.textContent = '❌';
+        if(gpsValTxt){ gpsValTxt.style.color='#f87171'; gpsValTxt.textContent='Sin permiso'; }
+        needsAction = true;
+        if(btn) btn.style.display='block';
+      }
+    });
+  } else {
+    // Fallback: try to get GPS directly
+    if(la !== 0 && lo !== 0){
+      if(gpsIcon) gpsIcon.textContent='✅';
+      if(gpsTxt){ gpsTxt.style.color='#4ade80'; gpsTxt.textContent='Activa'; }
+    } else {
+      if(gpsIcon) gpsIcon.textContent='⚠️';
+      if(gpsTxt){ gpsTxt.style.color='#facc15'; gpsTxt.textContent='Verificando'; }
+    }
+  }
+
+  // Check Notifications
+  if('Notification' in window){
+    var perm = Notification.permission;
+    if(perm === 'granted'){
+      if(notifIcon) notifIcon.textContent = '✅';
+      if(notifTxt){ notifTxt.style.color='#4ade80'; notifTxt.textContent='Activadas'; }
+    } else if(perm === 'denied'){
+      if(notifIcon) notifIcon.textContent = '❌';
+      if(notifTxt){ notifTxt.style.color='#f87171'; notifTxt.textContent='Bloqueadas'; }
+      needsAction = true;
+      if(btn) btn.style.display='block';
+    } else {
+      if(notifIcon) notifIcon.textContent = '⚠️';
+      if(notifTxt){ notifTxt.style.color='#facc15'; notifTxt.textContent='Sin activar'; }
+      needsAction = true;
+      if(btn) btn.style.display='block';
+    }
+  } else {
+    if(notifIcon) notifIcon.textContent = '❌';
+    if(notifTxt){ notifTxt.style.color='#f87171'; notifTxt.textContent='No soportado'; }
+  }
+
+  if(!needsAction && btn) btn.style.display='none';
+}
+
+function activarTodo(){
+  // Pedir GPS
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      function(p){ la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy); verificarPermisos(); },
+      function(){ verificarPermisos(); },
+      {enableHighAccuracy:true, timeout:10000, maximumAge:0}
+    );
+  }
+  // Pedir notificaciones
+  if('Notification' in window && Notification.permission !== 'granted'){
+    Notification.requestPermission().then(function(p){
+      if(p==='granted' && fbDB) setTimeout(initFCM, 500);
+      verificarPermisos();
+    });
+  }
+}
+
+// Mostrar barra al cargar
+window.addEventListener('load', function(){
+  setTimeout(function(){
+    verificarPermisos();
+    mostrarPermOverlay();
+  }, 800);
+});
 
 // ── Selector de perfil ───────────────────────────
 function selProfile(nombre, theme, tipo){
@@ -4368,45 +4511,6 @@ function confirmarAlarma(){
 function cancelarConfirmAlarma(){
   document.getElementById('alarmConfirmOverlay').classList.remove('open');
   document.getElementById('alarmOverlay').classList.add('open');
-}
-function enviarAlarma(){
-  document.getElementById('alarmConfirmOverlay').classList.remove('open');
-  // Si no tenemos GPS aún, intentar obtenerlo con timeout de 5 segundos
-  if((la === 0 && lo === 0) && navigator.geolocation){
-    showToast('📍 Obteniendo ubicación...');
-    var gpsTimeout = setTimeout(function(){ _doEnviarAlarma(); }, 5000);
-    navigator.geolocation.getCurrentPosition(
-      function(p){
-        clearTimeout(gpsTimeout);
-        la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy);
-        _doEnviarAlarma();
-      },
-      function(){ clearTimeout(gpsTimeout); _doEnviarAlarma(); },
-      {enableHighAccuracy:true, timeout:5000, maximumAge:0}
-    );
-  } else {
-    _doEnviarAlarma();
-  }
-}
-
-function _doEnviarAlarma(){
-  var ahora = new Date();
-  var horaStr = ahora.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
-  var fechaStr = ahora.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'});
-  var quien = REC || loggedUser || 'Campo';
-  var lugarInput = document.getElementById('alarmLocInput').value.trim();
-  var pozo = lugarInput || ((W && W!=='???') ? 'C-'+W : 'Campo Cuichapa');
-  var alarmaData = { id:ahora.getTime(), tipo:alarmTipoSeleccionado, quien:quien, pozo:pozo, fecha:ahora.toISOString(), hora:horaStr };
-  // Firebase → todos los dispositivos abiertos
-  if(fbDB) fbDB.ref('alarmas/'+alarmaData.id).set(alarmaData).catch(function(){});
-  // FCM Push → todos los dispositivos aunque estén cerrados
-  enviarPushATodos(alarmaData);
-  // WhatsApp supervisor
-  var msg='🚨 *ALERTA DE EMERGENCIA*\n━━━━━━━━━━━━━━━━━━\n⚠️ Tipo: *'+alarmTipoSeleccionado+'*\n👷 Por: '+quien+'\n📍 '+pozo+'\n📅 '+fechaStr+' · 🕐 '+horaStr+'\n━━━━━━━━━━━━━━━━━━\n_Campo Cuichapa · Lifting de Mexico_';
-  fetch(UM_BASE+'/messages/chat',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body:'token='+encodeURIComponent(UM_TOKEN)+'&to='+encodeURIComponent(UM_TO)+'&body='+encodeURIComponent(msg)}).catch(function(){});
-  showToast('🚨 Alerta enviada: '+alarmTipoSeleccionado);
-  alarmTipoSeleccionado='';
 }
 function escucharAlarmas(){
   if(!fbDB) return;
