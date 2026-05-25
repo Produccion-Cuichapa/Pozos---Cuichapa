@@ -52,7 +52,10 @@ body.jc-active{
 
 body{
   font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);
-  min-height:100vh;padding:14px 14px 96px 70px;transition:background .5s,color .5s;
+  min-height:100vh;padding:14px 14px 96px 14px;transition:background .5s,color .5s,padding .35s;
+}
+body.sidebar-visible{
+  padding-left:70px;
 }
 
 /* ══ SIDEBAR ══ */
@@ -63,6 +66,11 @@ body{
   padding:16px 0;gap:6px;z-index:400;
   border-right:1px solid #1a2a42;
   box-shadow:2px 0 16px rgba(0,0,0,.4);
+  transform:translateX(-100%);
+  transition:transform .35s cubic-bezier(.34,1.2,.64,1);
+}
+.sidebar.sidebar-unlocked{
+  transform:translateX(0);
 }
 body.night .sidebar{background:#050810;border-right-color:#0f1a28}
 
@@ -549,6 +557,24 @@ body.jc-active .header::after{content:'';position:absolute;bottom:0;right:0;widt
 body.m-active .banner-m{display:block;background:linear-gradient(135deg,#0e2a5a,#1a3d7a);border:1px solid #2a4d8a}
 body.c-active .banner-c{display:block;background:linear-gradient(135deg,#1e1e24,#2e2e38);border:1px solid #404050}
 body.jc-active .banner-jc{display:block;background:linear-gradient(135deg,#3a1a00,#582800);border:1px solid #7a3a00}
+
+/* ══ PERMISSION OVERLAY ══ */
+.perm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:800;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);padding:20px}
+.perm-overlay.show{display:flex}
+.perm-sheet{background:#0f1e32;border-radius:20px;padding:28px 24px;max-width:340px;width:100%;border:1.5px solid rgba(255,122,0,.3);box-shadow:0 0 40px rgba(255,122,0,.15);animation:popIn .4s cubic-bezier(.34,1.4,.64,1)}
+.perm-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:#FF7A00;text-align:center;margin-bottom:4px}
+.perm-sub{font-size:12px;color:rgba(255,255,255,.4);text-align:center;margin-bottom:18px}
+.perm-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(255,255,255,.05);border-radius:12px;margin-bottom:8px;border:1px solid rgba(255,255,255,.08)}
+.perm-icon{font-size:26px;flex-shrink:0}
+.perm-info strong{display:block;font-size:13px;color:#fff;font-weight:800}
+.perm-info span{font-size:11px;color:rgba(255,255,255,.4)}
+.perm-status{font-size:16px;margin-left:auto;flex-shrink:0}
+.perm-btn{width:100%;padding:15px;background:#FF7A00;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:900;cursor:pointer;font-family:'Inter',sans-serif;margin-top:10px;box-shadow:0 4px 20px rgba(255,122,0,.3)}
+.perm-skip{width:100%;padding:10px;background:transparent;color:rgba(255,255,255,.3);border:none;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;margin-top:4px}
+.ios-banner{display:none;background:#0f3460;border-radius:14px;padding:14px 16px;margin-bottom:14px;border:1.5px solid rgba(255,122,0,.3)}
+.ios-banner.show{display:block}
+.ios-banner p{font-size:12px;color:rgba(255,255,255,.8);line-height:1.6;margin:0}
+.ios-banner strong{color:#FF7A00}
 
 /* ══ GPS ══ */
 .gps-bar{
@@ -2091,6 +2117,37 @@ body.night .chk-row.on{background:#052e1640}
 </div><!-- /wrap -->
 
 <!-- ══ LOGIN MODAL ══ -->
+<!-- ══ PERMISSION OVERLAY ══ -->
+<div class="perm-overlay" id="permOverlay">
+  <div class="perm-sheet">
+    <div class="perm-title">📱 Permisos necesarios</div>
+    <div class="perm-sub">Para funcionar correctamente, la app necesita:</div>
+    <div class="perm-item">
+      <div class="perm-icon">📍</div>
+      <div class="perm-info">
+        <strong>Ubicación GPS</strong>
+        <span>Para registrar dónde estás al reportar</span>
+      </div>
+      <div class="perm-status" id="permGpsStatus">⏳</div>
+    </div>
+    <div class="perm-item">
+      <div class="perm-icon">🔔</div>
+      <div class="perm-info">
+        <strong>Notificaciones</strong>
+        <span>Para recibir alertas de emergencia</span>
+      </div>
+      <div class="perm-status" id="permNotifStatus">⏳</div>
+    </div>
+    <button class="perm-btn" id="permBtn" onclick="solicitarPermisos()">Activar permisos</button>
+    <button class="perm-skip" onclick="cerrarPermOverlay()">Omitir por ahora</button>
+  </div>
+</div>
+
+<!-- ══ IOS INSTALL BANNER ══ -->
+<div class="ios-banner" id="iosBanner">
+  <p>📲 <strong>Instalar en iPhone:</strong> Toca <strong>Compartir ↑</strong> en Safari → <strong>"Agregar a pantalla de inicio"</strong> → Agregar</p>
+</div>
+
 <div class="login-overlay" id="loginOverlay">
   <div class="login-box">
     <div class="login-icon">🔒</div>
@@ -2329,7 +2386,7 @@ function selProfile(nombre, theme, tipo){
         }
       }
       // Desbloquear sidebar
-      document.querySelector('.sidebar').classList.add('sidebar-unlocked');
+      var sb=document.querySelector('.sidebar');if(sb){sb.classList.add('sidebar-unlocked');document.body.classList.add('sidebar-visible');}
       // Pre-seleccionar el recorredor automáticamente
       selRec(null, nombre, theme);
     }, 280);
@@ -2353,7 +2410,7 @@ function volverAlPicker(){
   // Reset recorredor y bloquear sidebar
   REC = '';
   document.body.className = document.body.className.replace(/\b[mcj]+-active\b/g,'').trim();
-  var sb=document.querySelector('.sidebar');if(sb)sb.classList.remove('sidebar-unlocked');
+  var sb=document.querySelector('.sidebar');if(sb){sb.classList.remove('sidebar-unlocked');document.body.classList.remove('sidebar-visible');}
 }
 
 // ── Botones de estado grandes ─────────────────────
@@ -4024,6 +4081,114 @@ function cerrarAlarmaEntrante(){
   el.classList.remove('show'); el.style.display='none';
 }
 
+// ══ PERMISOS + INSTALACION ══════════════════════
+
+// Detectar iOS
+var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+var isAndroid = /android/i.test(navigator.userAgent);
+var isMobile = isIOS || isAndroid;
+var isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                || window.navigator.standalone === true;
+
+// Al entrar por primera vez mostrar overlay de permisos
+function mostrarPermOverlay(){
+  if(localStorage.getItem('perms_shown')) return; // ya lo vio
+  document.getElementById('permOverlay').classList.add('show');
+}
+
+function cerrarPermOverlay(){
+  document.getElementById('permOverlay').classList.remove('show');
+  localStorage.setItem('perms_shown','1');
+  // Si es iOS y no está instalada, mostrar banner de instalación
+  if(isIOS && !isStandalone){
+    setTimeout(function(){
+      document.getElementById('iosBanner').classList.add('show');
+    }, 500);
+  }
+}
+
+function solicitarPermisos(){
+  var gpsStatus = document.getElementById('permGpsStatus');
+  var notifStatus = document.getElementById('permNotifStatus');
+  var btn = document.getElementById('permBtn');
+  btn.textContent = 'Activando...';
+  btn.disabled = true;
+
+  // 1. GPS
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      function(p){
+        la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy);
+        if(gpsStatus) gpsStatus.textContent = '✅';
+        activarGPSContinuo();
+      },
+      function(){
+        if(gpsStatus) gpsStatus.textContent = '❌';
+      },
+      {enableHighAccuracy:true, timeout:10000, maximumAge:0}
+    );
+  } else {
+    if(gpsStatus) gpsStatus.textContent = '❌';
+  }
+
+  // 2. Notificaciones
+  if('Notification' in window){
+    Notification.requestPermission().then(function(perm){
+      if(notifStatus) notifStatus.textContent = perm === 'granted' ? '✅' : '❌';
+    });
+  } else {
+    if(notifStatus) notifStatus.textContent = '❌';
+  }
+
+  // Cerrar después de 3s
+  setTimeout(function(){
+    cerrarPermOverlay();
+  }, 3000);
+}
+
+// GPS continuo (watchPosition para mantenerlo actualizado)
+function activarGPSContinuo(){
+  if(navigator.geolocation){
+    navigator.geolocation.watchPosition(
+      function(p){ la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy); actualizarGPSbar(); },
+      function(){},
+      {enableHighAccuracy:true, maximumAge:30000, timeout:15000}
+    );
+  }
+}
+
+function actualizarGPSbar(){
+  var gb = document.getElementById('gpsBar');
+  var gc = document.getElementById('gpsCoords');
+  if(gb){ gb.className='gps-bar ok'; gb.textContent='📍 GPS activo · ±'+ac+'m'; }
+  if(gc) gc.textContent = la.toFixed(6)+', '+lo.toFixed(6);
+  var ml = document.getElementById('mapsLink');
+  if(ml){ ml.style.display='block'; ml.href='https://maps.google.com/?q='+la+','+lo; }
+}
+
+// Android PWA install prompt
+var deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', function(e){
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // Mostrar botón de instalar en Android si no está instalada
+  if(!isStandalone){
+    var banner = document.getElementById('installBanner');
+    if(banner) banner.classList.add('show');
+  }
+});
+
+window.addEventListener('appinstalled', function(){
+  deferredInstallPrompt = null;
+  var banner = document.getElementById('installBanner');
+  if(banner) banner.classList.remove('show');
+});
+
+// Mostrar permisos al cargar (después de un pequeño delay)
+window.addEventListener('load', function(){
+  setTimeout(mostrarPermOverlay, 1200);
+});
+
 function initFirebase(){
   try{
     if(typeof firebase === 'undefined'){ actualizarSyncBar('local'); return; }
@@ -4279,7 +4444,7 @@ function getPendientes(){
 // ── Configuración Ultramsg ────────────────────────
 var UM_INSTANCE  = 'instance176718';
 var UM_TOKEN     = 'qgzhdd47v5b7xv4e';
-var UM_TO        = '+522293735876';
+var UM_TO        = '522293735876';
 var UM_BASE      = 'https://api.ultramsg.com/' + UM_INSTANCE;
 var UM_URL       = UM_BASE + '/messages/chat';
 var UM_URL_IMG   = UM_BASE + '/messages/image';
@@ -4295,8 +4460,12 @@ function umSendText(texto, callback){
     body: body
   })
   .then(function(r){ return r.json(); })
-  .then(function(d){ if(callback) callback(!!(d && (d.sent==='true'||d.sent===true))); })
-  .catch(function(){ if(callback) callback(false); });
+  .then(function(d){
+    console.log('Ultramsg respuesta:', JSON.stringify(d));
+    var ok = !!(d && (d.sent==='true'||d.sent===true||d.id));
+    if(callback) callback(ok);
+  })
+  .catch(function(err){ console.error('Ultramsg error:', err); if(callback) callback(false); });
 }
 
 // ── Enviar imagen por Ultramsg (base64) ───────────
