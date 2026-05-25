@@ -4621,26 +4621,36 @@ function umSendText(texto, callback){
 
 // ── Enviar imagen por Ultramsg (base64) ───────────
 function umSendImage(base64, caption, callback){
-  // Ultramsg requiere form-urlencoded para imágenes
-  // El base64 debe ir sin el prefijo data:image/...
-  var imgData = base64.replace(/^data:image\/[a-z]+;base64,/, '');
-  var params = new URLSearchParams();
-  params.append('token',   UM_TOKEN);
-  params.append('to',      UM_TO);
-  params.append('image',   'data:image/jpeg;base64,' + imgData);
-  params.append('caption', caption || '');
-  fetch(UM_URL_IMG, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body: params.toString()
-  })
-  .then(function(r){ return r.json(); })
-  .then(function(d){
-    console.log('IMG respuesta:', JSON.stringify(d));
-    var ok = !!(d && (d.sent==='true'||d.sent===true||d.id));
-    if(callback) callback(ok);
-  })
-  .catch(function(err){ console.error('IMG error:', err); if(callback) callback(false); });
+  // Convertir base64 a Blob y enviar como multipart/form-data
+  // Esto evita que el base64 se corrompa con encodeURIComponent
+  try{
+    var imgData = base64.startsWith('data:') ? base64 : 'data:image/jpeg;base64,'+base64;
+    // Convertir data URI a Blob
+    var parts = imgData.split(',');
+    var mime  = parts[0].match(/:(.*?);/)[1];
+    var bin   = atob(parts[1]);
+    var arr   = new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+    var blob  = new Blob([arr], {type: mime});
+
+    var fd = new FormData();
+    fd.append('token',   UM_TOKEN);
+    fd.append('to',      UM_TO);
+    fd.append('image',   blob, 'foto.jpg');
+    fd.append('caption', caption || '');
+
+    fetch(UM_URL_IMG, { method:'POST', body: fd })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        console.log('IMG resp:', JSON.stringify(d));
+        var ok = !!(d && (d.sent==='true'||d.sent===true||d.id));
+        if(callback) callback(ok);
+      })
+      .catch(function(err){ console.error('IMG err:',err); if(callback) callback(false); });
+  } catch(e){
+    console.error('umSendImage error:', e);
+    if(callback) callback(false);
+  }
 }
 
 // ── Envío completo: texto + fotos ────────────────
