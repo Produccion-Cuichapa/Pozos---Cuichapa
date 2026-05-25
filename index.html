@@ -2921,6 +2921,53 @@ function mostrarResultado(exito, n, enviado){
 function cerrarResultado(){
   document.getElementById('resultView').classList.remove('open');
   msgPendiente = '';
+  resetFormulario();
+}
+
+function resetFormulario(){
+  // Limpiar pozo
+  W = '???';
+  document.getElementById('wellTitle').textContent = 'C-???';
+  document.title = 'Campo Cuichapa';
+  // Abrir selector de pozo de nuevo
+  var wp = document.getElementById('wellPicker');
+  if(wp){ wp.classList.add('show'); }
+  // Limpiar campos C.O.
+  var inputs = ['coEstatus','coFlujo','coFlujoTipo','coSistema',
+    'coTP','coLDD','coTR','coLBN','coKimray','coConico','coStarpack','coTrVuelta',
+    'coPTR_bm','coPresion','coEmb','coCarrera','coObs',
+    'medBarriles','medCentimetros','medObs',
+    'regTrabajo','regDrenar','regAforo','regIntermitente','regObs'];
+  inputs.forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  // Limpiar botones de estado seleccionados
+  document.querySelectorAll('.big-status-btn.active, .big-status-btn.sel-a, .big-status-btn.sel-b, .big-status-btn.sel-c, .alarm-opt.selected').forEach(function(b){
+    b.classList.remove('active','sel-a','sel-b','sel-c','selected');
+  });
+  // Ocultar secciones condicionales
+  ['cond-estrangulador','cond-franco','cond-bnfy','cond-bm','cond-bn-extra'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.className = 'cond';
+  });
+  // Limpiar fotos
+  fotos = [];
+  try{ localStorage.removeItem(FOTOS_KEY); }catch(e){}
+  renderFotos();
+  // Limpiar condición de pera
+  peraState = {areaPozo:'', contrapeso:'', cerco:'', bayoneta:''};
+  ['areaPozo','contrapeso','cerco','bayoneta'].forEach(function(k){
+    var ok = document.getElementById('pera-'+k+'-ok');
+    var bad = document.getElementById('pera-'+k+'-bad');
+    if(ok) ok.classList.remove('sel');
+    if(bad) bad.classList.remove('sel');
+  });
+  // Bloquear botón enviar de nuevo
+  var sb = document.getElementById('sendBtn');
+  if(sb){ sb.style.opacity = '.45'; sb.style.pointerEvents = 'none'; }
+  // Scroll arriba
+  window.scrollTo({top:0, behavior:'smooth'});
 }
 
 
@@ -4100,58 +4147,93 @@ var isStandalone = window.matchMedia('(display-mode: standalone)').matches
 
 // Al entrar por primera vez mostrar overlay de permisos
 function mostrarPermOverlay(){
-  if(localStorage.getItem('perms_shown')) return; // ya lo vio
-  document.getElementById('permOverlay').classList.add('show');
+  // Mostrar siempre que no tenga ambos permisos ya concedidos
+  var needsGPS = !navigator.geolocation ||
+    (navigator.permissions && navigator.permissions.query);
+  var needsNotif = 'Notification' in window && Notification.permission !== 'granted';
+  var needsGPSperm = true;
+
+  // Revisar si ya tenemos GPS
+  if(navigator.permissions){
+    navigator.permissions.query({name:'geolocation'}).then(function(r){
+      needsGPSperm = r.state !== 'granted';
+      // Si ya tenemos todo, no mostrar
+      if(!needsGPSperm && !needsNotif){
+        // Activar GPS silencioso en background
+        activarGPSContinuo();
+        return;
+      }
+      // Actualizar íconos según estado actual
+      var gps = document.getElementById('permGpsStatus');
+      var notif = document.getElementById('permNotifStatus');
+      if(gps) gps.textContent = r.state==='granted' ? '✅' : '⏳';
+      if(notif) notif.textContent = Notification.permission==='granted' ? '✅' : '⏳';
+      document.getElementById('permOverlay').classList.add('show');
+    }).catch(function(){
+      document.getElementById('permOverlay').classList.add('show');
+    });
+  } else {
+    // Sin Permissions API — mostrar siempre
+    document.getElementById('permOverlay').classList.add('show');
+  }
 }
 
 function cerrarPermOverlay(){
   document.getElementById('permOverlay').classList.remove('show');
-  localStorage.setItem('perms_shown','1');
-  // Si es iOS y no está instalada, mostrar banner de instalación
+  // Si es iOS y no está instalada, mostrar banner
   if(isIOS && !isStandalone){
     setTimeout(function(){
-      document.getElementById('iosBanner').classList.add('show');
+      var ib = document.getElementById('iosBanner');
+      if(ib) ib.classList.add('show');
     }, 500);
   }
 }
 
 function solicitarPermisos(){
-  var gpsStatus = document.getElementById('permGpsStatus');
+  var gpsStatus   = document.getElementById('permGpsStatus');
   var notifStatus = document.getElementById('permNotifStatus');
   var btn = document.getElementById('permBtn');
   btn.textContent = 'Activando...';
   btn.disabled = true;
 
-  // 1. GPS
+  var gpsDone = false, notifDone = false;
+
+  function checkDone(){
+    if(!gpsDone || !notifDone) return;
+    btn.textContent = '✓ Listo';
+    setTimeout(cerrarPermOverlay, 1000);
+  }
+
+  // GPS
   if(navigator.geolocation){
     navigator.geolocation.getCurrentPosition(
       function(p){
         la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy);
         if(gpsStatus) gpsStatus.textContent = '✅';
         activarGPSContinuo();
+        gpsDone = true; checkDone();
       },
       function(){
         if(gpsStatus) gpsStatus.textContent = '❌';
+        gpsDone = true; checkDone();
       },
       {enableHighAccuracy:true, timeout:10000, maximumAge:0}
     );
   } else {
     if(gpsStatus) gpsStatus.textContent = '❌';
+    gpsDone = true; checkDone();
   }
 
-  // 2. Notificaciones
+  // Notificaciones
   if('Notification' in window){
     Notification.requestPermission().then(function(perm){
-      if(notifStatus) notifStatus.textContent = perm === 'granted' ? '✅' : '❌';
+      if(notifStatus) notifStatus.textContent = perm==='granted' ? '✅' : '❌';
+      notifDone = true; checkDone();
     });
   } else {
     if(notifStatus) notifStatus.textContent = '❌';
+    notifDone = true; checkDone();
   }
-
-  // Cerrar después de 3s
-  setTimeout(function(){
-    cerrarPermOverlay();
-  }, 3000);
 }
 
 // GPS continuo (watchPosition para mantenerlo actualizado)
@@ -4192,9 +4274,9 @@ window.addEventListener('appinstalled', function(){
   if(banner) banner.classList.remove('show');
 });
 
-// Mostrar permisos al cargar (después de un pequeño delay)
+// Mostrar permisos al entrar a la app
 window.addEventListener('load', function(){
-  setTimeout(mostrarPermOverlay, 1200);
+  setTimeout(mostrarPermOverlay, 600);
 });
 
 function initFirebase(){
@@ -4452,7 +4534,7 @@ function getPendientes(){
 // ── Configuración Ultramsg ────────────────────────
 var UM_INSTANCE  = 'instance176718';
 var UM_TOKEN     = 'qgzhdd47v5b7xv4e';
-var UM_TO        = '522293735876';
+var UM_TO        = '120363427639300014@g.us'; // Grupo Pozos
 var UM_BASE      = 'https://api.ultramsg.com/' + UM_INSTANCE;
 var UM_URL       = UM_BASE + '/messages/chat';
 var UM_URL_IMG   = UM_BASE + '/messages/image';
