@@ -700,6 +700,15 @@ body.night .chk-row.on{background:#052e1640}
 /* ══ FOTO EVIDENCIA ══ */
 .foto-card{background:var(--surface);border-radius:16px;padding:16px;margin-bottom:14px;border:1.5px solid var(--border);box-shadow:var(--shadow)}
 .foto-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1.5px;color:var(--accent);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--border)}
+.foto-btn-cam,.foto-btn-gal{
+  flex:1;padding:14px 8px;border-radius:12px;border:none;
+  font-size:15px;font-weight:800;cursor:pointer;
+  font-family:'Inter',sans-serif;transition:all .2s;
+}
+.foto-btn-cam{background:linear-gradient(135deg,#0f3460,#1e5caa);color:#fff}
+.foto-btn-gal{background:var(--surface2);color:var(--txt);border:1.5px solid var(--border)}
+.foto-btn-cam:active,.foto-btn-gal:active{transform:scale(.95)}
+
 .foto-upload-area{
   border:2px dashed var(--border);border-radius:12px;
   padding:20px;text-align:center;cursor:pointer;
@@ -1671,11 +1680,11 @@ body.night .chk-row.on{background:#052e1640}
 <!-- FOTO -->
 <div class="foto-card">
   <div class="foto-title">📸 Evidencia Fotográfica</div>
-  <div class="foto-upload-area" onclick="document.getElementById('fotoInput').click()">
-    <input type="file" id="fotoInput" accept="image/*" capture="environment" onchange="agregarFotos(event)">
-    <span class="foto-icon">📷</span>
-    <div class="foto-label">Toca para tomar foto o seleccionar</div>
-    <div class="foto-sub">Puedes agregar varias fotos como evidencia</div>
+  <input type="file" id="fotoInputCam" accept="image/*" capture="environment" onchange="agregarFotos(event)" style="display:none">
+  <input type="file" id="fotoInputGal" accept="image/*" multiple onchange="agregarFotos(event)" style="display:none">
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <button class="foto-btn-cam" onclick="document.getElementById('fotoInputCam').click()">📷 Cámara</button>
+    <button class="foto-btn-gal" onclick="document.getElementById('fotoInputGal').click()">🖼 Galería</button>
   </div>
   <div class="foto-previews" id="fotoPreviews"></div>
   <div class="foto-count" id="fotoCount"></div>
@@ -2148,6 +2157,23 @@ body.night .chk-row.on{background:#052e1640}
   <p>📲 <strong>Instalar en iPhone:</strong> Toca <strong>Compartir ↑</strong> en Safari → <strong>"Agregar a pantalla de inicio"</strong> → Agregar</p>
 </div>
 
+<!-- ══ LOGIN RECORREDORES ══ -->
+<div class="login-overlay" id="recLoginOverlay">
+  <div class="login-box">
+    <div class="login-title" id="recLoginHint">👷 Recorredor</div>
+    <p style="font-size:12px;color:rgba(255,255,255,.45);text-align:center;margin-bottom:16px">Ingresa tu contraseña para continuar</p>
+    <input type="hidden" id="recLoginUser">
+    <div class="login-field">
+      <label class="login-label">Contraseña</label>
+      <input class="login-input" type="password" id="recLoginPass" placeholder="••••••••"
+        onkeydown="if(event.key==='Enter')doRecLogin()">
+    </div>
+    <div class="login-err" id="recLoginErr" style="display:none"></div>
+    <button class="login-btn" onclick="doRecLogin()">Entrar</button>
+    <button class="login-cancel" onclick="cerrarRecLogin()">Cancelar</button>
+  </div>
+</div>
+
 <div class="login-overlay" id="loginOverlay">
   <div class="login-box">
     <div class="login-icon">🔒</div>
@@ -2352,45 +2378,43 @@ function mostrarContador(nombre){
 // ── Selector de perfil ───────────────────────────
 function selProfile(nombre, theme, tipo){
   if(tipo === 'auth'){
-    // Superintendente o Jefe → login
     var target = (nombre === 'Superintendente') ? 'super' : 'jefe';
     requireLogin(target);
     return;
   }
-  // Recorredor → ocultar picker, pre-seleccionar y mostrar form
+  // Recorredor → pedir contraseña
+  var key = nombre.replace(' ','');
+  abrirRecLogin(key, theme);
+}
+
+function mostrarFormRecorredor(nombre, theme){
   var picker = document.getElementById('profilePicker');
   if(picker){
-    picker.style.transition = 'opacity .3s,transform .3s';
-    picker.style.opacity = '0';
-    picker.style.transform = 'translateY(-10px)';
-    setTimeout(function(){
-      picker.style.display = 'none';
-      // Mostrar el contenido del formulario
-      var formContent = document.getElementById('formContent');
-      if(formContent){
-        formContent.style.display = 'block';
-        formContent.style.animation = 'fadeUp .4s ease both';
-        // Mostrar botón de enviar
-        var sf = document.getElementById('sendFixed');
-        if(sf) sf.style.display = 'block';
-        // Re-trigger well picker (was hidden inside display:none)
-        var wp = document.getElementById('wellPicker');
-        if(wp && W==='???') wp.classList.add('show');
-        // Re-populate well list if empty
-        var sugg = document.getElementById('wpSuggestions');
-        if(sugg && !sugg.children.length){
-          var TODOS=['19','106D','119','128','139','167','172','179','187','191','197','201','213','224','324','326','327','342','346','350','352','356','359','363','364','367','373','376','385','500','502','504','505','601','602','603'];
-          sugg.innerHTML=TODOS.map(function(w){
-            return '<div class="wp-item" onclick="setWellFromPicker(\'' + w + '\')"><span class="wp-item-icon">🛢</span><span class="wp-item-num">C-' + w + '</span></div>';
-          }).join('');
-        }
-      }
-      // Desbloquear sidebar
-      var sb=document.querySelector('.sidebar');if(sb){sb.classList.add('sidebar-unlocked');document.body.classList.add('sidebar-visible');}
-      // Pre-seleccionar el recorredor automáticamente
-      selRec(null, nombre, theme);
-    }, 280);
+    picker.style.transition='opacity .3s,transform .3s';
+    picker.style.opacity='0'; picker.style.transform='translateY(-10px)';
+    setTimeout(function(){ picker.style.display='none'; }, 280);
   }
+  var formContent = document.getElementById('formContent');
+  if(formContent){
+    formContent.style.display='block';
+    formContent.style.animation='fadeUp .4s ease both';
+    var sf=document.getElementById('sendFixed'); if(sf) sf.style.display='block';
+    var wp=document.getElementById('wellPicker'); if(wp) wp.classList.add('show');
+    var sugg=document.getElementById('wpSuggestions');
+    if(sugg && !sugg.children.length){
+      ['19','106D','119','128','139','167','172','179','187','191','197','201','213','224',
+       '324','326','327','342','346','350','352','356','359','363','364','367','373','376',
+       '385','500','502','504','505','601','602','603'].forEach(function(w){
+        var d=document.createElement('div'); d.className='wp-item';
+        d.innerHTML='<span class="wp-item-icon">🛢</span><span class="wp-item-num">C-'+w+'</span>';
+        d.onclick=function(){ setWellFromPicker(w); };
+        sugg.appendChild(d);
+      });
+    }
+  }
+  var sb=document.querySelector('.sidebar');
+  if(sb){ sb.classList.add('sidebar-unlocked'); document.body.classList.add('sidebar-visible'); }
+  selRec(null, nombre, theme);
 }
 
 function volverAlPicker(){
@@ -2681,7 +2705,7 @@ function comprimirImagen(file, callback){
 
 function agregarFotos(e){
   var files = Array.from(e.target.files);
-  e.target.value = ''; // reset inmediato para poder tomar otra foto
+  setTimeout(function(){ e.target.value=''; }, 100); // reset con delay para iOS
   if(!files.length) return;
 
   var count = document.getElementById('fotoCount');
@@ -3244,7 +3268,7 @@ function doLogin(){
 
   // AntonioS — accede a TODO incluyendo Superintendente
   if(u==='AntonioS'&&p==='Mexico'){
-    loggedIn=true; loggedUser='AntonioS'; var sb=document.querySelector('.sidebar');if(sb)sb.classList.add('sidebar-unlocked');
+    loggedIn=true; loggedUser='AntonioS'; var sb=document.querySelector('.sidebar');if(sb){sb.classList.add('sidebar-unlocked');document.body.classList.add('sidebar-visible');}
     document.getElementById('loginOverlay').classList.remove('open');
     switchView(loginTarget);
 
@@ -3256,7 +3280,7 @@ function doLogin(){
       document.getElementById('loginPass').value='';
       document.getElementById('loginPass').focus();
     } else {
-      loggedIn=true; loggedUser='JaimeG'; var sb=document.querySelector('.sidebar');if(sb)sb.classList.add('sidebar-unlocked');
+      loggedIn=true; loggedUser='JaimeG'; var sb=document.querySelector('.sidebar');if(sb){sb.classList.add('sidebar-unlocked');document.body.classList.add('sidebar-visible');}
       document.getElementById('loginOverlay').classList.remove('open');
       switchView(loginTarget);
     }
@@ -3267,6 +3291,43 @@ function doLogin(){
     document.getElementById('loginErr').style.display='block';
     document.getElementById('loginPass').value='';
     document.getElementById('loginPass').focus();
+  }
+}
+
+// ══ LOGIN RECORREDORES ══════════════════════════
+var REC_MAP = {
+  'Manrique':   { nombre:'Manrique',   pass:'Canada',    theme:'m'  },
+  'Cirilo':     { nombre:'Cirilo',      pass:'Brasil',    theme:'c'  },
+  'JuanCarlos': { nombre:'Juan Carlos', pass:'Australia', theme:'jc' }
+};
+
+function abrirRecLogin(nombre, theme){
+  var ov = document.getElementById('recLoginOverlay');
+  document.getElementById('recLoginUser').value = nombre;
+  document.getElementById('recLoginPass').value = '';
+  document.getElementById('recLoginErr').style.display = 'none';
+  document.getElementById('recLoginHint').textContent = '👷 ' + nombre;
+  ov.classList.add('open');
+  setTimeout(function(){ document.getElementById('recLoginPass').focus(); }, 200);
+}
+
+function cerrarRecLogin(){
+  document.getElementById('recLoginOverlay').classList.remove('open');
+}
+
+function doRecLogin(){
+  var u   = document.getElementById('recLoginUser').value.trim();
+  var p   = document.getElementById('recLoginPass').value;
+  var err = document.getElementById('recLoginErr');
+  var found = REC_MAP[u];
+  if(found && p === found.pass){
+    cerrarRecLogin();
+    mostrarFormRecorredor(found.nombre, found.theme);
+  } else {
+    err.textContent = 'Contraseña incorrecta';
+    err.style.display = 'block';
+    document.getElementById('recLoginPass').value = '';
+    document.getElementById('recLoginPass').focus();
   }
 }
 
@@ -4560,22 +4621,26 @@ function umSendText(texto, callback){
 
 // ── Enviar imagen por Ultramsg (base64) ───────────
 function umSendImage(base64, caption, callback){
-  // Asegurar que tenga prefijo data:image
-  var imgData = base64.startsWith('data:') ? base64 : 'data:image/jpeg;base64,' + base64;
-  // Usar JSON para evitar que encodeURIComponent corte el base64
+  // Ultramsg requiere form-urlencoded para imágenes
+  // El base64 debe ir sin el prefijo data:image/...
+  var imgData = base64.replace(/^data:image\/[a-z]+;base64,/, '');
+  var params = new URLSearchParams();
+  params.append('token',   UM_TOKEN);
+  params.append('to',      UM_TO);
+  params.append('image',   'data:image/jpeg;base64,' + imgData);
+  params.append('caption', caption || '');
   fetch(UM_URL_IMG, {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      token:   UM_TOKEN,
-      to:      UM_TO,
-      image:   imgData,
-      caption: caption || ''
-    })
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: params.toString()
   })
   .then(function(r){ return r.json(); })
-  .then(function(d){ if(callback) callback(!!(d && (d.sent==='true'||d.sent===true))); })
-  .catch(function(){ if(callback) callback(false); });
+  .then(function(d){
+    console.log('IMG respuesta:', JSON.stringify(d));
+    var ok = !!(d && (d.sent==='true'||d.sent===true||d.id));
+    if(callback) callback(ok);
+  })
+  .catch(function(err){ console.error('IMG error:', err); if(callback) callback(false); });
 }
 
 // ── Envío completo: texto + fotos ────────────────
