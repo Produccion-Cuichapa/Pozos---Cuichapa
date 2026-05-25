@@ -4175,6 +4175,25 @@ function cancelarConfirmAlarma(){
 
 function enviarAlarma(){
   document.getElementById('alarmConfirmOverlay').classList.remove('open');
+  // Si no tenemos GPS aún, intentar obtenerlo con timeout de 5 segundos
+  if((la === 0 && lo === 0) && navigator.geolocation){
+    showToast('📍 Obteniendo ubicación...');
+    var gpsTimeout = setTimeout(function(){ _doEnviarAlarma(); }, 5000);
+    navigator.geolocation.getCurrentPosition(
+      function(p){
+        clearTimeout(gpsTimeout);
+        la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy);
+        _doEnviarAlarma();
+      },
+      function(){ clearTimeout(gpsTimeout); _doEnviarAlarma(); },
+      {enableHighAccuracy:true, timeout:5000, maximumAge:0}
+    );
+  } else {
+    _doEnviarAlarma();
+  }
+}
+
+function _doEnviarAlarma(){
   var ahora = new Date();
   var horaStr  = ahora.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
   var fechaStr = ahora.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'});
@@ -4268,8 +4287,8 @@ function enviarAlarma(){
   }
 
   showToast('🚨 ALARMA ENVIADA: '+alarmTipoSeleccionado);
-  tocarSonidoAlarma(); // Sonido de confirmación de envío
-  if(navigator.vibrate) navigator.vibrate([300,100,300,100,600]);
+  tocarSonidoAlarma();
+  if(navigator.vibrate) navigator.vibrate([400,100,400,100,600,100,400]);
   alarmTipoSeleccionado=''; alarmQuienSeleccionado='';
 
   // Reintentar cuando vuelva señal
@@ -4294,6 +4313,22 @@ function escucharAlarmas(){
     tocarSonidoAlarma();
   });
 }
+
+
+// Desbloquear AudioContext en primer toque (requerido por móviles)
+var _audioCtxUnlocked = false;
+function unlockAudio(){
+  if(_audioCtxUnlocked) return;
+  try{
+    var ctx = new (window.AudioContext||window.webkitAudioContext)();
+    var buf = ctx.createBuffer(1,1,22050);
+    var src = ctx.createBufferSource();
+    src.buffer=buf; src.connect(ctx.destination); src.start(0);
+    ctx.close(); _audioCtxUnlocked=true;
+  }catch(e){}
+}
+document.addEventListener('touchstart', unlockAudio, {once:true});
+document.addEventListener('click', unlockAudio, {once:true});
 
 function tocarSonidoAlarma(){
   try{
@@ -4336,6 +4371,25 @@ function cancelarConfirmAlarma(){
 }
 function enviarAlarma(){
   document.getElementById('alarmConfirmOverlay').classList.remove('open');
+  // Si no tenemos GPS aún, intentar obtenerlo con timeout de 5 segundos
+  if((la === 0 && lo === 0) && navigator.geolocation){
+    showToast('📍 Obteniendo ubicación...');
+    var gpsTimeout = setTimeout(function(){ _doEnviarAlarma(); }, 5000);
+    navigator.geolocation.getCurrentPosition(
+      function(p){
+        clearTimeout(gpsTimeout);
+        la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy);
+        _doEnviarAlarma();
+      },
+      function(){ clearTimeout(gpsTimeout); _doEnviarAlarma(); },
+      {enableHighAccuracy:true, timeout:5000, maximumAge:0}
+    );
+  } else {
+    _doEnviarAlarma();
+  }
+}
+
+function _doEnviarAlarma(){
   var ahora = new Date();
   var horaStr = ahora.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
   var fechaStr = ahora.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'});
@@ -4527,8 +4581,15 @@ function initFirebase(){
     sincronizarAFirebase();
     escucharFirebase();
     escucharAlarmas();
-    // Iniciar FCM para push notifications
-    initFCM();
+    // FCM: registrar token si ya tenemos permiso, si no esperar
+    if(Notification.permission === 'granted'){
+      setTimeout(initFCM, 1500);
+    } else if(Notification.permission === 'default'){
+      // Esperar a que se otorgue el permiso
+      Notification.requestPermission().then(function(p){
+        if(p === 'granted') setTimeout(initFCM, 500);
+      });
+    }
   } catch(e){
     console.warn('Firebase:', e);
     actualizarSyncBar('local');
