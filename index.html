@@ -5634,44 +5634,63 @@ function umSendText(texto, callback){
   .catch(function(err){ console.error('Ultramsg error:', err); if(callback) callback(false); });
 }
 
-// ── Enviar imagen: ImgBB → UltraMsg URL ─────────────────────────────
-var IMGBB_KEY = '32d6bb4e34f5b0dfcac00dac04f3e512'; // clave gratuita ImgBB
+// ── Enviar imagen: Firebase Storage → UltraMsg URL ──────────────────
+var IMGBB_KEY = '32d6bb4e34f5b0dfcac00dac04f3e512';
 
 function umSendImage(base64, caption, callback){
   try{
     var imgData = base64.startsWith('data:') ? base64 : 'data:image/jpeg;base64,'+base64;
-    var b64only = imgData.split(',')[1]; // solo base64 sin prefijo
+    var b64only = imgData.split(',')[1];
 
-    // 1. Subir a ImgBB (gratis, sin tarjeta, devuelve URL pública)
-    var fd = new FormData();
-    fd.append('key',    IMGBB_KEY);
-    fd.append('image',  b64only);
-    fd.append('expiration', '604800'); // 7 días
-
-    console.log('Subiendo imagen a ImgBB...');
     showToast('📤 Subiendo foto...');
 
-    fetch('https://api.imgbb.com/1/upload', {method:'POST', body:fd})
-      .then(function(r){ return r.json(); })
-      .then(function(d){
-        if(!d || !d.success || !d.data || !d.data.url){
-          console.warn('ImgBB falló:', JSON.stringify(d));
-          // Fallback: Cloudinary
-          return subirCloudinary(b64only, caption, callback);
-        }
-        var imgUrl = d.data.url;
-        console.log('ImgBB URL:', imgUrl);
-        // 2. Mandar URL a UltraMsg
-        enviarUrlUltramsg(imgUrl, caption, callback);
-      })
-      .catch(function(err){
-        console.error('ImgBB err:', err);
-        subirCloudinary(b64only, caption, callback);
-      });
+    // 1. Intentar Firebase Storage (ya lo tienen configurado)
+    if(typeof firebase !== 'undefined' && firebase.storage){
+      try{
+        var arr = new Uint8Array(atob(b64only).split('').map(function(c){return c.charCodeAt(0);}));
+        var blob = new Blob([arr], {type:'image/jpeg'});
+        var nombre = 'fotos/'+Date.now()+'.jpg';
+        var ref = firebase.storage().ref().child(nombre);
+        ref.put(blob).then(function(snap){
+          return snap.ref.getDownloadURL();
+        }).then(function(url){
+          console.log('Firebase Storage URL:', url);
+          enviarUrlUltramsg(url, caption, callback);
+        }).catch(function(err){
+          console.warn('Firebase Storage err:', err);
+          subirImgBB(b64only, caption, callback);
+        });
+        return;
+      } catch(e){
+        console.warn('Firebase Storage no disponible:', e);
+      }
+    }
+
+    // 2. Fallback: ImgBB
+    subirImgBB(b64only, caption, callback);
+
   } catch(e){
     console.error('umSendImage err:', e);
     if(callback) callback(false);
   }
+}
+
+function subirImgBB(b64only, caption, callback){
+  var fd = new FormData();
+  fd.append('key',   IMGBB_KEY);
+  fd.append('image', b64only);
+  fetch('https://api.imgbb.com/1/upload', {method:'POST', body:fd})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d && d.success && d.data && d.data.url){
+        console.log('ImgBB URL:', d.data.url);
+        enviarUrlUltramsg(d.data.url, caption, callback);
+      } else {
+        console.warn('ImgBB falló:', JSON.stringify(d));
+        subirCloudinary(b64only, caption, callback);
+      }
+    })
+    .catch(function(){ subirCloudinary(b64only, caption, callback); });
 }
 
 function subirCloudinary(b64only, caption, callback){
@@ -5685,11 +5704,15 @@ function subirCloudinary(b64only, caption, callback){
       if(d && d.secure_url){
         enviarUrlUltramsg(d.secure_url, caption, callback);
       } else {
-        console.error('Cloudinary tb falló:', JSON.stringify(d));
+        console.error('Todos los servicios fallaron');
+        showToast('⚠️ No se pudo subir la foto');
         if(callback) callback(false);
       }
     })
-    .catch(function(){ if(callback) callback(false); });
+    .catch(function(){
+      showToast('⚠️ Error al subir foto');
+      if(callback) callback(false);
+    });
 }
 
 function enviarUrlUltramsg(imgUrl, caption, callback){
@@ -5706,15 +5729,16 @@ function enviarUrlUltramsg(imgUrl, caption, callback){
   .then(function(d){
     console.log('UM img resp:', JSON.stringify(d));
     var ok = !!(d && (d.sent==='true'||d.sent===true||d.id));
+    showToast(ok ? '✅ Foto enviada' : '⚠️ Foto no enviada: '+JSON.stringify(d));
     if(callback) callback(ok);
   })
   .catch(function(err){
     console.error('UM img err:', err);
+    showToast('⚠️ Error UltraMsg: '+err.message);
     if(callback) callback(false);
   });
 }
 
-// Alias compatibilidad
 function sendImageFormData(base64, caption, callback){ umSendImage(base64, caption, callback); }
 function sendImageBase64Url(b, c, cb){ umSendImage(b, c, cb); }
 
