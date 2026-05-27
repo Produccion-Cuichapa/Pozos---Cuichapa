@@ -1561,23 +1561,7 @@ function ppToggle(id){
   <textarea id="medObs" placeholder="Observaciones..." style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--surface2);color:var(--txt);resize:none;height:64px;font-family:'Inter',sans-serif"></textarea>
 
   <!-- Foto guardia -->
-  <div style="margin-top:12px">
-    <div class="big-field-label" style="margin-bottom:8px">📸 Foto evidencia (opcional)</div>
-    <div style="display:flex;gap:8px">
-      <button type="button" onclick="document.getElementById('guardiaFotoCam').click()" style="flex:1;padding:11px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt);font-size:13px;font-weight:700;cursor:pointer">📷 Cámara</button>
-      <button type="button" onclick="document.getElementById('guardiaFotoGal').click()" style="flex:1;padding:11px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt);font-size:13px;font-weight:700;cursor:pointer">🖼 Galería</button>
-    </div>
-    <input type="file" id="guardiaFotoCam" accept="image/*" capture="environment" style="display:none" onchange="onGuardiaFoto(this)">
-    <input type="file" id="guardiaFotoGal" accept="image/*" style="display:none" onchange="onGuardiaFoto(this)">
-    <div id="guardiaFotoPreview" style="display:none;margin-top:8px;align-items:center;gap:10px">
-      <img id="guardiaFotoImg" style="width:72px;height:72px;border-radius:10px;object-fit:cover;border:2px solid var(--border)">
-      <div style="flex:1">
-        <div style="font-size:12px;font-weight:700;color:var(--green)" id="guardiaFotoNombre">✅ Foto lista</div>
-        <button type="button" onclick="borrarFotoGuardia()" style="font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;padding:0;margin-top:4px">✕ Quitar</button>
-      </div>
-    </div>
-  </div>
-</div>
+  
 
 <!-- ══ REPORTE COMPLETO ══ -->
 <div id="tabs-wrapper" style="display:none">
@@ -3570,11 +3554,9 @@ function enviarTodo(soloPreview){
       +(v('medObs')?'📝 '+v('medObs')+'\n':'')
       +gpsLinea2
       +'_C-'+W+'_';
-    var guardiaFotos=_guardiaFotoData?[{data:_guardiaFotoData,nombre:'guardia.jpg'}]:[];
-    if(_guardiaFotoData) msg2+='📸 Evidencia: 1 foto\n';
+    if(fotos.length) msg2+='📸 Evidencia: '+fotos.length+' foto'+(fotos.length===1?'':'s')+'\n';
     var rep2={id:Date.now(),fecha:new Date().toISOString(),pozo:W,recorredor:REC,
-      msg:msg2,fotos:guardiaFotos,estado:'pendiente',ultimoIntento:null,intentos:0};
-    borrarFotoGuardia();
+      msg:msg2,fotos:fotos.slice(),estado:'pendiente',ultimoIntento:null,intentos:0};
     guardarReporte(rep2);
     agregarVisita(REC,W); mostrarContador(REC);
     var n2=getVisitas(REC).length;
