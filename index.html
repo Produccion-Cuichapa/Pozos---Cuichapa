@@ -1796,7 +1796,7 @@ function ppToggle(id){
 <a class="maps-link" id="mapsLink" href="#" target="_blank">📍 Ver mi ubicación en Google Maps</a>
 
 <!-- MODO ALARMA BTN - visitas -->
-<button class="alarm-fab" onclick="abrirAlarma()">🚨 MODO ALARMA</button>
+<button class="alarm-fab" onclick="abrirAlarma();event&&event.stopPropagation&&event.stopPropagation()">🚨 MODO ALARMA</button>
 
 </div><!-- /formContent -->
 </div><!-- /view-visitas -->
@@ -3529,8 +3529,11 @@ function renderFotos(){
 
 var msgPendiente = '';
 
+var _lastEnviarClick = 0;
 function mostrarConfirmacion(){
-  // Build message first (reuse existing logic)
+  var now = Date.now();
+  if(now - _lastEnviarClick < 1200) return; // debounce 1.2s
+  _lastEnviarClick = now;
   enviarTodo(true);
 }
 
@@ -4973,7 +4976,14 @@ var ALARM_KEY = 'cuichapa_alarmas_v1';
 function getAlarmasLocales(){ try{ return JSON.parse(localStorage.getItem(ALARM_KEY)||'[]'); }catch(e){ return []; } }
 function saveAlarmasLocales(arr){ try{ localStorage.setItem(ALARM_KEY, JSON.stringify(arr)); }catch(e){} }
 
+var _lastAlarmClick = 0;
 function abrirAlarma(){
+  var now = Date.now();
+  if(now - _lastAlarmClick < 1200) return; // debounce 1.2s
+  _lastAlarmClick = now;
+  // Reset por si acaso se filtró un toque del botón enviar
+  if(document.getElementById('gpsWarnModal') && 
+     document.getElementById('gpsWarnModal').style.display === 'flex') return;
   alarmTipoSeleccionado = '';
   alarmQuienSeleccionado = '';
   document.querySelectorAll('.alarm-opt').forEach(function(b){ b.classList.remove('selected'); });
