@@ -2733,22 +2733,14 @@ function ppToggle(id){
       <div style="font-size:11px;font-weight:800;letter-spacing:1px;color:rgba(255,255,255,.5);text-transform:uppercase;margin-bottom:8px">📍 ¿Dónde ocurrió?</div>
       <input type="text" id="alarmLocInput" placeholder="" style="width:100%;padding:14px;border-radius:10px;background:#1a1a1a;color:#fff;border:1.5px solid #444;font-size:15px;font-family:'Inter',sans-serif;outline:none">
     </div>
-    <!-- FOTO EVIDENCIA ALARMA -->
+    <!-- FOTO EVIDENCIA ALARMA — misma función que evidencia fotográfica -->
     <div style="margin-bottom:14px">
       <div style="font-size:11px;font-weight:800;letter-spacing:1px;color:rgba(255,255,255,.5);text-transform:uppercase;margin-bottom:8px">📸 Foto del incidente (opcional)</div>
-      <div style="display:flex;gap:8px">
-        <button type="button" onclick="document.getElementById('alarmFotoCam').click()" style="flex:1;padding:11px;border-radius:12px;border:1.5px solid #333;background:#1a1a1a;color:rgba(255,255,255,.8);font-size:13px;font-weight:700;cursor:pointer">📷 Cámara</button>
-        <button type="button" onclick="document.getElementById('alarmFotoGal').click()" style="flex:1;padding:11px;border-radius:12px;border:1.5px solid #333;background:#1a1a1a;color:rgba(255,255,255,.8);font-size:13px;font-weight:700;cursor:pointer">🖼 Galería</button>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button type="button" onclick="document.getElementById('fotoInputCam').click()" style="flex:1;padding:11px;border-radius:12px;border:1.5px solid #333;background:#1a1a1a;color:rgba(255,255,255,.8);font-size:13px;font-weight:700;cursor:pointer">📷 Cámara</button>
+        <button type="button" onclick="document.getElementById('fotoInputGal').click()" style="flex:1;padding:11px;border-radius:12px;border:1.5px solid #333;background:#1a1a1a;color:rgba(255,255,255,.8);font-size:13px;font-weight:700;cursor:pointer">🖼 Galería</button>
       </div>
-      <input type="file" id="alarmFotoCam" accept="image/*" capture="environment" style="display:none" onchange="onAlarmFoto(this)">
-      <input type="file" id="alarmFotoGal" accept="image/*" style="display:none" onchange="onAlarmFoto(this)">
-      <div id="alarmFotoPreview" style="display:none;margin-top:8px;align-items:center;gap:10px">
-        <img id="alarmFotoImg" style="width:64px;height:64px;border-radius:10px;object-fit:cover;border:2px solid #dc2626">
-        <div style="flex:1">
-          <div id="alarmFotoLabel" style="font-size:12px;font-weight:700;color:#4ade80">Sin foto</div>
-          <button type="button" onclick="borrarFotoAlarma()" style="font-size:11px;color:#dc2626;background:none;border:none;cursor:pointer;padding:0;margin-top:2px">✕ Quitar</button>
-        </div>
-      </div>
+      <div id="alarmFotoCount" style="font-size:12px;color:#4ade80;min-height:16px"></div>
     </div>
     <div class="alarm-actions">
       <button class="alarm-cancel-btn" onclick="cerrarAlarma()">✕ Cancelar</button>
@@ -3455,6 +3447,8 @@ function agregarFotos(e){
       }
       if(procesadas === total){
         if(count) count.textContent = fotos.length + ' foto'+(fotos.length!==1?'s':'')+' lista'+(fotos.length!==1?'s':'');
+        var ac = document.getElementById('alarmFotoCount');
+        if(ac) ac.textContent = fotos.length ? '✅ '+fotos.length+' foto'+(fotos.length!==1?'s':'')+' lista'+(fotos.length!==1?'s':'') : '';
       }
     });
   });
@@ -5043,8 +5037,8 @@ function _doEnviarAlarma(){
     fecha:        alarmaData.fecha,
     pozo:         lugar,
     recorredor:   quien,
-    msg:          '🚨 *ALERTA: '+alarmaData.tipo+'*\n📍 '+lugar+'\n👷 '+quien+'\n🕐 '+horaStr+(_alarmFotoData?'\n📸 Evidencia: 1 foto':''),
-    fotos:        _alarmFotoData?[{data:_alarmFotoData,nombre:'alarma.jpg'}]:[],
+    msg:          '🚨 *ALERTA: '+alarmaData.tipo+'*\n📍 '+lugar+'\n👷 '+quien+'\n🕐 '+horaStr+(fotos.length?'\n📸 Evidencia: '+fotos.length+' foto'+(fotos.length===1?'':'s'):''),
+    fotos:        fotos.slice(),
     estado:       'pendiente',
     ultimoIntento:null,
     intentos:     0,
