@@ -1560,8 +1560,8 @@ function ppToggle(id){
   </div>
   <textarea id="medObs" placeholder="Observaciones..." style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--surface2);color:var(--txt);resize:none;height:64px;font-family:'Inter',sans-serif"></textarea>
 
-  <!-- Foto guardia -->
-  
+
+</div>
 
 <!-- ══ REPORTE COMPLETO ══ -->
 <div id="tabs-wrapper" style="display:none">
@@ -2733,15 +2733,14 @@ function ppToggle(id){
       <div style="font-size:11px;font-weight:800;letter-spacing:1px;color:rgba(255,255,255,.5);text-transform:uppercase;margin-bottom:8px">📍 ¿Dónde ocurrió?</div>
       <input type="text" id="alarmLocInput" placeholder="" style="width:100%;padding:14px;border-radius:10px;background:#1a1a1a;color:#fff;border:1.5px solid #444;font-size:15px;font-family:'Inter',sans-serif;outline:none">
     </div>
-    <!-- FOTO EVIDENCIA ALARMA — misma función que evidencia fotográfica -->
+    <!-- FOTO EVIDENCIA ALARMA -->
     <div style="margin-bottom:14px">
       <div style="font-size:11px;font-weight:800;letter-spacing:1px;color:rgba(255,255,255,.5);text-transform:uppercase;margin-bottom:8px">📸 Foto del incidente (opcional)</div>
-      <div style="display:flex;gap:8px;margin-bottom:8px">
+      <div style="display:flex;gap:8px;margin-bottom:6px">
         <button type="button" onclick="document.getElementById('fotoInputCam').click()" style="flex:1;padding:11px;border-radius:12px;border:1.5px solid #333;background:#1a1a1a;color:rgba(255,255,255,.8);font-size:13px;font-weight:700;cursor:pointer">📷 Cámara</button>
         <button type="button" onclick="document.getElementById('fotoInputGal').click()" style="flex:1;padding:11px;border-radius:12px;border:1.5px solid #333;background:#1a1a1a;color:rgba(255,255,255,.8);font-size:13px;font-weight:700;cursor:pointer">🖼 Galería</button>
       </div>
       <div id="alarmFotoCount" style="font-size:12px;color:#4ade80;min-height:16px"></div>
-    </div>
     <div class="alarm-actions">
       <button class="alarm-cancel-btn" onclick="cerrarAlarma()">✕ Cancelar</button>
       <button class="alarm-send-btn" id="alarmSendBtn" onclick="confirmarAlarma()" disabled>📤 Enviar alerta</button>
@@ -3447,8 +3446,8 @@ function agregarFotos(e){
       }
       if(procesadas === total){
         if(count) count.textContent = fotos.length + ' foto'+(fotos.length!==1?'s':'')+' lista'+(fotos.length!==1?'s':'');
-        var ac = document.getElementById('alarmFotoCount');
-        if(ac) ac.textContent = fotos.length ? '✅ '+fotos.length+' foto'+(fotos.length!==1?'s':'')+' lista'+(fotos.length!==1?'s':'') : '';
+        var ac=document.getElementById('alarmFotoCount');
+        if(ac) ac.textContent=fotos.length?'✅ '+fotos.length+' foto'+(fotos.length!==1?'s':'')+' lista'+(fotos.length!==1?'s':''):'';
       }
     });
   });
@@ -3548,9 +3547,7 @@ function enviarTodo(soloPreview){
       +(v('medObs')?'📝 '+v('medObs')+'\n':'')
       +gpsLinea2
       +'_C-'+W+'_';
-    if(fotos.length) msg2+='📸 Evidencia: '+fotos.length+' foto'+(fotos.length===1?'':'s')+'\n';
-    var rep2={id:Date.now(),fecha:new Date().toISOString(),pozo:W,recorredor:REC,
-      msg:msg2,fotos:fotos.slice(),estado:'pendiente',ultimoIntento:null,intentos:0};
+        if(fotos.length) msg2+='📸 Evidencia: '+fotos.length+' foto'+(fotos.length===1?'':'s')+'\n';
     guardarReporte(rep2);
     agregarVisita(REC,W); mostrarContador(REC);
     var n2=getVisitas(REC).length;
@@ -5080,7 +5077,9 @@ function _doEnviarAlarma(){
   }
 
   if(navigator.onLine){
-    intentarEnviarAlarmaWA();
+    enviarConUltramsg(alarmaData.id, function(ok){
+      if(!ok) showToast('⚠️ Sin señal · Alarma guardada · Se enviará cuando haya señal');
+    });
   } else {
     showToast('⚠️ Sin señal · Alarma guardada · Se enviará cuando haya señal');
   }
@@ -5802,7 +5801,8 @@ function enviarConUltramsg(id, callback){
       if(i >= imgs.length){ if(callback) callback(true); return; }
       var foto = imgs[i++];
       var src  = foto.data || foto;
-      umSendImage(src, '📸 Foto '+ i +' — C-'+r.pozo+' ('+r.recorredor+')', function(){
+      var caption = r.esAlarma ? '📸 Foto '+i+' — 🚨 '+r.tipo+' ('+r.recorredor+')' : '📸 Foto '+i+' — C-'+r.pozo+' ('+r.recorredor+')';
+      umSendImage(src, caption, function(){
         setTimeout(enviarSigFoto, 1500); // pausa entre fotos
       });
     }
@@ -6169,60 +6169,13 @@ function cerrarBanner(){
   }).join('');
 })();
 
-var _guardiaFotoData = null;
-var _alarmFotoData   = null;
 
-function onGuardiaFoto(inp){
-  if(!inp.files||!inp.files[0]) return;
-  var reader = new FileReader();
-  reader.onload = function(e){
-    _guardiaFotoData = e.target.result;
-    var prev = document.getElementById('guardiaFotoPreview');
-    var img  = document.getElementById('guardiaFotoImg');
-    var nom  = document.getElementById('guardiaFotoNombre');
-    if(img)  img.src = _guardiaFotoData;
-    if(nom)  nom.textContent = '\u2705 '+inp.files[0].name;
-    if(prev) prev.style.display = 'flex';
-  };
-  reader.readAsDataURL(inp.files[0]);
-}
 
-function borrarFotoGuardia(){
-  _guardiaFotoData = null;
-  var prev = document.getElementById('guardiaFotoPreview');
-  var inp1 = document.getElementById('guardiaFotoCam');
-  var inp2 = document.getElementById('guardiaFotoGal');
-  if(prev) prev.style.display = 'none';
-  if(inp1) inp1.value = '';
-  if(inp2) inp2.value = '';
-}
 
-function onAlarmFoto(inp){
-  if(!inp.files||!inp.files[0]) return;
-  var reader = new FileReader();
-  reader.onload = function(e){
-    _alarmFotoData = e.target.result;
-    var prev = document.getElementById('alarmFotoPreview');
-    var img  = document.getElementById('alarmFotoImg');
-    var lbl  = document.getElementById('alarmFotoLabel');
-    if(img)  img.src = _alarmFotoData;
-    if(lbl)  lbl.textContent = '\u2705 '+inp.files[0].name;
-    if(prev) prev.style.display = 'flex';
-  };
-  reader.readAsDataURL(inp.files[0]);
-}
 
-function borrarFotoAlarma(){
-  _alarmFotoData = null;
-  var prev = document.getElementById('alarmFotoPreview');
-  var c = document.getElementById('alarmFotoCam');
-  var g = document.getElementById('alarmFotoGal');
-  var lbl = document.getElementById('alarmFotoLabel');
-  if(prev) prev.style.display = 'none';
-  if(c) c.value = '';
-  if(g) g.value = '';
-  if(lbl) lbl.textContent = 'Sin foto';
-}
+
+
+
 
 function getCabObs(){
   var el=document.getElementById('cabObs');
