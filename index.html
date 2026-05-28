@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Pozos Campo Cuichapa</title>
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" id="pwa-manifest">
+<script>(function(){var m={"name":"Campo Cuichapa","short_name":"Cuichapa","start_url":"/Pozos---Cuichapa/","scope":"/Pozos---Cuichapa/","display":"standalone","background_color":"#0f3460","theme_color":"#0f3460","icons":[{"src":"https://via.placeholder.com/192/0f3460/FF7A00?text=CC","sizes":"192x192","type":"image/png"},{"src":"https://via.placeholder.com/512/0f3460/FF7A00?text=CC","sizes":"512x512","type":"image/png"}]};var b=new Blob([JSON.stringify(m)],{type:'application/json'});document.getElementById('pwa-manifest').href=URL.createObjectURL(b);})();</script>
 <meta name="theme-color" content="#0f3460">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -12,35 +13,26 @@
 <meta name="apple-mobile-web-app-title" content="Cuichapa">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.min.css"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 
 /* ══ BASE VARS ══ */
 :root{
-  /* ── MODO DÍA: blanco y azul claro ── */
-  --bg:#f5f8ff;--surface:#ffffff;--surface2:#eaf0fb;--border:#cad8ee;
-  --txt:#0a1628;--txt2:#3d5a80;--accent:#0f3460;--accent2:#1e5caa;
+  --bg:#eef2f8;--surface:#fff;--surface2:#e8edf8;--border:#d4ddef;
+  --txt:#0d1828;--txt2:#5a6e90;--accent:#0f3460;--accent2:#1e5caa;
   --green:#16a34a;--red:#dc2626;--send:#16a34a;
-  --bar:#cad8ee;--prog:linear-gradient(90deg,#16a34a,#4ade80);
-  --shadow:0 2px 14px rgba(15,52,96,.10);--shadowlg:0 8px 32px rgba(15,52,96,.16);
-  --fixed:#ffffff;--char-bg:#0f3460;
+  --bar:#d4ddef;--prog:linear-gradient(90deg,#16a34a,#4ade80);
+  --shadow:0 2px 12px rgba(15,52,96,.09);--shadowlg:0 8px 32px rgba(15,52,96,.14);
+  --fixed:#0d1828;--char-bg:#0f3460;
   --hdr:linear-gradient(135deg,#0f3460 0%,#1a4d8a 100%);
 }
-/* ── MODO NOCHE ── */
+/* NIGHT */
 body.night{
-  --bg:#040810;--surface:#0a1222;--surface2:#060e1a;--border:#0f2030;
-  --txt:#d0e0f8;--txt2:#4a6888;--accent:#4090e0;--accent2:#60b0f8;
-  --green:#22c55e;--red:#f87171;--bar:#0f2030;
-  --shadow:0 2px 10px rgba(0,0,0,.6);--shadowlg:0 8px 32px rgba(0,0,0,.7);
-  --fixed:#040810;--char-bg:#0a1a2e;
-}
-/* Indicador visual dia/noche en body */
-body:not(.night){
-  background:#f5f8ff !important;
-}
-body.night{
-  background:#040810 !important;
+  --bg:#060a12;--surface:#0d1525;--surface2:#080f1e;--border:#162035;
+  --txt:#ccd8f0;--txt2:#5a7098;--accent:#4090e0;--accent2:#60b0f8;
+  --green:#22c55e;--red:#f87171;--bar:#162035;
+  --shadow:0 2px 10px rgba(0,0,0,.5);--shadowlg:0 8px 32px rgba(0,0,0,.6);
+  --fixed:#060a12;--char-bg:#0d1a30;
 }
 /* MANRIQUE — offshore azul */
 body.m-active{
@@ -115,7 +107,6 @@ body.night .sidebar{background:#050810;border-right-color:#0f1a28}
 }
 .sidebar-icon:hover::after{opacity:1}
 
-.change-profile-btn{display:none}
 .toggle-btn{
   position:fixed;top:12px;right:12px;z-index:500;
   background:var(--surface);border:1.5px solid var(--border);
@@ -265,10 +256,6 @@ body.night .sidebar{background:#050810;border-right-color:#0f1a28}
 .hist-clear-btn{width:100%;padding:12px;background:var(--surface2);color:var(--red);border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-top:8px}
 .hist-count{font-size:12px;color:var(--txt2);margin-bottom:10px;text-align:center}
 
-@keyframes userPulse{
-  0%,100%{box-shadow:0 0 0 4px rgba(29,78,216,.3)}
-  50%{box-shadow:0 0 0 10px rgba(29,78,216,.05)}
-}
 #mapContainer{
   width:100%;height:420px;border-radius:14px;
   overflow:hidden;border:1.5px solid var(--border);
@@ -714,15 +701,6 @@ body.night .chk-row.on{background:#052e1640}
 /* ══ FOTO EVIDENCIA ══ */
 .foto-card{background:var(--surface);border-radius:16px;padding:16px;margin-bottom:14px;border:1.5px solid var(--border);box-shadow:var(--shadow)}
 .foto-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1.5px;color:var(--accent);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--border)}
-.foto-btn-cam,.foto-btn-gal{
-  flex:1;padding:14px 8px;border-radius:12px;border:none;
-  font-size:15px;font-weight:800;cursor:pointer;
-  font-family:'Inter',sans-serif;transition:all .2s;
-}
-.foto-btn-cam{background:linear-gradient(135deg,#0f3460,#1e5caa);color:#fff}
-.foto-btn-gal{background:var(--surface2);color:var(--txt);border:1.5px solid var(--border)}
-.foto-btn-cam:active,.foto-btn-gal:active{transform:scale(.95)}
-
 .foto-upload-area{
   border:2px dashed var(--border);border-radius:12px;
   padding:20px;text-align:center;cursor:pointer;
@@ -752,7 +730,7 @@ body.night .chk-row.on{background:#052e1640}
 .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-90px);color:#fff;padding:12px 22px;border-radius:12px;font-size:14px;font-weight:700;z-index:600;transition:transform .45s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.3);background:#0f3460}
 .toast.show{transform:translateX(-50%) translateY(0)}
 
-.send-fixed{position:fixed;bottom:0;left:0;right:0;padding:12px 14px 16px;background:var(--fixed);border-top:1.5px solid var(--border);z-index:100;transition:background .4s}
+.send-fixed{position:fixed;bottom:0;left:0;right:0;padding:12px 14px 16px;background:var(--fixed);z-index:100;transition:background .4s}
 .send-wrap{max-width:420px;margin:0 auto}
 .send-btn{width:100%;padding:16px;background:var(--send);color:#fff;border:none;border-radius:13px;font-size:16px;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;box-shadow:0 4px 16px rgba(22,163,74,.3)}
 .send-btn:hover{transform:translateY(-1px)}.send-btn:active{transform:scale(.98)}
@@ -964,136 +942,18 @@ body.night .chk-row.on{background:#052e1640}
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(s){s.unregister();});});
+}
+if(window.caches){caches.keys().then(function(k){k.forEach(function(c){caches.delete(c);});});}
+</script>
 </head>
 <body>
 
 <button class="toggle-btn" id="modeBtn" onclick="toggleMode()">🌙 Noche</button>
 
 <!-- ══ SIDEBAR ══ -->
-
-<style>
-/* ══ PETROLEUM BACKGROUND ══ */
-.petro-bg{
-  position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;
-}
-.petro-bg svg{width:100%;height:100%;object-fit:cover;}
-
-/* Make sidebar and content appear above background */
-.sidebar{z-index:400}
-.wrap{position:relative;z-index:2}
-.send-fixed{z-index:100}
-.login-overlay,.alarm-overlay,.alarm-confirm-overlay,.alarm-incoming,.perm-overlay{z-index:800}
-
-/* Darken app cards/panels slightly for readability on top of bg */
-.step-card,.well-picker,.header,.send-fixed,.hist-header,.gps-bar{
-  backdrop-filter:blur(2px);
-}
-</style>
-
-<div class="petro-bg" id="petroBg">
-<svg viewBox="0 0 400 900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-  <!-- Cielo nocturno -->
-  <rect x="0" y="0" width="400" height="900" fill="#060d1f"/>
-  <!-- Estrellas -->
-  <circle cx="30" cy="40" r="1.2" fill="#fff" opacity=".7"/>
-  <circle cx="80" cy="18" r="1" fill="#fff" opacity=".5"/>
-  <circle cx="150" cy="30" r="1.5" fill="#fff" opacity=".8"/>
-  <circle cx="210" cy="15" r="1" fill="#fff" opacity=".6"/>
-  <circle cx="290" cy="35" r="1.2" fill="#fff" opacity=".7"/>
-  <circle cx="340" cy="12" r="1" fill="#fff" opacity=".5"/>
-  <circle cx="60" cy="70" r="1" fill="#fff" opacity=".4"/>
-  <circle cx="320" cy="65" r="1.3" fill="#fff" opacity=".6"/>
-  <circle cx="180" cy="55" r="0.8" fill="#fff" opacity=".5"/>
-  <circle cx="250" cy="45" r="1" fill="#fff" opacity=".6"/>
-  <circle cx="110" cy="85" r="0.8" fill="#fff" opacity=".4"/>
-  <circle cx="370" cy="50" r="1" fill="#fff" opacity=".5"/>
-  <circle cx="20" cy="100" r="0.9" fill="#fff" opacity=".3"/>
-  <circle cx="390" cy="80" r="1" fill="#fff" opacity=".4"/>
-  <!-- Luna -->
-  <circle cx="340" cy="55" r="22" fill="#c8d4e8" opacity=".85"/>
-  <circle cx="350" cy="47" r="17" fill="#060d1f"/>
-  <!-- Nubes ligeras -->
-  <ellipse cx="100" cy="90" rx="50" ry="12" fill="#0a1628" opacity=".5"/>
-  <ellipse cx="280" cy="110" rx="60" ry="14" fill="#0a1628" opacity=".4"/>
-  <!-- Horizonte suelo -->
-  <rect x="0" y="580" width="400" height="320" fill="#0a1a0e"/>
-  <rect x="0" y="600" width="400" height="300" fill="#0d200f"/>
-  <!-- Horizonte glow naranja -->
-  <ellipse cx="200" cy="580" rx="200" ry="25" fill="#FF7A00" opacity=".07"/>
-  <rect x="0" y="575" width="400" height="18" fill="#1a2a14" opacity=".7"/>
-
-  <!-- ══ TORRE GRANDE CENTRO ══ -->
-  <polygon points="170,580 230,580 210,200 190,200" fill="#121f12" stroke="#1e2e1e" stroke-width="1.5"/>
-  <line x1="175" y1="540" x2="225" y2="540" stroke="#1e2e1e" stroke-width="2.5"/>
-  <line x1="180" y1="490" x2="220" y2="490" stroke="#1e2e1e" stroke-width="2"/>
-  <line x1="183" y1="440" x2="217" y2="440" stroke="#1e2e1e" stroke-width="2"/>
-  <line x1="186" y1="390" x2="214" y2="390" stroke="#1e2e1e" stroke-width="1.5"/>
-  <line x1="188" y1="340" x2="212" y2="340" stroke="#1e2e1e" stroke-width="1.5"/>
-  <line x1="190" y1="280" x2="210" y2="280" stroke="#1e2e1e" stroke-width="1.2"/>
-  <line x1="191" y1="240" x2="209" y2="240" stroke="#1e2e1e" stroke-width="1"/>
-  <!-- Diagonales -->
-  <line x1="175" y1="540" x2="220" y2="490" stroke="#1a2a1a" stroke-width="1"/>
-  <line x1="225" y1="540" x2="180" y2="490" stroke="#1a2a1a" stroke-width="1"/>
-  <line x1="180" y1="490" x2="217" y2="440" stroke="#1a2a1a" stroke-width="1"/>
-  <line x1="220" y1="490" x2="183" y2="440" stroke="#1a2a1a" stroke-width="1"/>
-  <line x1="183" y1="440" x2="214" y2="390" stroke="#1a2a1a" stroke-width=".8"/>
-  <line x1="217" y1="440" x2="186" y2="390" stroke="#1a2a1a" stroke-width=".8"/>
-  <!-- Flama cima -->
-  <ellipse cx="200" cy="198" rx="7" ry="8" fill="#FF7A00" opacity=".95"/>
-  <ellipse cx="200" cy="190" rx="5" ry="10" fill="#ffaa00" opacity=".85"/>
-  <ellipse cx="200" cy="182" rx="3" ry="7" fill="#fff8" opacity=".7"/>
-  <ellipse cx="200" cy="198" rx="30" ry="8" fill="#FF7A00" opacity=".06"/>
-
-  <!-- ══ TORRE IZQUIERDA ══ -->
-  <polygon points="30,580 65,580 55,340 40,340" fill="#111e11" stroke="#1b2b1b" stroke-width="1"/>
-  <line x1="33" y1="550" x2="62" y2="550" stroke="#1b2b1b" stroke-width="1.5"/>
-  <line x1="36" y1="510" x2="59" y2="510" stroke="#1b2b1b" stroke-width="1.2"/>
-  <line x1="38" y1="460" x2="57" y2="460" stroke="#1b2b1b" stroke-width="1"/>
-  <line x1="40" y1="410" x2="55" y2="410" stroke="#1b2b1b" stroke-width="1"/>
-  <ellipse cx="47" cy="337" rx="5" ry="6" fill="#FF7A00" opacity=".85"/>
-  <ellipse cx="47" cy="330" rx="3" ry="7" fill="#ffcc44" opacity=".7"/>
-
-  <!-- ══ TORRE DERECHA ══ -->
-  <polygon points="335,580 375,580 362,360 348,360" fill="#111e11" stroke="#1b2b1b" stroke-width="1"/>
-  <line x1="338" y1="548" x2="372" y2="548" stroke="#1b2b1b" stroke-width="1.5"/>
-  <line x1="341" y1="510" x2="369" y2="510" stroke="#1b2b1b" stroke-width="1.2"/>
-  <line x1="343" y1="468" x2="367" y2="468" stroke="#1b2b1b" stroke-width="1"/>
-  <line x1="345" y1="425" x2="365" y2="425" stroke="#1b2b1b" stroke-width="1"/>
-  <ellipse cx="355" cy="357" rx="5" ry="6" fill="#FF7A00" opacity=".85"/>
-  <ellipse cx="355" cy="350" rx="3" ry="7" fill="#ffcc44" opacity=".7"/>
-
-  <!-- ══ BALANCIN (nodding donkey) ══ -->
-  <rect x="255" y="560" width="60" height="20" rx="3" fill="#162016"/>
-  <rect x="278" y="545" width="14" height="20" fill="#1e2e1e"/>
-  <rect x="262" y="536" width="76" height="10" rx="5" fill="#FF7A00" opacity=".9"/>
-  <ellipse cx="338" cy="541" rx="14" ry="8" fill="#c05000"/>
-  <rect x="258" y="532" width="22" height="16" rx="4" fill="#444"/>
-
-  <!-- ══ TANQUE IZQUIERDO ══ -->
-  <rect x="80" y="552" width="34" height="30" rx="4" fill="#111e11" stroke="#1b2b1b" stroke-width="1"/>
-  <ellipse cx="97" cy="552" rx="17" ry="5" fill="#162016"/>
-  <ellipse cx="97" cy="582" rx="17" ry="5" fill="#162016"/>
-  <!-- Reflejos tanque -->
-  <line x1="84" y1="560" x2="84" y2="574" stroke="#1e3020" stroke-width="1"/>
-
-  <!-- ══ TANQUE DERECHO ══ -->
-  <rect x="290" y="558" width="28" height="24" rx="3" fill="#111e11" stroke="#1b2b1b" stroke-width="1"/>
-  <ellipse cx="304" cy="558" rx="14" ry="4" fill="#162016"/>
-
-  <!-- ══ TUBERIAS SUELO ══ -->
-  <path d="M114 577 Q145 570 170 575 Q190 577 200 575" stroke="#1e2e1e" stroke-width="5" fill="none" stroke-linecap="round"/>
-  <path d="M230 575 Q255 572 285 575 Q290 576 318 572" stroke="#1e2e1e" stroke-width="5" fill="none" stroke-linecap="round"/>
-  <!-- Válvulas -->
-  <rect x="148" y="571" width="12" height="8" rx="2" fill="#FF7A00" opacity=".6"/>
-  <rect x="262" y="569" width="12" height="8" rx="2" fill="#FF7A00" opacity=".6"/>
-  <!-- Tubería horizontal suelo -->
-  <line x1="0" y1="592" x2="400" y2="592" stroke="#152015" stroke-width="3"/>
-
-  <!-- ══ OVERLAY OSCURECEDOR para legibilidad ══ -->
-  <rect x="0" y="0" width="400" height="900" fill="#060d1f" opacity=".45"/>
-</svg>
-</div>
 <div class="sidebar">
   <!-- Logo -->
   <div class="sidebar-logo">
@@ -1175,6 +1035,9 @@ body.night .chk-row.on{background:#052e1640}
     </svg>
   </div>
 
+  <div class="sidebar-icon" id="icon-alarma" onclick="abrirAlarma()" style="background:linear-gradient(135deg,#dc2626,#991b1b);border-radius:12px" data-tip="🚨 Alarma">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+  </div>
   <!-- Historial de reportes -->
   <div class="sidebar-icon sidebar-locked" id="icon-historial" data-tip="Historial de Reportes 🔒" onclick="requireLogin('historial')">
     <svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" width="26" height="26">
@@ -1191,310 +1054,206 @@ body.night .chk-row.on{background:#052e1640}
 <div class="wrap">
 <div class="view active" id="view-visitas">
 
-
-<button class="change-profile-btn" id="changeProfileBtn" onclick="volverAlPicker()">‹ Cambiar perfil</button>
-
 <!-- ══ SELECTOR DE PERFIL ══ -->
-<style>
-@keyframes ppBoot{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-@keyframes ppLed{0%,100%{opacity:1}50%{opacity:0.25}}
-@keyframes ppCur{0%,49%{opacity:1}50%,100%{opacity:0}}
-@keyframes ppExpand{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
-.pp-wrap{background:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #e8edf5;margin-bottom:14px;animation:ppBoot .4s ease both;box-shadow:0 4px 24px rgba(15,52,96,.08)}
-.pp-hdr{padding:13px 16px;border-bottom:1px solid #edf2f7;display:flex;align-items:center;justify-content:space-between;background:#f8faff}
-.pp-logo{height:36px;width:auto;background:#fff;border-radius:4px;padding:3px 7px;display:block;border:1px solid #e8edf5}
-.pp-title{font-size:12px;color:#2d3748;letter-spacing:1px;font-family:monospace}
-.pp-sub{font-size:8px;color:#a0aec0;letter-spacing:2px;margin-top:2px;font-family:monospace}
-.pp-led{width:6px;height:6px;border-radius:50%;background:#48bb78;display:inline-block;margin-right:5px;animation:ppLed 2s infinite;vertical-align:middle}
-.pp-clock{font-size:12px;color:#4f46e5;letter-spacing:1px;font-family:monospace;text-align:right}
-.pp-loc{font-size:8px;color:#a0aec0;letter-spacing:2px;margin-top:2px;font-family:monospace;text-align:right}
-.pp-stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#edf2f7;border-bottom:1px solid #edf2f7}
-.pp-stat{background:#f8faff;padding:13px 16px}
-.pp-stat-lbl{font-size:8px;letter-spacing:2px;color:#a0aec0;margin-bottom:5px;font-family:monospace}
-.pp-stat-val{font-size:22px;color:#2d3748;font-weight:500;font-family:monospace}
-.pp-stat-unit{font-size:8px;color:#a0aec0;margin-top:1px;letter-spacing:1px;font-family:monospace}
-.pp-bar{height:2px;background:#edf2f7;border-radius:1px;margin-top:8px;overflow:hidden}
-.pp-bar-fill{height:100%;border-radius:1px;background:#4f46e5;width:0;transition:width 1.2s ease}
-.pp-acc{border-top:1px solid #edf2f7}
-.pp-acc-btn{width:100%;background:#fff;border:none;padding:13px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:background .2s}
-.pp-acc-btn:hover{background:#f8faff}
-.pp-acc-btn.open{background:#f5f3ff}
-.pp-acc-left{display:flex;align-items:center;gap:10px}
-.pp-acc-icon{font-size:16px}
-.pp-acc-title{font-size:10px;letter-spacing:3px;color:#2d3748;font-family:monospace;text-transform:uppercase}
-.pp-acc-count{font-size:8px;color:#a0aec0;letter-spacing:1px;font-family:monospace;margin-left:6px}
-.pp-acc-arrow{font-size:12px;color:#a0aec0;transition:transform .25s;font-family:monospace}
-.pp-acc-btn.open .pp-acc-arrow{transform:rotate(180deg)}
-.pp-acc-body{display:none;animation:ppExpand .25s ease}
-.pp-acc-body.open{display:block}
-.pp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#edf2f7}
-.pp-btn{background:#fff;border:none;padding:14px 10px;cursor:pointer;position:relative;display:flex;flex-direction:column;align-items:center;transition:background .2s;width:100%;border-radius:0}
-.pp-btn:hover{background:#f8faff}
-.pp-btn:hover .pp-top{opacity:1}
-.pp-top{position:absolute;top:0;left:0;right:0;height:2px;background:#4f46e5;opacity:0;transition:opacity .25s}
-.pp-dot{width:5px;height:5px;border-radius:50%;background:#e2e8f0;position:absolute;top:8px;right:8px;animation:ppLed 2.5s infinite}
-.pp-ico{width:44px;height:44px;border-radius:8px;border:1px solid #edf2f7;background:#f8faff;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px}
-.pp-name{font-size:10px;color:#2d3748;letter-spacing:.5px;margin-bottom:1px;font-family:monospace;text-align:center;line-height:1.3}
-.pp-role{font-size:7px;color:#a0aec0;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;font-family:monospace;text-align:center}
-.pp-access{width:100%;padding:5px 4px;border:1px solid #edf2f7;border-radius:3px;color:#718096;font-size:7px;letter-spacing:1px;text-align:center;font-family:monospace;background:transparent}
-.pp-foot{padding:11px 16px;border-top:1px solid #edf2f7;display:flex;align-items:center;justify-content:space-between;background:#f8faff}
-.pp-status{font-size:9px;color:#a0aec0;letter-spacing:1px;font-family:monospace}
-.pp-pemex{font-size:9px;color:#a0aec0;letter-spacing:1px;font-family:monospace}
-</style>
-
-<div id="profilePicker" class="pp-wrap">
-  <div class="pp-hdr">
-    <div style="display:flex;align-items:center;gap:12px">
-      <img class="pp-logo" src="data:image/jpeg;base64,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xJNmUh9zj4jpId1VhocRkRtFhI5iorVx1KbdPlYYMKxuIo+bdWOlLbXbto0yiI6JKszHKmpUahBFvLDWisXXI0nPyMZrYb8YcVrVVFTHk1Gwq3draTYihfCNTcsOVhoiYoirgmoxr+mm6u1E0ynT0WBE6quCK+H/ABNfHbOfCm4wcohk/WDv2t/RqIyhS0rMTrmpmwXZi9r/AOjzt7dJt3MQZe1ltEej53FYSOw5ET7C6LO2UsfKtZPUuQlMHJnI/kVCdMuavU6N8D0aSiw3xWZ/VWswwZzai5q7kMmylix1fewYQuR5b0qP6amyCV+SwvQToNeOThSZmrXs0pkBjlbDcqvcicichsQgtzILGL9FqIV+caeWK/wI+gAcMkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA6O3FmpC1lnZmjVGGj4MZuHL4l8RF14GTpbWh1ONFoUq6fk0dix7XI1ULtP45EcmDkRU+0u6m/l1f2932BDtnpXKEo9K+CqfAjsl8MERXIqp96nXS9xd61pqp11WZOIxYjsXxnxEXD7i8epQv2bPdQ+0RE1IiFrtecW3CCTZFGLLjLoqZd3T+qKrY9QiInVIqpguJlMA5mXLPLJym7ZIABrAAAAAABI2mjs135w400dmu/OHJHXWCCaK400tmu/OHGmls135w5I4FiiuNNLZrvzhxppbNd+cOSOBYorjTS2a784caaWzXfnDkjgWKK400tmu/OHGmls135w5I4FiiuNNLZrvzhxppbNd+cOSOBYorjTS2a784caaWzXfnDkjgWKK400tmu/OHGmls135w5I4FiiuNNLZrvzhxppbNd+cOSOBYorjTS2a784caaWzXfnDkjgWKK400tmu/OHGmls135w5I4FiiuNNLZrvzhxppbNd+cOSOBYorjTS2a784caaWzXfnDkjgWKK400tmu/OHGmls135w5I4FiiuNNLZrvzhxppbNd+cOSOBYorjTS2a784caaWzXfnDkjgWKK400dmu/OHGmjs135w5I4TWLBXOmjs135w4JHAsUf//Z" alt="Lifting">
-      <div>
-        <div class="pp-title"><span class="pp-led"></span>CAMPO CUICHAPA — U-39</div>
-        <div class="pp-sub">SISTEMA DE CONTROL DE ACCESO</div>
-      </div>
-    </div>
-    <div>
-      <div class="pp-clock" id="ppClk">--:--:--</div>
-      <div class="pp-loc">VERACRUZ · MX</div>
-    </div>
+<div id="profilePicker" class="profile-picker">
+  <div class="profile-picker-title">
+    <div class="profile-picker-logo">🛢</div>
+    <div class="profile-picker-h">Campo Cuichapa</div>
+    <div class="profile-picker-s">¿Quién eres?</div>
   </div>
+  <div class="profile-grid">
 
-  <div class="pp-stats">
-    <div class="pp-stat">
-      <div class="pp-stat-lbl">PRODUCCIÓN HOY</div>
-      <div class="pp-stat-val">312</div>
-      <div class="pp-stat-unit">BLS / DÍA</div>
-      <div class="pp-bar"><div class="pp-bar-fill" id="ppBa"></div></div>
-    </div>
-    <div class="pp-stat">
-      <div class="pp-stat-lbl">POZOS VISITADOS HOY</div>
-      <div class="pp-stat-val" id="ppPoz">0</div>
-      <div class="pp-stat-unit">DE 42 PROGRAMADOS</div>
-      <div class="pp-bar"><div class="pp-bar-fill" id="ppBb"></div></div>
-    </div>
-  </div>
-
-  <!-- PRODUCCIÓN -->
-  <div class="pp-acc">
-    <button class="pp-acc-btn" onclick="ppToggle('prod')">
-      <div class="pp-acc-left">
-        <span class="pp-acc-icon">🛢</span>
-        <span class="pp-acc-title">Producción</span>
-        <span class="pp-acc-count">5 perfiles</span>
+    <!-- Manrique -->
+    <button class="profile-card pc-m" onclick="selProfile('Manrique','m','rec')">
+      <div class="profile-tier tier-field">★ CAMPO</div>
+      <div class="profile-avatar pa-m">
+        <svg viewBox="0 0 60 80" width="60" height="80">
+          <ellipse cx="30" cy="78" rx="18" ry="4" fill="rgba(0,0,0,.2)"/>
+          <rect x="14" y="48" width="14" height="26" rx="3" fill="#E8650A"/>
+          <rect x="32" y="48" width="14" height="26" rx="3" fill="#E8650A"/>
+          <rect x="12" y="66" width="18" height="3" rx="1" fill="#ccc" opacity=".7"/>
+          <rect x="30" y="66" width="18" height="3" rx="1" fill="#ccc" opacity=".7"/>
+          <rect x="10" y="28" width="40" height="24" rx="6" fill="#E8650A"/>
+          <rect x="24" y="30" width="10" height="8" rx="2" fill="#CF5800" opacity=".8"/>
+          <rect x="10" y="44" width="40" height="5" rx="2" fill="#1a1a1a"/>
+          <rect x="10" y="33" width="40" height="3" rx="1" fill="#ccc" opacity=".5"/>
+          <rect x="3" y="28" width="10" height="22" rx="5" fill="#E8650A"/>
+          <rect x="47" y="28" width="10" height="22" rx="5" fill="#E8650A"/>
+          <rect x="1" y="44" width="14" height="8" rx="4" fill="#1a1a1a"/>
+          <!-- Casco en mano -->
+          <ellipse cx="8" cy="56" rx="8" ry="6" fill="#f0f0f0"/>
+          <rect x="47" y="44" width="13" height="8" rx="4" fill="#1a1a1a"/>
+          <rect x="26" y="20" width="8" height="10" rx="4" fill="#c8845a"/>
+          <ellipse cx="30" cy="15" rx="14" ry="14" fill="#c8845a"/>
+          <path d="M16 10 Q30 2 44 10 Q44 4 30 2 Q16 4 16 10Z" fill="#1a0a04"/>
+          <path d="M18 22 Q30 30 42 22 Q42 28 30 32 Q18 28 18 22Z" fill="#2a1204" opacity=".85"/>
+          <ellipse cx="23" cy="14" rx="3" ry="2.5" fill="#fff"/>
+          <ellipse cx="37" cy="14" rx="3" ry="2.5" fill="#fff"/>
+          <circle cx="24" cy="15" r="2" fill="#2a1204"/>
+          <circle cx="38" cy="15" r="2" fill="#2a1204"/>
+        </svg>
       </div>
-      <span class="pp-acc-arrow" id="pp-arrow-prod">▼</span>
+      <div class="profile-info">
+        <div class="profile-name">Manrique</div>
+        <div class="profile-role">Recorredor</div>
+        <div class="profile-stats ps-m"><div class="pstat"></div><div class="pstat"></div><div class="pstat"></div></div>
+      </div>
     </button>
-    <div class="pp-acc-body" id="pp-body-prod">
-      <div class="pp-grid">
-        <button class="pp-btn" onclick="selProfile('Superintendente','super','auth')">
-          <div class="pp-top"></div><div class="pp-dot"></div>
-          <div class="pp-ico">⭐</div>
-          <div class="pp-name">SUPER-INTENDENTE</div>
-          <div class="pp-role">Producción</div>
-          <div class="pp-access">ACCEDER</div>
-        </button>
-        <button class="pp-btn" onclick="selProfile('Jefe','jefe','auth')">
-          <div class="pp-top"></div><div class="pp-dot" style="animation-delay:.4s"></div>
-          <div class="pp-ico">👷</div>
-          <div class="pp-name">JEFE ING.</div>
-          <div class="pp-role">Producción</div>
-          <div class="pp-access">ACCEDER</div>
-        </button>
-        <button class="pp-btn" onclick="selProfile('Ing. Ductos','ductos','auth')">
-          <div class="pp-top"></div><div class="pp-dot" style="animation-delay:.8s"></div>
-          <div class="pp-ico">🔧</div>
-          <div class="pp-name">ING. DUCTOS</div>
-          <div class="pp-role">Producción</div>
-          <div class="pp-access">ACCEDER</div>
-        </button>
-        <button class="pp-btn" onclick="selProfile('Almacenista','almacenista','auth')">
-          <div class="pp-top"></div><div class="pp-dot" style="animation-delay:1.2s"></div>
-          <div class="pp-ico">📦</div>
-          <div class="pp-name">ALMACENISTA</div>
-          <div class="pp-role">Producción</div>
-          <div class="pp-access">ACCEDER</div>
-        </button>
-        <button class="pp-btn" onclick="selProfile('Ing. Jorge Gill','gill','auth')">
-          <div class="pp-top"></div><div class="pp-dot" style="animation-delay:1.6s"></div>
-          <div class="pp-ico">🏗️</div>
-          <div class="pp-name">ING. JORGE GILL</div>
-          <div class="pp-role">Producción</div>
-          <div class="pp-access">ACCEDER</div>
-        </button>
-      </div>
-    </div>
-  </div>
 
-  <!-- RECORREDORES -->
-  <div class="pp-acc">
-    <button class="pp-acc-btn" onclick="ppToggle('rec')">
-      <div class="pp-acc-left">
-        <span class="pp-acc-icon">🚶</span>
-        <span class="pp-acc-title">Recorredores</span>
-        <span class="pp-acc-count">3 perfiles</span>
+    <!-- Cirilo -->
+    <button class="profile-card pc-c" onclick="selProfile('Cirilo','c','rec')">
+      <div class="profile-tier tier-field">★ CAMPO</div>
+      <div class="profile-avatar pa-c">
+        <svg viewBox="0 0 60 80" width="60" height="80">
+          <ellipse cx="30" cy="78" rx="18" ry="4" fill="rgba(0,0,0,.2)"/>
+          <rect x="14" y="48" width="14" height="26" rx="3" fill="#E8650A"/>
+          <rect x="32" y="48" width="14" height="26" rx="3" fill="#E8650A"/>
+          <rect x="12" y="66" width="18" height="3" rx="1" fill="#ccc" opacity=".7"/>
+          <rect x="30" y="66" width="18" height="3" rx="1" fill="#ccc" opacity=".7"/>
+          <rect x="10" y="28" width="40" height="24" rx="6" fill="#E8650A"/>
+          <rect x="10" y="44" width="40" height="5" rx="2" fill="#1a1a1a"/>
+          <rect x="10" y="33" width="40" height="3" rx="1" fill="#ccc" opacity=".5"/>
+          <!-- Radio en hombro -->
+          <rect x="46" y="22" width="8" height="14" rx="2" fill="#1a1a1a"/>
+          <circle cx="50" cy="28" r="1.5" fill="#00ff88" opacity=".9"/>
+          <rect x="3" y="28" width="10" height="22" rx="5" fill="#E8650A"/>
+          <rect x="47" y="28" width="10" height="22" rx="5" fill="#E8650A"/>
+          <rect x="1" y="44" width="14" height="8" rx="4" fill="#1a1a1a"/>
+          <rect x="47" y="44" width="13" height="8" rx="4" fill="#1a1a1a"/>
+          <rect x="26" y="20" width="8" height="10" rx="4" fill="#b87848"/>
+          <ellipse cx="30" cy="15" rx="14" ry="14" fill="#b87848"/>
+          <path d="M16 8 Q30 0 44 8 Q44 2 30 0 Q16 2 16 8Z" fill="#0f0804"/>
+          <path d="M17 22 Q30 34 43 22 Q44 30 30 36 Q16 30 17 22Z" fill="#0f0804" opacity=".9"/>
+          <!-- Lentes oscuros -->
+          <rect x="18" y="12" rx="3" width="10" height="6" fill="#111" opacity=".95"/>
+          <rect x="32" y="12" rx="3" width="10" height="6" fill="#111" opacity=".95"/>
+          <line x1="28" y1="15" x2="32" y2="15" stroke="#333" stroke-width="1.5"/>
+          <rect x="18" y="12" rx="3" width="10" height="6" fill="none" stroke="#555" stroke-width=".8"/>
+          <rect x="32" y="12" rx="3" width="10" height="6" fill="none" stroke="#555" stroke-width=".8"/>
+        </svg>
       </div>
-      <span class="pp-acc-arrow" id="pp-arrow-rec">▼</span>
+      <div class="profile-info">
+        <div class="profile-name">Cirilo</div>
+        <div class="profile-role">Recorredor</div>
+        <div class="profile-stats ps-c"><div class="pstat"></div><div class="pstat"></div><div class="pstat"></div></div>
+      </div>
     </button>
-    <div class="pp-acc-body" id="pp-body-rec">
-      <div class="pp-grid">
-        <button class="pp-btn" onclick="selProfile('Manrique','m','rec')">
-          <div class="pp-top"></div><div class="pp-dot"></div>
-          <div style="font-size:7px;letter-spacing:2px;color:#a0aec0;align-self:flex-start;margin-bottom:10px;font-family:monospace">ID · MNR-001</div>
-          <div class="pp-ico">🌊</div>
-          <div class="pp-name">MANRIQUE</div>
-          <div class="pp-role">Recorredor</div>
-          <div style="width:100%;margin-bottom:4px"><div style="display:flex;justify-content:space-between;font-size:7px;margin-bottom:2px"><span style="color:#a0aec0;font-family:monospace">ZONA</span><span style="color:#4f46e5;font-family:monospace">NORTE</span></div><div style="height:1px;background:#edf2f7;overflow:hidden"><div style="height:100%;background:#4f46e5;width:90%"></div></div></div>
-          <div class="pp-access">VERIFICAR ACCESO</div>
-        </button>
-        <button class="pp-btn" onclick="selProfile('Cirilo','c','rec')">
-          <div class="pp-top"></div><div class="pp-dot" style="animation-delay:.8s"></div>
-          <div style="font-size:7px;letter-spacing:2px;color:#a0aec0;align-self:flex-start;margin-bottom:10px;font-family:monospace">ID · CRL-002</div>
-          <div class="pp-ico">🏭</div>
-          <div class="pp-name">CIRILO</div>
-          <div class="pp-role">Recorredor</div>
-          <div style="width:100%;margin-bottom:4px"><div style="display:flex;justify-content:space-between;font-size:7px;margin-bottom:2px"><span style="color:#a0aec0;font-family:monospace">ZONA</span><span style="color:#4f46e5;font-family:monospace">SUR</span></div><div style="height:1px;background:#edf2f7;overflow:hidden"><div style="height:100%;background:#4f46e5;width:75%"></div></div></div>
-          <div class="pp-access">VERIFICAR ACCESO</div>
-        </button>
-        <button class="pp-btn" onclick="selProfile('Juan Carlos','jc','rec')">
-          <div class="pp-top"></div><div class="pp-dot" style="animation-delay:1.6s"></div>
-          <div style="font-size:7px;letter-spacing:2px;color:#a0aec0;align-self:flex-start;margin-bottom:10px;font-family:monospace">ID · JCR-003</div>
-          <div class="pp-ico" style="background:#f8faff;padding:0;overflow:hidden"><svg viewBox="0 0 44 44" width="44" height="44" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="22" width="24" height="18" rx="3" fill="#1a3a5a"/><rect x="11" y="34" width="9" height="8" rx="2" fill="#1a3a5a"/><rect x="24" y="34" width="9" height="8" rx="2" fill="#1a3a5a"/><rect x="10" y="39" width="11" height="4" rx="2" fill="#0a0a0a"/><rect x="23" y="39" width="11" height="4" rx="2" fill="#0a0a0a"/><rect x="2" y="22" width="9" height="16" rx="4" fill="#1a3a5a"/><rect x="33" y="22" width="9" height="16" rx="4" fill="#1a3a5a"/><ellipse cx="6" cy="38" rx="5" ry="3.5" fill="#0f2a1a"/><ellipse cx="38" cy="38" rx="5" ry="3.5" fill="#0f2a1a"/><rect x="36" y="32" width="3" height="10" rx="1.5" fill="#888" transform="rotate(-20 38 37)"/><circle cx="37" cy="31" r="3" fill="none" stroke="#888" stroke-width="1.5"/><rect x="18" y="14" width="8" height="10" rx="3" fill="#c09060"/><ellipse cx="22" cy="12" rx="10" ry="10" fill="#c09060"/><path d="M12 11 Q22 1 32 11 Q32 6 22 4 Q12 6 12 11Z" fill="#e8e8e8"/><ellipse cx="22" cy="11" rx="12" ry="4" fill="#ddd"/><rect x="10" y="10" width="24" height="3" rx="1.5" fill="#ccc"/><rect x="15" y="13" rx="2" width="7" height="5" fill="rgba(150,200,255,.35)" stroke="#aaa" stroke-width=".6"/><rect x="23" y="13" rx="2" width="7" height="5" fill="rgba(150,200,255,.35)" stroke="#aaa" stroke-width=".6"/></svg></div>
-          <div class="pp-name">JUAN CARLOS</div>
-          <div class="pp-role">Recorredor</div>
-          <div style="width:100%;margin-bottom:4px"><div style="display:flex;justify-content:space-between;font-size:7px;margin-bottom:2px"><span style="color:#a0aec0;font-family:monospace">ZONA</span><span style="color:#4f46e5;font-family:monospace">ESTE</span></div><div style="height:1px;background:#edf2f7;overflow:hidden"><div style="height:100%;background:#4f46e5;width:83%"></div></div></div>
-          <div class="pp-access">VERIFICAR ACCESO</div>
-        </button>
-      </div>
-    </div>
-  </div>
 
-  <!-- OPERADORES -->
-  <div class="pp-acc">
-    <button class="pp-acc-btn" onclick="ppToggle('op')">
-      <div class="pp-acc-left">
-        <span class="pp-acc-icon">⚙️</span>
-        <span class="pp-acc-title">Operadores</span>
-        <span class="pp-acc-count">5 perfiles</span>
+    <!-- Juan Carlos -->
+    <button class="profile-card pc-jc" onclick="selProfile('Juan Carlos','jc','rec')">
+      <div class="profile-tier tier-field">★ CAMPO</div>
+      <div class="profile-avatar pa-jc">
+        <svg viewBox="0 0 60 80" width="60" height="80">
+          <ellipse cx="30" cy="78" rx="18" ry="4" fill="rgba(0,0,0,.2)"/>
+          <rect x="14" y="48" width="14" height="26" rx="3" fill="#E8650A"/>
+          <rect x="32" y="48" width="14" height="26" rx="3" fill="#E8650A"/>
+          <rect x="12" y="66" width="18" height="3" rx="1" fill="#ccc" opacity=".7"/>
+          <rect x="30" y="66" width="18" height="3" rx="1" fill="#ccc" opacity=".7"/>
+          <rect x="10" y="28" width="40" height="24" rx="6" fill="#E8650A"/>
+          <!-- Tablet -->
+          <rect x="14" y="32" width="20" height="14" rx="2" fill="#1a1a2e" stroke="#333" stroke-width=".8"/>
+          <rect x="15" y="33" width="18" height="10" rx="1" fill="#2a4a8a" opacity=".8"/>
+          <rect x="10" y="44" width="40" height="5" rx="2" fill="#1a1a1a"/>
+          <rect x="10" y="33" width="40" height="3" rx="1" fill="#ccc" opacity=".5"/>
+          <rect x="3" y="30" width="10" height="20" rx="5" fill="#E8650A"/>
+          <rect x="47" y="30" width="10" height="20" rx="5" fill="#E8650A"/>
+          <rect x="1" y="43" width="14" height="8" rx="4" fill="#1a1a1a"/>
+          <rect x="47" y="43" width="13" height="8" rx="4" fill="#1a1a1a"/>
+          <rect x="26" y="20" width="8" height="10" rx="4" fill="#c09060"/>
+          <ellipse cx="30" cy="15" rx="13" ry="13" fill="#c09060"/>
+          <!-- Casco -->
+          <path d="M17 10 Q30 0 43 10 Q44 6 30 4 Q16 6 17 10Z" fill="#f0f0f0"/>
+          <ellipse cx="30" cy="10" rx="16" ry="5" fill="#e8e8e8"/>
+          <rect x="14" y="9" width="32" height="4" rx="2" fill="#ddd"/>
+          <circle cx="30" cy="5" r="3" fill="#0f3460"/>
+          <!-- Safety glasses -->
+          <rect x="19" y="14" rx="2" width="9" height="5" fill="rgba(150,200,255,.4)" stroke="#aaa" stroke-width=".8"/>
+          <rect x="32" y="14" rx="2" width="9" height="5" fill="rgba(150,200,255,.4)" stroke="#aaa" stroke-width=".8"/>
+          <line x1="28" y1="16" x2="32" y2="16" stroke="#aaa" stroke-width="1"/>
+        </svg>
       </div>
-      <span class="pp-acc-arrow" id="pp-arrow-op">▼</span>
+      <div class="profile-info">
+        <div class="profile-name">Juan Carlos</div>
+        <div class="profile-role">Recorredor</div>
+        <div class="profile-stats ps-jc"><div class="pstat"></div><div class="pstat"></div><div class="pstat"></div></div>
+      </div>
     </button>
-    <div class="pp-acc-body" id="pp-body-op">
-      <div class="pp-grid">
-        <button class="pp-btn" onclick="selProfile('Operador 1','op1','auth')">
-          <div class="pp-top"></div><div class="pp-dot" style="animation-delay:.2s"></div>
-          <div class="pp-ico">⚙️</div><div class="pp-name">OPERADOR 1</div>
-          <div class="pp-role">Operador</div><div class="pp-access">ACCEDER</div>
-        </button>
-        <button class="pp-btn" onclick="selProfile('Operador 2','op2','auth')">
-          <div class="pp-top"></div><div class="pp-dot" style="animation-delay:.5s"></div>
-          <div class="pp-ico">⚙️</div><div class="pp-name">OPERADOR 2</div>
-          <div class="pp-role">Operador</div><div class="pp-access">ACCEDER</div>
-        </button>
-        <button class="pp-btn" onclick="selProfile('Operador 3','op3','auth')">
-          <div class="pp-top"></div><div class="pp-dot" style="animation-delay:.8s"></div>
-          <div class="pp-ico">⚙️</div><div class="pp-name">OPERADOR 3</div>
-          <div class="pp-role">Operador</div><div class="pp-access">ACCEDER</div>
-        </button>
-        <button class="pp-btn" onclick="selProfile('Operador 4','op4','auth')">
-          <div class="pp-top"></div><div class="pp-dot" style="animation-delay:1.1s"></div>
-          <div class="pp-ico">⚙️</div><div class="pp-name">OPERADOR 4</div>
-          <div class="pp-role">Operador</div><div class="pp-access">ACCEDER</div>
-        </button>
-        <button class="pp-btn" onclick="selProfile('Operador 5','op5','auth')">
-          <div class="pp-top"></div><div class="pp-dot" style="animation-delay:1.4s"></div>
-          <div class="pp-ico">⚙️</div><div class="pp-name">OPERADOR 5</div>
-          <div class="pp-role">Operador</div><div class="pp-access">ACCEDER</div>
-        </button>
-      </div>
-    </div>
-  </div>
 
-  <!-- SEGURIDAD -->
-  <div class="pp-acc">
-    <button class="pp-acc-btn" onclick="ppToggle('seg')">
-      <div class="pp-acc-left">
-        <span class="pp-acc-icon">🛡️</span>
-        <span class="pp-acc-title">Seguridad</span>
-        <span class="pp-acc-count">3 perfiles</span>
+    <!-- Superintendente -->
+    <button class="profile-card pc-super" onclick="selProfile('Superintendente','super','auth')">
+      <div class="profile-tier tier-elite">🔒 ELITE</div>
+      <div class="profile-avatar pa-super">
+        <svg viewBox="0 0 60 80" width="60" height="80">
+          <ellipse cx="30" cy="78" rx="18" ry="4" fill="rgba(0,0,0,.2)"/>
+          <rect x="14" y="48" width="14" height="26" rx="3" fill="#E8650A"/>
+          <rect x="32" y="48" width="14" height="26" rx="3" fill="#E8650A"/>
+          <rect x="10" y="28" width="40" height="24" rx="6" fill="#E8650A"/>
+          <rect x="10" y="44" width="40" height="5" rx="2" fill="#1a1a1a"/>
+          <rect x="3" y="28" width="10" height="22" rx="5" fill="#E8650A"/>
+          <rect x="47" y="28" width="10" height="22" rx="5" fill="#E8650A"/>
+          <!-- Radio en mano -->
+          <rect x="38" y="44" width="8" height="14" rx="2" fill="#1a1a1a"/>
+          <rect x="38" y="48" width="8" height="3" rx="1" fill="#333"/>
+          <circle cx="42" cy="52" r="1.5" fill="#ff4444"/>
+          <rect x="26" y="20" width="8" height="10" rx="4" fill="#c8845a"/>
+          <ellipse cx="30" cy="15" rx="14" ry="14" fill="#c8845a"/>
+          <!-- Casco blanco con estrellas -->
+          <path d="M16 8 Q30 0 44 8 Q44 2 30 0 Q16 2 16 8Z" fill="#f0f0f0"/>
+          <ellipse cx="30" cy="8" rx="16" ry="5.5" fill="#e8e8e8"/>
+          <rect x="14" y="7" width="32" height="4" rx="2" fill="#ddd"/>
+          <!-- Lentes oscuros -->
+          <rect x="18" y="13" rx="3" width="10" height="6" fill="#1a1a2e" opacity=".9"/>
+          <rect x="32" y="13" rx="3" width="10" height="6" fill="#1a1a2e" opacity=".9"/>
+          <line x1="28" y1="16" x2="32" y2="16" stroke="#333" stroke-width="1.5"/>
+          <!-- Estrellas de rango en pecho -->
+          <text x="30" y="40" text-anchor="middle" font-size="8" fill="#f0c060">★★</text>
+        </svg>
       </div>
-      <span class="pp-acc-arrow" id="pp-arrow-seg">▼</span>
+      <div class="profile-info">
+        <div class="profile-name">Superintendente</div>
+        <div class="profile-role">Acceso protegido</div>
+        <div class="profile-stats ps-super"><div class="pstat"></div><div class="pstat"></div><div class="pstat"></div></div>
+      </div>
     </button>
-    <div class="pp-acc-body" id="pp-body-seg">
-      <div class="pp-grid">
-        <button class="pp-btn" onclick="selProfile('Ing. Jorge Garcia','garcia','auth')">
-          <div class="pp-top"></div><div class="pp-dot" style="animation-delay:.3s"></div>
-          <div class="pp-ico">🛡️</div><div class="pp-name">ING. JORGE GARCIA</div>
-          <div class="pp-role">Seguridad</div><div class="pp-access">ACCEDER</div>
-        </button>
-        <button class="pp-btn" onclick="selProfile('Ing. Ocote','ocote','auth')">
-          <div class="pp-top"></div><div class="pp-dot" style="animation-delay:.7s"></div>
-          <div class="pp-ico">🛡️</div><div class="pp-name">ING. OCOTE</div>
-          <div class="pp-role">Seguridad</div><div class="pp-access">ACCEDER</div>
-        </button>
-        <button class="pp-btn" onclick="selProfile('Ing. Cano','cano','auth')">
-          <div class="pp-top"></div><div class="pp-dot" style="animation-delay:1.1s"></div>
-          <div class="pp-ico">🛡️</div><div class="pp-name">ING. CANO</div>
-          <div class="pp-role">Seguridad</div><div class="pp-access">ACCEDER</div>
-        </button>
+
+    <!-- Jefe de Ingeniería -->
+    <button class="profile-card pc-jefe" onclick="selProfile('Jefe','jefe','auth')">
+      <div class="profile-tier tier-legend">🔒 LEYENDA</div>
+      <div class="profile-avatar pa-jefe">
+        <svg viewBox="0 0 60 80" width="60" height="80">
+          <ellipse cx="30" cy="78" rx="18" ry="4" fill="rgba(0,0,0,.2)"/>
+          <rect x="14" y="48" width="14" height="26" rx="3" fill="#1e5caa"/>
+          <rect x="32" y="48" width="14" height="26" rx="3" fill="#1e5caa"/>
+          <rect x="10" y="28" width="40" height="24" rx="6" fill="#1e5caa"/>
+          <rect x="10" y="44" width="40" height="5" rx="2" fill="#0f3460"/>
+          <rect x="3" y="28" width="10" height="22" rx="5" fill="#1e5caa"/>
+          <rect x="47" y="28" width="10" height="22" rx="5" fill="#1e5caa"/>
+          <!-- Tablet/clipboard en mano -->
+          <rect x="15" y="34" width="20" height="16" rx="2" fill="#0f1f3a" stroke="#2a4a8a" stroke-width="1"/>
+          <rect x="16" y="35" width="18" height="10" rx="1" fill="#1e3a6a" opacity=".9"/>
+          <!-- Engrane en logo pecho -->
+          <circle cx="42" cy="34" r="6" fill="#0f3460"/>
+          <circle cx="42" cy="34" r="3.5" fill="none" stroke="#4ade80" stroke-width="1.5"/>
+          <circle cx="42" cy="34" r="1.5" fill="#4ade80"/>
+          <rect x="26" y="20" width="8" height="10" rx="4" fill="#c8845a"/>
+          <ellipse cx="30" cy="15" rx="14" ry="14" fill="#c8845a"/>
+          <path d="M16 8 Q30 0 44 8 Q44 2 30 0 Q16 2 16 8Z" fill="#1a0a04"/>
+          <path d="M18 24 Q30 32 42 24 Q42 30 30 34 Q18 30 18 24Z" fill="#1a0a04" opacity=".8"/>
+          <ellipse cx="23" cy="14" rx="3" ry="2.5" fill="#fff"/>
+          <ellipse cx="37" cy="14" rx="3" ry="2.5" fill="#fff"/>
+          <circle cx="24" cy="15" r="2" fill="#1a0a04"/>
+          <circle cx="38" cy="15" r="2" fill="#1a0a04"/>
+        </svg>
       </div>
-    </div>
-  </div>
+      <div class="profile-info">
+        <div class="profile-name">Jefe Ing.</div>
+        <div class="profile-role">Acceso protegido</div>
+        <div class="profile-stats ps-jefe"><div class="pstat"></div><div class="pstat"></div><div class="pstat"></div></div>
+      </div>
+    </button>
 
-  <div class="pp-foot">
-    <div class="pp-status">SELECCIONA TU DIVISIÓN <span style="animation:ppCur 1s infinite;display:inline-block">_</span></div>
-    <div class="pp-pemex">PEMEX · U-39</div>
   </div>
-
 </div><!-- /profilePicker -->
-
-<script>
-(function(){
-  function ppTick(){var d=new Date(),el=document.getElementById('ppClk');if(el)el.textContent=d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')+':'+d.getSeconds().toString().padStart(2,'0');}
-  ppTick();setInterval(ppTick,1000);
-  setTimeout(function(){
-    var a=document.getElementById('ppBa'),b=document.getElementById('ppBb');
-    if(a)a.style.width='74%';if(b)b.style.width='86%';
-    var p=0,iv=setInterval(function(){p=Math.min(p+1,36);var el=document.getElementById('ppPoz');if(el)el.textContent=p;if(p>=36)clearInterval(iv);},40);
-  },500);
-})();
-function ppToggle(id){
-  var body=document.getElementById('pp-body-'+id);
-  var btn=document.getElementById('pp-body-'+id).previousElementSibling;
-  var isOpen=body.classList.contains('open');
-  ['prod','rec','op','seg'].forEach(function(s){
-    document.getElementById('pp-body-'+s).classList.remove('open');
-    document.getElementById('pp-body-'+s).previousElementSibling.classList.remove('open');
-  });
-  if(!isOpen){body.classList.add('open');if(btn)btn.classList.add('open');}
-}
-</script>
-
-<!-- Status bar permisos -->
-<div id="permsStatusBar" style="display:none;margin:8px 0 4px;background:#0d1525;border-radius:14px;padding:12px 16px;border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(4px)">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-    <span style="font-size:12px;font-weight:800;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase">Estado de permisos</span>
-    <button onclick="verificarPermisos()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:rgba(255,255,255,.6);font-size:11px;padding:4px 10px;cursor:pointer;font-family:'Inter',sans-serif">↻ Verificar</button>
-  </div>
-  <div style="display:flex;gap:8px">
-    <div style="flex:1;background:rgba(255,255,255,.05);border-radius:10px;padding:10px 8px;text-align:center;border:1px solid rgba(255,255,255,.08)">
-      <div style="font-size:22px" id="psGpsIcon">⏳</div>
-      <div style="font-size:10px;font-weight:800;color:rgba(255,255,255,.5);margin-top:3px;letter-spacing:.5px">UBICACIÓN</div>
-      <div style="font-size:10px;margin-top:2px" id="psGpsTxt" style="color:rgba(255,255,255,.3)">Verificando...</div>
-    </div>
-    <div style="flex:1;background:rgba(255,255,255,.05);border-radius:10px;padding:10px 8px;text-align:center;border:1px solid rgba(255,255,255,.08)">
-      <div style="font-size:22px" id="psNotifIcon">⏳</div>
-      <div style="font-size:10px;font-weight:800;color:rgba(255,255,255,.5);margin-top:3px;letter-spacing:.5px">ALERTAS</div>
-      <div style="font-size:10px;margin-top:2px" id="psNotifTxt">Verificando...</div>
-    </div>
-    <div style="flex:1;background:rgba(255,255,255,.05);border-radius:10px;padding:10px 8px;text-align:center;border:1px solid rgba(255,255,255,.08)">
-      <div style="font-size:22px" id="psGpsValIcon">⏳</div>
-      <div style="font-size:10px;font-weight:800;color:rgba(255,255,255,.5);margin-top:3px;letter-spacing:.5px">GPS ACTIVO</div>
-      <div style="font-size:10px;margin-top:2px" id="psGpsValTxt">Esperando...</div>
-    </div>
-
-  </div>
-  <button onclick="activarTodo()" id="psActivarBtn" style="width:100%;margin-top:10px;padding:12px;background:#FF7A00;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif;display:none">
-    ⚡ Activar GPS y notificaciones
-  </button>
-</div>
 
 <!-- ══ FORMULARIO (oculto hasta elegir perfil) ══ -->
 <div id="formContent" style="display:none">
@@ -1736,19 +1495,6 @@ function ppToggle(id){
       <span style="font-size:15px;font-weight:800;margin-top:4px">Niveles de Guardia</span>
     </button>
   </div>
-
-  <!-- CAB Quick Access -->
-  <div style="margin-top:12px">
-    <button onclick="toggleCab()" style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-size:15px;font-weight:800;color:var(--txt);transition:all .2s;font-family:'Inter',sans-serif">
-      <span>🔧 CAB - Seleccionar pozo cabezal</span>
-      <span id="cabArrow" style="font-size:18px;transition:transform .3s;display:inline-block;color:var(--accent)">›</span>
-    </button>
-    <div id="cabList" style="display:none;margin-top:6px;border:1.5px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface)">
-      <div class="wp-item" onclick="setWellFromPicker('19');toggleCab()"><span class="wp-item-icon">🛢</span><span class="wp-item-num">C-19</span></div>
-      <div class="wp-item" onclick="setWellFromPicker('191');toggleCab()"><span class="wp-item-icon">🛢</span><span class="wp-item-num">C-191</span></div>
-      <div class="wp-item" onclick="setWellFromPicker('254');toggleCab()"><span class="wp-item-icon">🛢</span><span class="wp-item-num">C-254</span></div>
-    </div>
-  </div>
 </div>
 
 <!-- ══ NIVELES DE GUARDIA ══ -->
@@ -1935,11 +1681,11 @@ function ppToggle(id){
 <!-- FOTO -->
 <div class="foto-card">
   <div class="foto-title">📸 Evidencia Fotográfica</div>
-  <input type="file" id="fotoInputCam" accept="image/*" capture="environment" onchange="agregarFotos(event)" style="display:none">
-  <input type="file" id="fotoInputGal" accept="image/*" multiple onchange="agregarFotos(event)" style="display:none">
-  <div style="display:flex;gap:8px;margin-bottom:8px">
-    <button class="foto-btn-cam" onclick="document.getElementById('fotoInputCam').click()">📷 Cámara</button>
-    <button class="foto-btn-gal" onclick="document.getElementById('fotoInputGal').click()">🖼 Galería</button>
+  <div class="foto-upload-area" onclick="document.getElementById('fotoInput').click()">
+    <input type="file" id="fotoInput" accept="image/*" capture="environment" onchange="agregarFotos(event)">
+    <span class="foto-icon">📷</span>
+    <div class="foto-label">Toca para tomar foto o seleccionar</div>
+    <div class="foto-sub">Puedes agregar varias fotos como evidencia</div>
   </div>
   <div class="foto-previews" id="fotoPreviews"></div>
   <div class="foto-count" id="fotoCount"></div>
@@ -1948,14 +1694,13 @@ function ppToggle(id){
 <a class="maps-link" id="mapsLink" href="#" target="_blank">📍 Ver mi ubicación en Google Maps</a>
 
 <!-- MODO ALARMA BTN - visitas -->
-<button class="alarm-fab" onclick="abrirAlarma()">🚨 MODO ALARMA</button>
+
 
 </div><!-- /formContent -->
 </div><!-- /view-visitas -->
 
 <!-- ══ VIEW: CATÁLOGO DE POZOS ══ -->
-<div class="view" id="view-catalogo" style="position:relative">
-<button onclick="volverAlPicker()" class="back-to-picker" style="position:static;margin:14px 16px 0">‹ Cambiar perfil</button>
+<div class="view" id="view-catalogo">
 
   <!-- Header catálogo -->
   <div class="cat-header">
@@ -2122,8 +1867,7 @@ function ppToggle(id){
 </div><!-- /view-pozo -->
 
 <!-- ══ VIEW: MAPA / UBICACIÓN DE POZOS ══ -->
-<div class="view" id="view-mapa" style="position:relative">
-<button onclick="volverAlPicker()" class="back-to-picker" style="position:static;margin:14px 16px 0">‹ Cambiar perfil</button>
+<div class="view" id="view-mapa">
 
   <div class="cat-header" style="background:linear-gradient(135deg,#064e3b,#065f46)">
     <h2>📍 Ubicación de Pozos</h2>
@@ -2144,10 +1888,7 @@ function ppToggle(id){
   <div class="map-info-card" id="mapInfoCard">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <div class="map-well-title" id="mapWellName" style="margin:0">C-???</div>
-      <div style="display:flex;gap:8px">
-        <button onclick="trazarRuta()" id="btnRuta" style="padding:7px 12px;background:#0f3460;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🧭 Ir aquí</button>
-        <button onclick="abrirEnMaps()" style="padding:7px 12px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🗺 Maps</button>
-      </div>
+      <button onclick="abrirEnMaps()" style="padding:7px 12px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🗺 Maps</button>
     </div>
     <div style="display:flex;gap:16px;flex-wrap:wrap">
       <div>
@@ -2163,9 +1904,6 @@ function ppToggle(id){
         <div style="font-size:12px;color:var(--txt2)" id="mapDMS">—</div>
       </div>
     </div>
-    <div id="mapDistInfo" style="display:none;margin-top:10px;padding:8px 10px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--txt2)">
-      📏 <span id="mapDistTxt">—</span>
-    </div>
   </div>
 
   <!-- MAPA LEAFLET -->
@@ -2180,14 +1918,12 @@ function ppToggle(id){
 </div><!-- /view-mapa -->
 
 <!-- ══ VIEW: HISTORIAL DE REPORTES ══ -->
-<div class="view" id="view-historial" style="position:relative">
-<button onclick="volverAlPicker()" class="back-to-picker" style="position:static;margin:14px 16px 0">‹ Cambiar perfil</button>
+<div class="view" id="view-historial">
 
   <div class="hist-header">
     <h2>📋 Historial Central</h2>
     <p id="histHeaderSub">🔄 Sincronizando con Firebase...</p>
   </div>
-  <button onclick="volverAlPicker()" class="back-to-picker" style="position:static;margin:14px 16px 0">‹ Cambiar perfil</button>
 
   <!-- Estado de sincronización -->
   <div id="histSyncBar" style="display:none;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:8px">
@@ -2211,7 +1947,7 @@ function ppToggle(id){
 </div><!-- /view-historial -->
 
 <!-- SUPERINTENDENTE -->
-<div class="view" id="view-super" style="position:relative">
+<div class="view" id="view-super">
 
   <!-- Estilos exclusivos del panel Super -->
   <style>
@@ -2368,257 +2104,13 @@ function ppToggle(id){
     </div>
 
     <!-- MODO ALARMA BTN - super -->
-    <button class="alarm-fab" onclick="abrirAlarma()" style="margin-top:14px;position:relative;width:100%;max-width:340px">🚨 MODO ALARMA</button>
-
-    <!-- ══ DASHBOARD EN TIEMPO REAL ══ -->
-    <div style="width:100%;max-width:340px;margin-top:18px">
-
-      <!-- Título dashboard -->
-      <div style="font-size:11px;letter-spacing:3px;color:#FF7A00;font-family:monospace;margin-bottom:12px;text-align:center">
-        📊 DASHBOARD EN TIEMPO REAL
-      </div>
-
-      <!-- 1. Progreso de visitas -->
-      <div style="background:#0d1b2e;border-radius:14px;border:1px solid rgba(255,122,0,.25);padding:14px;margin-bottom:10px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span style="font-size:11px;color:rgba(255,255,255,.5);letter-spacing:1px;font-family:monospace">POZOS VISITADOS HOY</span>
-          <span style="font-size:18px;font-weight:700;color:#FF7A00;font-family:monospace"><span id="sd-visitados">0</span><span style="font-size:11px;color:rgba(255,255,255,.3)"> / <span id="sd-total">42</span></span></span>
-        </div>
-        <div style="height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden">
-          <div id="sd-bar-visitas" style="height:100%;background:linear-gradient(90deg,#FF7A00,#ffb347);border-radius:4px;width:0%;transition:width .8s ease"></div>
-        </div>
-        <div style="font-size:9px;color:rgba(255,255,255,.2);margin-top:6px;font-family:monospace">
-          Última visita: <span id="sd-ultima">—</span>
-        </div>
-      </div>
-
-      <!-- 2. Producción por turno -->
-      <div style="background:#0d1b2e;border-radius:14px;border:1px solid rgba(255,122,0,.25);padding:14px;margin-bottom:10px">
-        <div style="font-size:11px;color:rgba(255,255,255,.5);letter-spacing:1px;font-family:monospace;margin-bottom:10px">BARRILES POR TURNO</div>
-        <div style="display:flex;gap:8px;align-items:flex-end;height:70px">
-          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
-            <span id="sd-t1-val" style="font-size:11px;color:#5bc8a0;font-family:monospace">0</span>
-            <div style="width:100%;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;height:50px;display:flex;align-items:flex-end">
-              <div id="sd-t1-bar" style="width:100%;background:#5bc8a0;border-radius:4px;height:0%;transition:height .8s ease"></div>
-            </div>
-            <span style="font-size:8px;color:rgba(255,255,255,.3);font-family:monospace">T1</span>
-          </div>
-          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
-            <span id="sd-t2-val" style="font-size:11px;color:#4090e0;font-family:monospace">0</span>
-            <div style="width:100%;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;height:50px;display:flex;align-items:flex-end">
-              <div id="sd-t2-bar" style="width:100%;background:#4090e0;border-radius:4px;height:0%;transition:height .8s ease"></div>
-            </div>
-            <span style="font-size:8px;color:rgba(255,255,255,.3);font-family:monospace">T2</span>
-          </div>
-          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
-            <span id="sd-t3-val" style="font-size:11px;color:#FF7A00;font-family:monospace">0</span>
-            <div style="width:100%;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;height:50px;display:flex;align-items:flex-end">
-              <div id="sd-t3-bar" style="width:100%;background:#FF7A00;border-radius:4px;height:0%;transition:height .8s ease"></div>
-            </div>
-            <span style="font-size:8px;color:rgba(255,255,255,.3);font-family:monospace">T3</span>
-          </div>
-        </div>
-        <div style="font-size:9px;color:rgba(255,255,255,.2);margin-top:6px;font-family:monospace;text-align:right">
-          Total: <span id="sd-bls-total" style="color:#5bc8a0">0</span> bls
-        </div>
-      </div>
-
-      <!-- 3. Mapa de calor pozos -->
-      <div style="background:#0d1b2e;border-radius:14px;border:1px solid rgba(255,122,0,.25);padding:14px;margin-bottom:10px">
-        <div style="font-size:11px;color:rgba(255,255,255,.5);letter-spacing:1px;font-family:monospace;margin-bottom:10px">MAPA DE ACTIVIDAD HOY</div>
-        <div id="sd-heatmap" style="display:flex;flex-wrap:wrap;gap:4px"></div>
-        <div style="display:flex;gap:10px;margin-top:8px">
-          <div style="display:flex;align-items:center;gap:4px"><div style="width:8px;height:8px;background:#5bc8a0;border-radius:2px"></div><span style="font-size:8px;color:rgba(255,255,255,.3);font-family:monospace">Visitado</span></div>
-          <div style="display:flex;align-items:center;gap:4px"><div style="width:8px;height:8px;background:#FF7A00;border-radius:2px"></div><span style="font-size:8px;color:rgba(255,255,255,.3);font-family:monospace">Guardia</span></div>
-          <div style="display:flex;align-items:center;gap:4px"><div style="width:8px;height:8px;background:rgba(255,255,255,.08);border-radius:2px"></div><span style="font-size:8px;color:rgba(255,255,255,.3);font-family:monospace">Sin visita</span></div>
-        </div>
-      </div>
-
-      <!-- 4. Tendencia niveles Frac Tank -->
-      <div style="background:#0d1b2e;border-radius:14px;border:1px solid rgba(255,122,0,.25);padding:14px;margin-bottom:10px">
-        <div style="font-size:11px;color:rgba(255,255,255,.5);letter-spacing:1px;font-family:monospace;margin-bottom:10px">NIVELES FRAC TANK (HOY)</div>
-        <div id="sd-frac-list" style="display:flex;flex-direction:column;gap:6px">
-          <div style="font-size:10px;color:rgba(255,255,255,.2);font-family:monospace;text-align:center;padding:8px">Sin registros hoy</div>
-        </div>
-      </div>
-
-      <!-- 5. Contador de actividades -->
-      <div style="background:#0d1b2e;border-radius:14px;border:1px solid rgba(255,122,0,.25);padding:14px;margin-bottom:10px">
-        <div style="font-size:11px;color:rgba(255,255,255,.5);letter-spacing:1px;font-family:monospace;margin-bottom:10px">ACTIVIDADES DEL DÍA</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:10px;text-align:center">
-            <div style="font-size:22px;font-weight:700;color:#5bc8a0;font-family:monospace" id="sd-trabajo">0</div>
-            <div style="font-size:8px;color:rgba(255,255,255,.3);letter-spacing:1px;font-family:monospace;margin-top:2px">TRABAJOS</div>
-          </div>
-          <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:10px;text-align:center">
-            <div style="font-size:22px;font-weight:700;color:#4090e0;font-family:monospace" id="sd-drenar">0</div>
-            <div style="font-size:8px;color:rgba(255,255,255,.3);letter-spacing:1px;font-family:monospace;margin-top:2px">DRENES</div>
-          </div>
-          <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:10px;text-align:center">
-            <div style="font-size:22px;font-weight:700;color:#FF7A00;font-family:monospace" id="sd-aforo">0</div>
-            <div style="font-size:8px;color:rgba(255,255,255,.3);letter-spacing:1px;font-family:monospace;margin-top:2px">AFOROS</div>
-          </div>
-          <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:10px;text-align:center">
-            <div style="font-size:22px;font-weight:700;color:#c084fc;font-family:monospace" id="sd-inter">0</div>
-            <div style="font-size:8px;color:rgba(255,255,255,.3);letter-spacing:1px;font-family:monospace;margin-top:2px">INTERMIT.</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Actualizar btn -->
-      <button onclick="sdCargar()" style="width:100%;background:rgba(255,122,0,.1);border:1px solid rgba(255,122,0,.3);border-radius:10px;padding:10px;color:#FF7A00;font-size:11px;letter-spacing:2px;font-family:monospace;cursor:pointer;margin-bottom:4px">
-        ↻ ACTUALIZAR DATOS
-      </button>
-      <div style="font-size:8px;color:rgba(255,255,255,.15);text-align:center;font-family:monospace">Actualizado: <span id="sd-updated">—</span></div>
-    </div>
-
-    <script>
-    // ── Dashboard Superintendente ─────────────────────────────────────
-    var WELLS_DASH = ['19','106D','119','128','139','167','172','179','187','191','197','201','213','224','324','326','327','342','346','350','352','356','359','363','364','367','373','376','385','500','502','504','505','601','602','603'];
-
-    function sdCargar(){
-      if(typeof fbDB === 'undefined' || !fbDB) {
-        setTimeout(sdCargar, 800);
-        return;
-      }
-      var hoy = new Date();
-      var yyyy = hoy.getFullYear();
-      var mm   = String(hoy.getMonth()+1).padStart(2,'0');
-      var dd   = String(hoy.getDate()).padStart(2,'0');
-      var fechaHoy = dd+'/'+mm+'/'+yyyy;
-
-      fbDB.ref('reportes').orderByChild('fecha').once('value', function(snap){
-        var visitados = new Set();
-        var guardias  = new Set();
-        var t1=0, t2=0, t3=0;
-        var trabajo=0, drenar=0, aforo=0, inter=0;
-        var fracItems = [];
-        var ultimaHora = '';
-
-        snap.forEach(function(child){
-          var r = child.val();
-          if(!r || !r.fecha) return;
-          var fStr = (r.fecha+'').substring(0,10).replace(/-/g,'/');
-          // Normalize date format
-          var partes = fStr.split('/');
-          var rFecha = '';
-          if(partes[0] && partes[0].length===4){
-            rFecha = partes[2]+'/'+partes[1]+'/'+partes[0];
-          } else {
-            rFecha = fStr;
-          }
-          if(rFecha !== fechaHoy) return;
-
-          var pozo = (r.pozo||'').replace('C-','');
-          var tipo = (r.tipo||r.mode||'diario').toLowerCase();
-
-          if(tipo.includes('guardia')){
-            guardias.add(pozo);
-            var bls = parseFloat(r.barriles||r.bls||0);
-            var hr = (r.hora||r.time||'').toLowerCase();
-            if(hr.includes('a.m') || hr.includes('am')) t1+=bls;
-            else if(hr < '15:00') t2+=bls;
-            else t3+=bls;
-            if(bls>0) fracItems.push({pozo:'C-'+pozo, bls:bls, hora:r.hora||''});
-          } else {
-            visitados.add(pozo);
-            ultimaHora = r.hora || r.timestamp || '';
-            if(r.trabajo) trabajo++;
-            if(r.drenar)  drenar++;
-            if(r.aforo)   aforo++;
-            if(r.intermitente) inter++;
-          }
-        });
-
-        // 1. Progreso visitas
-        var nVis = visitados.size + guardias.size;
-        var total = WELLS_DASH.length;
-        document.getElementById('sd-visitados').textContent = nVis;
-        document.getElementById('sd-total').textContent = total;
-        document.getElementById('sd-bar-visitas').style.width = Math.min(100, Math.round(nVis/total*100))+'%';
-        if(ultimaHora) document.getElementById('sd-ultima').textContent = ultimaHora;
-
-        // 2. Barras turno
-        var maxT = Math.max(t1,t2,t3,1);
-        document.getElementById('sd-t1-val').textContent = t1;
-        document.getElementById('sd-t2-val').textContent = t2;
-        document.getElementById('sd-t3-val').textContent = t3;
-        document.getElementById('sd-t1-bar').style.height = Math.round(t1/maxT*100)+'%';
-        document.getElementById('sd-t2-bar').style.height = Math.round(t2/maxT*100)+'%';
-        document.getElementById('sd-t3-bar').style.height = Math.round(t3/maxT*100)+'%';
-        document.getElementById('sd-bls-total').textContent = (t1+t2+t3).toFixed(1);
-
-        // 3. Mapa calor
-        var hm = document.getElementById('sd-heatmap');
-        hm.innerHTML = '';
-        WELLS_DASH.forEach(function(w){
-          var div = document.createElement('div');
-          var bg = visitados.has(w) ? '#5bc8a0' : guardias.has(w) ? '#FF7A00' : 'rgba(255,255,255,.08)';
-          div.title = 'C-'+w;
-          div.style.cssText = 'width:28px;height:28px;border-radius:5px;background:'+bg+';display:flex;align-items:center;justify-content:center;font-size:7px;color:rgba(255,255,255,.6);font-family:monospace;cursor:default';
-          div.textContent = w.length>3 ? w.substring(0,3) : w;
-          hm.appendChild(div);
-        });
-
-        // 4. Frac tank
-        var fl = document.getElementById('sd-frac-list');
-        if(fracItems.length){
-          fl.innerHTML = '';
-          fracItems.slice(-6).forEach(function(item){
-            var d = document.createElement('div');
-            d.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:rgba(255,255,255,.04);border-radius:6px';
-            d.innerHTML = '<span style="font-size:10px;color:rgba(255,255,255,.6);font-family:monospace">'+item.pozo+'</span>'
-              +'<span style="font-size:10px;color:#5bc8a0;font-family:monospace">'+item.bls+' bls</span>'
-              +'<span style="font-size:9px;color:rgba(255,255,255,.25);font-family:monospace">'+item.hora+'</span>';
-            fl.appendChild(d);
-          });
-        } else {
-          fl.innerHTML = '<div style="font-size:10px;color:rgba(255,255,255,.2);font-family:monospace;text-align:center;padding:8px">Sin registros hoy</div>';
-        }
-
-        // 5. Actividades
-        document.getElementById('sd-trabajo').textContent = trabajo;
-        document.getElementById('sd-drenar').textContent  = drenar;
-        document.getElementById('sd-aforo').textContent   = aforo;
-        document.getElementById('sd-inter').textContent   = inter;
-
-        // Timestamp
-        var now = new Date();
-        document.getElementById('sd-updated').textContent =
-          now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-      });
-    }
-
-    // Auto-cargar al entrar a super view
-    document.addEventListener('DOMContentLoaded', function(){
-      setTimeout(function(){
-        var orig = window.switchView;
-        if(typeof orig === 'function'){
-          window.switchView = function(id){
-            orig(id);
-            if(id==='super') setTimeout(sdCargar, 500);
-          };
-        }
-      }, 500);
-    });
-
-    // Actualizar en tiempo real cuando llegan reportes
-    function sdIniciarListener(){
-      if(typeof fbDB !== 'undefined' && fbDB){
-        fbDB.ref('reportes').on('child_added', function(){ sdCargar(); });
-      } else {
-        setTimeout(sdIniciarListener, 1000);
-      }
-    }
-    sdIniciarListener();
-    </script>
+    
 
   </div>
 </div><!-- /view-super -->
 
 <!-- JEFE DE INGENIERÍA -->
-<div class="view" id="view-jefe" style="position:relative">
-<button onclick="volverAlPicker()" class="back-to-picker" style="position:static;margin:14px 16px 0">‹ Cambiar perfil</button>
+<div class="view" id="view-jefe">
   <div class="hist-header">
     <h2>⚙️ Jefe de Ingeniería</h2>
     <p id="jefeHeaderSub">Panel de ingeniería del campo</p>
@@ -2628,9 +2120,7 @@ function ppToggle(id){
     <div style="font-size:16px;font-weight:700;color:var(--txt);margin-bottom:8px">Sección en construcción</div>
     <div style="font-size:13px">Aquí irán los análisis e información técnica para el Jefe de Ingeniería.</div>
   </div>
-  <button onclick="volverAlPicker()" class="back-to-picker" style="position:static;margin:14px 16px 0">‹ Cambiar perfil</button>
-
-  <button class="alarm-fab" onclick="abrirAlarma()" style="margin-top:14px;position:relative;width:100%">🚨 MODO ALARMA</button>
+  
 
 </div><!-- /view-jefe -->
 
@@ -2668,46 +2158,27 @@ function ppToggle(id){
   <p>📲 <strong>Instalar en iPhone:</strong> Toca <strong>Compartir ↑</strong> en Safari → <strong>"Agregar a pantalla de inicio"</strong> → Agregar</p>
 </div>
 
-<!-- ══ LOGIN RECORREDORES ══ -->
-<!-- ══ LOGIN UNIFICADO ══ -->
-<div class="login-overlay" id="recLoginOverlay">
-  <div class="login-box">
-    <div class="login-icon" id="recLoginIcon">👷</div>
-    <div class="login-title" id="recLoginHint">Recorredor</div>
-    <p style="font-size:12px;color:rgba(255,255,255,.45);text-align:center;margin-bottom:16px">Ingresa tu contraseña</p>
-    <input type="hidden" id="recLoginUser">
-    <div class="login-field" style="position:relative">
-      <label class="login-label">Contraseña</label>
-      <input class="login-input" type="password" id="recLoginPass" placeholder="••••••••"
-        onkeydown="if(event.key==='Enter')doRecLogin()">
-      <button type="button" onclick="togglePass('recLoginPass',this)" style="position:absolute;right:10px;bottom:10px;background:none;border:none;color:rgba(255,255,255,.4);font-size:16px;cursor:pointer;padding:4px">👁</button>
-    </div>
-    <div class="login-err" id="recLoginErr" style="display:none"></div>
-    <button class="login-btn" onclick="doRecLogin()">Entrar</button>
-    <button class="login-cancel" onclick="cerrarRecLogin()">Cancelar</button>
-  </div>
-</div>
-
-<!-- Login auth (produccion/seguridad/operadores) - solo contraseña -->
 <div class="login-overlay" id="loginOverlay">
   <div class="login-box">
-    <div class="login-icon" id="loginIcon">🔒</div>
-    <div class="login-title" id="loginTitle">Acceso Restringido</div>
-    <div class="login-sub" id="loginSub">Ingresa tu contraseña</div>
-    <input type="hidden" id="loginUser">
-    <div class="login-field" style="position:relative">
-      <label>Contraseña</label>
-      <input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" autocomplete="off">
-      <button type="button" onclick="togglePass('loginPass',this)" style="position:absolute;right:10px;bottom:10px;background:none;border:none;color:rgba(255,255,255,.4);font-size:16px;cursor:pointer;padding:4px">👁</button>
+    <div class="login-icon">🔒</div>
+    <div class="login-title">Acceso Restringido</div>
+    <div class="login-sub">Esta sección es exclusiva para supervisión</div>
+    <div class="login-field">
+      <label>Usuario</label>
+      <input type="text" id="loginUser" placeholder="Usuario" autocomplete="off">
     </div>
-    <div class="login-err" id="loginErr" style="display:none">❌ Contraseña incorrecta</div>
+    <div class="login-field">
+      <label>Contraseña</label>
+      <input type="password" id="loginPass" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-err" id="loginErr">❌ Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()">Ingresar</button>
     <button class="login-cancel" onclick="closeLogin()">Cancelar</button>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="send-fixed" id="sendFixed" style="display:none">
+<div class="send-fixed" id="sendFixed">
   <div class="send-wrap">
     <button class="send-btn" id="sendBtn" onclick="mostrarConfirmacion()" style="opacity:.45;pointer-events:none">📤 Enviar reporte a WhatsApp</button>
   </div>
@@ -2815,8 +2286,7 @@ document.title='C-'+W;
 function toggleMode(){
   nightMode=!nightMode;
   document.body.classList.toggle('night',nightMode);
-  var btn=document.getElementById('modeBtn');
-  btn.textContent=nightMode?'☀️ Modo Día':'🌙 Modo Noche';
+  document.getElementById('modeBtn').textContent=nightMode?'☀️ Día':'🌙 Noche';
   try{localStorage.setItem('cuichapa_mode',nightMode?'night':'day');}catch(e){}
 }
 try{if(localStorage.getItem('cuichapa_mode')==='night'){nightMode=true;document.body.classList.add('night');document.getElementById('modeBtn').textContent='☀️ Día';}}catch(e){}
@@ -2834,17 +2304,7 @@ function gpsErr(){
   var gb2=document.getElementById('gpsBar');if(gb2)gb2.className='gps-bar err';
   document.getElementById('gpsBar').innerHTML='⚠️ Sin GPS — activa ubicación en tu celular';
 }
-// Obtener GPS inmediatamente y mantenerlo actualizado
-if(navigator.geolocation){
-  // Primera lectura
-  navigator.geolocation.getCurrentPosition(gpsOk,gpsErr,{enableHighAccuracy:true,timeout:15000,maximumAge:0});
-  // Actualización continua
-  navigator.geolocation.watchPosition(
-    function(p){ la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy); },
-    function(){},
-    {enableHighAccuracy:true, maximumAge:10000, timeout:15000}
-  );
-} else { gpsErr(); }
+navigator.geolocation?navigator.geolocation.getCurrentPosition(gpsOk,gpsErr,{enableHighAccuracy:true,timeout:15000,maximumAge:0}):gpsErr();
 
 function showTab(id,btn){
   document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
@@ -2899,221 +2359,51 @@ function mostrarContador(nombre){
   }
 }
 
-// ── Barra de estado de permisos ──────────────────
-function verificarPermisos(){
-  var bar = document.getElementById('permsStatusBar');
-  if(bar) bar.style.display = 'block';
-
-  // GPS permission
-  var gpsIcon = document.getElementById('psGpsIcon');
-  var gpsTxt  = document.getElementById('psGpsTxt');
-  var gpsValIcon = document.getElementById('psGpsValIcon');
-  var gpsValTxt  = document.getElementById('psGpsValTxt');
-  var notifIcon = document.getElementById('psNotifIcon');
-  var notifTxt  = document.getElementById('psNotifTxt');
-  var btn = document.getElementById('psActivarBtn');
-
-  var needsAction = false;
-
-  // Check GPS
-  if(navigator.permissions){
-    navigator.permissions.query({name:'geolocation'}).then(function(r){
-      if(r.state === 'granted'){
-        if(gpsIcon) gpsIcon.textContent = '✅';
-        if(gpsTxt)  gpsTxt.style.color = '#4ade80';
-        if(gpsTxt)  gpsTxt.textContent = 'Activada';
-        // Check if we have actual coords
-        if(la !== 0 && lo !== 0){
-          if(gpsValIcon) gpsValIcon.textContent = '✅';
-          if(gpsValTxt)  gpsValTxt.style.color = '#4ade80';
-          if(gpsValTxt)  gpsValTxt.textContent = '±'+ac+'m';
-        } else {
-          if(gpsValIcon) gpsValIcon.textContent = '⚠️';
-          if(gpsValTxt)  gpsValTxt.style.color = '#facc15';
-          if(gpsValTxt)  gpsValTxt.textContent = 'Buscando...';
-          navigator.geolocation.getCurrentPosition(
-            function(p){ la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy);
-              if(gpsValIcon) gpsValIcon.textContent='✅';
-              if(gpsValTxt){ gpsValTxt.style.color='#4ade80'; gpsValTxt.textContent='±'+ac+'m'; }
-            },
-            function(){
-              if(gpsValIcon) gpsValIcon.textContent='❌';
-              if(gpsValTxt){ gpsValTxt.style.color='#f87171'; gpsValTxt.textContent='Sin señal'; }
-            },
-            {enableHighAccuracy:true,timeout:8000,maximumAge:0}
-          );
-        }
-      } else {
-        if(gpsIcon) gpsIcon.textContent = '❌';
-        if(gpsTxt){ gpsTxt.style.color='#f87171'; gpsTxt.textContent='Desactivada'; }
-        if(gpsValIcon) gpsValIcon.textContent = '❌';
-        if(gpsValTxt){ gpsValTxt.style.color='#f87171'; gpsValTxt.textContent='Sin permiso'; }
-        needsAction = true;
-        if(btn) btn.style.display='block';
-      }
-    });
-  } else {
-    // Fallback: try to get GPS directly
-    if(la !== 0 && lo !== 0){
-      if(gpsIcon) gpsIcon.textContent='✅';
-      if(gpsTxt){ gpsTxt.style.color='#4ade80'; gpsTxt.textContent='Activa'; }
-    } else {
-      if(gpsIcon) gpsIcon.textContent='⚠️';
-      if(gpsTxt){ gpsTxt.style.color='#facc15'; gpsTxt.textContent='Verificando'; }
-    }
-  }
-
-  // Check Notifications
-  if('Notification' in window){
-    var perm = Notification.permission;
-    if(perm === 'granted'){
-      if(notifIcon) notifIcon.textContent = '✅';
-      if(notifTxt){ notifTxt.style.color='#4ade80'; notifTxt.textContent='Activadas'; }
-    } else if(perm === 'denied'){
-      if(notifIcon) notifIcon.textContent = '❌';
-      if(notifTxt){ notifTxt.style.color='#f87171'; notifTxt.textContent='Bloqueadas'; }
-      needsAction = true;
-      if(btn) btn.style.display='block';
-    } else {
-      if(notifIcon) notifIcon.textContent = '⚠️';
-      if(notifTxt){ notifTxt.style.color='#facc15'; notifTxt.textContent='Sin activar'; }
-      needsAction = true;
-      if(btn) btn.style.display='block';
-    }
-  } else {
-    if(notifIcon) notifIcon.textContent = '❌';
-    if(notifTxt){ notifTxt.style.color='#f87171'; notifTxt.textContent='No soportado'; }
-  }
-
-  if(!needsAction && btn) btn.style.display='none';
-}
-
-
-
-function activarTodo(){
-  // Pedir GPS
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(
-      function(p){ la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy); verificarPermisos(); },
-      function(){ verificarPermisos(); },
-      {enableHighAccuracy:true, timeout:10000, maximumAge:0}
-    );
-  }
-  // Pedir notificaciones
-  if('Notification' in window && Notification.permission !== 'granted'){
-    Notification.requestPermission().then(function(p){
-      if(p==='granted' && fbDB) setTimeout(initFCM, 500);
-      verificarPermisos();
-    });
-  }
-}
-
-// Mostrar barra al cargar
-window.addEventListener('load', function(){
-  setTimeout(function(){
-    verificarPermisos();
-    mostrarPermOverlay();
-  }, 800);
-});
-
 // ── Selector de perfil ───────────────────────────
-var loginCurrentTheme = '';
-var loginCurrentNombre = '';
-
 function selProfile(nombre, theme, tipo){
   if(tipo === 'auth'){
-    loginCurrentTheme = theme;
-    loginCurrentNombre = nombre;
-    // Set icon and title in the login overlay
-    var icons = {
-      super:'⭐', jefe:'👷', ductos:'🔧', almacenista:'📦',
-      gill:'🏗️', op1:'⚙️', op2:'⚙️', op3:'⚙️', op4:'⚙️', op5:'⚙️',
-      garcia:'🛡️', ocote:'🛡️', cano:'🛡️'
-    };
-    var ic = document.getElementById('loginIcon');
-    var ti = document.getElementById('loginTitle');
-    var su = document.getElementById('loginSub');
-    if(ic) ic.textContent = icons[theme] || '🔒';
-    if(ti) ti.textContent = nombre;
-    if(su) su.textContent = 'Ingresa tu contraseña';
-    // For auth profiles, open the shared loginOverlay (no target view needed yet)
-    loginTarget = 'visitas'; // default, will be changed by requireLogin if needed
-    // Determine default view based on permissions
-    var perms = PERMISOS_MAP[theme] || [];
-    loginTarget = perms[0] || 'mapa';
-    document.getElementById('loginPass').value='';
-    document.getElementById('loginErr').style.display='none';
-    document.getElementById('loginOverlay').classList.add('open');
-    setTimeout(function(){document.getElementById('loginPass').focus();},200);
+    // Superintendente o Jefe → login
+    var target = (nombre === 'Superintendente') ? 'super' : 'jefe';
+    requireLogin(target);
     return;
   }
-  // Recorredor → pedir contraseña
-  var key = nombre.replace(' ','');
-  abrirRecLogin(key, theme);
-}
-
-function mostrarFormRecorredor(nombre, theme){
+  // Recorredor → ocultar picker, pre-seleccionar y mostrar form
   var picker = document.getElementById('profilePicker');
   if(picker){
-    picker.style.transition='opacity .3s,transform .3s';
-    picker.style.opacity='0'; picker.style.transform='translateY(-10px)';
-    setTimeout(function(){ picker.style.display='none'; }, 280);
+    picker.style.transition = 'opacity .3s,transform .3s';
+    picker.style.opacity = '0';
+    picker.style.transform = 'translateY(-10px)';
+    setTimeout(function(){
+      picker.style.display = 'none';
+      // Mostrar el contenido del formulario
+      var formContent = document.getElementById('formContent');
+      if(formContent){
+        formContent.style.display = 'block';
+        formContent.style.animation = 'fadeUp .4s ease both';
+        // Mostrar botón de enviar
+        var sf = document.getElementById('sendFixed');
+        if(sf) sf.style.display = 'block';
+        // Re-trigger well picker (was hidden inside display:none)
+        var wp = document.getElementById('wellPicker');
+        if(wp && W==='???') wp.classList.add('show');
+        // Re-populate well list if empty
+        var sugg = document.getElementById('wpSuggestions');
+        if(sugg && !sugg.children.length){
+          var TODOS=['19','106D','119','128','139','167','172','179','187','191','197','201','213','224','324','326','327','342','346','350','352','356','359','363','364','367','373','376','385','500','502','504','505','601','602','603'];
+          sugg.innerHTML=TODOS.map(function(w){
+            return '<div class="wp-item" onclick="setWellFromPicker(\'' + w + '\')"><span class="wp-item-icon">🛢</span><span class="wp-item-num">C-' + w + '</span></div>';
+          }).join('');
+        }
+      }
+      // Desbloquear sidebar
+      var sb=document.querySelector('.sidebar');if(sb){sb.classList.add('sidebar-unlocked');document.body.classList.add('sidebar-visible');}
+      // Pre-seleccionar el recorredor automáticamente
+      selRec(null, nombre, theme);
+    }, 280);
   }
-  var formContent = document.getElementById('formContent');
-  if(formContent){
-    formContent.style.display='block';
-    formContent.style.animation='fadeUp .4s ease both';
-    var sf=document.getElementById('sendFixed'); if(sf) sf.style.display='block';
-    var wp=document.getElementById('wellPicker'); if(wp) wp.classList.add('show');
-    var sugg=document.getElementById('wpSuggestions');
-    if(sugg && !sugg.children.length){
-      ['19','106D','119','128','139','167','172','179','187','191','197','201','213','224',
-       '324','326','327','342','346','350','352','356','359','363','364','367','373','376',
-       '385','500','502','504','505','601','602','603'].forEach(function(w){
-        var d=document.createElement('div'); d.className='wp-item';
-        d.innerHTML='<span class="wp-item-icon">🛢</span><span class="wp-item-num">C-'+w+'</span>';
-        d.onclick=function(){ setWellFromPicker(w); };
-        sugg.appendChild(d);
-      });
-    }
-  }
-  var sb=document.querySelector('.sidebar');
-  if(sb){ sb.classList.add('sidebar-unlocked'); document.body.classList.add('sidebar-visible'); }
-  aplicarPermisos(theme);
-  selRec(null, nombre, theme);
 }
 
 function volverAlPicker(){
-  // Reset session
-  REC = '';
-  loggedIn = false;
-  loggedUser = '';
-  loggedTheme = '';
-  // Hide change-profile button
-  var cpb = document.getElementById('changeProfileBtn');
-  if(cpb) cpb.style.display = 'none';
-  // Reset sidebar icons visibility
-  ['super','jefe','catalogo','mapa','historial'].forEach(function(v){
-    var ic = document.getElementById('icon-'+v);
-    if(ic){
-      ic.classList.add('sidebar-locked');
-      ic.style.display = '';
-    }
-  });
-  // Hide sidebar
-  var sb = document.querySelector('.sidebar');
-  if(sb){ sb.classList.remove('sidebar-unlocked'); document.body.classList.remove('sidebar-visible'); }
-  // Show visitas view with picker
-  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active')});
-  var visitas = document.getElementById('view-visitas');
-  if(visitas) visitas.classList.add('active');
-  var picker = document.getElementById('profilePicker');
-  var formContent = document.getElementById('formContent');
-  var sf = document.getElementById('sendFixed');
-  if(picker){ picker.style.display='block'; picker.style.opacity='1'; picker.style.transform=''; }
-  if(formContent) formContent.style.display='none';
-  if(sf) sf.style.display='none';
-
   var picker = document.getElementById('profilePicker');
   var formContent = document.getElementById('formContent');
   if(picker){
@@ -3195,7 +2485,7 @@ function peraLinea(){
   Object.keys(peraState).forEach(function(k){
     if(peraState[k]) parts.push(map[k]+': '+(peraState[k]==='ok'?'✓':'✗'));
   });
-  return parts.length ? '🍐 *Cond. de Pera*\n'+parts.map(function(p){ return (p.includes('✓')?'✅':'❌')+' '+p.replace(': ✓','').replace(': ✗',''); }).join('\n') : '';
+  return parts.length ? '🍐 Cond. de Pera: '+parts.join(' · ') : '';
 }
 
 function selEstado(btn, val){
@@ -3242,18 +2532,7 @@ function toggleChk(key){
   }
 }
 
-function gpsLine(){
-  if(!la||!lo) return 'GPS: No disponible';
-  var base='GPS: '+la.toFixed(6)+', '+lo.toFixed(6)+' (±'+ac+'m)\n🗺 maps.google.com/?q='+la+','+lo;
-  if(W && WELL_COORDS_ALL[W]){
-    var wc=WELL_COORDS_ALL[W];
-    var dLat=(wc.lat-la)*Math.PI/180;var dLon=(wc.lon-lo)*Math.PI/180;
-    var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(la*Math.PI/180)*Math.cos(wc.lat*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
-    var dm=6371000*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-    base+='\n📏 Distancia al pozo: '+(dm<1000?Math.round(dm)+'m':(dm/1000).toFixed(2)+'km')+(dm<=100?' OK':' LEJOS');
-  }
-  return base;
-}
+function gpsLine(){return la?'📍 GPS: '+la.toFixed(6)+', '+lo.toFixed(6)+' (±'+ac+'m)\n🗺 maps.google.com/?q='+la+','+lo:'📍 GPS: No disponible';}
 function now(){var d=new Date();return d.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'})+'  '+d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});}
 function v(id){return document.getElementById(id).value.trim();}
 // ══ VACACIONES ══
@@ -3412,7 +2691,7 @@ function comprimirImagen(file, callback){
 
 function agregarFotos(e){
   var files = Array.from(e.target.files);
-  setTimeout(function(){ e.target.value=''; }, 100); // reset con delay para iOS
+  e.target.value = ''; // reset inmediato para poder tomar otra foto
   if(!files.length) return;
 
   var count = document.getElementById('fotoCount');
@@ -3493,25 +2772,6 @@ function enviarTodo(soloPreview){
   if(!REC){alert('Selecciona tu nombre primero');return}
   // Validar que se haya escogido un pozo
   if(!W || W==='???'){alert('Selecciona el pozo antes de enviar');return}
-
-  // ── Verificación de radio 100m ─────────────────────
-  if(la && lo && WELL_COORDS_ALL[W]){
-    var wc = WELL_COORDS_ALL[W];
-    var R = 6371000; // radio tierra en metros
-    var dLat = (wc.lat - la) * Math.PI / 180;
-    var dLon = (wc.lon - lo) * Math.PI / 180;
-    var a2 = Math.sin(dLat/2)*Math.sin(dLat/2) +
-             Math.cos(la*Math.PI/180)*Math.cos(wc.lat*Math.PI/180)*
-             Math.sin(dLon/2)*Math.sin(dLon/2);
-    var distMetros = R * 2 * Math.atan2(Math.sqrt(a2), Math.sqrt(1-a2));
-    if(distMetros > 100){
-      var distTxt = distMetros < 1000 ? Math.round(distMetros)+'m' : (distMetros/1000).toFixed(2)+'km';
-      var msg100 = "Estas a " + distTxt + " del pozo C-" + W + ". El radio permitido es de 100m. Deseas enviar de todas formas?";
-      if(!confirm(msg100)) return;
-    }
-  }
-  // ──────────────────────────────────────────────────
-
   var ci=getCicloInfo(REC);
   if(!ci.trabajando&&!confirm('Estás en día de descanso. ¿Registrar de todas formas?'))return;
 
@@ -3521,18 +2781,9 @@ function enviarTodo(soloPreview){
     if(!medBls && !medCm){ alert('Llena al menos Barriles o Centímetros'); return; }
     var hr2=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
     // GPS en tiempo real del recorredor
-    var distPozo2 = '';
-    if(la && lo && WELL_COORDS_ALL[W]){
-      var wc2=WELL_COORDS_ALL[W];
-      var dLat2=(wc2.lat-la)*Math.PI/180; var dLon2=(wc2.lon-lo)*Math.PI/180;
-      var a3=Math.sin(dLat2/2)*Math.sin(dLat2/2)+Math.cos(la*Math.PI/180)*Math.cos(wc2.lat*Math.PI/180)*Math.sin(dLon2/2)*Math.sin(dLon2/2);
-      var dm2=6371000*2*Math.atan2(Math.sqrt(a3),Math.sqrt(1-a3));
-      distPozo2 = 'Distancia al pozo: '+(dm2<1000?Math.round(dm2)+'m':(dm2/1000).toFixed(2)+'km')+(dm2<=100?' OK':' LEJOS')+' ';
-    }
     var gpsLinea2 = la
-      ? 'Ubicacion: '+la.toFixed(6)+', '+lo.toFixed(6)+'\n'
+      ? '📍 Ubicación: '+la.toFixed(6)+', '+lo.toFixed(6)+'\n'
         +'🗺 maps.google.com/?q='+la+','+lo+'\n'
-        +distPozo2
       : '';
     var msg2='🌙 *NIVELES DE GUARDIA*\n🛢 Pozo: *C-'+W+'*\n👷 Recorredor: '+REC+'\n📅 '+now()+'\n'
       +'══════════════════\n'
@@ -3562,15 +2813,15 @@ function enviarTodo(soloPreview){
     if(!flu){alert('C.O.: Selecciona Fluye');return}
     if(!sis){alert('C.O.: Selecciona SAP');return}
     var d='';
-    if(sis==='BN'||sis==='FY'){var tp=v('coTP'),ld=v('coLDD'),tr=v('coTR');if(!tp||!ld||!tr){alert('C.O.: Falta PTP, LDD o PTR');return}var lbn=v('coLBN');var kimray=v('coKimray'),conico=v('coConico'),starpack=v('coStarpack'),trVuelta=v('coTrVuelta');d='PTP: '+tp+' kg/cm² · LDD: '+ld+' kg/cm² · PTR: '+tr+' kg/cm²'+(lbn&&sis==='BN'?' · LBN: '+lbn+' kg/cm²':'')+(sis==='BN'&&(kimray||conico||starpack||trVuelta)?'\n'+(kimray?'KIMRAY # VUELTAS: '+kimray+' ':' ')+(conico?'CAMCO: '+conico+' ':' ')+(starpack?'STARPACK: '+starpack+' ':' ')+(trVuelta?'TR#VUELTA: '+trVuelta:''):'');}
+    if(sis==='BN'||sis==='FY'){var tp=v('coTP'),ld=v('coLDD'),tr=v('coTR');if(!tp||!ld||!tr){alert('C.O.: Falta PTP, LDD o PTR');return}var lbn=v('coLBN');var kimray=v('coKimray'),conico=v('coConico'),starpack=v('coStarpack'),trVuelta=v('coTrVuelta');d='PTP: '+tp+' · LDD: '+ld+' · PTR: '+tr+' kg/cm²'+(lbn&&sis==='BN'?' · LBN: '+lbn+' kg/cm²':'')+(sis==='BN'&&(kimray||conico||starpack||trVuelta)?'\n'+(kimray?'# VUELTAS: '+kimray+' ':' ')+(conico?'CAMCO: '+conico+' ':' ')+(starpack?'STARPACK: '+starpack+' ':' ')+(trVuelta?'TR#VUELTA: '+trVuelta:''):'');}
     else if(sis==='BM'){var p2=v('coPresion'),ptr2=v('coPTR_bm'),e2=v('coEmb'),c2=v('coCarrera');if(!p2||!ptr2||!e2||!c2){alert('C.O.: Falta PTP, PTR, Velocidad EPM o Carrera');return}d='PTP: '+p2+' · PTR: '+ptr2+' kg/cm² · Vel: '+e2+' EPM · Car: '+c2+' pulg';}
     var flujoTipo = v('coFlujoTipo');
     var vueltasTP = flujoTipo==='estrangulador' ? v('coVueltasTP_est') : v('coVueltasTP_fra');
     var estrangLine = '';
     if(flujoTipo==='estrangulador'){
-      estrangLine = '🔩 Estrangulador: '+(v('coEstrangulador')||'—')+' pulg - TP #Vueltas: '+(vueltasTP||'—')+'\n';
+      estrangLine = '🔩 Estrangulador: '+(v('coEstrangulador')||'—')+' pulg · Vueltas TP: '+(vueltasTP||'—')+'\n';
     } else if(flujoTipo==='franco'){
-      estrangLine = '🔓 Franco - TP #Vueltas: '+(vueltasTP||'—')+'\n';
+      estrangLine = '🔓 Franco · Vueltas TP: '+(vueltasTP||'—')+'\n';
     }
     msg+='══════════════════\n🔧 *CONTROL OPERATIVO*\n📌 Estatus: '+est+'\n💧 Fluye: '+flu+'\n'+estrangLine+'⚙️ SAP: '+sis+'\n'+d+'\n'+(v('coObs')?'📝 '+v('coObs')+'\n':'');ok=true;
   }
@@ -3599,14 +2850,14 @@ function enviarTodo(soloPreview){
     a.push(checks.aforo?'✅ Aforo/Proyección: '+v('regAforo')+' BPH':'❌ Aforo/Proyección');
     a.push(checks.intermitente?'✅ Intermitente':'❌ Intermitente');
     var estado=v('regEstado');
-    if(estado) a.push((estado.toLowerCase().includes('estable')&&!estado.toLowerCase().includes('inestable')?'✅':'❌')+' Estado del pozo: '+estado);
+    if(estado) a.push('🔍 Estado del pozo: '+estado);
     var peraMsg = peraLinea();
     msg+='══════════════════\n📋 *REGISTRO*\n'+a.join('\n')+'\n'+(peraMsg?peraMsg+'\n':'')+(v('regObs')?'📝 '+v('regObs')+'\n':'');ok=true;
   }
   if(!ok){alert('Llena al menos un apartado antes de enviar');return}
   msg+='══════════════════\n'+gpsLine()+'\n';
   if(fotos.length) msg+='📸 Evidencia: '+fotos.length+' foto'+(fotos.length===1?'':'s')+'\n';
-  // QR line removed
+  msg+='_QR C-'+W+'_';
 
   // Guardar mensaje y mostrar modal de confirmación
   msgPendiente = msg;
@@ -3979,161 +3230,59 @@ var loggedIn=false;
 var loggedUser=''; // 'AntonioS' | 'JaimeG'
 
 function requireLogin(target){
+  // Si ya hay sesión, verificar si el usuario tiene acceso a esta sección
   if(loggedIn){
-    var perms = PERMISOS_MAP[loggedTheme] || [];
-    if(perms.indexOf(target) >= 0){
-      switchView(target);
-    } else {
-      alert('Tu perfil no tiene acceso a esta seccion.');
+    // JaimeG NO puede entrar a Superintendente
+    if(loggedUser==='JaimeG' && target==='super'){
+      alert('Tu usuario no tiene acceso al área de Superintendente.');
+      return;
     }
+    switchView(target);
     return;
   }
   loginTarget=target;
+  document.getElementById('loginUser').value='';
   document.getElementById('loginPass').value='';
   document.getElementById('loginErr').style.display='none';
   document.getElementById('loginOverlay').classList.add('open');
-  setTimeout(function(){document.getElementById('loginPass').focus();},200);
-}
-
-// Permisos por usuario (theme/rol)
-var PERMISOS_MAP = {
-  'm':           ['visitas','mapa'],
-  'c':           ['visitas','mapa'],
-  'jc':          ['visitas','mapa'],
-  'op1':         ['mapa'],
-  'op2':         ['mapa'],
-  'op3':         ['mapa'],
-  'op4':         ['mapa'],
-  'op5':         ['mapa'],
-  'super':       ['visitas','mapa','catalogo','historial','super','jefe'],
-  'jefe':        ['visitas','mapa','catalogo','historial','super','jefe'],
-  'ductos':      ['visitas','mapa','catalogo','historial','super','jefe'],
-  'almacenista': ['visitas','mapa','catalogo','historial','super','jefe'],
-  'gill':        ['visitas','mapa','catalogo','historial','super','jefe'],
-  'garcia':      ['visitas','mapa','catalogo'],
-  'ocote':       ['visitas','mapa','catalogo'],
-  'cano':        ['visitas','mapa','catalogo'],
-};
-
-// Usuarios auth (produccion, seguridad, operadores)
-var AUTH_USERS = {
-  'AntonioS':    {p:'Mexico',       theme:'super'},
-  'JaimeG':      {p:'Venezuela',    theme:'jefe'},
-  'IngDuctos':   {p:'Ductos2024',   theme:'ductos'},
-  'Almacenista': {p:'Bodega2024',   theme:'almacenista'},
-  'JorgeGill':   {p:'Gill2024',     theme:'gill'},
-  'Operador1':   {p:'Op1Campo',     theme:'op1'},
-  'Operador2':   {p:'Op2Campo',     theme:'op2'},
-  'Operador3':   {p:'Op3Campo',     theme:'op3'},
-  'Operador4':   {p:'Op4Campo',     theme:'op4'},
-  'Operador5':   {p:'Op5Campo',     theme:'op5'},
-  'JorgeGarcia': {p:'Garcia2024',   theme:'garcia'},
-  'IngOcote':    {p:'Ocote2024',    theme:'ocote'},
-  'IngCano':     {p:'Cano2024',     theme:'cano'},
-};
-
-function aplicarPermisos(theme){
-  var perms = PERMISOS_MAP[theme] || [];
-  var allViews = ['super','jefe','catalogo','mapa','historial'];
-  allViews.forEach(function(v){
-    var ic = document.getElementById('icon-'+v);
-    if(!ic) return;
-    if(perms.indexOf(v) >= 0){
-      ic.classList.remove('sidebar-locked');
-      ic.onclick = function(){ switchView(v); };
-    } else {
-      ic.classList.add('sidebar-locked');
-      ic.style.display = 'none';
-    }
-  });
+  setTimeout(function(){document.getElementById('loginUser').focus();},200);
 }
 
 function doLogin(){
-  var p = document.getElementById('loginPass').value;
-  var theme = loginCurrentTheme || '';
-  var found = null;
-  Object.keys(AUTH_USERS).forEach(function(k){
-    if(AUTH_USERS[k].theme === theme) found = AUTH_USERS[k];
-  });
-  if(found && p === found.p){
-    loggedIn=true; loggedUser=found.theme; loggedTheme=found.theme;
-    var sb=document.querySelector('.sidebar');if(sb){sb.classList.add('sidebar-unlocked');document.body.classList.add('sidebar-visible');}
+  var u=document.getElementById('loginUser').value.trim();
+  var p=document.getElementById('loginPass').value;
+
+  // AntonioS — accede a TODO incluyendo Superintendente
+  if(u==='AntonioS'&&p==='Mexico'){
+    loggedIn=true; loggedUser='AntonioS'; var sb=document.querySelector('.sidebar');if(sb)sb.classList.add('sidebar-unlocked');
     document.getElementById('loginOverlay').classList.remove('open');
-    aplicarPermisos(found.theme);
     switchView(loginTarget);
+
+  // JaimeG — accede a todo EXCEPTO Superintendente
+  } else if(u==='JaimeG'&&p==='Venezuela'){
+    if(loginTarget==='super'){
+      document.getElementById('loginErr').textContent='Tu usuario no tiene acceso al área de Superintendente';
+      document.getElementById('loginErr').style.display='block';
+      document.getElementById('loginPass').value='';
+      document.getElementById('loginPass').focus();
+    } else {
+      loggedIn=true; loggedUser='JaimeG'; var sb=document.querySelector('.sidebar');if(sb)sb.classList.add('sidebar-unlocked');
+      document.getElementById('loginOverlay').classList.remove('open');
+      switchView(loginTarget);
+    }
+
+  // Credenciales incorrectas
   } else {
-    document.getElementById('loginErr').textContent='Contrasena incorrecta';
+    document.getElementById('loginErr').textContent='Usuario o contraseña incorrectos';
     document.getElementById('loginErr').style.display='block';
     document.getElementById('loginPass').value='';
     document.getElementById('loginPass').focus();
   }
 }
 
-// ══ LOGIN RECORREDORES ══════════════════════════
-var REC_MAP = {
-  'Manrique':   { nombre:'Manrique',   pass:'Canada',    theme:'m'  },
-  'Cirilo':     { nombre:'Cirilo',      pass:'Brasil',    theme:'c'  },
-  'JuanCarlos': { nombre:'Juan Carlos', pass:'Australia', theme:'jc' }
-};
-
-function abrirRecLogin(nombre, theme){
-  var ov = document.getElementById('recLoginOverlay');
-  document.getElementById('recLoginUser').value = nombre;
-  document.getElementById('recLoginPass').value = '';
-  document.getElementById('recLoginErr').style.display = 'none';
-  document.getElementById('recLoginHint').textContent = '👷 ' + nombre;
-  ov.classList.add('open');
-  setTimeout(function(){ document.getElementById('recLoginPass').focus(); }, 200);
-}
-
-function cerrarRecLogin(){
-  document.getElementById('recLoginOverlay').classList.remove('open');
-}
-
-function doRecLogin(){
-  var u   = document.getElementById('recLoginUser').value.trim();
-  var p   = document.getElementById('recLoginPass').value;
-  var err = document.getElementById('recLoginErr');
-  var found = REC_MAP[u];
-  if(found && p === found.pass){
-    cerrarRecLogin();
-    mostrarFormRecorredor(found.nombre, found.theme);
-  } else {
-    err.textContent = 'Contraseña incorrecta';
-    err.style.display = 'block';
-    document.getElementById('recLoginPass').value = '';
-    document.getElementById('recLoginPass').focus();
-  }
-}
-
 function closeLogin(){
   document.getElementById('loginOverlay').classList.remove('open');
   loginTarget='';
-}
-
-// ── Toast notification ─────────────────────────────────────────────
-var toastTimer = null;
-function showToast(msg, duration){
-  var el = document.getElementById('toast');
-  if(!el) return;
-  el.textContent = msg;
-  el.style.transform = 'translateX(-50%) translateY(0)';
-  if(toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(function(){
-    el.style.transform = 'translateX(-50%) translateY(-90px)';
-  }, duration || 2800);
-}
-
-function togglePass(inputId, btn){
-  var inp = document.getElementById(inputId);
-  if(!inp) return;
-  if(inp.type==='password'){
-    inp.type='text';
-    btn.textContent='🙈';
-  } else {
-    inp.type='password';
-    btn.textContent='👁';
-  }
 }
 
 // ══ MAPA LEAFLET ══
@@ -4148,10 +3297,6 @@ function toDMS(deg, isLat){
 var leafletMap = null;
 var mapMarkers = {};
 var activeMapWell = null;
-var userLocationMarker = null;
-var userLocationCircle = null;
-var routingControl = null;
-var watchId = null;
 
 function initLeafletMap(){
   if(leafletMap) return; // already initialized
@@ -4168,44 +3313,6 @@ function initLeafletMap(){
     maxZoom: 19,
     attribution: '© OpenStreetMap contributors'
   }).addTo(leafletMap);
-
-  // ── Ubicación del usuario en tiempo real ──────────
-  function updateUserMarker(lat, lon, acc){
-    var userIcon = L.divIcon({
-      className: '',
-      html: '<div style="width:18px;height:18px;background:#1d4ed8;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 4px rgba(29,78,216,.3);animation:userPulse 2s infinite"></div>',
-      iconAnchor: [9, 9]
-    });
-    if(!userLocationMarker){
-      userLocationMarker = L.marker([lat, lon], {icon: userIcon, zIndexOffset: 1000}).addTo(leafletMap);
-      userLocationMarker.bindPopup('<div style="font-weight:700;color:#1d4ed8">📍 Tu ubicación</div><div style="font-size:11px;color:#5a6e90">±'+acc+'m de precisión</div>');
-      userLocationCircle = L.circle([lat, lon], {radius: acc, color: '#1d4ed8', fillColor: '#1d4ed8', fillOpacity: 0.08, weight: 1}).addTo(leafletMap);
-    } else {
-      userLocationMarker.setLatLng([lat, lon]);
-      userLocationMarker.setIcon(userIcon);
-      userLocationCircle.setLatLng([lat, lon]);
-      userLocationCircle.setRadius(acc);
-    }
-    // Update distance to active well
-    if(activeMapWell && WELL_COORDS_ALL[activeMapWell]){
-      var wc = WELL_COORDS_ALL[activeMapWell];
-      var dist = leafletMap.distance([lat,lon],[wc.lat,wc.lon]);
-      var distTxt = dist < 1000 ? Math.round(dist)+'m' : (dist/1000).toFixed(1)+'km';
-      var distEl = document.getElementById('mapDistInfo');
-      var distTxtEl = document.getElementById('mapDistTxt');
-      if(distEl) distEl.style.display = 'block';
-      if(distTxtEl) distTxtEl.textContent = 'Distancia al pozo: '+distTxt;
-    }
-  }
-
-  // Start watching user location
-  if(navigator.geolocation){
-    watchId = navigator.geolocation.watchPosition(
-      function(p){ updateUserMarker(p.coords.latitude, p.coords.longitude, Math.round(p.coords.accuracy)); },
-      function(){},
-      {enableHighAccuracy:true, maximumAge:5000, timeout:10000}
-    );
-  }
 
   // Custom marker icon
   function makeIcon(color, active){
@@ -4310,58 +3417,6 @@ function abrirEnMaps(){
   var card = document.getElementById('mapInfoCard');
   var lat = card.dataset.lat, lon = card.dataset.lon;
   if(lat && lon) window.open('https://maps.google.com/?q='+lat+','+lon,'_blank');
-}
-
-var rutaPolyline = null;
-
-function trazarRuta(){
-  var card = document.getElementById('mapInfoCard');
-  var destLat = parseFloat(card.dataset.lat);
-  var destLon = parseFloat(card.dataset.lon);
-  if(!destLat || !destLon){ alert('Sin coordenadas del pozo'); return; }
-  if(!la || !lo){ alert('Activa el GPS primero para trazar la ruta'); return; }
-
-  // Remove existing route
-  if(rutaPolyline){ leafletMap.removeLayer(rutaPolyline); rutaPolyline = null; }
-
-  var btn = document.getElementById('btnRuta');
-  if(btn){ btn.textContent = '⏳ Calculando...'; }
-
-  var url = 'https://router.project-osrm.org/route/v1/driving/'
-    + lo + ',' + la + ';' + destLon + ',' + destLat
-    + '?overview=full&geometries=geojson&steps=false';
-
-  fetch(url)
-    .then(function(r){ return r.json(); })
-    .then(function(data){
-      if(!data.routes || !data.routes.length){ throw new Error('Sin ruta'); }
-      var route = data.routes[0];
-      var coords = route.geometry.coordinates.map(function(c){ return [c[1], c[0]]; });
-      var dist = route.distance < 1000 ? Math.round(route.distance)+'m' : (route.distance/1000).toFixed(1)+'km';
-      var mins = Math.round(route.duration/60);
-
-      rutaPolyline = L.polyline(coords, {color:'#0f3460', weight:5, opacity:0.85}).addTo(leafletMap);
-      leafletMap.fitBounds(rutaPolyline.getBounds(), {padding:[30,30]});
-
-      var distEl = document.getElementById('mapDistInfo');
-      var distTxtEl = document.getElementById('mapDistTxt');
-      if(distEl) distEl.style.display = 'block';
-      if(distTxtEl) distTxtEl.textContent = '🛣 ' + dist + ' · ~' + mins + ' min en auto';
-
-      if(btn){ btn.textContent = '✕ Quitar ruta'; btn.onclick = quitarRuta; }
-    })
-    .catch(function(e){
-      alert('No se pudo calcular la ruta. Verifica tu conexión.');
-      if(btn){ btn.textContent = '🧭 Ir aquí'; btn.onclick = trazarRuta; }
-    });
-}
-
-function quitarRuta(){
-  if(rutaPolyline){ leafletMap.removeLayer(rutaPolyline); rutaPolyline = null; }
-  var btn = document.getElementById('btnRuta');
-  if(btn){ btn.textContent = '🧭 Ir aquí'; btn.onclick = trazarRuta; }
-  var di = document.getElementById('mapDistInfo');
-  if(di) di.style.display = 'none';
 }
 
 function initMapChips(){
@@ -4769,12 +3824,6 @@ var selectedWell=null;
 
 function switchView(id){
   document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active')});
-  // Show change-profile button on all views except visitas picker
-  var cpb = document.getElementById('changeProfileBtn');
-  if(cpb){
-    var showCpb = (id !== 'visitas') || (REC && REC !== '');
-    cpb.style.display = showCpb ? 'block' : 'none';
-  }
   document.querySelectorAll('.sidebar-icon').forEach(function(i){i.classList.remove('active')});
   var el=document.getElementById('view-'+id);
   if(el) el.classList.add('active');
@@ -4784,20 +3833,14 @@ function switchView(id){
   if(id==='visitas'){
     var ic=document.getElementById('icon-visitas');
     if(ic) ic.classList.add('active');
+    // Show picker, hide form when returning to visitas
     var picker = document.getElementById('profilePicker');
     var formContent = document.getElementById('formContent');
+    if(picker){ picker.style.display='block'; picker.style.opacity='1'; picker.style.transform=''; }
+    if(formContent) formContent.style.display='none';
+    // Hide send button until form is visible
     var sf=document.getElementById('sendFixed');
-    // Show picker only if no session active at all
-    var hasSession = (REC && REC!=='') || (loggedIn) || (loggedTheme && loggedTheme!=='');
-    if(!hasSession){
-      if(picker){ picker.style.display='block'; picker.style.opacity='1'; picker.style.transform=''; }
-      if(formContent) formContent.style.display='none';
-      if(sf) sf.style.display='none';
-    } else {
-      if(picker) picker.style.display='none';
-      if(formContent) formContent.style.display='block';
-      if(sf) sf.style.display='block';
-    }
+    if(sf) sf.style.display='none';
   } else if(id==='catalogo'){
     var ic=document.getElementById('icon-catalogo');
     if(ic) ic.classList.add('active');
@@ -4874,16 +3917,6 @@ function abrirAlarma(){
   document.getElementById('alarm-location-wrap').style.display = 'none';
   document.getElementById('alarmLocInput').value = '';
   document.getElementById('alarmSendBtn').disabled = true;
-
-  // Forzar GPS actualizado al abrir la alarma
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(
-      function(p){ la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy); console.log('GPS alarma:',la,lo); },
-      function(e){ console.warn('GPS alarma error:', e.message); },
-      {enableHighAccuracy:true, timeout:8000, maximumAge:0}
-    );
-  }
-
   var vistaActiva = document.querySelector('.view.active');
   var esVisitas = vistaActiva && vistaActiva.id === 'view-visitas';
 
@@ -4947,41 +3980,20 @@ function cancelarConfirmAlarma(){
 
 function enviarAlarma(){
   document.getElementById('alarmConfirmOverlay').classList.remove('open');
-  // Si no tenemos GPS aún, intentar obtenerlo con timeout de 5 segundos
-  if((la === 0 && lo === 0) && navigator.geolocation){
-    showToast('📍 Obteniendo ubicación...');
-    var gpsTimeout = setTimeout(function(){ _doEnviarAlarma(); }, 5000);
-    navigator.geolocation.getCurrentPosition(
-      function(p){
-        clearTimeout(gpsTimeout);
-        la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy);
-        _doEnviarAlarma();
-      },
-      function(){ clearTimeout(gpsTimeout); _doEnviarAlarma(); },
-      {enableHighAccuracy:true, timeout:5000, maximumAge:0}
-    );
-  } else {
-    _doEnviarAlarma();
-  }
-}
-
-function _doEnviarAlarma(){
   var ahora = new Date();
   var horaStr  = ahora.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
   var fechaStr = ahora.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'});
   var quien = alarmQuienSeleccionado || REC || loggedUser || 'Campo';
-  // Detectar si es recorredor (tienen REC definido) o Super/Jefe (loggedUser)
-  var esRecorredor = !!(alarmQuienSeleccionado || REC);
+  var lw2 = document.getElementById('alarm-location-wrap');
+  var esVisitasEnvio = lw2 && lw2.dataset.esVisitas === '1';
   var lugar;
-  if(esRecorredor){
+  if(esVisitasEnvio){
     // Recorredor: manda ubicación GPS en tiempo real
-    if(la !== 0 && lo !== 0){
-      lugar = la.toFixed(6)+','+lo.toFixed(6)
-        +'\nhttps://maps.google.com/?q='+la+','+lo;
-    } else if(W && W!=='???'){
-      lugar = 'Pozo C-'+W+' (sin GPS)';
+    if(la){
+      lugar = '📍 '+la.toFixed(6)+', '+lo.toFixed(6)
+        +'\nmaps.google.com/?q='+la+','+lo;
     } else {
-      lugar = 'Campo Cuichapa (sin GPS)';
+      lugar = (W && W!=='???') ? 'C-'+W : 'Campo Cuichapa';
     }
   } else {
     // Super/Jefe: NO manda ubicación
@@ -5029,7 +4041,7 @@ function _doEnviarAlarma(){
   var msg = '🚨 *ALERTA DE EMERGENCIA*\n━━━━━━━━━━━━━━━━━━\n'
     +'⚠️ Tipo: *'+alarmTipoSeleccionado+'*\n'
     +'👷 Reportado por: '+quien+'\n'
-    +(lugar ? 'Ubicacion: '+lugar+'\n' : '')
+    +(lugar ? '📍 Ubicación: '+lugar+'\n' : '')
     +'📅 '+fechaStr+' · 🕐 '+horaStr+'\n'
     +'━━━━━━━━━━━━━━━━━━\n'
     +'_Campo Cuichapa · Lifting de Mexico_';
@@ -5059,8 +4071,6 @@ function _doEnviarAlarma(){
   }
 
   showToast('🚨 ALARMA ENVIADA: '+alarmTipoSeleccionado);
-  tocarSonidoAlarma();
-  if(navigator.vibrate) navigator.vibrate([400,100,400,100,600,100,400]);
   alarmTipoSeleccionado=''; alarmQuienSeleccionado='';
 
   // Reintentar cuando vuelva señal
@@ -5081,50 +4091,8 @@ function escucharAlarmas(){
       'Reportado por: '+d.quien+'\n📍 '+d.lugar+' · '+d.hora;
     var el=document.getElementById('alarmIncoming');
     el.style.display='flex'; el.classList.add('show');
-    if(navigator.vibrate) navigator.vibrate([500,200,500,200,500,200,500]);
-    tocarSonidoAlarma();
+    if(navigator.vibrate) navigator.vibrate([400,100,400,100,400]);
   });
-}
-
-
-// Desbloquear AudioContext en primer toque (requerido por móviles)
-var _audioCtxUnlocked = false;
-function unlockAudio(){
-  if(_audioCtxUnlocked) return;
-  try{
-    var ctx = new (window.AudioContext||window.webkitAudioContext)();
-    var buf = ctx.createBuffer(1,1,22050);
-    var src = ctx.createBufferSource();
-    src.buffer=buf; src.connect(ctx.destination); src.start(0);
-    ctx.close(); _audioCtxUnlocked=true;
-  }catch(e){}
-}
-document.addEventListener('touchstart', unlockAudio, {once:true});
-document.addEventListener('click', unlockAudio, {once:true});
-
-function tocarSonidoAlarma(){
-  try{
-    var ctx = new (window.AudioContext || window.webkitAudioContext)();
-    function beep(freq, start, dur){
-      var o = ctx.createOscillator();
-      var g = ctx.createGain();
-      o.connect(g); g.connect(ctx.destination);
-      o.frequency.value = freq;
-      o.type = 'square';
-      g.gain.setValueAtTime(0.3, ctx.currentTime + start);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
-      o.start(ctx.currentTime + start);
-      o.stop(ctx.currentTime + start + dur + 0.05);
-    }
-    // Patrón de alarma: 3 pitidos fuertes
-    beep(880, 0,    0.3);
-    beep(880, 0.4,  0.3);
-    beep(880, 0.8,  0.3);
-    beep(1100, 1.2, 0.5);
-    beep(880, 1.9,  0.3);
-    beep(880, 2.3,  0.3);
-    beep(1100, 2.7, 0.8);
-  } catch(e){ console.warn('Audio alarm error:', e); }
 }
 
 function cerrarAlarmaEntrante(){
@@ -5140,6 +4108,26 @@ function confirmarAlarma(){
 function cancelarConfirmAlarma(){
   document.getElementById('alarmConfirmOverlay').classList.remove('open');
   document.getElementById('alarmOverlay').classList.add('open');
+}
+function enviarAlarma(){
+  document.getElementById('alarmConfirmOverlay').classList.remove('open');
+  var ahora = new Date();
+  var horaStr = ahora.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  var fechaStr = ahora.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'});
+  var quien = REC || loggedUser || 'Campo';
+  var lugarInput = document.getElementById('alarmLocInput').value.trim();
+  var pozo = lugarInput || ((W && W!=='???') ? 'C-'+W : 'Campo Cuichapa');
+  var alarmaData = { id:ahora.getTime(), tipo:alarmTipoSeleccionado, quien:quien, pozo:pozo, fecha:ahora.toISOString(), hora:horaStr };
+  // Firebase → todos los dispositivos abiertos
+  if(fbDB) fbDB.ref('alarmas/'+alarmaData.id).set(alarmaData).catch(function(){});
+  // FCM Push → todos los dispositivos aunque estén cerrados
+  enviarPushATodos(alarmaData);
+  // WhatsApp supervisor
+  var msg='🚨 *ALERTA DE EMERGENCIA*\n━━━━━━━━━━━━━━━━━━\n⚠️ Tipo: *'+alarmTipoSeleccionado+'*\n👷 Por: '+quien+'\n📍 '+pozo+'\n📅 '+fechaStr+' · 🕐 '+horaStr+'\n━━━━━━━━━━━━━━━━━━\n_Campo Cuichapa · Lifting de Mexico_';
+  fetch(UM_BASE+'/messages/chat',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'token='+encodeURIComponent(UM_TOKEN)+'&to='+encodeURIComponent(UM_TO)+'&body='+encodeURIComponent(msg)}).catch(function(){});
+  showToast('🚨 Alerta enviada: '+alarmTipoSeleccionado);
+  alarmTipoSeleccionado='';
 }
 function escucharAlarmas(){
   if(!fbDB) return;
@@ -5250,10 +4238,6 @@ function solicitarPermisos(){
   if('Notification' in window){
     Notification.requestPermission().then(function(perm){
       if(notifStatus) notifStatus.textContent = perm==='granted' ? '✅' : '❌';
-      if(perm==='granted' && fbDB){
-        // Registrar token FCM ahora que tenemos permiso
-        setTimeout(initFCM, 1000);
-      }
       notifDone = true; checkDone();
     });
   } else {
@@ -5314,15 +4298,8 @@ function initFirebase(){
     sincronizarAFirebase();
     escucharFirebase();
     escucharAlarmas();
-    // FCM: registrar token si ya tenemos permiso, si no esperar
-    if(Notification.permission === 'granted'){
-      setTimeout(initFCM, 1500);
-    } else if(Notification.permission === 'default'){
-      // Esperar a que se otorgue el permiso
-      Notification.requestPermission().then(function(p){
-        if(p === 'granted') setTimeout(initFCM, 500);
-      });
-    }
+    // Iniciar FCM para push notifications
+    initFCM();
   } catch(e){
     console.warn('Firebase:', e);
     actualizarSyncBar('local');
@@ -5335,61 +4312,39 @@ var fcmToken = null;
 
 function initFCM(){
   try{
-    if(!firebase || !firebase.messaging) return;
+    if(!firebase.messaging) return;
     fcmMessaging = firebase.messaging(fbApp);
-
-    // Registrar service worker
-    if('serviceWorker' in navigator){
-      // Registrar sw.js explícitamente
-      navigator.serviceWorker.register('/Pozos---Cuichapa/sw.js')
-        .then(function(reg){
-          console.log('SW registrado:', reg.scope);
-        }).catch(function(e){ console.warn('SW reg error:', e); });
-
-      navigator.serviceWorker.ready.then(function(reg){
-        console.log('SW listo, obteniendo token FCM...');
-        fcmMessaging.getToken({ vapidKey: FCM_VAPID, serviceWorkerRegistration: reg })
-          .then(function(token){
-            if(token){
-              fcmToken = token;
-              console.log('FCM token obtenido:', token.substring(0,20)+'...');
-              var deviceId = localStorage.getItem('device_id') || ('dev_'+Date.now());
-              localStorage.setItem('device_id', deviceId);
-              fbDB.ref('fcm_tokens/'+deviceId).set({
-                token: token,
-                fecha: new Date().toISOString(),
-                ua:    navigator.userAgent.substring(0,80)
-              }).then(function(){
-                console.log('✅ FCM token guardado en Firebase');
-                showToast('🔔 Notificaciones activadas ✅');
-              }).catch(function(e){ 
-                console.warn('❌ Error guardando token FCM:', e);
-                showToast('⚠️ Error al activar notificaciones: ' + e.message);
-              });
-            } else {
-              console.warn('No se obtuvo token FCM - verificar permisos de notificación');
-            }
-          })
-          .catch(function(e){ console.warn('FCM getToken error:', e.message); });
-      });
-    }
-
-    // Escuchar mensajes en primer plano
-    fcmMessaging.onMessage(function(payload){
-      console.log('Mensaje FCM en primer plano:', payload);
-      var d = (payload && payload.data) ? payload.data : 
-              (payload && payload.notification) ? payload.notification : {};
-      var tipo = d.tipo || (payload.notification && payload.notification.title) || 'EMERGENCIA';
-      var quien = d.quien || '';
-      var lugar = d.lugar || '';
-      var hora = d.hora || '';
-      document.getElementById('alarmIncomingType').textContent = tipo;
-      document.getElementById('alarmIncomingInfo').textContent =
-        (quien ? 'Por: '+quien : '') + (lugar ? ' · 📍 '+lugar.split('\n')[0] : '') + (hora ? ' · '+hora : '');
-      var el = document.getElementById('alarmIncoming');
-      el.style.display = 'flex'; el.classList.add('show');
-      if(navigator.vibrate) navigator.vibrate([400,100,400,100,400]);
-    });
+    // Solicitar permiso de notificaciones
+    Notification.requestPermission().then(function(perm){
+      if(perm === 'granted'){
+        // Obtener token FCM
+        fcmMessaging.getToken({ vapidKey: FCM_VAPID }).then(function(token){
+          if(token){
+            fcmToken = token;
+            // Guardar token en Firebase para poder enviar a este dispositivo
+            var deviceId = localStorage.getItem('device_id') || ('dev_'+Date.now());
+            localStorage.setItem('device_id', deviceId);
+            fbDB.ref('fcm_tokens/'+deviceId).set({
+              token: token,
+              fecha: new Date().toISOString(),
+              ua: navigator.userAgent.substring(0,80)
+            }).catch(function(){});
+          }
+        }).catch(function(e){ console.warn('FCM token error:', e); });
+        // Escuchar mensajes cuando la app está en primer plano
+        fcmMessaging.onMessage(function(payload){
+          if(payload && payload.data){
+            var d = payload.data;
+            document.getElementById('alarmIncomingType').textContent = d.tipo || 'EMERGENCIA';
+            document.getElementById('alarmIncomingInfo').textContent =
+              'Por: ' + (d.quien||'') + ' · Pozo: ' + (d.pozo||'') + ' · ' + (d.hora||'');
+            var el = document.getElementById('alarmIncoming');
+            el.style.display = 'flex'; el.classList.add('show');
+            if(navigator.vibrate) navigator.vibrate([400,100,400,100,400]);
+          }
+        });
+      }
+    }).catch(function(){});
   } catch(e){ console.warn('FCM init error:', e); }
 }
 
@@ -5613,113 +4568,43 @@ function umSendText(texto, callback){
   .catch(function(err){ console.error('Ultramsg error:', err); if(callback) callback(false); });
 }
 
-// ── Enviar imagen: Firebase Storage → UltraMsg URL ──────────────────
-var IMGBB_KEY = '32d6bb4e34f5b0dfcac00dac04f3e512';
-
-function umSendImage(base64, caption, callback){
+// ── Enviar imagen por Ultramsg (base64) ───────────
+function comprimirFoto(base64, callback){
   try{
-    var imgData = base64.startsWith('data:') ? base64 : 'data:image/jpeg;base64,'+base64;
-    var b64only = imgData.split(',')[1];
-
-    showToast('📤 Subiendo foto...');
-
-    // 1. Intentar Firebase Storage (ya lo tienen configurado)
-    if(typeof firebase !== 'undefined' && firebase.storage){
-      try{
-        var arr = new Uint8Array(atob(b64only).split('').map(function(c){return c.charCodeAt(0);}));
-        var blob = new Blob([arr], {type:'image/jpeg'});
-        var nombre = 'fotos/'+Date.now()+'.jpg';
-        var ref = firebase.storage().ref().child(nombre);
-        ref.put(blob).then(function(snap){
-          return snap.ref.getDownloadURL();
-        }).then(function(url){
-          console.log('Firebase Storage URL:', url);
-          enviarUrlUltramsg(url, caption, callback);
-        }).catch(function(err){
-          console.warn('Firebase Storage err:', err);
-          subirImgBB(b64only, caption, callback);
-        });
-        return;
-      } catch(e){
-        console.warn('Firebase Storage no disponible:', e);
-      }
-    }
-
-    // 2. Fallback: ImgBB
-    subirImgBB(b64only, caption, callback);
-
-  } catch(e){
-    console.error('umSendImage err:', e);
-    if(callback) callback(false);
-  }
+    var MAX=900,Q=0.65,img=new Image();
+    img.onload=function(){
+      var w=img.width,h=img.height;
+      if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
+      if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}
+      var c=document.createElement('canvas');c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      callback(c.toDataURL('image/jpeg',Q));
+    };
+    img.onerror=function(){callback(base64);};
+    img.src=base64.startsWith('data:')?base64:'data:image/jpeg;base64,'+base64;
+  }catch(e){callback(base64);}
 }
-
-function subirImgBB(b64only, caption, callback){
-  var fd = new FormData();
-  fd.append('key',   IMGBB_KEY);
-  fd.append('image', b64only);
-  fetch('https://api.imgbb.com/1/upload', {method:'POST', body:fd})
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      if(d && d.success && d.data && d.data.url){
-        console.log('ImgBB URL:', d.data.url);
-        enviarUrlUltramsg(d.data.url, caption, callback);
-      } else {
-        console.warn('ImgBB falló:', JSON.stringify(d));
-        subirCloudinary(b64only, caption, callback);
-      }
-    })
-    .catch(function(){ subirCloudinary(b64only, caption, callback); });
+function umSendImage(base64, caption, callback){
+  comprimirFoto(base64, function(b64){ _umSendRaw(b64, caption, callback); });
 }
-
-function subirCloudinary(b64only, caption, callback){
-  var fd = new FormData();
-  fd.append('upload_preset', 'cuichapa_unsigned');
-  fd.append('folder', 'cuichapa');
-  fd.append('file', 'data:image/jpeg;base64,'+b64only);
-  fetch('https://api.cloudinary.com/v1_1/ddnftojl1/image/upload', {method:'POST', body:fd})
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      if(d && d.secure_url){
-        enviarUrlUltramsg(d.secure_url, caption, callback);
-      } else {
-        console.error('Todos los servicios fallaron');
-        showToast('⚠️ No se pudo subir la foto');
-        if(callback) callback(false);
-      }
-    })
-    .catch(function(){
-      showToast('⚠️ Error al subir foto');
-      if(callback) callback(false);
-    });
-}
-
-function enviarUrlUltramsg(imgUrl, caption, callback){
-  var body = 'token='   + encodeURIComponent(UM_TOKEN)
-           + '&to='     + encodeURIComponent(UM_TO)
-           + '&image='  + encodeURIComponent(imgUrl)
-           + '&caption='+ encodeURIComponent(caption||'');
+function _umSendRaw(base64, caption, callback){
+  // Asegurar que tenga prefijo data:image
+  var imgData = base64.startsWith('data:') ? base64 : 'data:image/jpeg;base64,' + base64;
+  // Usar JSON para evitar que encodeURIComponent corte el base64
   fetch(UM_URL_IMG, {
-    method:'POST',
-    headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body: body
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      token:   UM_TOKEN,
+      to:      UM_TO,
+      image:   imgData,
+      caption: caption || ''
+    })
   })
   .then(function(r){ return r.json(); })
-  .then(function(d){
-    console.log('UM img resp:', JSON.stringify(d));
-    var ok = !!(d && (d.sent==='true'||d.sent===true||d.id));
-    showToast(ok ? '✅ Foto enviada' : '⚠️ Foto no enviada: '+JSON.stringify(d));
-    if(callback) callback(ok);
-  })
-  .catch(function(err){
-    console.error('UM img err:', err);
-    showToast('⚠️ Error UltraMsg: '+err.message);
-    if(callback) callback(false);
-  });
+  .then(function(d){ if(callback) callback(!!(d && (d.sent==='true'||d.sent===true))); })
+  .catch(function(){ if(callback) callback(false); });
 }
-
-function sendImageFormData(base64, caption, callback){ umSendImage(base64, caption, callback); }
-function sendImageBase64Url(b, c, cb){ umSendImage(b, c, cb); }
 
 // ── Envío completo: texto + fotos ────────────────
 function enviarConUltramsg(id, callback){
@@ -6110,14 +4995,6 @@ function cerrarBanner(){
   }).join('');
 })();
 
-function toggleCab(){
-  var list = document.getElementById('cabList');
-  var arrow = document.getElementById('cabArrow');
-  var open = list.style.display === 'block';
-  list.style.display = open ? 'none' : 'block';
-  if(arrow) arrow.style.transform = open ? '' : 'rotate(90deg)';
-}
-
 function toggleWellList(){
   var list  = document.getElementById('wpSuggestions');
   var arrow = document.getElementById('wpArrow');
@@ -6164,77 +5041,5 @@ function setWellFromPicker(num){
 })();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.min.js"></script>
-
-<script>
-// ── Sonido de alarma para notificaciones ──────────────────
-var _alarmAudio = null;
-var ALARM_SRC = 'data:audio/mp3;base64,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';
-
-function initAlarmAudio() {
-  if (_alarmAudio) return;
-  try {
-    _alarmAudio = new Audio(ALARM_SRC);
-    _alarmAudio.volume = 1.0;
-  } catch(e) { console.warn('Audio no disponible:', e); }
-}
-
-function playAlarmSound() {
-  initAlarmAudio();
-  if (!_alarmAudio) return;
-  _alarmAudio.currentTime = 0;
-  _alarmAudio.play().catch(function(e){ console.warn('Alarma:', e); });
-}
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.addEventListener('message', function(e) {
-    if (e.data && e.data.type === 'PLAY_ALARM') {
-      try {
-        var a = new Audio(e.data.src || ALARM_SRC);
-        a.volume = 1.0;
-        a.play().catch(function(){});
-      } catch(err){}
-    }
-  });
-}
-
-document.addEventListener('touchstart', function() { initAlarmAudio(); }, { once: true });
-document.addEventListener('click',      function() { initAlarmAudio(); }, { once: true });
-</script>
-
-<script>
-var _alarmAudio = null;
-var ALARM_SRC = 'data:audio/mp3;base64,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';
-
-function initAlarmAudio() {
-  if (_alarmAudio) return;
-  try {
-    _alarmAudio = new Audio(ALARM_SRC);
-    _alarmAudio.volume = 1.0;
-  } catch(e) { console.warn('Audio:', e); }
-}
-
-function playAlarmSound() {
-  initAlarmAudio();
-  if (!_alarmAudio) return;
-  _alarmAudio.currentTime = 0;
-  _alarmAudio.play().catch(function(){});
-}
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.addEventListener('message', function(e) {
-    if (e.data && e.data.type === 'PLAY_ALARM') {
-      try {
-        var a = new Audio(ALARM_SRC);
-        a.volume = 1.0;
-        a.play().catch(function(){});
-      } catch(err){}
-    }
-  });
-}
-
-document.addEventListener('touchstart', function() { initAlarmAudio(); }, { once: true });
-document.addEventListener('click', function() { initAlarmAudio(); }, { once: true });
-</script>
 </body>
 </html>
