@@ -4595,17 +4595,15 @@ function confirmarEnvio(){
   if(navigator.onLine){
     enviarConUltramsg(reporte.id, function(ok){
       actualizarBadgeHistorial();
-      mostrarResultado(ok, n, ok);
       if(!ok){
-        // Falló — queda en cola para reintento automático
         showToast('⚠️ Sin respuesta · Reintentando automáticamente');
       }
     });
-    mostrarResultado(true, n, true); // mostrar éxito optimista
-  } else {
-    // Sin señal — guardado, se enviará cuando haya señal
-    mostrarResultado(true, n, false);
   }
+  // Mostrar éxito y reiniciar formulario automáticamente
+  showToast('✅ Reporte enviado — C-'+W);
+  limpiarFotos();
+  resetFormulario();
 }
 
 // ── Renderizar historial ──────────────────────────
@@ -6007,23 +6005,60 @@ function ubiTrazarRuta(lat, lng, nombre){
   var distStr = dist < 1000 ? Math.round(dist) + ' m' : (dist/1000).toFixed(1) + ' km';
   var timeStr = secs < 60 ? Math.round(secs) + ' seg' : secs < 3600 ? Math.round(secs/60) + ' min' : (secs/3600).toFixed(1) + ' h';
 
-  // Draw straight line (dashed)
-  _ubiRouteLine = L.polyline(
-    [[_ubiUserLat, _ubiUserLng], [lat, lng]],
-    {color: '#1f6feb', weight: 3, dashArray: '8,6', opacity: 0.9}
-  ).addTo(_ubiMap);
+  // URL Google Maps ruta real
+  var gmUrl = 'https://www.google.com/maps/dir/?api=1'
+    + '&origin=' + _ubiUserLat + ',' + _ubiUserLng
+    + '&destination=' + lat + ',' + lng
+    + '&travelmode=driving';
 
-  // Show route card
+  // Mostrar card de inmediato
   var card = document.getElementById('ubiRouteCard');
   var nameEl = document.getElementById('ubiRouteName');
   var infoEl = document.getElementById('ubiRouteInfo');
   if(card){ card.style.display = 'block'; }
   if(nameEl){ nameEl.textContent = '🗺 ' + nombre; }
-  if(infoEl){ infoEl.textContent = '📏 ' + distStr + '   ⏱ ~' + timeStr + ' en campo'; }
+  if(infoEl){ infoEl.textContent = '⏳ Calculando ruta por carretera...'; }
 
-  // Fit map to show both points
-  _ubiMap.fitBounds([[_ubiUserLat, _ubiUserLng],[lat, lng]], {padding: [40, 40]});
-  _ubiMap.invalidateSize();
+  // Ruta real via OSRM (OpenStreetMap, sin API key)
+  var osrmUrl = 'https://router.project-osrm.org/route/v1/driving/'
+    + _ubiUserLng + ',' + _ubiUserLat + ';'
+    + lng + ',' + lat
+    + '?overview=full&geometries=geojson&steps=false';
+
+  fetch(osrmUrl)
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(!data || !data.routes || !data.routes.length){ throw new Error('Sin ruta'); }
+      var route = data.routes[0];
+      var rdist = route.distance;
+      var rsecs = route.duration;
+      var rdistStr = rdist < 1000 ? Math.round(rdist) + ' m' : (rdist/1000).toFixed(1) + ' km';
+      var rtimeStr = rsecs < 60 ? Math.round(rsecs) + ' seg'
+        : rsecs < 3600 ? Math.round(rsecs/60) + ' min'
+        : (rsecs/3600).toFixed(1) + ' h';
+      var coords = route.geometry.coordinates.map(function(c){ return [c[1], c[0]]; });
+      _ubiRouteLine = L.polyline(coords, {color: '#1f6feb', weight: 4, opacity: 0.85}).addTo(_ubiMap);
+      if(infoEl){
+        infoEl.innerHTML = '📏 ' + rdistStr + '&nbsp;&nbsp;⏱ ~' + rtimeStr
+          + '&nbsp;&nbsp;<a href="' + gmUrl + '" target="_blank" style="color:#3fb950;font-weight:800;text-decoration:none">🌎 Abrir en Google Maps ↗</a>';
+      }
+      _ubiMap.fitBounds(_ubiRouteLine.getBounds(), {padding: [40, 40]});
+      _ubiMap.invalidateSize();
+    })
+    .catch(function(){
+      // Fallback: linea recta + boton Google Maps
+      var distStr2 = dist < 1000 ? Math.round(dist) + ' m' : (dist/1000).toFixed(1) + ' km';
+      _ubiRouteLine = L.polyline(
+        [[_ubiUserLat, _ubiUserLng], [lat, lng]],
+        {color: '#f59e0b', weight: 3, dashArray: '8,6', opacity: 0.9}
+      ).addTo(_ubiMap);
+      if(infoEl){
+        infoEl.innerHTML = '📏 ~' + distStr2 + ' (linea recta)'
+          + '&nbsp;&nbsp;<a href="' + gmUrl + '" target="_blank" style="color:#3fb950;font-weight:800;text-decoration:none">🌎 Abrir Google Maps ↗</a>';
+      }
+      _ubiMap.fitBounds([[_ubiUserLat, _ubiUserLng],[lat, lng]], {padding: [40, 40]});
+      _ubiMap.invalidateSize();
+    });
 }
 
 function ubiLimpiarRuta(){
