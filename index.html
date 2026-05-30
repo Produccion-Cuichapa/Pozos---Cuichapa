@@ -1775,6 +1775,26 @@ function ppToggle(id){
     <span style="font-size:17px;font-weight:900;color:#fff;letter-spacing:.3px">Enviar reporte a WhatsApp</span>
   </div>
 </div>
+
+  <!-- ══ TARJETAS DE CONFIRMACIÓN ══ -->
+  <div id="confirmCards" style="display:none;padding:0 16px 24px">
+    <div style="font-size:11px;font-weight:700;color:var(--txt2);letter-spacing:.8px;margin-bottom:10px;margin-top:8px">ESTADO DEL ENVÍO</div>
+    <div id="ccMsgCard" style="background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px">
+      <div id="ccMsgIcon" style="font-size:28px;flex-shrink:0;line-height:1">⏳</div>
+      <div>
+        <div id="ccMsgTitle" style="font-weight:800;font-size:14px;color:var(--txt);margin-bottom:3px">Mensaje WhatsApp</div>
+        <div id="ccMsgSub" style="font-size:12px;color:var(--txt2)">Enviando...</div>
+      </div>
+    </div>
+    <div id="ccFotoCard" style="background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px">
+      <div id="ccFotoIcon" style="font-size:28px;flex-shrink:0;line-height:1">📷</div>
+      <div>
+        <div style="font-weight:800;font-size:14px;color:var(--txt);margin-bottom:3px">Evidencia fotográfica</div>
+        <div id="ccFotoSub" style="font-size:12px;color:var(--txt2)">—</div>
+      </div>
+    </div>
+  </div>
+
 </div><!-- /formContent -->
 </div><!-- /view-visitas -->
 
@@ -2003,47 +2023,7 @@ function ppToggle(id){
 </div>
 
 <!-- ══ PANTALLA DE RESULTADO ══ -->
-<div class="result-view" id="resultView">
-  <div id="rv-header" style="width:100%;background:linear-gradient(135deg,#0f3460,#1a4a7a);padding:28px 20px 24px;text-align:center;flex-shrink:0">
-    <div style="font-size:64px;margin-bottom:10px;animation:popIn .5s cubic-bezier(.34,1.56,.64,1)">&#x2705;</div>
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:2px;color:#fff;margin-bottom:10px">REPORTE REGISTRADO</div>
-    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-      <span id="rv-modo-badge" style="background:rgba(255,255,255,.15);color:#fff;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700"></span>
-      <span id="rv-badge" style="background:rgba(255,255,255,.25);color:#fff;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:800"></span>
-    </div>
-  </div>
-  <div style="flex:1;width:100%;overflow-y:auto;padding:16px;box-sizing:border-box">
-    <div id="rv-status" style="background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:14px">
-      <div id="rv-status-title" style="font-weight:800;font-size:14px;color:var(--txt);margin-bottom:4px"></div>
-      <div id="rv-status-sub" style="font-size:13px;color:var(--txt2)"></div>
-    </div>
-    <div style="background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:14px">
-      <div style="display:flex;border-bottom:1px solid var(--border);padding:10px 16px">
-        <span style="font-size:11px;font-weight:700;color:var(--txt2);width:90px;flex-shrink:0">POZO</span>
-        <span id="rv-pozo" style="font-weight:800;color:var(--txt);font-size:14px"></span>
-      </div>
-      <div style="display:flex;border-bottom:1px solid var(--border);padding:10px 16px">
-        <span style="font-size:11px;font-weight:700;color:var(--txt2);width:90px;flex-shrink:0">CORREDOR</span>
-        <span id="rv-rec" style="font-weight:700;color:var(--txt);font-size:14px"></span>
-      </div>
-      <div style="display:flex;border-bottom:1px solid var(--border);padding:10px 16px">
-        <span style="font-size:11px;font-weight:700;color:var(--txt2);width:90px;flex-shrink:0">FECHA</span>
-        <span id="rv-fecha" style="font-weight:600;color:var(--txt);font-size:13px"></span>
-      </div>
-      <div style="display:flex;padding:10px 16px">
-        <span style="font-size:11px;font-weight:700;color:var(--txt2);width:90px;flex-shrink:0">POZOS CICLO</span>
-        <span id="rv-ciclo" style="font-weight:800;color:var(--accent);font-size:14px"></span>
-      </div>
-    </div>
-    <div id="rv-fotos-wrap" style="margin-bottom:14px">
-      <div id="rv-fotos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,90px);gap:8px"></div>
-      <div id="rv-no-fotos" style="color:var(--txt2);font-style:italic;font-size:13px;text-align:center;padding:8px 0"></div>
-    </div>
-  </div>
-  <div style="padding:16px;width:100%;box-sizing:border-box;flex-shrink:0">
-    <button onclick="cerrarResultado()" style="width:100%;padding:18px;background:#16a34a;color:#fff;border:none;border-radius:16px;font-size:16px;font-weight:800;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:.5px">&#x2714; Entendido &middot; Nuevo registro</button>
-  </div>
-</div>
+
 
 <script>
 var W=location.hash.replace('#','')||'???';
@@ -2937,82 +2917,6 @@ function cerrarConfirmacion(){
 
 
 
-function mostrarResultado(exito, n, enviado){
-  var rv = document.getElementById('resultView');
-  document.getElementById('resultIcon').textContent  = exito ? '✅' : '❌';
-  document.getElementById('resultTitle').textContent = exito ? '¡Reporte guardado!' : 'Error';
-  document.getElementById('resultTitle').style.color = exito ? 'var(--green)' : 'var(--red)';
-  var sub = '';
-  if(exito){
-    sub = 'C-'+W+' · '+REC+' · '+n+(n===1?' pozo':' pozos')+' este ciclo.\n';
-    if(enviado){
-      sub += '📤 Enviado a WhatsApp del supervisor.';
-    } else {
-      sub += '💾 Guardado localmente.\n⚠️ Sin internet — se guardó en el historial.\nEnvíalo desde Historial cuando tengas señal.';
-    }
-  } else {
-    sub = 'No se pudo guardar el reporte.';
-  }
-  document.getElementById('resultSub').textContent = sub;
-  rv.classList.add('open');
-}
-
-function cerrarResultado(){
-  document.getElementById('resultView').classList.remove('open');
-  msgPendiente = '';
-}
-
-function mostrarPantallaResultado(pozo, rec, fotosSnap, online, modo){
-  var rv = document.getElementById('resultView');
-  if(!rv) return;
-  // Badge de modo
-  var modoBadge = document.getElementById('rv-modo-badge');
-  var modos = {co:'🛢 C.O.', guardia:'👷 Guardia', cab:'🔧 Cabezal', estacion:'🏭 Estación', nota:'📝 Nota', alarma:'🚨 Alarma'};
-  var modoLabel = modos[modo] || modos.co;
-  if(modoBadge) modoBadge.textContent = modoLabel;
-  // Badge pozo/recorredor
-  var badge = document.getElementById('rv-badge');
-  if(badge) badge.textContent = (pozo || 'NOTA') + ' · ' + (rec || '');
-  // Estado envío
-  var st = document.getElementById('rv-status-title');
-  var ss = document.getElementById('rv-status-sub');
-  if(online){
-    if(st) st.textContent = 'Enviado al grupo';
-    if(ss) ss.textContent = 'Mensaje y fotos entregados correctamente a WhatsApp.';
-  } else {
-    if(st) st.textContent = 'Guardado localmente';
-    if(ss) ss.textContent = 'Sin señal. Se enviará automáticamente al recuperar internet.';
-  }
-  // Info
-  var rPozo = document.getElementById('rv-pozo');
-  var rRec  = document.getElementById('rv-rec');
-  var rFecha= document.getElementById('rv-fecha');
-  var rCiclo= document.getElementById('rv-ciclo');
-  if(rPozo)  rPozo.textContent  = pozo || 'NOTA';
-  if(rRec)   rRec.textContent   = rec  || '';
-  var now = new Date();
-  if(rFecha) rFecha.textContent = now.toLocaleDateString('es-MX') + ' · ' + now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
-  var nVis = rec ? getVisitas(rec).length : 0;
-  if(rCiclo) rCiclo.textContent = nVis + ' pozo' + (nVis !== 1 ? 's' : '') + ' registrado' + (nVis !== 1 ? 's' : '') + ' este ciclo';
-  // Fotos
-  var grid = document.getElementById('rv-fotos-grid');
-  var noFotos = document.getElementById('rv-no-fotos');
-  if(grid) grid.innerHTML = '';
-  if(fotosSnap && fotosSnap.length > 0){
-    if(noFotos) noFotos.textContent = '';
-    fotosSnap.forEach(function(src){
-      if(!src) return;
-      var img = document.createElement('img');
-      img.src = src;
-      img.style.cssText = 'width:90px;height:90px;object-fit:cover;border-radius:10px;border:1.5px solid var(--border)';
-      if(grid) grid.appendChild(img);
-    });
-  } else {
-    if(noFotos) noFotos.textContent = 'Sin fotos adjuntas';
-  }
-  rv.classList.add('open');
-}
-
 function limpiarTodo(){ resetFormulario(); }
 
 function resetFormulario(){
@@ -3072,6 +2976,9 @@ function resetFormulario(){
   if(cw) cw.style.display = 'none'; if(ew) ew.style.display = 'none';
   var ct = document.getElementById('cabObsText'), et = document.getElementById('estObsText');
   if(ct) ct.value = ''; if(et) et.value = '';
+  // Ocultar tarjetas de confirmación
+  var cc = document.getElementById('confirmCards');
+  if(cc) cc.style.display = 'none';
   // Volver al modo CO por defecto
   setModoReg('co');
   // Bloquear botón enviar de nuevo
@@ -4698,22 +4605,48 @@ function confirmarEnvio(){
   if(navigator.onLine){
     enviarConUltramsg(reporte.id, function(ok){
       actualizarBadgeHistorial();
-      if(!ok){
+      if(ok){
+        _ccSet('msg', '✅', 'Mensaje WhatsApp', 'Enviado correctamente al grupo');
+        var nF = (reporte.fotos||[]).length;
+        _ccSet('foto', nF > 0 ? '✅' : '📷', 'Evidencia fotográfica', nF > 0 ? nF+' foto'+(nF>1?'s':'')+' enviada'+(nF>1?'s':'')+' correctamente' : 'Sin fotos adjuntas');
+      } else {
+        _ccSet('msg', '⚠️', 'Mensaje WhatsApp', 'Sin respuesta — reintentando automáticamente');
+        _ccSet('foto', '⚠️', 'Evidencia fotográfica', 'Pendiente de reenvío');
         showToast('⚠️ Sin respuesta · Reintentando automáticamente');
       }
     });
   }
-  // Capturar datos ANTES de resetear
+  // Capturar datos antes de resetear
   var fotosCopy = fotos.map(function(f){ return f.data || f; });
-  var pozoCopy = W;
-  var recCopy = REC;
-  var online = navigator.onLine;
-  var modoCopy = typeof modoRegistro !== 'undefined' ? modoRegistro : 'co';
-  // Limpiar y resetear formulario
+  var nFotos = fotosCopy.length;
   limpiarFotos();
   resetFormulario();
-  // Mostrar pantalla de resultado (después del reset para que no se cierre)
-  mostrarPantallaResultado(pozoCopy, recCopy, fotosCopy, online, modoCopy);
+
+  // Mostrar tarjetas de confirmación
+  var cc = document.getElementById('confirmCards');
+  if(cc){
+    cc.style.display = 'block';
+    // Scroll hasta las tarjetas
+    setTimeout(function(){ cc.scrollIntoView({behavior:'smooth', block:'center'}); }, 150);
+  }
+
+  if(navigator.onLine){
+    // Estado inicial: enviando
+    _ccSet('msg', '⏳', 'Mensaje WhatsApp', 'Enviando al grupo...');
+    _ccSet('foto', '⏳', 'Evidencia fotográfica', nFotos > 0 ? 'Enviando '+nFotos+' foto'+(nFotos>1?'s':'')+'...' : 'Sin fotos adjuntas');
+  } else {
+    _ccSet('msg', '💾', 'Mensaje WhatsApp', 'Guardado localmente — se enviará al recuperar señal');
+    _ccSet('foto', '💾', 'Evidencia fotográfica', nFotos > 0 ? nFotos+' foto'+(nFotos>1?'s':'')+' guardada'+(nFotos>1?'s':'')+' localmente' : 'Sin fotos adjuntas');
+  }
+}
+
+function _ccSet(tipo, icon, titulo, sub){
+  var iconEl  = document.getElementById('cc'+tipo.charAt(0).toUpperCase()+tipo.slice(1)+'Icon');
+  var titleEl = document.getElementById('cc'+tipo.charAt(0).toUpperCase()+tipo.slice(1)+'Title');
+  var subEl   = document.getElementById('cc'+tipo.charAt(0).toUpperCase()+tipo.slice(1)+'Sub');
+  if(iconEl)  iconEl.textContent  = icon;
+  if(titleEl) titleEl.textContent = titulo;
+  if(subEl)   subEl.textContent   = sub;
 }
 
 // ── Renderizar historial ──────────────────────────
