@@ -978,32 +978,9 @@ body.night .chk-row.on{background:#052e1640}
 /* ══ RESULT SCREEN ══ */
 .result-view{
   display:none;position:fixed;inset:0;z-index:700;
-  background:var(--bg);flex-direction:column;overflow-y:auto;
+  background:var(--bg);flex-direction:column;overflow:hidden;
 }
 .result-view.open{display:flex}
-.result-header{
-  background:linear-gradient(135deg,#0f3460 0%,#1a4d8a 100%);
-  padding:48px 24px 32px;text-align:center;flex-shrink:0;
-}
-.result-icon{font-size:72px;margin-bottom:12px;animation:popIn .5s cubic-bezier(.34,1.56,.64,1);display:block}
-.result-title{font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:2px;color:#fff;margin-bottom:6px}
-.result-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;letter-spacing:.5px}
-.result-body{padding:20px 16px;flex:1;max-width:480px;margin:0 auto;width:100%}
-.result-info-card{background:var(--surface);border-radius:14px;border:1.5px solid var(--border);padding:16px;margin-bottom:14px}
-.result-info-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
-.result-info-row:last-child{border-bottom:none;padding-bottom:0}
-.result-info-label{font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.7px;min-width:80px}
-.result-info-val{font-size:14px;font-weight:700;color:var(--txt);flex:1}
-.result-fotos-title{font-size:12px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px}
-.result-fotos-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
-.result-foto{width:90px;height:90px;object-fit:cover;border-radius:10px;border:2px solid var(--border)}
-.result-no-foto{font-size:12px;color:var(--txt2);font-style:italic;margin-bottom:14px}
-.result-back{width:100%;padding:16px;background:var(--green);color:#fff;border:none;border-radius:13px;font-size:16px;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:8px;transition:all .2s}
-.result-back:active{transform:scale(.98)}
-.result-signal{display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:10px;padding:12px 14px;margin-bottom:14px;border:1.5px solid var(--border)}
-.result-signal-icon{font-size:22px;flex-shrink:0}
-.result-signal-txt{font-size:12px;color:var(--txt2);line-height:1.5}
-.result-signal-txt strong{color:var(--txt);font-weight:700;display:block;margin-bottom:2px}
 
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -2027,23 +2004,44 @@ function ppToggle(id){
 
 <!-- ══ PANTALLA DE RESULTADO ══ -->
 <div class="result-view" id="resultView">
-  <div class="result-header">
-    <span class="result-icon" id="resultIcon"></span>
-    <div class="result-title" id="resultTitle"></div>
-    <div id="resultBadge" class="result-badge"></div>
+  <div id="rv-header" style="width:100%;background:linear-gradient(135deg,#0f3460,#1a4a7a);padding:28px 20px 24px;text-align:center;flex-shrink:0">
+    <div style="font-size:64px;margin-bottom:10px;animation:popIn .5s cubic-bezier(.34,1.56,.64,1)">&#x2705;</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:2px;color:#fff;margin-bottom:10px">REPORTE REGISTRADO</div>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <span id="rv-modo-badge" style="background:rgba(255,255,255,.15);color:#fff;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700"></span>
+      <span id="rv-badge" style="background:rgba(255,255,255,.25);color:#fff;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:800"></span>
+    </div>
   </div>
-  <div class="result-body">
-    <div class="result-signal" id="resultSignal" style="display:none">
-      <span class="result-signal-icon" id="resultSignalIcon"></span>
-      <div class="result-signal-txt" id="resultSignalTxt"></div>
+  <div style="flex:1;width:100%;overflow-y:auto;padding:16px;box-sizing:border-box">
+    <div id="rv-status" style="background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:14px">
+      <div id="rv-status-title" style="font-weight:800;font-size:14px;color:var(--txt);margin-bottom:4px"></div>
+      <div id="rv-status-sub" style="font-size:13px;color:var(--txt2)"></div>
     </div>
-    <div class="result-info-card" id="resultInfoCard"></div>
-    <div id="resultFotosWrap">
-      <div class="result-fotos-title" id="resultFotosTitleEl" style="display:none">📸 Evidencia fotográfica</div>
-      <div class="result-fotos-grid" id="resultFotosGrid"></div>
-      <div class="result-no-foto" id="resultNoFoto" style="display:none">Sin fotos adjuntas</div>
+    <div style="background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:14px">
+      <div style="display:flex;border-bottom:1px solid var(--border);padding:10px 16px">
+        <span style="font-size:11px;font-weight:700;color:var(--txt2);width:90px;flex-shrink:0">POZO</span>
+        <span id="rv-pozo" style="font-weight:800;color:var(--txt);font-size:14px"></span>
+      </div>
+      <div style="display:flex;border-bottom:1px solid var(--border);padding:10px 16px">
+        <span style="font-size:11px;font-weight:700;color:var(--txt2);width:90px;flex-shrink:0">CORREDOR</span>
+        <span id="rv-rec" style="font-weight:700;color:var(--txt);font-size:14px"></span>
+      </div>
+      <div style="display:flex;border-bottom:1px solid var(--border);padding:10px 16px">
+        <span style="font-size:11px;font-weight:700;color:var(--txt2);width:90px;flex-shrink:0">FECHA</span>
+        <span id="rv-fecha" style="font-weight:600;color:var(--txt);font-size:13px"></span>
+      </div>
+      <div style="display:flex;padding:10px 16px">
+        <span style="font-size:11px;font-weight:700;color:var(--txt2);width:90px;flex-shrink:0">POZOS CICLO</span>
+        <span id="rv-ciclo" style="font-weight:800;color:var(--accent);font-size:14px"></span>
+      </div>
     </div>
-    <button class="result-back" onclick="cerrarResultado()">✔ Entendido · Nuevo registro</button>
+    <div id="rv-fotos-wrap" style="margin-bottom:14px">
+      <div id="rv-fotos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,90px);gap:8px"></div>
+      <div id="rv-no-fotos" style="color:var(--txt2);font-style:italic;font-size:13px;text-align:center;padding:8px 0"></div>
+    </div>
+  </div>
+  <div style="padding:16px;width:100%;box-sizing:border-box;flex-shrink:0">
+    <button onclick="cerrarResultado()" style="width:100%;padding:18px;background:#16a34a;color:#fff;border:none;border-radius:16px;font-size:16px;font-weight:800;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:.5px">&#x2714; Entendido &middot; Nuevo registro</button>
   </div>
 </div>
 
@@ -2960,12 +2958,60 @@ function mostrarResultado(exito, n, enviado){
 }
 
 function cerrarResultado(){
-  var rv = document.getElementById('resultView');
-  rv.classList.remove('open');
-  // Limpiar fotos del grid para no acumular
-  var grid = document.getElementById('resultFotosGrid');
-  if(grid) grid.innerHTML = '';
+  document.getElementById('resultView').classList.remove('open');
   msgPendiente = '';
+  resetFormulario();
+}
+
+function mostrarPantallaResultado(pozo, rec, fotosSnap, online){
+  var rv = document.getElementById('resultView');
+  if(!rv) return;
+  // Badge de modo
+  var modoBadge = document.getElementById('rv-modo-badge');
+  var modos = {co:'🛢 C.O.', guardia:'👷 Guardia', cab:'🔧 Cabezal', estacion:'🏭 Estación', nota:'📝 Nota', alarma:'🚨 Alarma'};
+  var modoLabel = modos[modoRegistro] || modos.co;
+  if(modoBadge) modoBadge.textContent = modoLabel;
+  // Badge pozo/recorredor
+  var badge = document.getElementById('rv-badge');
+  if(badge) badge.textContent = (pozo || 'NOTA') + ' · ' + (rec || '');
+  // Estado envío
+  var st = document.getElementById('rv-status-title');
+  var ss = document.getElementById('rv-status-sub');
+  if(online){
+    if(st) st.textContent = 'Enviado al grupo';
+    if(ss) ss.textContent = 'Mensaje y fotos entregados correctamente a WhatsApp.';
+  } else {
+    if(st) st.textContent = 'Guardado localmente';
+    if(ss) ss.textContent = 'Sin señal. Se enviará automáticamente al recuperar internet.';
+  }
+  // Info
+  var rPozo = document.getElementById('rv-pozo');
+  var rRec  = document.getElementById('rv-rec');
+  var rFecha= document.getElementById('rv-fecha');
+  var rCiclo= document.getElementById('rv-ciclo');
+  if(rPozo)  rPozo.textContent  = pozo || 'NOTA';
+  if(rRec)   rRec.textContent   = rec  || '';
+  var now = new Date();
+  if(rFecha) rFecha.textContent = now.toLocaleDateString('es-MX') + ' · ' + now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  var nVis = rec ? getVisitas(rec).length : 0;
+  if(rCiclo) rCiclo.textContent = nVis + ' pozo' + (nVis !== 1 ? 's' : '') + ' registrado' + (nVis !== 1 ? 's' : '') + ' este ciclo';
+  // Fotos
+  var grid = document.getElementById('rv-fotos-grid');
+  var noFotos = document.getElementById('rv-no-fotos');
+  if(grid) grid.innerHTML = '';
+  if(fotosSnap && fotosSnap.length > 0){
+    if(noFotos) noFotos.textContent = '';
+    fotosSnap.forEach(function(src){
+      if(!src) return;
+      var img = document.createElement('img');
+      img.src = src;
+      img.style.cssText = 'width:90px;height:90px;object-fit:cover;border-radius:10px;border:1.5px solid var(--border)';
+      if(grid) grid.appendChild(img);
+    });
+  } else {
+    if(noFotos) noFotos.textContent = 'Sin fotos adjuntas';
+  }
+  rv.classList.add('open');
 }
 
 function limpiarTodo(){ resetFormulario(); }
@@ -3009,6 +3055,26 @@ function resetFormulario(){
     if(ok) ok.classList.remove('sel');
     if(bad) bad.classList.remove('sel');
   });
+  // Limpiar Nivel Frac Tank
+  ['nivCTM','nivBLS','nivObs'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.value = '';
+  });
+  var cardNivel = document.getElementById('card-nivel');
+  if(cardNivel) cardNivel.style.display = 'none';
+  // Limpiar nota de campo
+  var nota = document.getElementById('notaLibreText');
+  if(nota) nota.value = '';
+  // Limpiar cabezales y estaciones (visual + variables)
+  _cabSel = ''; _estSel = '';
+  document.querySelectorAll('.cab-opt,.est-opt').forEach(function(b){
+    b.style.borderColor = '#e5e7eb'; b.style.background = 'var(--surface2)';
+  });
+  var cw = document.getElementById('cab-obs-wrap'), ew = document.getElementById('est-obs-wrap');
+  if(cw) cw.style.display = 'none'; if(ew) ew.style.display = 'none';
+  var ct = document.getElementById('cabObsText'), et = document.getElementById('estObsText');
+  if(ct) ct.value = ''; if(et) et.value = '';
+  // Volver al modo CO por defecto
+  setModoReg('co');
   // Bloquear botón enviar de nuevo
   var sb = document.getElementById('sendBtn');
   if(sb){ sb.style.opacity = '.45'; sb.style.pointerEvents = 'none'; }
@@ -4610,135 +4676,39 @@ function confirmarEnvio(){
   ov.classList.remove('open');
   ov.style.cssText = '';
   ov.style.display = 'none';
-
-  var ahora = new Date();
-  var fechaStr = ahora.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'});
-  var horaStr  = ahora.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
-  var snapFotos = fotos.map(function(f){ return {data:(f.data||f), nombre:(f.nombre||'')}; });
-  var snapPozo  = W;
-  var snapRec   = REC;
-
+  var ahora = new Date().toISOString();
   var reporte = {
     id: Date.now(),
-    fecha: ahora.toISOString(),
-    pozo: snapPozo,
-    recorredor: snapRec,
+    fecha: ahora,
+    pozo: W,
+    recorredor: REC,
     msg: msgPendiente,
-    fotos: snapFotos,
+    fotos: fotos.map(function(f){ return {data:(f.data||f), nombre:(f.nombre||'')}; }),
     estado: 'pendiente',
     ultimoIntento: null,
     intentos: 0
   };
-
-  // 1. SIEMPRE guardar primero
+  // 1. SIEMPRE guardar primero — nunca perder
   guardarReporte(reporte);
-  agregarVisita(snapRec, snapPozo);
-  mostrarContador(snapRec);
-  var n = getVisitas(snapRec).length;
+  agregarVisita(REC, W);
+  mostrarContador(REC);
+  var n = getVisitas(REC).length;
   actualizarBadgeHistorial();
 
-  // 2. Intentar enviar
-  var hayInternet = navigator.onLine;
-  if(hayInternet){
+  // Intentar enviar automáticamente con Ultramsg (silencioso)
+  if(navigator.onLine){
     enviarConUltramsg(reporte.id, function(ok){
       actualizarBadgeHistorial();
-      // Actualizar ícono de señal en pantalla de resultado
-      var si = document.getElementById('resultSignalIcon');
-      var st = document.getElementById('resultSignalTxt');
-      if(si && st){
-        if(ok){
-          si.textContent = '✅';
-          st.innerHTML = '<strong>Enviado al grupo</strong>Mensaje y fotos entregados correctamente a WhatsApp.';
-        } else {
-          si.textContent = '⏳';
-          st.innerHTML = '<strong>En cola de envío</strong>Sin respuesta del servidor · Se reintentará automáticamente cuando haya señal.';
-        }
+      if(!ok){
+        showToast('⚠️ Sin respuesta · Reintentando automáticamente');
       }
     });
   }
-
-  // 3. Mostrar pantalla de resultado con fotos
-  mostrarPantallaResultado(snapPozo, snapRec, fechaStr, horaStr, n, hayInternet, snapFotos);
-
-  // 4. Limpiar formulario
+  // Mostrar pantalla de resultado
+  var fotosSnap = fotos.map(function(f){ return f.data || f; });
   limpiarFotos();
+  mostrarPantallaResultado(W, REC, fotosSnap, navigator.onLine);
   resetFormulario();
-}
-
-function mostrarPantallaResultado(pozo, rec, fechaStr, horaStr, n, hayInternet, fotosSnap){
-  var rv = document.getElementById('resultView');
-
-  // Ícono y título
-  document.getElementById('resultIcon').textContent = '✅';
-  document.getElementById('resultTitle').textContent = 'Reporte Registrado';
-  document.getElementById('resultBadge').textContent = 'C-' + pozo + ' · ' + rec;
-
-  // Señal
-  var signal = document.getElementById('resultSignal');
-  var si     = document.getElementById('resultSignalIcon');
-  var st     = document.getElementById('resultSignalTxt');
-  if(signal && si && st){
-    signal.style.display = 'flex';
-    if(hayInternet){
-      signal.style.borderColor = 'rgba(22,163,74,.3)';
-      si.textContent = '📡';
-      st.innerHTML = '<strong>Enviando al grupo...</strong>Conectado a internet · Enviando mensaje y fotos a WhatsApp.';
-    } else {
-      signal.style.borderColor = 'rgba(245,158,11,.3)';
-      si.textContent = '💾';
-      st.innerHTML = '<strong>Guardado sin internet</strong>El reporte está guardado localmente. Se enviará al grupo automáticamente cuando haya señal.';
-    }
-  }
-
-  // Info card
-  var card = document.getElementById('resultInfoCard');
-  if(card){
-    card.innerHTML =
-      '<div class="result-info-row">'
-      +'<span class="result-info-label">Pozo</span>'
-      +'<span class="result-info-val">C-' + pozo + '</span>'
-      +'</div>'
-      +'<div class="result-info-row">'
-      +'<span class="result-info-label">Recorredor</span>'
-      +'<span class="result-info-val">' + rec + '</span>'
-      +'</div>'
-      +'<div class="result-info-row">'
-      +'<span class="result-info-label">Fecha</span>'
-      +'<span class="result-info-val">' + fechaStr + ' · ' + horaStr + '</span>'
-      +'</div>'
-      +'<div class="result-info-row">'
-      +'<span class="result-info-label">Pozos ciclo</span>'
-      +'<span class="result-info-val">' + n + ' pozo' + (n===1?'':'s') + ' registrado' + (n===1?'':'s') + ' este ciclo</span>'
-      +'</div>';
-  }
-
-  // Fotos
-  var tituloFotos = document.getElementById('resultFotosTitleEl');
-  var grid        = document.getElementById('resultFotosGrid');
-  var noFoto      = document.getElementById('resultNoFoto');
-  if(grid){
-    grid.innerHTML = '';
-    if(fotosSnap && fotosSnap.length){
-      if(tituloFotos) tituloFotos.style.display = 'block';
-      if(noFoto) noFoto.style.display = 'none';
-      fotosSnap.forEach(function(f, i){
-        var src = f.data || f;
-        if(!src) return;
-        var img = document.createElement('img');
-        img.className = 'result-foto';
-        img.src = src.startsWith('data:') ? src : 'data:image/jpeg;base64,' + src;
-        img.alt = 'Foto ' + (i+1);
-        grid.appendChild(img);
-      });
-    } else {
-      if(tituloFotos) tituloFotos.style.display = 'none';
-      if(noFoto) noFoto.style.display = 'block';
-    }
-  }
-
-  // Mostrar pantalla
-  rv.classList.add('open');
-  rv.scrollTop = 0;
 }
 
 // ── Renderizar historial ──────────────────────────
