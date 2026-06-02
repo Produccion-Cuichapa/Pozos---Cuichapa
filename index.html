@@ -2382,6 +2382,17 @@ function ppToggle(id){
       🚨 Enviar alerta
     </button>
 
+    <!-- Overlay de confirmación antes de enviar -->
+    <div id="alarmConfirmOverlay" style="display:none;margin-top:14px;background:#fff1f2;border:2px solid #fca5a5;border-radius:16px;padding:18px 16px;text-align:center">
+      <div style="font-size:28px;margin-bottom:8px">🚨</div>
+      <div style="font-size:14px;font-weight:800;color:#991b1b;margin-bottom:4px">¿CONFIRMAS LA ALARMA?</div>
+      <div id="alarmConfirmType" style="font-size:13px;font-weight:700;color:#dc2626;margin-bottom:14px"></div>
+      <div style="display:flex;gap:10px">
+        <button onclick="cancelarConfirmAlarma()" style="flex:1;padding:12px;border-radius:12px;border:1.5px solid #d1d5db;background:transparent;color:#6b7280;font-size:14px;font-weight:700;cursor:pointer">Cancelar</button>
+        <button onclick="enviarAlarma()" style="flex:1;padding:12px;border-radius:12px;border:none;background:#dc2626;color:#fff;font-size:14px;font-weight:800;cursor:pointer">Sí, enviar</button>
+      </div>
+    </div>
+
     <!-- Tarjetas de confirmación -->
     <div id="alarmConfirmCards" style="display:none;margin-top:16px">
       <div style="font-size:11px;font-weight:700;color:var(--txt2);letter-spacing:.8px;margin-bottom:10px">ESTADO DEL ENVÍO</div>
@@ -4232,13 +4243,15 @@ function selAlarm(btn, tipo){
 
 function confirmarAlarma(){
   if(!alarmTipoSeleccionado) return;
-  // Mostrar confirmación inline
-  document.getElementById('alarmConfirmOverlay').classList.add('open');
-  document.getElementById('alarmConfirmType').textContent = alarmTipoSeleccionado;
+  var ov = document.getElementById('alarmConfirmOverlay');
+  var tp = document.getElementById('alarmConfirmType');
+  if(ov) ov.style.display = 'block';
+  if(tp) tp.textContent = alarmTipoSeleccionado;
 }
 
 function cancelarConfirmAlarma(){
-  document.getElementById('alarmConfirmOverlay').classList.remove('open');
+  var ov = document.getElementById('alarmConfirmOverlay');
+  if(ov) ov.style.display = 'none';
 }
 
 var _alarmLastReporteId = null;
@@ -4274,7 +4287,7 @@ function alarmCcVerificar(){
 }
 
 function enviarAlarma(){
-  document.getElementById('alarmConfirmOverlay').classList.remove('open');
+  var _ov = document.getElementById('alarmConfirmOverlay'); if(_ov) _ov.style.display = 'none';
 
   // Detectar quien reporta automáticamente
   var RECS = {'m':'Manrique','c':'Cirilo','jc':'Juan Carlos'};
@@ -4320,6 +4333,16 @@ function enviarAlarma(){
 
     // Firebase push
     if(fbDB){ fbDB.ref('alarmas/'+alarmaData.id).set(alarmaData).catch(function(){}); enviarPushATodos(alarmaData); }
+    // Escribir alarma activa en config para que todos los dispositivos la vean
+    if(fbDB){ fbDB.ref('config/alarma_activa').set({
+      id: alarmaData.id,
+      tipo: alarmaData.tipo,
+      quien: alarmaData.quien,
+      lugar: alarmaData.lugar,
+      hora: alarmaData.hora,
+      ts: Date.now(),
+      deviceId: DEVICE_ID
+    }).catch(function(){}); }
 
     // Construir mensaje WA
     var msgLines = ['🚨 *ALERTA DE EMERGENCIA*','━━━━━━━━━━━━━━━━━━',
@@ -4879,7 +4902,7 @@ var REC_ICONOS = ['🪖','🔧','⚒️','🛠️','🔩','🪛','🦺','🧰','
 function supGetCustomRecs(){
   try{ return JSON.parse(localStorage.getItem('custom_recs')||'[]'); }catch(e){ return []; }
 }
-// supSaveCustomRecs definido arriba con sync Firebase
+
 
 function supMostrarFormNuevoRec(){
   document.getElementById('supFormNuevoRec').style.display='block';
@@ -4915,6 +4938,7 @@ function supConfirmarNuevoRec(){
   supSaveCustomRecs(custom);
   // Agregar al ciclo con fecha de hoy
   if(!CICLOS[nombre]){ var hoyRec=new Date(); hoyRec.setHours(0,0,0,0); CICLOS[nombre]=hoyRec; }
+  fbSetConfig('ciclos/'+nombre, CICLOS[nombre].getTime());
   // Registrar en el sistema de login
   REC_MAP[nombre.replace(/\s+/g,'')] = {nombre:nombre, pass:pass, theme:key};
   // Agregar a la lista live
@@ -5025,7 +5049,7 @@ document.addEventListener('DOMContentLoaded',function(){
 // ══ PROGRAMA DEL DÍA (Recorredor – asignado por supervisión) ═════
 function _progKey(){ return 'prog_asig_'+(typeof REC!=='undefined'?REC:'x')+'_'+new Date().toISOString().slice(0,10); }
 function _progGet(){ try{ return JSON.parse(localStorage.getItem(_progKey())||'[]'); }catch(e){ return []; } }
-// _progSave definido arriba con sync Firebase
+
 
 function abrirPrograma(){
   var m=document.getElementById('progModal'); if(!m) return;
@@ -5046,6 +5070,35 @@ function progToggleHecho(idx){
   _progSave(lista);
   _progRenderLista();
   _progActualizarBadge();
+}
+function progEliminarPozo(idx){
+  var lista=_progGet();
+  lista.splice(idx,1);
+  _progSave(lista);
+  _progRenderLista();
+  _progActualizarBadge();
+}
+function progConfirmEliminar(idx, btn){
+  var card = btn ? btn.closest('.prog-card') : null;
+  if(!card) return;
+  var existing = card.querySelector('.prog-del-confirm');
+  if(existing){ existing.remove(); return; }
+  var div = document.createElement('div');
+  div.className = 'prog-del-confirm';
+  div.style.cssText = 'display:flex;gap:8px;align-items:center;padding:10px 14px;background:#fff1f2;border-top:1px solid #fecaca';
+  var lbl = document.createElement('span');
+  lbl.textContent = '¿Quitar este pozo?';
+  lbl.style.cssText = 'flex:1;font-size:12px;font-weight:700;color:#b91c1c';
+  var btnSi = document.createElement('button');
+  btnSi.textContent = 'Sí';
+  btnSi.style.cssText = 'padding:7px 14px;border-radius:9px;border:none;background:#dc2626;color:#fff;font-size:12px;font-weight:800;cursor:pointer';
+  btnSi.onclick = (function(i){ return function(){ progEliminarPozo(i); }; })(idx);
+  var btnNo = document.createElement('button');
+  btnNo.textContent = 'No';
+  btnNo.style.cssText = 'padding:7px 12px;border-radius:9px;border:1.5px solid #d1d5db;background:transparent;color:#6b7280;font-size:12px;font-weight:700;cursor:pointer';
+  btnNo.onclick = function(){ div.remove(); };
+  div.appendChild(lbl); div.appendChild(btnSi); div.appendChild(btnNo);
+  card.appendChild(div);
 }
 
 function _progRenderLista(){
@@ -5121,7 +5174,7 @@ function _asigKey(recKey){
 function _asigGet(recKey){
   try{ return JSON.parse(localStorage.getItem(_asigKey(recKey))||'[]'); }catch(e){ return []; }
 }
-// _asigSave definido arriba con sync Firebase
+
 
 // ── Panel selector de recorredor ─────────────────────────
 function supToggleProgRec(){
@@ -5348,6 +5401,31 @@ function setVacaciones(nombre, arr){
   if(fbDB) fbDB.ref('config/vac/'+nombre).set(arr.length?arr:null).catch(function(){});
 }
 
+// ── Funciones de escritura a Firebase ────────────────────
+function fbSetConfig(path, value){
+  if(!fbDB) return;
+  fbDB.ref('config/'+path).set(value).catch(function(e){ console.warn('fbSet error:',e); });
+}
+
+function supSaveCustomRecs(arr){
+  try{ localStorage.setItem('custom_recs', JSON.stringify(arr)); }catch(e){}
+  fbSetConfig('custom_recs', arr.length ? arr : null);
+}
+
+function _asigSave(recKey, arr){
+  var date = new Date().toISOString().slice(0,10);
+  try{ localStorage.setItem('prog_asig_'+recKey+'_'+date, JSON.stringify(arr)); }catch(e){}
+  fbSetConfig('prog_asig/'+recKey+'/'+date, arr.length ? arr : null);
+}
+
+function _progSave(arr){
+  var date = new Date().toISOString().slice(0,10);
+  var recKey = typeof REC !== 'undefined' ? REC : 'x';
+  try{ localStorage.setItem('prog_asig_'+recKey+'_'+date, JSON.stringify(arr)); }catch(e){}
+  fbSetConfig('prog_asig/'+recKey+'/'+date, arr.length ? arr : null);
+}
+// ─────────────────────────────────────────────────────────
+
 // ── Escuchar TODO en config ───────────────────────────────
 function escucharConfigFirebase(){
   if(!fbDB) return;
@@ -5439,6 +5517,39 @@ function escucharConfigFirebase(){
       try{ localStorage.setItem('vac_'+nombre, JSON.stringify(arr)); }catch(e){}
     });
     if(cambioExterno) notifCambio('Vacaciones de recorredores actualizadas');
+  });
+
+  // ── Ciclos de trabajo ────────────────────────────────────
+  fbDB.ref('config/ciclos').on('value', function(snap){
+    if(!snap.exists()) return;
+    var ciclosRemotos = snap.val();
+    Object.keys(ciclosRemotos).forEach(function(nombre){
+      var ts = ciclosRemotos[nombre];
+      if(ts && !CICLOS[nombre]){
+        var d = new Date(ts); d.setHours(0,0,0,0);
+        CICLOS[nombre] = d;
+      }
+    });
+  });
+
+  // ── Alarma activa en tiempo real ─────────────────────────
+  var _alarmaSyncInit = false;
+  fbDB.ref('config/alarma_activa').on('value', function(snap){
+    if(!_alarmaSyncInit){ _alarmaSyncInit=true; return; } // ignorar primera carga
+    if(!snap.exists()) return;
+    var d = snap.val();
+    // Ignorar si fue este mismo dispositivo quien la activó
+    if(d.deviceId === DEVICE_ID) return;
+    // Mostrar banner de alarma entrante
+    var tipoEl = document.getElementById('alarmIncomingType');
+    var infoEl = document.getElementById('alarmIncomingInfo');
+    if(tipoEl) tipoEl.textContent = d.tipo || 'EMERGENCIA';
+    if(infoEl) infoEl.textContent = 'Reportado por: '+d.quien+'\n📍 '+d.lugar+' · '+d.hora;
+    var el = document.getElementById('alarmIncoming');
+    if(el){ el.style.display='flex'; el.classList.add('show'); }
+    if(navigator.vibrate) navigator.vibrate([500,200,500,200,500,200,500]);
+    tocarSonidoAlarma();
+    notifCambio('🚨 ALARMA ACTIVA — '+d.quien);
   });
 }
 
@@ -6064,7 +6175,13 @@ function escucharFirebase(){
   var _fbReportesInit = false;
   fbDB.ref('reportes').orderByChild('fecha').on('value', function(snapshot){
     actualizarSyncBar('conectado');
-    if(_fbReportesInit) notifCambio('Nuevos reportes disponibles');
+    if(_fbReportesInit){
+      // Find the newest report to show who sent it
+      var snap_data = snapshot.val();
+      var newest = snap_data ? Object.values(snap_data).sort(function(a,b){ return (b.fecha||'')>(a.fecha||'')?1:-1; })[0] : null;
+      var quien = newest && newest.recorredor ? newest.recorredor : '';
+      notifCambio('📋 Nuevo reporte' + (quien ? ' de '+quien : '') + ' — Gráficas actualizadas');
+    }
     _fbReportesInit = true;
     var data = snapshot.val();
 
@@ -6106,6 +6223,9 @@ function escucharFirebase(){
     saveHistorial(merged);
     renderHistorial();
     actualizarBadgeHistorial();
+    // Auto-actualizar gráficas si el panel está abierto
+    var infoPanel = document.getElementById('supInfoPanel');
+    if(infoPanel && infoPanel.style.display === 'block') supRenderGraficas();
 
   }, function(err){
     console.warn('Firebase error:', err);
@@ -7201,7 +7321,7 @@ function initLeafletMap(){
 
 function selectWell(w){
   selectedWell=w;
-  document.getElementById('pozoTitle').textContent='C-'+w;
+  var _pt=document.getElementById('pozoTitle'); if(_pt) _pt.textContent='C-'+w;
   cargarInfoPozo(w);
   switchView('pozo');
 }
@@ -7287,7 +7407,7 @@ function filtrarPozos(){
 
 function entrarPozo(){
   if(!selectedWell) return;
-  document.getElementById('pozoTitle').textContent='C-'+selectedWell;
+  var _pt2=document.getElementById('pozoTitle'); if(_pt2) _pt2.textContent='C-'+selectedWell;
   cargarInfoPozo(selectedWell);
   switchView('pozo');
 }
