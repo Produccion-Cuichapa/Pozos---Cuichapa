@@ -19,15 +19,15 @@
     "theme_color": "#0f3460",
     "lang": "es",
     "icons": [
-      { "src": "https://produccion-cuichapa.github.io/Pozos---Cuichapa/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-      { "src": "https://produccion-cuichapa.github.io/Pozos---Cuichapa/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+      { "src": "https://via.placeholder.com/192x192/0f3460/FF7A00?text=CC", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+      { "src": "https://via.placeholder.com/512x512/0f3460/FF7A00?text=CC", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
     ],
     "categories": ["productivity", "utilities"],
     "prefer_related_applications": false
   };
-  var json = JSON.stringify(manifest);
-  var b64 = btoa(unescape(encodeURIComponent(json)));
-  document.getElementById('pwa-manifest').setAttribute('href', 'data:application/json;base64,' + b64);
+  var blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+  var url = URL.createObjectURL(blob);
+  document.getElementById('pwa-manifest').setAttribute('href', url);
 })();
 </script>
 <meta name="theme-color" content="#0f3460">
@@ -152,6 +152,7 @@ body.night .sidebar{background:#050810;border-right-color:#0f1a28}
 
 /* ══ VIEWS ══ */
 .view{display:none}.view.active{display:block}
+.wrap .view.active{display:block !important}
 
 /* ══ LOGIN MODAL ══ */
 .login-overlay{
@@ -1058,15 +1059,11 @@ body.night .chk-row.on{background:#052e1640}
 
   <div class="sidebar-divider"></div>
 
-  <!-- Historial Central -->
-  <div class="sidebar-icon sidebar-locked" id="icon-histcentral" data-tip="Historial Central" onclick="sidebarNav('histcentral')" style="display:none">
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+  <!-- Supervisión -->
+  <div class="sidebar-icon sidebar-locked" id="icon-supervision" data-tip="Supervisión" onclick="sidebarNav('supervision')" style="display:none;align-items:center;justify-content:center">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><circle cx="19" cy="8" r="2"/><path d="M21 14c1.7.6 3 2 3 3.5"/></svg>
   </div>
 
-  <!-- Superintendente -->
-  <div class="sidebar-icon sidebar-locked" id="icon-supercentral" data-tip="Superintendente" onclick="sidebarNav('supercentral')" style="display:none">
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-  </div>
 
 </div>
 
@@ -1175,18 +1172,6 @@ body.night .chk-row.on{background:#052e1640}
       <div class="pk-card" onclick="selProfile('Manrique','m','rec')"><div class="pk-card-ico">🌊</div><div class="pk-card-nm">Manrique</div><div class="pk-card-lk">🔒 clave</div></div>
       <div class="pk-card" onclick="selProfile('Cirilo','c','rec')"><div class="pk-card-ico">⛏️</div><div class="pk-card-nm">Cirilo</div><div class="pk-card-lk">🔒 clave</div></div>
       <div class="pk-card" onclick="selProfile('Juan Carlos','jc','rec')"><div class="pk-card-ico">🦺</div><div class="pk-card-nm">Juan Carlos</div><div class="pk-card-lk">🔒 clave</div></div>
-      <!-- Botón instalar para recorredores -->
-      <div id="recInstallWrap" style="grid-column:1/-1;margin-top:4px;display:none">
-        <button onclick="pwaInstalarRec()" style="width:100%;padding:12px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif">
-          📲 Instalar app en este teléfono
-        </button>
-        <div id="recInstallInstr" style="display:none;margin-top:10px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:12px;font-size:12px;color:#166534;line-height:1.7">
-          <strong>Cómo instalar en Android:</strong><br>
-          1. Toca los 3 puntos ⋮ arriba a la derecha<br>
-          2. Selecciona <strong>"Agregar a pantalla de inicio"</strong><br>
-          3. Confirma con <strong>"Agregar"</strong>
-        </div>
-      </div>
     </div>
 
     <!-- OPERADORES -->
@@ -1254,39 +1239,6 @@ function ppToggle(id){
   var row=body.previousElementSibling;
   body.classList.add('open');
   if(row)row.classList.add('open');
-  // Mostrar botón instalar solo en recorredores y si no está instalada
-  if(id === 'rec'){
-    var wrap = document.getElementById('recInstallWrap');
-    if(wrap && !window.matchMedia('(display-mode: standalone)').matches){
-      wrap.style.display = 'block';
-    }
-  }
-}
-
-function pwaInstalarRec(){
-  if(window.deferredPrompt){
-    window.deferredPrompt.prompt();
-    window.deferredPrompt.userChoice.then(function(r){
-      window.deferredPrompt = null;
-      if(r.outcome === 'accepted'){
-        var wrap = document.getElementById('recInstallWrap');
-        if(wrap) wrap.style.display = 'none';
-        showToast('✅ App instalada correctamente');
-      }
-    });
-  } else {
-    // Mostrar instrucciones manuales para Android/Chrome
-    var instr = document.getElementById('recInstallInstr');
-    if(instr) instr.style.display = instr.style.display === 'none' ? 'block' : 'none';
-  }
-}
-
-function pwaVerificarInstalacion(){
-  if(window.deferredPrompt){
-    instalarPWA();
-  } else if(!window.matchMedia('(display-mode: standalone)').matches){
-    showToast('Abre el menú ⋮ del navegador y elige "Agregar a pantalla de inicio"');
-  }
 }
 </script>
 
@@ -1326,6 +1278,17 @@ function pwaVerificarInstalacion(){
 <button class="back-to-picker" onclick="volverAlPicker()">‹ Cambiar perfil</button>
 
 <!-- Banner PWA -->
+<!-- Banner aviso sesión por expirar -->
+<div id="sesionAviso" style="display:none;position:fixed;top:0;left:0;right:0;z-index:8000;background:#d97706;padding:10px 16px;align-items:center;gap:12px;font-family:'Inter',sans-serif">
+  <div style="font-size:20px;flex-shrink:0">⏰</div>
+  <div style="flex:1;color:#fff">
+    <div style="font-size:13px;font-weight:800">Sesión por expirar</div>
+    <div style="font-size:11px;opacity:.85">Tu sesión cierra en 10 minutos</div>
+  </div>
+  <button onclick="sesionRenovar()" style="background:#fff;color:#d97706;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:800;cursor:pointer;font-family:'Inter',sans-serif;flex-shrink:0">Renovar</button>
+  <button onclick="this.parentElement.style.display='none'" style="background:transparent;border:none;color:rgba(255,255,255,.8);font-size:20px;cursor:pointer;flex-shrink:0;padding:0 4px">✕</button>
+</div>
+
 <div class="install-banner" id="installBanner">
   <div class="install-banner-txt">
     <strong>📲 Instalar en tu teléfono</strong>
@@ -1333,33 +1296,6 @@ function pwaVerificarInstalacion(){
   </div>
   <button class="install-btn" id="installBtn" onclick="instalarPWA()">Instalar</button>
   <button class="install-close" onclick="cerrarBanner()">✕</button>
-</div>
-
-<!-- Pantalla de instalación para Android -->
-<div id="installScreen" style="display:none;position:fixed;inset:0;z-index:99999;background:#0f3460;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center">
-  <div style="font-size:64px;margin-bottom:16px">📲</div>
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:2px;color:#fff;margin-bottom:8px">CAMPO CUICHAPA</div>
-  <div style="font-size:14px;color:rgba(255,255,255,.7);margin-bottom:32px">Instala la app para usarla sin internet</div>
-
-  <!-- Botón instalar (si Chrome tiene prompt) -->
-  <button id="installScreenBtn" onclick="installScreenInstall()" style="width:100%;max-width:320px;padding:18px;background:#f59e0b;color:#fff;border:none;border-radius:16px;font-size:16px;font-weight:900;font-family:'Inter',sans-serif;cursor:pointer;margin-bottom:16px;display:none">
-    ⬇️ Instalar app ahora
-  </button>
-
-  <!-- Instrucciones manuales Android -->
-  <div id="installManual" style="background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.25);border-radius:16px;padding:20px;max-width:320px;width:100%;text-align:left;margin-bottom:20px">
-    <div style="font-size:13px;font-weight:800;color:#f59e0b;margin-bottom:12px;text-align:center">CÓMO INSTALAR EN ANDROID</div>
-    <div style="font-size:13px;color:#fff;line-height:2">
-      <div>1️⃣ Toca los <strong>3 puntos ⋮</strong> arriba a la derecha</div>
-      <div>2️⃣ Selecciona <strong>"Agregar a pantalla de inicio"</strong></div>
-      <div>3️⃣ Toca <strong>"Agregar"</strong> para confirmar</div>
-      <div>4️⃣ Abre la app desde el ícono instalado</div>
-    </div>
-  </div>
-
-  <button onclick="installScreenSkip()" style="background:transparent;border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.6);padding:10px 24px;border-radius:10px;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif">
-    Continuar sin instalar
-  </button>
 </div>
 
 <!-- Selector de pozo -->
@@ -1564,6 +1500,13 @@ function pwaVerificarInstalacion(){
 <div class="gps-bar" id="gpsBar">📡 Obteniendo ubicación GPS...</div>
 <div class="gps-coords" id="gpsCoords"></div>
 
+<!-- Botón Historial Central -->
+<div id="hcBtnWrap" style="display:none;padding:8px 14px 0">
+  <button onclick="abrirHistorialCentral()" style="width:100%;padding:12px 16px;background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;font-family:'Inter',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+    📋 Historial Central
+  </button>
+</div>
+
 <!-- Contador de visitas (oculto, mantiene funcionalidad) -->
 <div id="cnt-panel" class="cnt-panel" style="margin-bottom:10px">
   <div class="cnt-row">
@@ -1608,16 +1551,14 @@ function pwaVerificarInstalacion(){
   <div style="display:flex;gap:12px;margin-bottom:14px">
     <div style="flex:1">
       <div class="big-field-label">Centímetros</div>
-      <input class="big-input" type="number" id="medCentimetros" placeholder="" step="0.1">
+      <input class="big-input" type="number" id="medCentimetros" placeholder="" step="0.1" oninput="cmABls(this.value,'medBarriles')">
     </div>
     <div style="flex:1">
       <div class="big-field-label">Barriles</div>
-      <input class="big-input" type="number" id="medBarriles" placeholder="" step="0.1">
+      <input class="big-input" type="number" id="medBarriles" placeholder="" step="0.1" readonly style="opacity:.7">
     </div>
   </div>
   <textarea id="medObs" placeholder="Observaciones..." style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--surface2);color:var(--txt);resize:none;height:64px;font-family:'Inter',sans-serif"></textarea>
-
-
 </div>
 
 <!-- ══ REPORTE COMPLETO ══ -->
@@ -1720,8 +1661,8 @@ function pwaVerificarInstalacion(){
   <div class="step-card" id="card-nivel" style="display:none">
     <div class="step-label">Nivel Frac Tank</div>
     <div style="display:flex;gap:10px;margin-bottom:14px">
-      <div style="flex:1"><div class="big-field-label">CTM (cm)</div><input class="big-input" type="number" id="nivCTM" placeholder="" step="1"></div>
-      <div style="flex:1"><div class="big-field-label">Barriles</div><input class="big-input" type="number" id="nivBLS" placeholder="" step="1"></div>
+      <div style="flex:1"><div class="big-field-label">CTM (cm)</div><input class="big-input" type="number" id="nivCTM" placeholder="" step="1" oninput="cmABls(this.value,'nivBLS')"></div>
+      <div style="flex:1"><div class="big-field-label">Barriles</div><input class="big-input" type="number" id="nivBLS" placeholder="" step="0.1" readonly style="opacity:.7"></div>
     </div>
     <div class="hora-box" id="horaBox">⏱ Hora: se captura al enviar</div>
     <textarea id="nivObs" placeholder="Observaciones..." style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--surface2);color:var(--txt);resize:none;height:64px;margin-top:10px;font-family:'Inter',sans-serif"></textarea>
@@ -1890,50 +1831,152 @@ function pwaVerificarInstalacion(){
 </div><!-- /formContent -->
 </div><!-- /view-visitas -->
 
-<!-- ══ HISTORIAL CENTRAL ══ -->
-<div class="view" id="view-histcentral" style="padding-bottom:80px">
-  <div style="background:linear-gradient(135deg,#1e1b4b,#312e81);padding:20px 16px 16px;margin-bottom:0">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;color:#fff">📋 HISTORIAL CENTRAL</div>
-    <div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:2px">Todos los reportes · Se borra automáticamente cada 7 días</div>
-  </div>
-  <!-- Filtros -->
-  <div style="display:flex;gap:8px;padding:14px 14px 10px;overflow-x:auto;flex-wrap:nowrap">
-    <button onclick="hcFiltrar('todos')" id="hcf-todos" style="flex-shrink:0;padding:7px 14px;border-radius:20px;border:1.5px solid var(--accent);background:var(--accent);color:#fff;font-size:12px;font-weight:800;cursor:pointer">Todos</button>
-    <button onclick="hcFiltrar('co')" id="hcf-co" style="flex-shrink:0;padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer">🛢 C.O.</button>
-    <button onclick="hcFiltrar('guardia')" id="hcf-guardia" style="flex-shrink:0;padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer">🌙 Nivel Nocturno</button>
-    <button onclick="hcFiltrar('cabezal')" id="hcf-cabezal" style="flex-shrink:0;padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer">🔧 Cabezal</button>
-    <button onclick="hcFiltrar('estacion')" id="hcf-estacion" style="flex-shrink:0;padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer">🏭 Estación</button>
-    <button onclick="hcFiltrar('alarma')" id="hcf-alarma" style="flex-shrink:0;padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer">🚨 Alarmas</button>
-  </div>
-  <div style="padding:0 14px 6px;font-size:11px;color:var(--txt2)" id="hcCount"></div>
-  <div id="hcList" style="padding:0 14px 20px"></div>
-</div>
 
-<!-- ══ SUPERINTENDENTE ══ -->
-<div class="view" id="view-supercentral" style="padding-bottom:80px">
-  <div style="background:linear-gradient(135deg,#78350f,#92400e);padding:20px 16px 16px">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;color:#fff">⭐ SUPERINTENDENTE</div>
-    <div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:2px">Panel de control · Solo supervisión</div>
-  </div>
 
-  <!-- Sección: Producción de Barriles -->
-  <div style="padding:16px 14px 0">
-    <div style="font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.8px;margin-bottom:12px">📈 PRODUCCIÓN DIARIA (BARRILES)</div>
-    <div style="background:var(--surface2);border:1.5px solid var(--border);border-radius:16px;padding:16px;margin-bottom:6px">
-      <canvas id="blsChart" height="200"></canvas>
-    </div>
-    <div style="font-size:11px;color:var(--txt2);text-align:center;margin-bottom:16px">Datos de Nivel Frac Tank y Nivel Nocturno</div>
-
-    <!-- Sección: Alta/Baja recorredores -->
-    <div style="font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.8px;margin-bottom:12px">👷 RECORREDORES</div>
-    <div id="recList" style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px"></div>
-
-  </div>
-</div>
-</div>
 </div><!-- /wrap -->
 
 
+
+<!-- ══ SUPERVISIÓN MODAL ══ -->
+<div id="supModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:9000;background:var(--bg);flex-direction:column;overflow-y:auto">
+
+  <!-- Header con logo SVG petrolero -->
+  <div id="supHeader" style="background:#0a1f44;overflow:hidden;position:relative;flex-shrink:0">
+    <svg width="100%" viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg" style="display:block">
+      <rect width="420" height="170" fill="#0a1f44"/>
+      <rect x="0" y="136" width="420" height="34" fill="#0d2a5e"/>
+      <rect x="18" y="124" width="36" height="12" rx="2" fill="#1a3a6b"/>
+      <rect x="26" y="106" width="22" height="20" rx="3" fill="#1e4a80"/>
+      <line x1="37" y1="106" x2="37" y2="88" stroke="#2563a0" stroke-width="3"/>
+      <line x1="24" y1="88" x2="72" y2="88" stroke="#2563a0" stroke-width="3"/>
+      <ellipse cx="72" cy="88" rx="7" ry="5" fill="#1e4a80" stroke="#3b82f6" stroke-width="1"/>
+      <line x1="72" y1="93" x2="72" y2="124" stroke="#3b82f6" stroke-width="1.5"/>
+      <rect x="14" y="84" width="16" height="10" rx="2" fill="#2563a0"/>
+      <rect x="69" y="124" width="6" height="16" rx="1" fill="#1e4a80"/>
+      <rect x="75" y="130" width="300" height="8" rx="4" fill="#1a3a6b"/>
+      <rect x="75" y="131" width="300" height="3" rx="2" fill="#2563a0" opacity="0.4"/>
+      <rect x="160" y="125" width="7" height="18" rx="2" fill="#1e4a80"/>
+      <rect x="158" y="128" width="11" height="4" rx="1" fill="#3b82f6"/>
+      <rect x="270" y="125" width="7" height="18" rx="2" fill="#1e4a80"/>
+      <rect x="268" y="128" width="11" height="4" rx="1" fill="#3b82f6"/>
+      <ellipse cx="348" cy="116" rx="28" ry="9" fill="#1e4a80"/>
+      <rect x="320" y="88" width="56" height="28" fill="#1a3a6b"/>
+      <ellipse cx="348" cy="88" rx="28" ry="9" fill="#2563a0"/>
+      <line x1="320" y1="100" x2="376" y2="100" stroke="#2563a0" stroke-width="0.8" opacity="0.6"/>
+      <line x1="320" y1="110" x2="376" y2="110" stroke="#2563a0" stroke-width="0.8" opacity="0.6"/>
+      <rect x="373" y="92" width="4" height="16" rx="1" fill="#3b82f6"/>
+      <polygon points="368,105 398,105 392,42 374,42" fill="#1e4a80" opacity="0.7"/>
+      <line x1="370" y1="98" x2="396" y2="68" stroke="#2a5a9a" stroke-width="1"/>
+      <line x1="396" y1="98" x2="370" y2="68" stroke="#2a5a9a" stroke-width="1"/>
+      <polygon points="374,42 392,42 388,32 378,32" fill="#2563a0" opacity="0.7"/>
+      <circle cx="383" cy="30" r="4" fill="none" stroke="#3b82f6" stroke-width="1.5"/>
+      <circle cx="383" cy="32" r="2" fill="#f59e0b"/>
+      <circle cx="68" cy="62" r="40" fill="#0f2a52" stroke="#1e4a80" stroke-width="1"/>
+      <circle cx="68" cy="62" r="33" fill="none" stroke="#2563a0" stroke-width="0.7"/>
+      <path d="M68 35 C68 35 50 54 50 64 C50 74 58 82 68 82 C78 82 86 74 86 64 C86 54 68 35 68 35Z" fill="#1e4a80"/>
+      <path d="M68 40 C68 40 55 56 55 64 C55 72 61 78 68 78 C75 78 81 72 81 64 C81 56 68 40 68 40Z" fill="#2563a0"/>
+      <ellipse cx="63" cy="52" rx="4" ry="6" fill="#3b82f6" opacity="0.35" transform="rotate(-20,63,52)"/>
+      <text x="68" y="67" font-family="Arial Black,sans-serif" font-size="12" fill="#93c5fd" text-anchor="middle" font-weight="700">LM</text>
+      <text x="120" y="38" font-family="Arial Black,sans-serif" font-size="26" fill="#ffffff" letter-spacing="3">CAMPO CUICHAPA</text>
+      <text x="120" y="56" font-family="Arial,sans-serif" font-size="11" fill="#60a5fa" letter-spacing="1.5">U-39 · LIFTING DE MEXICO · VERACRUZ</text>
+      <line x1="120" y1="63" x2="395" y2="63" stroke="#1e4a80" stroke-width="0.8"/>
+      <text x="120" y="78" font-family="Arial,sans-serif" font-size="13" fill="#93c5fd" letter-spacing="1">MÓDULO DE SUPERVISIÓN</text>
+      <text id="supSvgFecha" x="159" y="103" font-family="Arial,sans-serif" font-size="10" fill="#60a5fa" text-anchor="middle">📅 —</text>
+      <text id="supSvgHora"  x="238" y="103" font-family="Arial,sans-serif" font-size="10" fill="#60a5fa" text-anchor="middle">🕐 —</text>
+      <text id="supSvgUser"  x="333" y="103" font-family="Arial,sans-serif" font-size="10" fill="#60a5fa" text-anchor="middle">👤 —</text>
+      <rect x="120" y="90" width="78" height="18" rx="9" fill="#1e3a5f"/>
+      <rect x="204" y="90" width="68" height="18" rx="9" fill="#1e3a5f"/>
+      <rect x="278" y="90" width="110" height="18" rx="9" fill="#1e3a5f"/>
+    </svg>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;padding:10px 16px 14px;background:#0d2258">
+      <button onclick="cerrarSupervision()" style="background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">✕ Cerrar</button>
+      <div id="supChipFecha" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:5px 12px;font-size:11px;color:rgba(255,255,255,.8)">📅 —</div>
+      <div id="supChipHora"  style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:5px 12px;font-size:11px;color:rgba(255,255,255,.8)">🕐 —</div>
+      <div id="supChipUser"  style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:5px 12px;font-size:11px;color:rgba(255,255,255,.8)">👤 —</div>
+      <div id="supChipPozos" style="background:rgba(96,165,250,.15);border:1px solid rgba(96,165,250,.3);border-radius:20px;padding:5px 12px;font-size:11px;color:#60a5fa">🛢 — pozos</div>
+    </div>
+  </div>
+
+  <!-- Contenido -->
+  <div id="supContent" style="padding:14px 14px 40px;flex:1">
+
+    <!-- Selector de pozo + botón todos -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.8px;margin-bottom:8px">SELECCIONAR POZO</div>
+      <div style="display:flex;gap:8px;align-items:stretch">
+        <!-- Dropdown barra -->
+        <div style="flex:1;position:relative">
+          <div id="supPozoDropBtn" onclick="supToggleDropdown()" style="background:var(--surface2);border:2px solid #1e4a80;border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:12px;cursor:pointer">
+            <span style="font-size:18px">&#x1F6E2;</span>
+            <span id="supPozoLabel" style="flex:1;font-size:14px;font-weight:800;color:#1e4a80">&#x2014; Selecciona un pozo &#x2014;</span>
+            <span id="supDropArrow" style="font-size:18px;font-weight:700;color:#1e4a80">&#8250;</span>
+          </div>
+          <div id="supPozoBar" style="display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:9999;background:var(--bg);border:1.5px solid var(--border);border-radius:14px;max-height:260px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.3)"></div>
+        </div>
+        <!-- Botón TODOS -->
+        <button onclick="supVerTodos()" id="supBtnTodos" style="flex-shrink:0;padding:14px 16px;background:#1e4a80;color:#fff;border:2px solid #1e4a80;border-radius:14px;font-size:13px;font-weight:900;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;letter-spacing:.5px">TODOS</button>
+      </div>
+    </div>
+
+    <!-- Gráfica 1: PTP y PTR vs Días -->
+    <div style="background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:800;color:var(--txt2);letter-spacing:.5px;margin-bottom:10px">📈 PTP / PTR vs DÍAS (kg/cm²)</div>
+      <canvas id="supChartPresion" style="width:100%;max-height:220px"></canvas>
+      <div style="display:flex;gap:14px;margin-top:8px;justify-content:center">
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2)"><div style="width:12px;height:3px;background:#3b82f6;border-radius:2px"></div>PTP</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2)"><div style="width:12px;height:3px;background:#f59e0b;border-radius:2px"></div>PTR</div>
+      </div>
+    </div>
+
+    <!-- Gráfica 2: Producción (BLS) vs Días -->
+    <div style="background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;padding:14px">
+      <div style="font-size:12px;font-weight:800;color:var(--txt2);letter-spacing:.5px;margin-bottom:10px">🛢 PRODUCCIÓN vs DÍAS (barriles)</div>
+      <canvas id="supChartBls" style="width:100%;max-height:220px"></canvas>
+    </div>
+
+  </div>
+
+</div><!-- /supModal -->
+
+<!-- ══ HISTORIAL CENTRAL MODAL ══ -->
+<div id="hcModal" style="display:none;position:fixed;inset:0;z-index:8500;background:var(--bg);flex-direction:column;overflow:hidden">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1e1b4b,#312e81);padding:18px 16px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0">
+    <button onclick="cerrarHistorialCentral()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:10px;font-size:18px;cursor:pointer;flex-shrink:0">✕</button>
+    <div style="flex:1">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;color:#fff;line-height:1">📋 HISTORIAL CENTRAL</div>
+      <div id="hcStatus" style="font-size:11px;color:rgba(255,255,255,.6);margin-top:2px">⏳ Cargando...</div>
+    </div>
+    <button onclick="hcRecargar()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:10px;font-size:18px;cursor:pointer;flex-shrink:0">↻</button>
+  </div>
+
+  <!-- Filtros tipo -->
+  <div style="display:flex;gap:6px;padding:10px 14px 4px;overflow-x:auto;flex-shrink:0;scrollbar-width:none">
+    <button onclick="hcFiltrar('todos')" id="hcf-todos" style="flex-shrink:0;padding:6px 13px;border-radius:20px;border:2px solid var(--accent);background:var(--accent);color:#fff;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif">Todos</button>
+    <button onclick="hcFiltrar('co')" id="hcf-co" style="flex-shrink:0;padding:6px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif">🛢 C.O.</button>
+    <button onclick="hcFiltrar('guardia')" id="hcf-guardia" style="flex-shrink:0;padding:6px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif">🌙 Nocturno</button>
+    <button onclick="hcFiltrar('cab')" id="hcf-cab" style="flex-shrink:0;padding:6px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif">🔧 Cabezal</button>
+    <button onclick="hcFiltrar('estacion')" id="hcf-estacion" style="flex-shrink:0;padding:6px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif">🏭 Estación</button>
+    <button onclick="hcFiltrar('nota')" id="hcf-nota" style="flex-shrink:0;padding:6px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif">📝 Nota</button>
+    <button onclick="hcFiltrar('alarma')" id="hcf-alarma" style="flex-shrink:0;padding:6px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif">🚨 Alarma</button>
+  </div>
+
+  <!-- Filtros persona -->
+  <div style="display:flex;gap:6px;padding:0 14px 8px;overflow-x:auto;flex-shrink:0;scrollbar-width:none">
+    <button onclick="hcFiltrarRec('todos')" id="hcfr-todos" style="flex-shrink:0;padding:6px 13px;border-radius:20px;border:2px solid #7c3aed;background:#7c3aed;color:#fff;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif">Todos</button>
+    <button onclick="hcFiltrarRec('Manrique')" id="hcfr-Manrique" style="flex-shrink:0;padding:6px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif">Manrique</button>
+    <button onclick="hcFiltrarRec('Cirilo')" id="hcfr-Cirilo" style="flex-shrink:0;padding:6px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif">Cirilo</button>
+    <button onclick="hcFiltrarRec('Juan Carlos')" id="hcfr-JuanCarlos" style="flex-shrink:0;padding:6px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif">Juan Carlos</button>
+    <button onclick="hcFiltrarRec('otros')" id="hcfr-otros" style="flex-shrink:0;padding:6px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif">Otros</button>
+  </div>
+
+  <div style="padding:0 14px 6px;font-size:11px;color:var(--txt2);flex-shrink:0"><span id="hcCount"></span></div>
+
+  <!-- Lista -->
+  <div id="hcList" style="flex:1;overflow-y:auto;padding:0 14px 24px"></div>
+
+</div>
 
 <!-- ══ MAPA UBICACIÓN POZOS (modal overlay) ══ -->
 <div id="ubiModal" style="display:none;position:fixed;top:0;right:0;bottom:0;left:0;z-index:9999;background:#0d1117;flex-direction:column;font-family:sans-serif">
@@ -2291,6 +2334,7 @@ function getVisitas(n){try{var d=localStorage.getItem(getCicloKey(n));return d?J
 function agregarVisita(n,p){var v=getVisitas(n);v.push({pozo:p,fecha:new Date().toISOString()});try{localStorage.setItem(getCicloKey(n),JSON.stringify(v));}catch(e){}}
 
 function mostrarContador(nombre){
+  mostrarBtnHistorialCentral();
   var i=getCicloInfo(nombre),n=getVisitas(nombre).length;
   var cp=document.getElementById('cnt-panel');if(cp)cp.className='cnt-panel show';
   document.getElementById('cnt-nombre').textContent=nombre;
@@ -2421,7 +2465,12 @@ window.addEventListener('load', function(){
   setTimeout(function(){
     verificarPermisos();
     mostrarPermOverlay();
-    hcAutoLimpiar(); // Auto-limpiar reportes mayores a 7 días
+    // Auto-limpiar reportes mayores a 7 días
+    try{
+      var hace7 = Date.now() - (7*24*60*60*1000);
+      var hist = getHistorial().filter(function(r){ return new Date(r.fecha).getTime() > hace7; });
+      saveHistorial(hist);
+    }catch(e){}
   }, 800);
 });
 
@@ -2500,6 +2549,12 @@ function mostrarFormRecorredor(nombre, theme){
 }
 
 function volverAlPicker(){
+  // Borrar sesión guardada
+  sesionBorrar();
+  if(_sesionTimer) clearTimeout(_sesionTimer);
+  if(_sesionAvisoTimer) clearTimeout(_sesionAvisoTimer);
+  var av = document.getElementById('sesionAviso');
+  if(av) av.style.display = 'none';
   // Reset session
   REC = '';
   loggedIn = false;
@@ -2509,7 +2564,7 @@ function volverAlPicker(){
   var cpb = document.getElementById('changeProfileBtn');
   if(cpb) cpb.style.display = 'none';
   // Reset sidebar icons visibility
-  ['super','jefe','catalogo','mapa','historial','histcentral','supercentral'].forEach(function(v){
+  ['super','jefe','catalogo','mapa','historial','supervision'].forEach(function(v){
     var ic = document.getElementById('icon-'+v);
     if(ic){
       ic.classList.add('sidebar-locked');
@@ -2583,6 +2638,54 @@ function selFlujoTipo(btn, tipo){
 }
 
 // ── Fluye: muestra/oculta Nivel Frac Tank ────────
+// ── Conversión CM → Barriles (tabla Frac Tank) ────
+var CM_BLS_TABLE = {
+  1:1.6,2:3.2,3:4.7,4:6.3,5:8.8,6:10.5,7:12.3,8:14.0,9:15.8,10:17.6,
+  11:19.3,12:21.1,13:22.8,14:24.6,15:26.3,16:28.1,17:29.9,18:31.6,19:33.4,20:35.1,
+  21:36.9,22:38.6,23:40.4,24:42.1,25:43.9,26:45.7,27:47.4,28:49.2,29:50.9,30:52.7,
+  31:54.4,32:56.2,33:57.9,34:59.7,35:61.5,36:63.2,37:65.0,38:66.7,39:68.5,40:70.2,
+  41:72.0,42:73.8,43:75.5,44:77.3,45:79.0,46:80.8,47:82.5,48:84.3,49:86.0,50:87.8,
+  51:89.6,52:91.3,53:93.1,54:94.8,55:96.6,56:98.3,57:100.1,58:101.8,59:103.6,60:105.4,
+  61:107.1,62:108.9,63:110.6,64:112.4,65:114.1,66:115.9,67:117.7,68:119.4,69:121.2,70:122.9,
+  71:124.7,72:126.4,73:128.2,74:129.9,75:131.7,76:133.5,77:135.2,78:137.0,79:138.7,80:140.5,
+  81:142.2,82:144.0,83:145.7,84:147.5,85:149.3,86:151.0,87:152.8,88:154.5,89:156.3,90:158.0,
+  91:159.8,92:161.6,93:163.3,94:165.1,95:166.8,96:168.6,97:170.3,98:172.1,99:173.8,100:175.6,
+  101:177.4,102:179.1,103:180.9,104:182.6,105:184.4,106:186.1,107:187.9,108:189.6,109:191.4,110:193.2,
+  111:194.9,112:196.7,113:198.4,114:200.2,115:201.9,116:203.7,117:212.1,118:213.9,119:215.7,120:217.6,
+  121:219.4,122:221.2,123:223.0,124:224.8,125:226.6,126:228.4,127:230.3,128:232.1,129:233.9,130:236.7,
+  131:237.5,132:239.3,133:241.1,134:242.9,135:244.8,136:246.6,137:248.4,138:250.2,139:252.0,140:253.8,
+  141:255.6,142:257.4,143:259.3,144:261.1,145:262.9,146:264.7,147:266.5,148:268.3,149:270.1,150:272.0,
+  151:273.8,152:275.6,153:277.4,154:279.2,155:281.0,156:282.8,157:284.6,158:286.5,159:288.3,160:290.1,
+  161:291.9,162:293.7,163:295.5,164:297.3,165:289.6,166:291.3,167:293.1,168:294.8,169:296.6,170:298.4,
+  171:300.1,172:301.9,173:303.6,174:305.4,175:307.1,176:308.9,177:310.6,178:312.4,179:314.1,180:315.9,
+  181:317.7,182:319.4,183:321.2,184:322.9,185:324.7,186:326.4,187:328.2,188:330.0,189:331.7,190:333.5,
+  191:335.2,192:337.0,193:338.7,194:340.5,195:342.2,196:344.0,197:345.7,198:347.5,199:349.2,200:376.8,
+  201:378.7,202:380.6,203:382.5,204:384.3,205:386.2,206:388.1,207:390.0,208:391.9,209:393.8,210:395.6,
+  211:397.5,212:399.4,213:401.3,214:403.2,215:405.1,216:406.9,217:408.8,218:410.7,219:412.6,220:414.5,
+  221:416.4,222:418.2,223:420.1,224:422.0,225:423.9,226:425.8,227:427.7,228:429.6,229:431.4,230:433.3,
+  231:435.2,232:437.1,233:439.0,234:440.9,235:442.2,236:444.6,237:446.5,238:448.4,239:450.3,240:452.2,
+  241:454.0,242:455.9,243:457.8,244:459.7,245:461.6,246:463.5,247:465.3,248:465.3,249:467.2,250:469.1,
+  251:471.0,252:472.9,253:474.8,254:476.7,255:478.5
+};
+
+function cmABls(cm, blsFieldId){
+  var blsEl = document.getElementById(blsFieldId);
+  if(!blsEl) return;
+  var cmVal = parseFloat(cm);
+  if(isNaN(cmVal) || cmVal <= 0){ blsEl.value = ''; return; }
+  var cmInt = Math.round(cmVal);
+  if(CM_BLS_TABLE[cmInt] !== undefined){
+    blsEl.value = CM_BLS_TABLE[cmInt];
+  } else if(cmInt > 255){
+    blsEl.value = (CM_BLS_TABLE[255] + (cmInt - 255) * 1.9).toFixed(1);
+  } else {
+    var lo = Math.floor(cmVal), hi = Math.ceil(cmVal);
+    var blo = CM_BLS_TABLE[lo]||0, bhi = CM_BLS_TABLE[hi]||blo;
+    blsEl.value = (blo + (bhi-blo)*(cmVal-lo)).toFixed(1);
+  }
+  actualizarEnviarBtn();
+}
+
 function selFluye(btn, val){
   selBigStatus(btn, 'coFlujo', val);
   var cardNivel = document.getElementById('card-nivel');
@@ -3453,25 +3556,25 @@ function requireLogin(target){
 
 // Permisos por usuario (theme/rol)
 var PERMISOS_MAP = {
-  'm':           ['visitas','mapa','histcentral'],
-  'c':           ['visitas','mapa','histcentral'],
-  'jc':          ['visitas','mapa','histcentral'],
+  'm':           ['visitas','mapa'],
+  'c':           ['visitas','mapa'],
+  'jc':          ['visitas','mapa'],
   'op1':         ['mapa'],
   'op2':         ['mapa'],
   'op3':         ['mapa'],
   'op4':         ['mapa'],
   'op5':         ['mapa'],
-  'super':       ['visitas','mapa','catalogo','historial','super','jefe','analisis','histcentral','supercentral'],
-  'jefe':        ['visitas','mapa','catalogo','historial','super','jefe','analisis','histcentral','supercentral'],
-  'ductos':      ['visitas','mapa','catalogo','historial','super','jefe','analisis','histcentral'],
-  'almacenista': ['visitas','mapa','catalogo','historial','super','jefe','analisis','histcentral'],
-  'gill':        ['visitas','mapa','catalogo','historial','super','jefe','analisis','histcentral'],
-  'garcia':      ['visitas','mapa','catalogo','regactividad','histcentral'],
-  'ocote':       ['visitas','mapa','catalogo','regactividad','histcentral'],
-  'cano':        ['visitas','mapa','catalogo','regactividad','histcentral'],
+  'super':       ['visitas','mapa','catalogo','historial','super','jefe','analisis','supervision'],
+  'jefe':        ['visitas','mapa','catalogo','historial','super','jefe','analisis','supervision'],
+  'ductos':      ['visitas','mapa','catalogo','historial','super','jefe','analisis','supervision'],
+  'almacenista': ['visitas','mapa','catalogo','historial','super','jefe','analisis','supervision'],
+  'gill':        ['visitas','mapa','catalogo','historial','super','jefe','analisis','supervision'],
+  'garcia':      ['visitas','mapa','catalogo','regactividad','supervision'],
+  'ocote':       ['visitas','mapa','catalogo','regactividad','supervision'],
+  'cano':        ['visitas','mapa','catalogo','regactividad','supervision'],
   'invitado':    [],
-  'eiran':       ['visitas','mapa','catalogo','historial','super','jefe','analisis','histcentral','supercentral'],
-  'calderon':    ['visitas','mapa','catalogo','historial','super','jefe','analisis','regactividad','histcentral','supercentral'],
+  'eiran':       ['visitas','mapa','catalogo','historial','super','jefe','analisis','supervision'],
+  'calderon':    ['visitas','mapa','catalogo','historial','super','jefe','analisis','regactividad','supervision'],
 };
 
 // Usuarios auth (produccion, seguridad, operadores)
@@ -3495,7 +3598,7 @@ var AUTH_USERS = {
 
 function aplicarPermisos(theme){
   var perms = PERMISOS_MAP[theme] || [];
-  var allViews = ['super','jefe','catalogo','mapa','historial','analisis','regactividad','histcentral','supercentral'];
+  var allViews = ['super','jefe','catalogo','mapa','historial','analisis','regactividad','supervision'];
   allViews.forEach(function(v){
     var ic = document.getElementById('icon-'+v);
     if(!ic) return;
@@ -3520,10 +3623,13 @@ function doLogin(){
   });
   if(found && p === found.p){
     loggedIn=true; loggedUser=found.theme; loggedTheme=found.theme;
+    sesionGuardar(found.theme, null);
     var sb=document.querySelector('.sidebar');if(sb){sb.classList.add('sidebar-unlocked');document.body.classList.add('sidebar-visible');}
     document.getElementById('loginOverlay').classList.remove('open');
     aplicarPermisos(found.theme);
     switchView(loginTarget);
+    mostrarBtnHistorialCentral();
+    sesionIniciarTimer();
   } else {
     document.getElementById('loginErr').textContent='Contrasena incorrecta';
     document.getElementById('loginErr').style.display='block';
@@ -3560,7 +3666,9 @@ function doRecLogin(){
   var found = REC_MAP[u];
   if(found && p === found.pass){
     cerrarRecLogin();
+    sesionGuardar(found.theme, found.nombre);
     mostrarFormRecorredor(found.nombre, found.theme);
+    sesionIniciarTimer();
   } else {
     err.textContent = 'Contraseña incorrecta';
     err.style.display = 'block';
@@ -3626,24 +3734,27 @@ function toDMS(deg, isLat){
 }
 // ── Navegación desde sidebar — cierra cualquier overlay activo primero ──
 function sidebarNav(dest){
-  // Cerrar confirmOverlay si está abierto
-  var co = document.getElementById('confirmOverlay');
-  if(co) { co.style.cssText = ''; co.style.display = 'none'; }
-  // Cerrar vistaAlarma si está abierta
-  var va = document.getElementById('vistaAlarma');
-  if(va && va.style.display !== 'none'){ cerrarVistaAlarma(); return; }
-  // Cerrar ubiModal si está abierto
-  var um = document.getElementById('ubiModal');
-  if(um && um.style.display !== 'none'){ cerrarUbiMapa(); return; }
-  // Restaurar sidebar y overflow por si acaso
-  document.body.style.overflow = '';
-  var sidebar = document.querySelector('.sidebar');
-  if(sidebar) sidebar.style.display = '';
+  // Auto-diagnóstico: limpiar overlays activos
+  try{
+    var co = document.getElementById('confirmOverlay');
+    if(co) { co.style.cssText = ''; co.style.display = 'none'; }
+    var va = document.getElementById('vistaAlarma');
+    if(va && va.style.display !== 'none'){ cerrarVistaAlarma(); if(dest==='alarma') return; }
+    var um = document.getElementById('ubiModal');
+    if(um && um.style.display !== 'none'){ cerrarUbiMapa(); if(dest==='ubipozos') return; }
+    var hc = document.getElementById('hcModal');
+    if(hc && hc.style.display !== 'none'){ cerrarHistorialCentral(); }
+    document.body.style.overflow = '';
+    var sidebar = document.querySelector('.sidebar');
+    if(sidebar) sidebar.style.display = '';
+  }catch(ex){}
 
   if(dest === 'alarma'){
     abrirVistaAlarma();
   } else if(dest === 'ubipozos'){
     abrirUbiMapa();
+  } else if(dest === 'supervision'){
+    abrirSupervision();
   } else {
     switchView(dest);
   }
@@ -3679,6 +3790,7 @@ function switchView(id){
       if(picker) picker.style.display='none';
       if(formContent) formContent.style.display='block';
       if(sf) sf.style.display='block';
+      mostrarBtnHistorialCentral();
     }
   } else if(id==='catalogo'){
     var ic=document.getElementById('icon-catalogo');
@@ -3705,15 +3817,28 @@ function switchView(id){
   } else if(id==='jefe'){
     var ic=document.getElementById('icon-jefe');
     if(ic) ic.classList.add('active');
-  } else if(id==='histcentral'){
-    var ic=document.getElementById('icon-histcentral');
+  } else if(id==='supervision'){
+    var ic=document.getElementById('icon-supervision');
     if(ic) ic.classList.add('active');
-    renderHistCentral();
-  } else if(id==='supercentral'){
-    var ic=document.getElementById('icon-supercentral');
-    if(ic) ic.classList.add('active');
-    renderSuperCentral();
+    renderSupervision();
   }
+  // Auto-diagnóstico: forzar visibilidad de la vista activa
+  try{
+    var activeView = document.getElementById('view-'+id);
+    if(activeView){
+      // Asegurar que display sea block independiente de CSS
+      if(getComputedStyle(activeView).display === 'none'){
+        activeView.style.display = 'block';
+      }
+    }
+    // Asegurar que otras vistas estén ocultas
+    document.querySelectorAll('.view').forEach(function(v){
+      if(v.id !== 'view-'+id){
+        v.classList.remove('active');
+        v.style.display = '';
+      }
+    });
+  }catch(ex){}
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -3889,10 +4014,14 @@ function selAlarm(btn, tipo){
 
 function confirmarAlarma(){
   if(!alarmTipoSeleccionado) return;
-  enviarAlarma();
+  // Mostrar confirmación inline
+  document.getElementById('alarmConfirmOverlay').classList.add('open');
+  document.getElementById('alarmConfirmType').textContent = alarmTipoSeleccionado;
 }
 
-function cancelarConfirmAlarma(){ }
+function cancelarConfirmAlarma(){
+  document.getElementById('alarmConfirmOverlay').classList.remove('open');
+}
 
 var _alarmLastReporteId = null;
 
@@ -3927,6 +4056,8 @@ function alarmCcVerificar(){
 }
 
 function enviarAlarma(){
+  document.getElementById('alarmConfirmOverlay').classList.remove('open');
+
   // Detectar quien reporta automáticamente
   var RECS = {'m':'Manrique','c':'Cirilo','jc':'Juan Carlos'};
   var RECS_SHORT = ['Manrique','Cirilo','Juan Carlos'];
@@ -4068,279 +4199,622 @@ function limpiarFotosPostAlarma(){
 }
 
 
-// ══════════════════════════════════════════════════
-// ══  HISTORIAL CENTRAL  ═══════════════════════════
-// ══════════════════════════════════════════════════
+// ══ HISTORIAL CENTRAL ══════════════════════════════
+var HC_FILTRO     = 'todos';
+var HC_FILTRO_REC = 'todos';
+var _hcData       = [];
+var _hcFbLoaded   = false;
 
-var HC_FILTRO = 'todos';
+var HC_META = {
+  co:      {icon:'🛢', label:'C.O.',         color:'#3b82f6'},
+  guardia: {icon:'🌙', label:'Nivel Nocturno',color:'#8b5cf6'},
+  cab:     {icon:'🔧', label:'Cabezal',       color:'#f59e0b'},
+  estacion:{icon:'🏭', label:'Estación',      color:'#10b981'},
+  nota:    {icon:'📝', label:'Nota de campo', color:'#6b7280'},
+  alarma:  {icon:'🚨', label:'Alarma',        color:'#dc2626'},
+  co_default:{icon:'🛢',label:'C.O.',         color:'#3b82f6'}
+};
 
-// Auto-limpieza: borrar reportes mayores a 7 días
-function hcAutoLimpiar(){
-  var arr = getHistorial();
-  var hace7 = Date.now() - (7 * 24 * 60 * 60 * 1000);
-  var filtrado = arr.filter(function(r){ return new Date(r.fecha).getTime() > hace7; });
-  if(filtrado.length < arr.length){
-    saveHistorial(filtrado);
-    console.log('Historial Central: ' + (arr.length - filtrado.length) + ' reportes eliminados (>7 días)');
-  }
-}
-
-// Detectar tipo de reporte
 function hcTipoReporte(r){
   if(r.esAlarma) return 'alarma';
-  if(r.modo === 'guardia') return 'guardia';
-  if(r.modo === 'cab') return 'cabezal';
-  if(r.modo === 'estacion') return 'estacion';
+  if(r.modo==='guardia')  return 'guardia';
+  if(r.modo==='cab')      return 'cab';
+  if(r.modo==='estacion') return 'estacion';
+  if(r.modo==='nota')     return 'nota';
   if(!r.msg) return 'co';
   var m = r.msg;
-  if(m.indexOf('NIVELES DE GUARDIA') !== -1 || m.indexOf('NIVEL NOCTURNO') !== -1) return 'guardia';
-  if(m.indexOf('CABEZAL') !== -1) return 'cabezal';
-  if(m.indexOf('ESTACIÓN') !== -1 || m.indexOf('ESTACION') !== -1) return 'estacion';
+  if(m.indexOf('GUARDIA')!=-1||m.indexOf('NOCTURNO')!=-1) return 'guardia';
+  if(m.indexOf('CABEZAL')!=-1) return 'cab';
+  if(m.indexOf('ESTACIÓN')!=-1||m.indexOf('ESTACION')!=-1) return 'estacion';
   return 'co';
 }
 
-function hcFiltrar(filtro){
-  HC_FILTRO = filtro;
-  // Actualizar botones
-  ['todos','co','guardia','cabezal','estacion','alarma'].forEach(function(f){
-    var btn = document.getElementById('hcf-'+f);
-    if(!btn) return;
-    if(f === filtro){
-      btn.style.background = 'var(--accent)'; btn.style.color = '#fff'; btn.style.borderColor = 'var(--accent)';
-    } else {
-      btn.style.background = 'var(--surface2)'; btn.style.color = 'var(--txt2)'; btn.style.borderColor = 'var(--border)';
-    }
-  });
-  renderHistCentral();
+function abrirHistorialCentral(){
+  HC_FILTRO='todos'; HC_FILTRO_REC='todos'; _hcFbLoaded=false; _hcData=[];
+  var modal = document.getElementById('hcModal');
+  if(modal){ modal.style.display='flex'; modal.scrollTop=0; }
+  var sidebar = document.querySelector('.sidebar');
+  if(sidebar) sidebar.style.display='none';
+  document.body.style.overflow='hidden';
+  hcCargar();
 }
 
-var HC_TIPO_LABELS = {
-  co: {icon:'🛢', label:'C.O.', color:'#3b82f6'},
-  guardia: {icon:'🌙', label:'Nivel Nocturno', color:'#8b5cf6'},
-  cabezal: {icon:'🔧', label:'Cabezal', color:'#f59e0b'},
-  estacion: {icon:'🏭', label:'Estación', color:'#10b981'},
-  alarma: {icon:'🚨', label:'Alarma', color:'#dc2626'},
-};
+function cerrarHistorialCentral(){
+  var modal = document.getElementById('hcModal');
+  if(modal) modal.style.display='none';
+  var sidebar = document.querySelector('.sidebar');
+  if(sidebar) sidebar.style.display='';
+  document.body.style.overflow='';
+}
 
-function renderHistCentral(){
-  hcAutoLimpiar();
-  var arr = getHistorial();
-  // Filtrar
-  if(HC_FILTRO !== 'todos'){
-    arr = arr.filter(function(r){ return hcTipoReporte(r) === HC_FILTRO; });
-  }
-  // Ordenar más reciente primero
-  arr = arr.slice().sort(function(a,b){ return new Date(b.fecha) - new Date(a.fecha); });
+function hcRecargar(){ _hcFbLoaded=false; _hcData=[]; hcCargar(); }
 
+function hcCargar(){
+  var statusEl = document.getElementById('hcStatus');
   var list = document.getElementById('hcList');
-  var countEl = document.getElementById('hcCount');
-  if(!list) return;
-  if(countEl) countEl.textContent = arr.length + ' reporte' + (arr.length !== 1 ? 's' : '');
+  if(list) list.innerHTML='<div style="text-align:center;padding:40px;color:var(--txt2)">⏳ Cargando reportes...</div>';
 
-  if(!arr.length){
-    list.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--txt2)">📭 Sin reportes' + (HC_FILTRO !== 'todos' ? ' de este tipo' : '') + '</div>';
+  var locales = [];
+  try{ locales = getHistorial(); }catch(e){}
+  _hcData = locales.slice();
+  hcRender();
+
+  if(typeof fbDB !== 'undefined' && fbDB){
+    if(statusEl) statusEl.textContent = '🔄 Sincronizando todos los dispositivos...';
+    fbDB.ref('reportes').orderByChild('fecha').limitToLast(300).once('value', function(snap){
+      try{
+        var localIds={};
+        locales.forEach(function(r){ if(r.id) localIds[r.id]=true; });
+        snap.forEach(function(child){
+          var r=child.val();
+          if(r&&r.id&&!localIds[r.id]) _hcData.push(r);
+        });
+        _hcFbLoaded=true;
+        if(statusEl) statusEl.textContent='✅ '+_hcData.length+' reporte'+(_hcData.length!==1?'s':'')+' · Todos los dispositivos';
+        hcRender();
+      }catch(e2){}
+    }, function(){
+      if(statusEl) statusEl.textContent='📱 '+locales.length+' reporte'+(locales.length!==1?'s':'')+' · Este dispositivo';
+    });
+  } else {
+    if(statusEl) statusEl.textContent='📱 '+locales.length+' reporte'+(locales.length!==1?'s':'')+' · Este dispositivo (sin conexión Firebase)';
+  }
+}
+
+function hcFiltrar(f){
+  HC_FILTRO=f;
+  ['todos','co','guardia','cab','estacion','nota','alarma'].forEach(function(k){
+    var b=document.getElementById('hcf-'+k);
+    if(!b) return;
+    if(k===f){ b.style.background='var(--accent)'; b.style.color='#fff'; b.style.borderColor='var(--accent)'; b.style.borderWidth='2px'; }
+    else { b.style.background='var(--surface2)'; b.style.color='var(--txt2)'; b.style.borderColor='var(--border)'; b.style.borderWidth='1.5px'; }
+  });
+  hcRender();
+}
+
+function hcFiltrarRec(rec){
+  HC_FILTRO_REC=rec;
+  var map={'todos':'todos','Manrique':'Manrique','Cirilo':'Cirilo','Juan Carlos':'JuanCarlos','otros':'otros'};
+  Object.keys(map).forEach(function(k){
+    var b=document.getElementById('hcfr-'+map[k]);
+    if(!b) return;
+    if(k===rec){ b.style.background='#7c3aed'; b.style.color='#fff'; b.style.borderColor='#7c3aed'; b.style.borderWidth='2px'; }
+    else { b.style.background='var(--surface2)'; b.style.color='var(--txt2)'; b.style.borderColor='var(--border)'; b.style.borderWidth='1.5px'; }
+  });
+  hcRender();
+}
+
+var _hcExpanded = {};
+
+function hcToggle(id){
+  _hcExpanded[id] = !_hcExpanded[id];
+  hcRender();
+}
+
+function hcGetDeviceName(){
+  var ua = navigator.userAgent;
+  var iphone = ua.match(/iPhone OS ([\d_]+)/);
+  if(iphone){
+    var v = parseInt(iphone[1].split('_')[0]);
+    if(v>=18) return '\ud83d\udcf1 iPhone 16';
+    if(v>=17) return '\ud83d\udcf1 iPhone 15';
+    if(v>=16) return '\ud83d\udcf1 iPhone 14';
+    if(v>=15) return '\ud83d\udcf1 iPhone 13';
+    return '\ud83d\udcf1 iPhone';
+  }
+  if(/iPad/i.test(ua)) return '\ud83d\udcf1 iPad';
+  var android = ua.match(/\(Linux; Android [^;]+; ([^)]+)\)/);
+  if(android){
+    var model = android[1].trim().replace(/ Build.*/,'').replace(/;.*/,'').trim();
+    if(model.length > 28) model = model.substring(0,28)+'\u2026';
+    return '\ud83d\udcf1 '+model;
+  }
+  if(/Android/i.test(ua)) return '\ud83d\udcf1 Android';
+  if(/Windows/i.test(ua)) return '\ud83d\udcbb Windows';
+  if(/Mac/i.test(ua)) return '\ud83d\udcbb Mac';
+  return '\ud83c\udf10 Navegador';
+}
+
+function hcRender(){
+  try{
+    var arr=_hcData.slice();
+    if(HC_FILTRO!=='todos') arr=arr.filter(function(r){ return hcTipoReporte(r)===HC_FILTRO; });
+    if(HC_FILTRO_REC!=='todos'){
+      var recs=['Manrique','Cirilo','Juan Carlos'];
+      if(HC_FILTRO_REC==='otros') arr=arr.filter(function(r){ return recs.indexOf(r.recorredor)===-1; });
+      else arr=arr.filter(function(r){ return r.recorredor===HC_FILTRO_REC; });
+    }
+    arr.sort(function(a,b){ return new Date(b.fecha)-new Date(a.fecha); });
+    var list=document.getElementById('hcList');
+    var countEl=document.getElementById('hcCount');
+    if(!list) return;
+    if(countEl) countEl.textContent=arr.length+' reporte'+(arr.length!==1?'s':'');
+    if(!arr.length){
+      list.innerHTML='<div style="text-align:center;padding:40px 16px;color:var(--txt2)"><div style="font-size:40px;margin-bottom:12px">\ud83d\udceb</div><div style="font-size:14px;font-weight:700">Sin reportes'+(HC_FILTRO!=='todos'?' de este tipo':'')+' a\xfan</div><div style="font-size:12px;margin-top:6px">Los reportes enviados aparecer\xe1n aqu\xed</div></div>';
+      return;
+    }
+    var myDevice = hcGetDeviceName();
+    list.innerHTML = arr.map(function(r){
+      try{
+        var id = String(r.id||Math.random());
+        var expanded = !!_hcExpanded[id];
+        var tipo=hcTipoReporte(r);
+        var meta=HC_META[tipo]||HC_META.co;
+        var fecha=new Date(r.fecha);
+        var fechaStr=isNaN(fecha.getTime())?'\u2014':fecha.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'})+' '+fecha.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+        var enviado=r.estado==='enviado';
+        var nFotos=r.nFotos||(r.fotos?r.fotos.length:0);
+        var titulo=r.esAlarma?'\ud83d\udea8 '+(r.tipoAlarma||'Alarma'):(r.pozo?'C-'+r.pozo:meta.label);
+        var rec=r.recorredor||'\u2014';
+        var device=r.device||myDevice;
+        var border=expanded?'1.5px solid '+meta.color:'1.5px solid var(--border)';
+        var h='<div data-hcid="'+id+'" style="border:'+border+';border-radius:14px;overflow:hidden;margin-bottom:10px;cursor:pointer">';
+        h+='<div style="padding:13px 14px;display:flex;align-items:flex-start;gap:10px;background:var(--surface2)">';
+        h+='<div style="font-size:22px;flex-shrink:0;margin-top:2px">'+meta.icon+'</div>';
+        h+='<div style="flex:1;min-width:0">';
+        h+='<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:3px">';
+        h+='<span style="font-weight:800;font-size:14px;color:var(--txt)">'+titulo+'</span>';
+        h+='<span style="background:'+meta.color+';color:#fff;font-size:10px;font-weight:800;padding:2px 6px;border-radius:7px">'+meta.label+'</span>';
+        h+=enviado?'<span style="background:#16a34a;color:#fff;font-size:10px;padding:2px 6px;border-radius:7px">\u2713</span>':'<span style="background:#f59e0b;color:#fff;font-size:10px;padding:2px 6px;border-radius:7px">\u23f3</span>';
+        h+='</div>';
+        h+='<div style="font-size:12px;color:var(--txt2)">\ud83d\udc77 '+rec+' \u00b7 \ud83d\udd50 '+fechaStr+'</div>';
+        h+='<div style="font-size:11px;color:var(--txt2);margin-top:2px">'+device+'</div>';
+        h+='</div>';
+        h+='<div style="font-size:18px;color:var(--txt2);flex-shrink:0;margin-top:4px">'+(expanded?'\u2227':'\u2228')+'</div>';
+        h+='</div>';
+        if(expanded){
+          var msg=(r.msg||'(sin mensaje)');
+          h+='<div style="border-top:1px solid var(--border);padding:14px;background:var(--bg)">';
+          h+='<div style="font-size:10px;font-weight:800;color:var(--txt2);letter-spacing:.8px;margin-bottom:8px">MENSAJE ENVIADO AL GRUPO</div>';
+          h+='<div style="font-size:12px;color:var(--txt);line-height:1.8;background:var(--surface2);border-radius:10px;padding:12px;border:1px solid var(--border);white-space:pre-wrap;word-break:break-word">'+msg+'</div>';
+          h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">';
+          h+='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--txt2)">'+device+'</div>';
+          if(nFotos>0) h+='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--txt2)">\ud83d\udcf8 '+nFotos+' foto'+(nFotos>1?'s':'')+'</div>';
+          else h+='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--txt2)">Sin fotos</div>';
+          h+='</div></div>';
+        }
+        h+='</div>';
+        return h;
+      }catch(e2){ return ''; }
+    }).join('');
+    list.onclick=function(e){
+      var card=e.target.closest('[data-hcid]');
+      if(card) hcToggle(card.getAttribute('data-hcid'));
+    };
+  }catch(e){ console.error('hcRender:',e); }
+}
+
+// Mostrar botón HC cuando hay sesión activa
+function mostrarBtnHistorialCentral(){
+  var wrap = document.getElementById('hcBtnWrap');
+  if(wrap) wrap.style.display='block';
+}
+
+// ══ SISTEMA DE SESIÓN PERSISTENTE (8 horas) ══════
+var SESSION_KEY = 'cuichapa_session_v1';
+var SESION_DURACION = 8 * 60 * 60 * 1000; // 8 horas en ms
+var SESION_AVISO    = 10 * 60 * 1000;      // aviso 10 min antes
+var _sesionTimer = null;
+var _sesionAvisoTimer = null;
+
+function sesionGuardar(theme, rec){
+  try{
+    localStorage.setItem(SESSION_KEY, JSON.stringify({
+      theme: theme,
+      rec:   rec || null,
+      ts:    Date.now()
+    }));
+  }catch(e){}
+}
+
+function sesionLeer(){
+  try{
+    var s = JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
+    if(!s) return null;
+    if(Date.now() - s.ts > SESION_DURACION){
+      localStorage.removeItem(SESSION_KEY);
+      return null;
+    }
+    return s;
+  }catch(e){ return null; }
+}
+
+function sesionBorrar(){
+  try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
+}
+
+function sesionRestaurar(){
+  var s = sesionLeer();
+  if(!s) return false;
+  // Restaurar sesión de producción
+  if(s.theme && !s.rec){
+    loggedIn=true; loggedUser=s.theme; loggedTheme=s.theme;
+    var sb=document.querySelector('.sidebar');
+    if(sb){sb.classList.add('sidebar-unlocked');document.body.classList.add('sidebar-visible');}
+    aplicarPermisos(s.theme);
+    switchView('visitas');
+    mostrarBtnHistorialCentral();
+    sesionIniciarTimer();
+    return true;
+  }
+  // Restaurar sesión de recorredor
+  if(s.theme && s.rec){
+    mostrarFormRecorredor(s.rec, s.theme);
+    mostrarBtnHistorialCentral();
+    sesionIniciarTimer();
+    return true;
+  }
+  return false;
+}
+
+function sesionIniciarTimer(){
+  if(_sesionTimer) clearTimeout(_sesionTimer);
+  if(_sesionAvisoTimer) clearTimeout(_sesionAvisoTimer);
+  var s = sesionLeer();
+  if(!s) return;
+  var restante = SESION_DURACION - (Date.now() - s.ts);
+  var avisoEn  = restante - SESION_AVISO;
+
+  // Aviso 10 min antes
+  if(avisoEn > 0){
+    _sesionAvisoTimer = setTimeout(function(){
+      sesionMostrarAviso();
+    }, avisoEn);
+  } else {
+    sesionMostrarAviso();
+  }
+
+  // Expiración
+  _sesionTimer = setTimeout(function(){
+    sesionExpirar();
+  }, restante > 0 ? restante : 0);
+}
+
+function sesionMostrarAviso(){
+  var av = document.getElementById('sesionAviso');
+  if(av) av.style.display = 'flex';
+}
+
+function sesionRenovar(){
+  var s = sesionLeer();
+  if(!s) return;
+  sesionGuardar(s.theme, s.rec);
+  sesionIniciarTimer();
+  var av = document.getElementById('sesionAviso');
+  if(av) av.style.display = 'none';
+  showToast('✅ Sesión renovada por 8 horas más');
+}
+
+function sesionExpirar(){
+  sesionBorrar();
+  var av = document.getElementById('sesionAviso');
+  if(av) av.style.display = 'none';
+  // Cerrar sesión y mostrar picker
+  loggedIn=false; loggedUser=''; loggedTheme=''; REC='';
+  var sb=document.querySelector('.sidebar');
+  if(sb){sb.classList.remove('sidebar-unlocked');document.body.classList.remove('sidebar-visible');}
+  var fc=document.getElementById('formContent'); if(fc) fc.style.display='none';
+  var pp=document.getElementById('profilePicker'); if(pp){pp.style.display='block';pp.style.opacity='1';}
+  var sf=document.getElementById('sendFixed'); if(sf) sf.style.display='none';
+  var hc=document.getElementById('hcBtnWrap'); if(hc) hc.style.display='none';
+  switchView('visitas');
+  showToast('🔒 Sesión expirada — vuelve a ingresar');
+}
+
+// Restaurar sesión al cargar la página
+document.addEventListener('DOMContentLoaded', function(){
+  setTimeout(function(){
+    if(!sesionRestaurar()){
+      // No hay sesión — mostrar picker normal
+    }
+  }, 300);
+});
+
+// ══ SUPERVISIÓN ══════════════════════════════════
+// ══ SUPERVISIÓN ══════════════════════════════════
+var _supPozoSel = 'todos';
+var _supChartP  = null;
+var _supChartB  = null;
+
+function abrirSupervision(){
+  var modal = document.getElementById('supModal');
+  if(!modal) return;
+  modal.style.display = 'flex';
+  var sidebar = document.querySelector('.sidebar');
+  if(sidebar) sidebar.style.display = 'none';
+  document.body.style.overflow = 'hidden';
+  supActualizarChips();
+  supRenderPozos();
+  supRenderGraficas();
+}
+
+// Alias por compatibilidad
+function renderSupervision(){ abrirSupervision(); }
+
+function supActualizarChips(){
+  var ahora = new Date();
+  var fecha = ahora.toLocaleDateString('es-MX',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+  var hora  = ahora.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  var nombreUser = REC || (loggedUser ? loggedUser.charAt(0).toUpperCase()+loggedUser.slice(1) : 'Usuario');
+  var reportesHoy = 0;
+  try{
+    var hoy = new Date(); hoy.setHours(0,0,0,0);
+    reportesHoy = getHistorial().filter(function(r){ return !r.esAlarma && new Date(r.fecha) >= hoy; }).length;
+  }catch(e){}
+  var cf=document.getElementById('supChipFecha'), ch=document.getElementById('supChipHora');
+  var cu=document.getElementById('supChipUser'), cp=document.getElementById('supChipPozos');
+  if(cf) cf.textContent='📅 '+fecha;
+  if(ch) ch.textContent='🕐 '+hora;
+  if(cu) cu.textContent='👤 '+nombreUser;
+  if(cp) cp.textContent='🛢 '+reportesHoy+' pozo'+(reportesHoy!==1?'s':'')+' hoy';
+  var sf=document.getElementById('supSvgFecha'), sh2=document.getElementById('supSvgHora'), su=document.getElementById('supSvgUser');
+  if(sf) sf.textContent='📅 '+ahora.toLocaleDateString('es-MX',{day:'2-digit',month:'short'});
+  if(sh2) sh2.textContent='🕐 '+hora;
+  if(su) su.textContent='👤 '+nombreUser;
+}
+
+function cerrarSupervision(){
+  var modal = document.getElementById('supModal');
+  if(modal) modal.style.display = 'none';
+  var sidebar = document.querySelector('.sidebar');
+  if(sidebar) sidebar.style.display = '';
+  document.body.style.overflow = '';
+}
+
+function supVerTodos(){
+  _supPozoSel='todos';
+  supCerrarDropdown();
+  var label=document.getElementById('supPozoLabel');
+  if(label) label.textContent='\u2014 Selecciona un pozo \u2014';
+  var btn=document.getElementById('supBtnTodos');
+  if(btn){ btn.style.background='#1e4a80'; btn.style.color='#fff'; }
+  supRenderGraficas();
+}
+
+function supSelPozo(pozo){
+  _supPozoSel=pozo;
+  var btnT=document.getElementById('supBtnTodos');
+  if(btnT){ btnT.style.background='var(--surface2)'; }
+  document.querySelectorAll('.sup-pozo-btn').forEach(function(b){
+    var sel=b.getAttribute('data-pozo')===pozo;
+    b.style.background=sel?'#1e4a80':'var(--surface2)';
+    b.style.borderColor=sel?'#1e4a80':'var(--border)';
+  });
+  supRenderGraficas();
+}
+
+var _supDropOpen = false;
+
+function supToggleDropdown(){
+  _supDropOpen = !_supDropOpen;
+  var list = document.getElementById('supPozoBar');
+  var arrow = document.getElementById('supDropArrow');
+  if(list) list.style.display = _supDropOpen ? 'block' : 'none';
+  if(arrow) arrow.style.transform = _supDropOpen ? 'rotate(90deg)' : 'rotate(0deg)';
+  if(_supDropOpen) supRenderPozos();
+}
+
+function supCerrarDropdown(){
+  _supDropOpen = false;
+  var list = document.getElementById('supPozoBar');
+  var arrow = document.getElementById('supDropArrow');
+  if(list) list.style.display = 'none';
+  if(arrow) arrow.style.transform = 'rotate(0deg)';
+}
+
+function supRenderPozos(){
+  var hist=[];
+  try{
+    hist=getHistorial().filter(function(r){
+      // Solo pozos reales: no alarmas, no estaciones, no C-??? ni C-Estacion
+      if(r.esAlarma) return false;
+      if(!r.pozo) return false;
+      var p = String(r.pozo);
+      if(p==='???' || p.indexOf('???')!==-1) return false;
+      if(p.toLowerCase().indexOf('estac')!==-1) return false;
+      if(r.modo==='estacion') return false;
+      return true;
+    });
+  }catch(e){}
+  var pozos={};
+  hist.forEach(function(r){ pozos[r.pozo]=true; });
+  var bar=document.getElementById('supPozoBar');
+  if(!bar) return;
+  var sorted=Object.keys(pozos).sort(function(a,b){ return parseInt(a)-parseInt(b); });
+  if(!sorted.length){
+    bar.innerHTML='<div style="padding:16px;text-align:center;color:var(--txt2);font-size:13px">Sin pozos con reportes aún</div>';
     return;
   }
-
-  list.innerHTML = arr.map(function(r){
-    var tipo = hcTipoReporte(r);
-    var t = HC_TIPO_LABELS[tipo] || HC_TIPO_LABELS.co;
-    var fecha = new Date(r.fecha);
-    var fechaStr = fecha.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'})
-      +' '+fecha.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
-    var estadoBg = r.estado === 'enviado' ? '#16a34a' : '#f59e0b';
-    var estadoTxt = r.estado === 'enviado' ? '✓' : '⏳';
-    return '<div style="background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px">'
-      +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
-      +'<div style="font-size:22px">'+t.icon+'</div>'
-      +'<div style="flex:1;min-width:0">'
-      +'<div style="font-weight:800;font-size:14px;color:var(--txt)">'+(r.esAlarma ? (r.tipoAlarma||'Alarma') : 'C-'+r.pozo)+'</div>'
-      +'<div style="font-size:11px;color:var(--txt2);margin-top:1px">'+r.recorredor+' · '+fechaStr+'</div>'
-      +'</div>'
-      +'<span style="background:'+t.color+';color:#fff;font-size:10px;font-weight:800;padding:3px 8px;border-radius:10px;flex-shrink:0">'+t.label+'</span>'
-      +'<span style="background:'+estadoBg+';color:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">'+estadoTxt+'</span>'
-      +'</div>'
-      +(r.msg ? '<div style="font-size:11px;color:var(--txt2);white-space:pre-wrap;max-height:80px;overflow:hidden;line-height:1.5">'+escapeHTML(r.msg.substring(0,200))+(r.msg.length>200?'…':'')+'</div>' : '')
+  bar.innerHTML=sorted.map(function(p){
+    var sel=_supPozoSel===p;
+    return '<div data-pozo="'+p+'" style="padding:12px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;border-bottom:1px solid var(--border);background:'+(sel?'rgba(30,74,128,.15)':'transparent')+'">'
+      +'<span style="font-size:16px">&#x1F6E2;</span>'
+      +'<span style="flex:1;font-size:14px;font-weight:800;color:'+(sel?'#1e4a80':'var(--txt)')+'">C-'+p+'</span>'
+      +(sel?'<span style="color:#1e4a80;font-weight:800">&#10003;</span>':'')
       +'</div>';
   }).join('');
+  bar.onclick=function(e){
+    var card=e.target.closest('[data-pozo]');
+    if(!card) return;
+    var pozo=card.getAttribute('data-pozo');
+    _supPozoSel=pozo;
+    var label=document.getElementById('supPozoLabel');
+    if(label) label.textContent='POZO C-'+pozo;
+    var btnT=document.getElementById('supBtnTodos');
+    if(btnT){ btnT.style.background='var(--surface2)'; btnT.style.color='#1e4a80'; }
+    supCerrarDropdown();
+    supRenderGraficas();
+  };
 }
 
-// ══════════════════════════════════════════════════
-// ══  SUPERINTENDENTE CENTRAL  ═════════════════════
-// ══════════════════════════════════════════════════
+function supRenderGraficas(){
+  var hist = [];
+  try{ hist = getHistorial().filter(function(r){ return !r.esAlarma && r.pozo; }); }catch(e){}
 
-var REC_STATUS_KEY = 'cuichapa_rec_status';
+  // Filtrar por pozo seleccionado
+  if(_supPozoSel !== 'todos') hist = hist.filter(function(r){ return r.pozo === _supPozoSel; });
 
-function getRecStatus(){
-  try{ return JSON.parse(localStorage.getItem(REC_STATUS_KEY)||'{}'); }catch(e){ return {}; }
-}
-function saveRecStatus(obj){
-  try{ localStorage.setItem(REC_STATUS_KEY, JSON.stringify(obj)); }catch(e){}
-}
-
-function toggleRecStatus(nombre){
-  var status = getRecStatus();
-  status[nombre] = status[nombre] === 'baja' ? 'activo' : 'baja';
-  saveRecStatus(status);
-  renderSuperCentral();
-  showToast((status[nombre] === 'activo' ? '✅ ' : '⛔ ') + nombre + ' → ' + (status[nombre] === 'activo' ? 'Activo' : 'Dado de baja'));
-}
-
-var _blsChartInstance = null;
-
-function renderSuperCentral(){
-  renderRecList();
-  renderBlsChart();
-}
-
-function renderRecList(){
-  var RECS_FULL = [
-    {key:'Manrique', label:'Manrique', theme:'m', emoji:'👷'},
-    {key:'Cirilo',   label:'Cirilo',   theme:'c', emoji:'👷'},
-    {key:'Juan Carlos', label:'Juan Carlos', theme:'jc', emoji:'👷'},
-  ];
-  var status = getRecStatus();
-  var list = document.getElementById('recList');
-  if(!list) return;
-  list.innerHTML = RECS_FULL.map(function(r){
-    var activo = status[r.key] !== 'baja';
-    return '<div style="background:var(--surface2);border:1.5px solid '+(activo?'var(--border)':'#dc2626')+';border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px">'
-      +'<div style="font-size:28px">'+r.emoji+'</div>'
-      +'<div style="flex:1">'
-      +'<div style="font-weight:800;font-size:15px;color:var(--txt)">'+r.label+'</div>'
-      +'<div style="font-size:11px;margin-top:2px;font-weight:700;color:'+(activo?'#16a34a':'#dc2626')+'">'+( activo?'● Activo':'● Dado de baja')+'</div>'
-      +'</div>'
-      +'<button onclick="toggleRecStatus(\''+r.key+'\')" style="padding:8px 16px;border-radius:10px;border:1.5px solid '+(activo?'#dc2626':'#16a34a')+';background:transparent;color:'+(activo?'#dc2626':'#16a34a')+';font-size:13px;font-weight:800;cursor:pointer">'
-      +(activo?'Dar de baja':'Dar de alta')+'</button>'
-      +'</div>';
-  }).join('');
-}
-
-function renderBlsChart(){
-  var canvas = document.getElementById('blsChart');
-  if(!canvas) return;
-  // Destruir instancia anterior
-  if(_blsChartInstance){ try{ _blsChartInstance.destroy(); }catch(e){} _blsChartInstance = null; }
-
-  // Extraer datos de barriles de los últimos 14 días
-  var arr = getHistorial();
-  var hoy = new Date(); hoy.setHours(0,0,0,0);
+  // Últimos 14 días
   var dias = [];
   var etiquetas = [];
-  for(var d = 13; d >= 0; d--){
-    var dia = new Date(hoy); dia.setDate(hoy.getDate() - d);
+  var hoy = new Date(); hoy.setHours(0,0,0,0);
+  for(var d=13;d>=0;d--){
+    var dia = new Date(hoy); dia.setDate(hoy.getDate()-d);
     dias.push(dia);
-    etiquetas.push(dia.getDate()+'/'+(dia.getMonth()+1));
+    etiquetas.push((dia.getDate()+'/'+(dia.getMonth()+1)));
   }
 
-  // Agrupar barriles por día
-  var blsPorDia = {};
-  dias.forEach(function(d){ blsPorDia[d.toDateString()] = 0; });
+  // Agrupar datos por día (promedio si hay varios reportes)
+  function agrupar(campo){
+    return dias.map(function(dia){
+      var diaStr = dia.toDateString();
+      var vals = hist.filter(function(r){
+        var f = new Date(r.fecha); f.setHours(0,0,0,0);
+        return f.toDateString() === diaStr && r[campo] !== null && r[campo] !== undefined;
+      }).map(function(r){ return r[campo]; });
+      if(!vals.length) return null;
+      return Math.round((vals.reduce(function(a,b){return a+b;},0)/vals.length)*10)/10;
+    });
+  }
 
-  arr.forEach(function(r){
-    if(!r.fecha || !r.msg) return;
-    var fecha = new Date(r.fecha); fecha.setHours(0,0,0,0);
-    var key = fecha.toDateString();
-    if(!(key in blsPorDia)) return;
-    // Buscar barriles en el mensaje: "BLS: XXX" o "Barriles: XXX"
-    var m = r.msg;
-    var matchBls = m.match(/(?:BLS|Barriles):\s*(\d+(?:\.\d+)?)/i);
-    if(matchBls){
-      var val = parseFloat(matchBls[1]);
-      if(!isNaN(val)) blsPorDia[key] = Math.max(blsPorDia[key], val);
-    }
-    // Nivel nocturno: "🛢 Barriles: XXX"
-    var matchNiv = m.match(/🛢 Barriles:\s*(\d+(?:\.\d+)?)/);
-    if(matchNiv){
-      var val2 = parseFloat(matchNiv[1]);
-      if(!isNaN(val2)) blsPorDia[key] = Math.max(blsPorDia[key], val2);
-    }
-  });
+  var dataPTP = agrupar('ptp');
+  var dataPTR = agrupar('ptr');
+  var dataBLS = agrupar('bls');
 
-  var datos = dias.map(function(d){ return blsPorDia[d.toDateString()] || 0; });
-  var maxVal = Math.max.apply(null, datos.concat([10]));
+  supDibujarPresion(etiquetas, dataPTP, dataPTR);
+  supDibujarBls(etiquetas, dataBLS);
+}
 
-  // Dibujar con Canvas API directamente (sin Chart.js externo)
+function supDibujarPresion(etiquetas, ptp, ptr){
+  var canvas = document.getElementById('supChartPresion');
+  if(!canvas) return;
   var ctx = canvas.getContext('2d');
-  var W2 = canvas.offsetWidth || 320;
-  var H = 180;
+  var W2 = canvas.parentElement.clientWidth - 28;
+  var H = 200;
   canvas.width = W2; canvas.height = H;
-  var pad = {top:20, right:10, bottom:30, left:40};
-  var chartW = W2 - pad.left - pad.right;
-  var chartH = H - pad.top - pad.bottom;
-  var n = datos.length;
-  var stepX = chartW / (n - 1);
+  var pad = {top:20,right:10,bottom:28,left:38};
+  var cW = W2-pad.left-pad.right, cH = H-pad.top-pad.bottom;
+  var n = etiquetas.length;
 
-  // Fondo
-  ctx.clearRect(0, 0, W2, H);
+  ctx.clearRect(0,0,W2,H);
 
-  // Grid lines
-  ctx.strokeStyle = 'rgba(128,128,128,.15)';
-  ctx.lineWidth = 1;
-  for(var gi = 0; gi <= 4; gi++){
-    var gy = pad.top + (chartH / 4) * gi;
-    ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(pad.left + chartW, gy); ctx.stroke();
-    // Etiqueta Y
-    var yVal = Math.round(maxVal - (maxVal / 4) * gi);
-    ctx.fillStyle = 'rgba(128,128,128,.7)';
-    ctx.font = '10px Inter,sans-serif';
-    ctx.textAlign = 'right';
-    ctx.fillText(yVal, pad.left - 4, gy + 4);
+  // Max value
+  var allVals = ptp.concat(ptr).filter(function(v){ return v!==null; });
+  var maxV = allVals.length ? Math.max.apply(null,allVals)*1.15 : 10;
+  if(maxV<1) maxV=10;
+
+  // Grid
+  ctx.strokeStyle='rgba(128,128,128,.12)'; ctx.lineWidth=1;
+  for(var gi=0;gi<=4;gi++){
+    var gy=pad.top+(cH/4)*gi;
+    ctx.beginPath(); ctx.moveTo(pad.left,gy); ctx.lineTo(pad.left+cW,gy); ctx.stroke();
+    ctx.fillStyle='rgba(128,128,128,.6)';
+    ctx.font='10px Inter,sans-serif'; ctx.textAlign='right';
+    ctx.fillText(Math.round(maxV-(maxV/4)*gi),pad.left-4,gy+4);
   }
 
-  // Línea
-  ctx.beginPath();
-  ctx.strokeStyle = '#f59e0b';
-  ctx.lineWidth = 2.5;
-  ctx.lineJoin = 'round';
-  datos.forEach(function(v, i){
-    var x = pad.left + i * stepX;
-    var y = pad.top + chartH - (v / maxVal) * chartH;
-    if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-  });
-  ctx.stroke();
+  function dibujarLinea(datos, color){
+    var puntos = datos.map(function(v,i){
+      return {x: pad.left+(cW/(n-1))*i, y: v!==null ? pad.top+cH-(v/maxV)*cH : null};
+    });
+    ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=2.5; ctx.lineJoin='round';
+    var empezado=false;
+    puntos.forEach(function(p){
+      if(p.y===null){ empezado=false; return; }
+      if(!empezado){ ctx.moveTo(p.x,p.y); empezado=true; }
+      else ctx.lineTo(p.x,p.y);
+    });
+    ctx.stroke();
+    puntos.forEach(function(p){
+      if(p.y===null) return;
+      ctx.beginPath(); ctx.arc(p.x,p.y,4,0,Math.PI*2);
+      ctx.fillStyle=color; ctx.fill();
+    });
+  }
 
-  // Área bajo la línea
-  ctx.beginPath();
-  datos.forEach(function(v, i){
-    var x = pad.left + i * stepX;
-    var y = pad.top + chartH - (v / maxVal) * chartH;
-    if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-  });
-  ctx.lineTo(pad.left + (n-1)*stepX, pad.top + chartH);
-  ctx.lineTo(pad.left, pad.top + chartH);
-  ctx.closePath();
-  var grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + chartH);
-  grad.addColorStop(0, 'rgba(245,158,11,.3)');
-  grad.addColorStop(1, 'rgba(245,158,11,.02)');
-  ctx.fillStyle = grad;
-  ctx.fill();
+  dibujarLinea(ptp,'#3b82f6');
+  dibujarLinea(ptr,'#f59e0b');
 
-  // Puntos + etiquetas X
-  datos.forEach(function(v, i){
-    var x = pad.left + i * stepX;
-    var y = pad.top + chartH - (v / maxVal) * chartH;
-    // Punto
-    ctx.beginPath();
-    ctx.arc(x, y, v > 0 ? 4 : 2.5, 0, Math.PI * 2);
-    ctx.fillStyle = v > 0 ? '#f59e0b' : 'rgba(128,128,128,.4)';
-    ctx.fill();
-    // Valor encima
-    if(v > 0){
-      ctx.fillStyle = '#f59e0b';
-      ctx.font = 'bold 10px Inter,sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(v, x, y - 8);
-    }
-    // Etiqueta X (cada 2 días)
-    if(i % 2 === 0 || i === n-1){
-      ctx.fillStyle = 'rgba(128,128,128,.7)';
-      ctx.font = '10px Inter,sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(etiquetas[i], x, H - 6);
+  // Etiquetas X
+  etiquetas.forEach(function(e,i){
+    if(i%2===0||i===n-1){
+      ctx.fillStyle='rgba(128,128,128,.7)'; ctx.font='10px Inter,sans-serif'; ctx.textAlign='center';
+      ctx.fillText(e, pad.left+(cW/(n-1))*i, H-6);
     }
   });
 }
+
+function supDibujarBls(etiquetas, bls){
+  var canvas = document.getElementById('supChartBls');
+  if(!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W2 = canvas.parentElement.clientWidth - 28;
+  var H = 200;
+  canvas.width = W2; canvas.height = H;
+  var pad = {top:20,right:10,bottom:28,left:42};
+  var cW = W2-pad.left-pad.right, cH = H-pad.top-pad.bottom;
+  var n = etiquetas.length;
+
+  ctx.clearRect(0,0,W2,H);
+
+  var allVals = bls.filter(function(v){ return v!==null; });
+  var maxV = allVals.length ? Math.max.apply(null,allVals)*1.15 : 100;
+  if(maxV<1) maxV=100;
+
+  // Grid
+  ctx.strokeStyle='rgba(128,128,128,.12)'; ctx.lineWidth=1;
+  for(var gi=0;gi<=4;gi++){
+    var gy=pad.top+(cH/4)*gi;
+    ctx.beginPath(); ctx.moveTo(pad.left,gy); ctx.lineTo(pad.left+cW,gy); ctx.stroke();
+    ctx.fillStyle='rgba(128,128,128,.6)';
+    ctx.font='10px Inter,sans-serif'; ctx.textAlign='right';
+    ctx.fillText(Math.round(maxV-(maxV/4)*gi),pad.left-4,gy+4);
+  }
+
+  // Barras
+  var barW = Math.max(4, (cW/n)*0.6);
+  bls.forEach(function(v,i){
+    if(v===null) return;
+    var x = pad.left+(cW/(n-1))*i - barW/2;
+    var barH2 = (v/maxV)*cH;
+    var y = pad.top+cH-barH2;
+    ctx.fillStyle='rgba(16,185,129,.7)';
+    ctx.fillRect(x,y,barW,barH2);
+    if(v>0){
+      ctx.fillStyle='#10b981'; ctx.font='9px Inter,sans-serif'; ctx.textAlign='center';
+      ctx.fillText(v,x+barW/2,y-3);
+    }
+  });
+
+  // Etiquetas X
+  etiquetas.forEach(function(e,i){
+    if(i%2===0||i===n-1){
+      ctx.fillStyle='rgba(128,128,128,.7)'; ctx.font='10px Inter,sans-serif'; ctx.textAlign='center';
+      ctx.fillText(e, pad.left+(cW/(n-1))*i, H-6);
+    }
+  });
+}
+
 
 function escucharAlarmas(){
   if(!fbDB) return;
@@ -4552,14 +5026,6 @@ window.addEventListener('appinstalled', function(){
 // Mostrar permisos al entrar a la app
 window.addEventListener('load', function(){
   setTimeout(mostrarPermOverlay, 600);
-  // Mostrar pantalla instalación en Android si no está instalada
-  var isAndroid = /Android/i.test(navigator.userAgent);
-  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-  var skipped = false;
-  try{ skipped = localStorage.getItem('install_skip')==='1'; }catch(e){}
-  if(isAndroid && !isStandalone && !skipped){
-    setTimeout(mostrarInstallScreen, 1800);
-  }
 });
 
 function initFirebase(){
@@ -4673,6 +5139,7 @@ function guardarEnFirebase(reporte){
   if(!fbDB || !reporte.id) return;
   try{
     // No subir fotos a Firebase (muy pesadas) — solo metadata
+    var deviceName = typeof hcGetDeviceName === 'function' ? hcGetDeviceName() : '';
     fbDB.ref('reportes/' + reporte.id).set({
       id:            reporte.id,
       fecha:         reporte.fecha,
@@ -4681,6 +5148,14 @@ function guardarEnFirebase(reporte){
       msg:           reporte.msg,
       nFotos:        (reporte.fotos||[]).length,
       estado:        reporte.estado,
+      modo:          reporte.modo || 'co',
+      esAlarma:      reporte.esAlarma || false,
+      tipoAlarma:    reporte.tipoAlarma || null,
+      device:        deviceName,
+      ptp:           reporte.ptp || null,
+      ptr:           reporte.ptr || null,
+      bls:           reporte.bls || null,
+      ctm:           reporte.ctm || null,
       ultimoIntento: reporte.ultimoIntento || null,
       intentos:      reporte.intentos || 0
     }).catch(function(e){ console.warn('FB write:', e); });
@@ -4875,24 +5350,45 @@ var IMGBB_KEY = '32d6bb4e34f5b0dfcac00dac04f3e512';
 
 function comprimirFoto(base64, callback){
   try{
-    var MAX=900, QUALITY=0.65;
-    var img=new Image();
-    img.onload=function(){
-      var w=img.width, h=img.height;
-      if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
-      if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}
-      var canvas=document.createElement('canvas');
-      canvas.width=w; canvas.height=h;
-      var ctx=canvas.getContext('2d');
-      ctx.drawImage(img,0,0,w,h);
-      var compressed=canvas.toDataURL('image/jpeg',QUALITY);
-      var origKB=Math.round(base64.length*0.75/1024);
-      var newKB=Math.round(compressed.length*0.75/1024);
-      console.log('Foto: '+origKB+'KB → '+newKB+'KB ('+w+'x'+h+')');
+    // Android necesita compresión más agresiva — fotos de 12-20MB
+    var isAndroid = /Android/i.test(navigator.userAgent);
+    var MAX     = isAndroid ? 800 : 1024;
+    var QUALITY = isAndroid ? 0.50 : 0.70;
+    var MAX_KB  = isAndroid ? 150  : 300;  // límite objetivo en KB
+
+    var img = new Image();
+    img.onload = function(){
+      var w = img.width, h = img.height;
+      // Reducir hasta que quepa en MAX
+      if(w > MAX){ h = Math.round(h*MAX/w); w = MAX; }
+      if(h > MAX){ w = Math.round(w*MAX/h); h = MAX; }
+
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+
+      var compressed = canvas.toDataURL('image/jpeg', QUALITY);
+      var newKB = Math.round(compressed.length * 0.75 / 1024);
+
+      // Si sigue siendo grande, comprimir otra vez
+      if(newKB > MAX_KB){
+        var canvas2 = document.createElement('canvas');
+        var escala = Math.sqrt(MAX_KB / newKB);
+        var w2 = Math.max(200, Math.round(w * escala));
+        var h2 = Math.max(200, Math.round(h * escala));
+        canvas2.width = w2; canvas2.height = h2;
+        canvas2.getContext('2d').drawImage(canvas, 0, 0, w2, h2);
+        compressed = canvas2.toDataURL('image/jpeg', 0.55);
+        newKB = Math.round(compressed.length * 0.75 / 1024);
+      }
+
+      var origKB = Math.round(base64.length * 0.75 / 1024);
+      console.log('Foto comprimida: '+origKB+'KB → '+newKB+'KB ('+w+'x'+h+') Android:'+isAndroid);
       callback(compressed);
     };
-    img.onerror=function(){ callback(base64); }; // fallback original
-    img.src=base64.startsWith('data:')?base64:'data:image/jpeg;base64,'+base64;
+    img.onerror = function(){ callback(base64); };
+    img.src = base64.startsWith('data:') ? base64 : 'data:image/jpeg;base64,'+base64;
   }catch(e){ callback(base64); }
 }
 
@@ -4906,34 +5402,34 @@ function umSendImage(base64, caption, callback){
 function _umSendImageInner(base64, caption, callback){
   try{
     var imgData = base64.startsWith('data:') ? base64 : 'data:image/jpeg;base64,'+base64;
-    var b64only = imgData.split(',')[1];
+    var b64only  = imgData.split(',')[1];
 
-    showToast('📤 Subiendo foto...');
+    // ── MÉTODO 1: Enviar base64 directamente a UltraMsg ──
+    // UltraMsg acepta data URI en el campo 'image'
+    var bodyB64 = 'token='   + encodeURIComponent(UM_TOKEN)
+                + '&to='     + encodeURIComponent(UM_TO)
+                + '&image='  + encodeURIComponent(imgData)
+                + '&caption='+ encodeURIComponent(caption||'');
 
-    // 1. Intentar Firebase Storage (ya lo tienen configurado)
-    if(typeof firebase !== 'undefined' && firebase.storage){
-      try{
-        var arr = new Uint8Array(atob(b64only).split('').map(function(c){return c.charCodeAt(0);}));
-        var blob = new Blob([arr], {type:'image/jpeg'});
-        var nombre = 'fotos/'+Date.now()+'.jpg';
-        var ref = firebase.storage().ref().child(nombre);
-        ref.put(blob).then(function(snap){
-          return snap.ref.getDownloadURL();
-        }).then(function(url){
-          console.log('Firebase Storage URL:', url);
-          enviarUrlUltramsg(url, caption, callback);
-        }).catch(function(err){
-          console.warn('Firebase Storage err:', err);
-          subirImgBB(b64only, caption, callback);
-        });
+    fetch(UM_URL_IMG, {
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body: bodyB64
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var ok = !!(d && (d.sent==='true'||d.sent===true||d.id));
+      if(ok){
+        if(callback) callback(true);
         return;
-      } catch(e){
-        console.warn('Firebase Storage no disponible:', e);
       }
-    }
-
-    // 2. Fallback: ImgBB
-    subirImgBB(b64only, caption, callback);
+      // Base64 no funcionó — intentar subir a ImgBB y enviar URL
+      console.warn('Base64 directo falló, intentando ImgBB:', JSON.stringify(d));
+      subirImgBB(b64only, caption, callback);
+    })
+    .catch(function(){
+      subirImgBB(b64only, caption, callback);
+    });
 
   } catch(e){
     console.error('umSendImage err:', e);
@@ -5151,7 +5647,16 @@ function confirmarEnvio(){
     estado: 'pendiente',
     ultimoIntento: null,
     intentos: 0,
-    modo: modoRegistro || 'co'
+    modo: modoRegistro || 'co',
+    // Datos numéricos para gráficas
+    ptp: parseFloat(document.getElementById('coTP')    ? document.getElementById('coTP').value    :
+                    document.getElementById('coPresion')? document.getElementById('coPresion').value : '') || null,
+    ptr: parseFloat(document.getElementById('coTR')     ? document.getElementById('coTR').value     :
+                    document.getElementById('coPTR_bm') ? document.getElementById('coPTR_bm').value  : '') || null,
+    bls: parseFloat(document.getElementById('nivBLS')   ? document.getElementById('nivBLS').value   :
+                    document.getElementById('medBarriles')? document.getElementById('medBarriles').value : '') || null,
+    ctm: parseFloat(document.getElementById('nivCTM')   ? document.getElementById('nivCTM').value   :
+                    document.getElementById('medCentimetros')? document.getElementById('medCentimetros').value : '') || null
   };
   // 1. SIEMPRE guardar primero — nunca perder
   guardarReporte(reporte);
@@ -5438,65 +5943,22 @@ if('serviceWorker' in navigator){
 
 // ══ INSTALL BANNER ══
 var deferredPrompt=null;
-// ── Pantalla de instalación ───────────────────────
-function mostrarInstallScreen(){
-  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-  if(isStandalone) return;
-  try{ if(localStorage.getItem('install_skip')==='1') return; }catch(e){}
-  var sc = document.getElementById('installScreen');
-  if(sc) sc.style.display = 'flex';
-}
-function installScreenInstall(){
-  if(window.deferredPrompt){
-    window.deferredPrompt.prompt();
-    window.deferredPrompt.userChoice.then(function(){
-      window.deferredPrompt = null;
-      var sc = document.getElementById('installScreen');
-      if(sc) sc.style.display = 'none';
-    });
-  }
-}
-function installScreenSkip(){
-  try{ localStorage.setItem('install_skip','1'); }catch(e){}
-  var sc = document.getElementById('installScreen');
-  if(sc) sc.style.display = 'none';
-}
 window.addEventListener('beforeinstallprompt',function(e){
-  e.preventDefault(); window.deferredPrompt = e;
-  var btn = document.getElementById('installScreenBtn');
-  var manual = document.getElementById('installManual');
-  if(btn) btn.style.display = 'block';
-  if(manual) manual.style.display = 'none';
+  e.preventDefault(); deferredPrompt=e;
   if(!window.matchMedia('(display-mode: standalone)').matches){
     var dismissed=false;
     try{dismissed=localStorage.getItem('pwa_dismissed')==='1';}catch(e2){}
     if(!dismissed) document.getElementById('installBanner').classList.add('show');
   }
 });
-window.addEventListener('appinstalled',function(){
-  window.deferredPrompt=null;
-  var sc=document.getElementById('installScreen'); if(sc) sc.style.display='none';
-  document.getElementById('installBanner').classList.remove('show');
-  showToast('\u2705 App instalada correctamente');
-});
 function instalarPWA(){
-  if(!window.deferredPrompt)return;
-  window.deferredPrompt.prompt();
-  window.deferredPrompt.userChoice.then(function(){window.deferredPrompt=null;cerrarBanner();});
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(function(){deferredPrompt=null;cerrarBanner();});
 }
 function cerrarBanner(){
   document.getElementById('installBanner').classList.remove('show');
   try{localStorage.setItem('pwa_dismissed','1');}catch(e){}
-}
-function pwaVerificarInstalacion(){ if(window.deferredPrompt){ instalarPWA(); } else { mostrarInstallScreen(); } }
-function pwaInstalarRec(){
-  if(window.deferredPrompt){
-    window.deferredPrompt.prompt();
-    window.deferredPrompt.userChoice.then(function(r){
-      window.deferredPrompt=null;
-      if(r.outcome==='accepted'){ var w=document.getElementById('recInstallWrap'); if(w) w.style.display='none'; }
-    });
-  } else { mostrarInstallScreen(); }
 }
 
 // ══ WELL PICKER — selección de pozo ══
@@ -6916,7 +7378,4 @@ function _ubiCategorizeAfterInit(){
 function ubiFiltrar(){ /* replaced by filter buttons */ }
 
 
-</script>    <div style="font-size:12px;color:#8b949e;margin-bottom:18px">Selecciona el recorredor</div>
-    <div id="qrPickerList" style="display:flex;flex-direction:column;gap:10px"></div>
-  </div>
-</div>
+</script>
