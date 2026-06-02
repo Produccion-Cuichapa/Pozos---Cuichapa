@@ -1070,7 +1070,7 @@ body.night .chk-row.on{background:#052e1640}
 <div class="wrap">
 <div class="view active" id="view-visitas">
 
-<button class="change-profile-btn" id="changeProfileBtn" onclick="volverAlPicker()">‹ Cambiar perfil</button>
+
 
 <!-- ══ SELECTOR DE PERFIL ══ -->
 <style>
@@ -1169,9 +1169,9 @@ body.night .chk-row.on{background:#052e1640}
     </button>
     <div class="pk-divider"></div>
     <div class="pk-cards" id="pp-body-rec">
-      <div class="pk-card" onclick="selProfile('Manrique','m','rec')"><div class="pk-card-ico">🌊</div><div class="pk-card-nm">Manrique</div><div class="pk-card-lk">🔒 clave</div></div>
-      <div class="pk-card" onclick="selProfile('Cirilo','c','rec')"><div class="pk-card-ico">⛏️</div><div class="pk-card-nm">Cirilo</div><div class="pk-card-lk">🔒 clave</div></div>
-      <div class="pk-card" onclick="selProfile('Juan Carlos','jc','rec')"><div class="pk-card-ico">🦺</div><div class="pk-card-nm">Juan Carlos</div><div class="pk-card-lk">🔒 clave</div></div>
+      <div class="pk-card" id="pk-rec-m" onclick="selProfile('Manrique','m','rec')"><div class="pk-card-ico">🌊</div><div class="pk-card-nm">Manrique</div><div class="pk-card-lk">🔒 clave</div></div>
+      <div class="pk-card" id="pk-rec-c" onclick="selProfile('Cirilo','c','rec')"><div class="pk-card-ico">⛏️</div><div class="pk-card-nm">Cirilo</div><div class="pk-card-lk">🔒 clave</div></div>
+      <div class="pk-card" id="pk-rec-jc" onclick="selProfile('Juan Carlos','jc','rec')"><div class="pk-card-ico">🦺</div><div class="pk-card-nm">Juan Carlos</div><div class="pk-card-lk">🔒 clave</div></div>
     </div>
 
     <!-- OPERADORES -->
@@ -1273,9 +1273,10 @@ function ppToggle(id){
 
 <!-- ══ FORMULARIO (oculto hasta elegir perfil) ══ -->
 <div id="formContent" style="display:none">
+<button class="back-to-picker" onclick="volverAlPicker()">‹ Cambiar perfil</button>
 
 <!-- BACK ARROW -->
-<button class="back-to-picker" onclick="volverAlPicker()">‹ Cambiar perfil</button>
+
 
 <!-- Banner PWA -->
 <!-- Banner aviso sesión por expirar -->
@@ -1500,20 +1501,86 @@ function ppToggle(id){
 <div class="gps-bar" id="gpsBar">📡 Obteniendo ubicación GPS...</div>
 <div class="gps-coords" id="gpsCoords"></div>
 
-<!-- Botón Historial Central -->
-<div id="hcBtnWrap" style="display:none;padding:8px 14px 0">
-  <button onclick="abrirHistorialCentral()" style="width:100%;padding:12px 16px;background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;font-family:'Inter',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
-    📋 Historial Central
-  </button>
-</div>
-
 <!-- Contador de visitas (oculto, mantiene funcionalidad) -->
-<div id="cnt-panel" class="cnt-panel" style="margin-bottom:10px">
+<div id="cnt-panel" class="cnt-panel" style="margin-bottom:10px;display:none!important">
   <div class="cnt-row">
     <div><span class="cnt-name" id="cnt-nombre"></span><br><span class="cnt-status" id="cnt-status"></span></div>
     <div style="text-align:right"><div class="cnt-big" id="cnt-num">0</div><div class="cnt-sub" id="cnt-sub"></div></div>
   </div>
   <div class="pbar"><div class="pfill" id="cnt-bar" style="width:0%"></div></div>
+</div>
+
+<!-- Accesos rápidos: Programa + Historial Central -->
+<div id="quickAccessWrap" style="margin-bottom:14px;display:none">
+
+  <!-- PROGRAMA DEL DÍA -->
+  <div id="progBtnWrap" style="display:none;margin-bottom:10px">
+    <button onclick="abrirPrograma()"
+      style="width:100%;padding:0;background:linear-gradient(135deg,#1e3a8a,#2563eb);border:none;border-radius:18px;cursor:pointer;box-shadow:0 4px 20px rgba(37,99,235,.28);overflow:hidden;display:block">
+      <div style="display:flex;align-items:center;gap:0">
+        <!-- Ícono -->
+        <div style="width:72px;flex-shrink:0;background:rgba(0,0,0,.15);align-self:stretch;display:flex;align-items:center;justify-content:center">
+          <span style="font-size:30px">📋</span>
+        </div>
+        <!-- Texto -->
+        <div style="flex:1;padding:16px 14px;text-align:left">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:1.5px;color:#fff;line-height:1">PROGRAMA DEL DÍA</div>
+          <div id="progBadgeCount" style="font-size:13px;font-family:Inter,sans-serif;font-weight:600;color:rgba(255,255,255,.75);margin-top:4px">Sin pozos aún</div>
+        </div>
+        <!-- Flecha -->
+        <div style="padding:0 18px;color:rgba(255,255,255,.6);font-size:26px">›</div>
+      </div>
+    </button>
+  </div>
+
+  <!-- HISTORIAL CENTRAL -->
+  <div id="hcBtnWrap" style="display:none">
+    <button onclick="abrirHistorialCentral()"
+      style="width:100%;padding:0;background:var(--surface2);border:1.5px solid var(--border);border-radius:18px;cursor:pointer;overflow:hidden;display:block">
+      <div style="display:flex;align-items:center;gap:0">
+        <!-- Ícono -->
+        <div style="width:72px;flex-shrink:0;background:rgba(30,27,75,.08);align-self:stretch;display:flex;align-items:center;justify-content:center">
+          <span style="font-size:28px">🗂</span>
+        </div>
+        <!-- Texto -->
+        <div style="flex:1;padding:15px 14px;text-align:left">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:1.5px;color:var(--txt);line-height:1">HISTORIAL CENTRAL</div>
+          <div style="font-size:12px;font-family:Inter,sans-serif;font-weight:600;color:var(--txt2);margin-top:4px">Reportes del campo</div>
+        </div>
+        <!-- Flecha -->
+        <div style="padding:0 18px;color:var(--txt2);font-size:24px">›</div>
+      </div>
+    </button>
+  </div>
+
+</div>
+
+<!-- Modal PROGRAMA -->
+<div id="progModal" style="display:none;position:fixed;inset:0;z-index:9000;background:var(--bg);flex-direction:column;overflow:hidden">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1e3a8a,#2563eb);padding:20px 16px 18px;flex-shrink:0">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+      <button onclick="cerrarPrograma()" style="background:rgba(255,255,255,.18);border:none;color:#fff;width:40px;height:40px;border-radius:12px;font-size:20px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">✕</button>
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;color:#fff;line-height:1">📋 MI PROGRAMA</div>
+        <div id="progSubtitle" style="font-size:12px;color:rgba(255,255,255,.7);margin-top:3px"></div>
+      </div>
+    </div>
+    <!-- Barra de progreso -->
+    <div style="background:rgba(255,255,255,.2);border-radius:99px;height:8px;margin-top:10px">
+      <div id="progBarFill" style="background:#fff;border-radius:99px;height:8px;width:0%;transition:width .4s ease"></div>
+    </div>
+    <div id="progBarLabel" style="font-size:11px;color:rgba(255,255,255,.75);margin-top:5px;text-align:right"></div>
+  </div>
+
+  <!-- Cuerpo -->
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch">
+
+    <!-- Lista de pozos -->
+    <div id="progLista" style="padding:16px 14px 8px"></div>
+
+  </div>
 </div>
 
 <!-- ══ PASO 2: TIPO DE REGISTRO ══ -->
@@ -1589,7 +1656,7 @@ function ppToggle(id){
     <div class="big-field-label">Condición de flujo</div>
     <div style="display:flex;gap:10px;margin-bottom:16px">
       <button class="big-status-btn slate" id="btn-estrangulador" onclick="selFlujoTipo(this,'estrangulador')">🔩<br>Estrangulador</button>
-      <button class="big-status-btn slate" id="btn-franco"        onclick="selFlujoTipo(this,'franco')">🔓<br>Franco</button>
+      <button class="big-status-btn slate" id="btn-franco"        onclick="selFlujoTipo(this,'franco')">⚙️<br>Franco</button>
     </div>
     <input type="hidden" id="coFlujoTipo">
 
@@ -1703,7 +1770,7 @@ function ppToggle(id){
     <input type="hidden" id="regEstado">
 
     <!-- Condición de Pera -->
-    <div class="big-field-label" style="margin-top:4px;margin-bottom:10px">🍐 Condición de Pera</div>
+    <div class="big-field-label" style="margin-top:4px;margin-bottom:10px">🛢 Condición de Pera</div>
     <div class="pera2-row">
       <div class="pera2-lbl">Área de pozo</div>
       <div class="pera2-btns">
@@ -1712,7 +1779,7 @@ function ppToggle(id){
       </div>
     </div>
     <div class="pera2-row">
-      <div class="pera2-lbl">Contrapeso</div>
+      <div class="pera2-lbl">Contrapozo</div>
       <div class="pera2-btns">
         <button class="pera2-btn ok"  id="pera-contrapeso-ok"  onclick="setPera('contrapeso','ok')">✓</button>
         <button class="pera2-btn bad" id="pera-contrapeso-bad" onclick="setPera('contrapeso','bad')">✗</button>
@@ -1898,45 +1965,189 @@ function ppToggle(id){
   </div>
 
   <!-- Contenido -->
-  <div id="supContent" style="padding:14px 14px 40px;flex:1">
+  <div id="supContent" style="padding:14px 14px 40px;flex:1;overflow-y:auto">
 
-    <!-- Selector de pozo + botón todos -->
-    <div style="margin-bottom:14px">
-      <div style="font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.8px;margin-bottom:8px">SELECCIONAR POZO</div>
-      <div style="display:flex;gap:8px;align-items:stretch">
-        <!-- Dropdown barra -->
-        <div style="flex:1;position:relative">
-          <div id="supPozoDropBtn" onclick="supToggleDropdown()" style="background:var(--surface2);border:2px solid #1e4a80;border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:12px;cursor:pointer">
-            <span style="font-size:18px">&#x1F6E2;</span>
-            <span id="supPozoLabel" style="flex:1;font-size:14px;font-weight:800;color:#1e4a80">&#x2014; Selecciona un pozo &#x2014;</span>
-            <span id="supDropArrow" style="font-size:18px;font-weight:700;color:#1e4a80">&#8250;</span>
-          </div>
-          <div id="supPozoBar" style="display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:9999;background:var(--bg);border:1.5px solid var(--border);border-radius:14px;max-height:260px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.3)"></div>
+    <!-- Grid de accesos — Opción B -->
+    <!-- Grid 2 columnas -->
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:14px">
+
+      <!-- Información de campo -->
+      <button id="supInfoBtn" onclick="supToggleInfo()" style="background:var(--surface);border:1.5px solid var(--border);border-radius:18px;padding:20px 12px 18px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;transition:border-color .15s">
+        <div style="width:56px;height:56px;border-radius:16px;background:#E6F1FB;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
         </div>
-        <!-- Botón TODOS -->
-        <button onclick="supVerTodos()" id="supBtnTodos" style="flex-shrink:0;padding:14px 16px;background:#1e4a80;color:#fff;border:2px solid #1e4a80;border-radius:14px;font-size:13px;font-weight:900;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;letter-spacing:.5px">TODOS</button>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--txt);line-height:1.3">Información<br>de Campo</div>
+          <div style="font-size:11px;color:var(--txt2);margin-top:4px">Gráficas · Pozos</div>
+        </div>
+        <span id="supInfoArrow" style="display:none"></span>
+      </button>
+
+      <!-- Recorredores -->
+      <button id="supRecBtn" onclick="supToggleRec()" style="background:var(--surface);border:1.5px solid var(--border);border-radius:18px;padding:20px 12px 18px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;transition:border-color .15s">
+        <div style="width:56px;height:56px;border-radius:16px;background:#EAF3DE;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3B6D11" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--txt);line-height:1.3">Recorre-<br>dores</div>
+          <div style="font-size:11px;color:var(--txt2);margin-top:4px">Alta · Baja · Agregar</div>
+        </div>
+        <span id="supRecArrow" style="display:none"></span>
+      </button>
+
+    </div><!-- /grid 2 col -->
+
+    <!-- Panel colapsable Información de Campo (FUERA del grid) -->
+    <div id="supInfoPanel" style="display:none;margin-bottom:14px;overflow:hidden">
+
+      <!-- Selector de pozo + botón todos -->
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.8px;margin-bottom:8px">SELECCIONAR POZO</div>
+        <div style="display:flex;gap:8px;align-items:stretch">
+          <div style="flex:1;position:relative">
+            <div id="supPozoDropBtn" onclick="supToggleDropdown()" style="background:var(--surface2);border:2px solid #1e4a80;border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:12px;cursor:pointer">
+              <span style="font-size:18px">&#x1F6E2;</span>
+              <span id="supPozoLabel" style="flex:1;font-size:14px;font-weight:800;color:#1e4a80">&#x2014; Selecciona un pozo &#x2014;</span>
+              <span id="supDropArrow" style="font-size:18px;font-weight:700;color:#1e4a80">&#8250;</span>
+            </div>
+            <div id="supPozoBar" style="display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:9999;background:var(--bg);border:1.5px solid var(--border);border-radius:14px;max-height:260px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.3)"></div>
+          </div>
+          <button onclick="supVerTodos()" id="supBtnTodos" style="flex-shrink:0;padding:14px 16px;background:#1e4a80;color:#fff;border:2px solid #1e4a80;border-radius:14px;font-size:13px;font-weight:900;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;letter-spacing:.5px">TODOS</button>
+        </div>
+      </div>
+
+      <!-- Gráfica 1 -->
+      <div style="background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:800;color:var(--txt2);letter-spacing:.5px;margin-bottom:10px">📈 PTP / PTR vs DÍAS (kg/cm²)</div>
+        <canvas id="supChartPresion" style="width:100%;max-height:220px"></canvas>
+        <div style="display:flex;gap:14px;margin-top:8px;justify-content:center">
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2)"><div style="width:12px;height:3px;background:#3b82f6;border-radius:2px"></div>PTP</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2)"><div style="width:12px;height:3px;background:#f59e0b;border-radius:2px"></div>PTR</div>
+        </div>
+      </div>
+
+      <!-- Gráfica 2 -->
+      <div style="background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;padding:14px">
+        <div style="font-size:12px;font-weight:800;color:var(--txt2);letter-spacing:.5px;margin-bottom:10px">🛢 PRODUCCIÓN vs DÍAS (barriles)</div>
+        <canvas id="supChartBls" style="width:100%;max-height:220px"></canvas>
+      </div>
+
+    </div><!-- /supInfoPanel -->
+
+    <!-- Panel Recorredores -->
+    <div id="supRecPanel" style="display:none;margin-bottom:14px;background:var(--surface2);border:1.5px solid var(--border);border-radius:16px;overflow:hidden">
+      <div style="padding:12px 16px 6px;font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.8px">ESTADO DE RECORREDORES</div>
+      <div id="supRecList"></div>
+
+      <!-- Botón Agregar -->
+      <div style="padding:12px 16px;border-top:1px solid var(--border)">
+        <button onclick="supMostrarFormNuevoRec()" id="supBtnAgregarRec" style="width:100%;padding:11px;border-radius:12px;border:2px dashed #16a34a;background:rgba(22,163,74,.06);color:#16a34a;font-size:13px;font-weight:800;cursor:pointer;font-family:Inter,sans-serif;letter-spacing:.5px">➕ AGREGAR RECORREDOR</button>
+
+        <!-- Formulario nuevo recorredor (oculto) -->
+        <div id="supFormNuevoRec" style="display:none;margin-top:12px">
+          <div style="font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.8px;margin-bottom:8px">NUEVO RECORREDOR</div>
+          <input id="supNuevoRecNombre" type="text" placeholder="Nombre completo"
+            style="width:100%;box-sizing:border-box;padding:11px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);color:var(--txt);font-size:14px;font-weight:600;font-family:Inter,sans-serif;margin-bottom:8px;outline:none"/>
+          <input id="supNuevoRecPass" type="password" placeholder="Contraseña"
+            style="width:100%;box-sizing:border-box;padding:11px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);color:var(--txt);font-size:14px;font-weight:600;font-family:Inter,sans-serif;margin-bottom:10px;outline:none"
+            onkeydown="if(event.key==='Enter')supConfirmarNuevoRec()"/>
+          <div id="supNuevoRecErr" style="display:none;color:#dc2626;font-size:12px;font-weight:700;margin-bottom:8px"></div>
+          <div style="display:flex;gap:8px">
+            <button onclick="supConfirmarNuevoRec()" style="flex:1;padding:10px;border-radius:10px;border:none;background:#16a34a;color:#fff;font-size:13px;font-weight:800;cursor:pointer;font-family:Inter,sans-serif">✓ Agregar</button>
+            <button onclick="supCancelarNuevoRec()" style="padding:10px 16px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);color:var(--txt2);font-size:13px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">Cancelar</button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Gráfica 1: PTP y PTR vs Días -->
-    <div style="background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px">
-      <div style="font-size:12px;font-weight:800;color:var(--txt2);letter-spacing:.5px;margin-bottom:10px">📈 PTP / PTR vs DÍAS (kg/cm²)</div>
-      <canvas id="supChartPresion" style="width:100%;max-height:220px"></canvas>
-      <div style="display:flex;gap:14px;margin-top:8px;justify-content:center">
-        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2)"><div style="width:12px;height:3px;background:#3b82f6;border-radius:2px"></div>PTP</div>
-        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2)"><div style="width:12px;height:3px;background:#f59e0b;border-radius:2px"></div>PTR</div>
+    <!-- ══ Programa de Recorredores — tile ancho completo ══ -->
+    <button id="supProgRecBtn" onclick="supToggleProgRec()" style="width:100%;margin-bottom:14px;background:var(--surface);border:1.5px solid var(--border);border-radius:18px;padding:18px 20px;cursor:pointer;display:flex;align-items:center;gap:16px;text-align:left;transition:border-color .15s">
+      <div style="width:56px;height:56px;border-radius:16px;background:#EEEDFE;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#534AB7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="16" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="8" y2="18"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
       </div>
-    </div>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:700;color:var(--txt)">Programa de recorredores</div>
+        <div style="font-size:12px;color:var(--txt2);margin-top:4px">Asignar actividades del día a cada recorredor</div>
+      </div>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--txt2)" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      <span id="supProgRecArrow" style="display:none"></span>
+    </button>
 
-    <!-- Gráfica 2: Producción (BLS) vs Días -->
-    <div style="background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;padding:14px">
-      <div style="font-size:12px;font-weight:800;color:var(--txt2);letter-spacing:.5px;margin-bottom:10px">🛢 PRODUCCIÓN vs DÍAS (barriles)</div>
-      <canvas id="supChartBls" style="width:100%;max-height:220px"></canvas>
+    <!-- Panel: selector de recorredor + botón asignar -->
+    <div id="supProgRecPanel" style="display:none;margin-bottom:14px;background:var(--surface2);border:1.5px solid var(--border);border-radius:16px;overflow:hidden">
+      <div style="padding:14px 16px 10px;font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.8px">SELECCIONA UN RECORREDOR</div>
+      <div id="supProgRecCards" style="padding:0 12px 14px;display:flex;flex-direction:column;gap:10px"></div>
     </div>
 
   </div>
 
 </div><!-- /supModal -->
+
+<!-- ══ MODAL: ASIGNAR PROGRAMA ══ -->
+<div id="asigProgModal" style="display:none;position:fixed;inset:0;z-index:9200;background:var(--bg);flex-direction:column;overflow:hidden">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#7c3aed,#6d28d9);padding:20px 16px 18px;flex-shrink:0">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button onclick="cerrarAsigProg()" style="background:rgba(255,255,255,.18);border:none;color:#fff;width:40px;height:40px;border-radius:12px;font-size:20px;cursor:pointer;flex-shrink:0">✕</button>
+      <div style="flex:1">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:#fff;line-height:1">🗓 ASIGNAR PROGRAMA</div>
+        <div id="asigProgSubtitle" style="font-size:12px;color:rgba(255,255,255,.7);margin-top:3px"></div>
+      </div>
+      <button onclick="asigProgGuardar()" style="background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.4);color:#fff;padding:8px 16px;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:Inter,sans-serif">✓ Guardar</button>
+    </div>
+  </div>
+
+  <!-- Lista de items asignados -->
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 20px">
+    <div id="asigProgLista" style="margin-bottom:14px"></div>
+
+    <!-- Agregar item -->
+    <div style="background:var(--surface2);border:1.5px solid var(--border);border-radius:16px;padding:16px">
+      <div style="font-size:12px;font-weight:800;color:var(--txt2);letter-spacing:.8px;margin-bottom:12px">AGREGAR AL PROGRAMA</div>
+
+      <!-- Tipo de actividad -->
+      <div style="font-size:12px;font-weight:700;color:var(--txt2);margin-bottom:8px">Tipo de actividad</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px" id="asigTipoGrid">
+        <button onclick="asigSelTipo('pozo','🛢','Pozo')" id="asigTipo-pozo" class="asig-tipo-btn" style="padding:12px 6px;border-radius:12px;border:2px solid var(--border);background:var(--surface);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="font-size:22px">🛢</span><span style="font-size:11px;font-weight:700;color:var(--txt)">Pozo</span>
+        </button>
+        <button onclick="asigSelTipo('estacion','🏭','Estación')" id="asigTipo-estacion" class="asig-tipo-btn" style="padding:12px 6px;border-radius:12px;border:2px solid var(--border);background:var(--surface);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="font-size:22px">🏭</span><span style="font-size:11px;font-weight:700;color:var(--txt)">Estación</span>
+        </button>
+        <button onclick="asigSelTipo('fractank','🪣','Frac Tank')" id="asigTipo-fractank" class="asig-tipo-btn" style="padding:12px 6px;border-radius:12px;border:2px solid var(--border);background:var(--surface);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="font-size:22px">🪣</span><span style="font-size:11px;font-weight:700;color:var(--txt)">Frac Tank</span>
+        </button>
+        <button onclick="asigSelTipo('cabezal','🔧','Cabezal')" id="asigTipo-cabezal" class="asig-tipo-btn" style="padding:12px 6px;border-radius:12px;border:2px solid var(--border);background:var(--surface);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="font-size:22px">🔧</span><span style="font-size:11px;font-weight:700;color:var(--txt)">Cabezal</span>
+        </button>
+        <button onclick="asigSelTipo('visita','🤝','Visita')" id="asigTipo-visita" class="asig-tipo-btn" style="padding:12px 6px;border-radius:12px;border:2px solid var(--border);background:var(--surface);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="font-size:22px">🤝</span><span style="font-size:11px;font-weight:700;color:var(--txt)">Visita</span>
+        </button>
+        <button onclick="asigSelTipo('otro','📝','Otro')" id="asigTipo-otro" class="asig-tipo-btn" style="padding:12px 6px;border-radius:12px;border:2px solid var(--border);background:var(--surface);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="font-size:22px">📝</span><span style="font-size:11px;font-weight:700;color:var(--txt)">Otro</span>
+        </button>
+      </div>
+
+      <!-- Campo de valor según tipo -->
+      <div id="asigCampoPozo" style="display:none;margin-bottom:10px;position:relative">
+        <div onclick="asigTogglePozoDrop()" style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:13px 14px;display:flex;align-items:center;gap:10px;cursor:pointer">
+          <span style="font-size:16px">🛢</span>
+          <span id="asigPozoLabel" style="flex:1;font-size:14px;font-weight:700;color:var(--txt2)">— Selecciona un pozo —</span>
+          <span style="font-size:16px;color:var(--txt2)">›</span>
+        </div>
+        <div id="asigPozoDropList" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:9999;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;max-height:200px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.25)"></div>
+      </div>
+      <input id="asigCampoTexto" type="text" placeholder="Describe la actividad…"
+        style="display:none;width:100%;box-sizing:border-box;padding:13px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);color:var(--txt);font-size:14px;font-family:Inter,sans-serif;outline:none;margin-bottom:10px"/>
+
+      <input id="asigNota" type="text" placeholder="Nota o indicación (opcional)"
+        style="width:100%;box-sizing:border-box;padding:11px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);color:var(--txt);font-size:13px;font-family:Inter,sans-serif;outline:none;margin-bottom:12px"/>
+
+      <button onclick="asigAgregarItem()" style="width:100%;padding:14px;border-radius:12px;border:none;background:#7c3aed;color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:Inter,sans-serif">➕ Agregar al programa</button>
+    </div>
+  </div>
+</div>
 
 <!-- ══ HISTORIAL CENTRAL MODAL ══ -->
 <div id="hcModal" style="display:none;position:fixed;inset:0;z-index:8500;background:var(--bg);flex-direction:column;overflow:hidden">
@@ -2323,7 +2534,9 @@ function selRec(btn,nombre,theme){
 
 function diffDays(a,b){return Math.floor((b-a)/(1000*60*60*24));}
 function getCicloInfo(nombre){
-  var ref=CICLOS[nombre],hoy=new Date();hoy.setHours(0,0,0,0);
+  var ref=CICLOS[nombre];
+  if(!ref){ ref=new Date(); ref.setHours(0,0,0,0); CICLOS[nombre]=ref; }
+  var hoy=new Date();hoy.setHours(0,0,0,0);
   var dias=diffDays(ref,hoy);if(dias<0)dias=((dias%21)+21)%21;
   var pos=dias%21,t=pos<14;
   var ini=new Date(ref.getTime()+(dias-pos)*86400000);
@@ -2336,7 +2549,7 @@ function agregarVisita(n,p){var v=getVisitas(n);v.push({pozo:p,fecha:new Date().
 function mostrarContador(nombre){
   mostrarBtnHistorialCentral();
   var i=getCicloInfo(nombre),n=getVisitas(nombre).length;
-  var cp=document.getElementById('cnt-panel');if(cp)cp.className='cnt-panel show';
+  var cp=document.getElementById('cnt-panel');if(cp)cp.className='cnt-panel'; // panel hidden, kept for data
   document.getElementById('cnt-nombre').textContent=nombre;
   if(i.trabajando){
     document.getElementById('cnt-status').innerHTML='🟢 Día '+i.diaEnCiclo+' de 14 · desde '+i.iniStr;
@@ -2530,6 +2743,8 @@ function mostrarFormRecorredor(nombre, theme){
     formContent.style.animation='fadeUp .4s ease both';
     var sf=document.getElementById('sendFixed'); if(sf) sf.style.display='block';
     var wp=document.getElementById('wellPicker'); if(wp) wp.classList.add('show');
+    var pb=document.getElementById('progBtnWrap'); if(pb) pb.style.display='block';
+    var qa=document.getElementById('quickAccessWrap'); if(qa) qa.style.display='block';
     var sugg=document.getElementById('wpSuggestions');
     if(sugg && !sugg.children.length){
       ['19','106D','119','128','139','167','172','179','187','191','197','201','213','224',
@@ -2709,12 +2924,12 @@ function setPera(key, estado){
 }
 
 function peraLinea(){
-  var map = {areaPozo:'Área', contrapeso:'Contrapeso', cerco:'Cerco', bayoneta:'Bayoneta'};
+  var map = {areaPozo:'Área', contrapeso:'Contrapozo', cerco:'Cerco', bayoneta:'Bayoneta'};
   var parts = [];
   Object.keys(peraState).forEach(function(k){
     if(peraState[k]) parts.push(map[k]+': '+(peraState[k]==='ok'?'✓':'✗'));
   });
-  return parts.length ? '🍐 *Cond. de Pera*\n'+parts.map(function(p){ return (p.includes('✓')?'✅':'❌')+' '+p.replace(': ✓','').replace(': ✗',''); }).join('\n') : '';
+  return parts.length ? '🛢 *Cond. de Pera*\n'+parts.map(function(p){ return (p.includes('✓')?'✅':'❌')+' '+p.replace(': ✓','').replace(': ✗',''); }).join('\n') : '';
 }
 
 function selEstado(btn, val){
@@ -2814,9 +3029,7 @@ function selVacRec(btn, nombre){
 function getVacaciones(nombre){
   try{ var d = localStorage.getItem('vac_'+nombre); return d ? JSON.parse(d) : []; }catch(e){return [];}
 }
-function setVacaciones(nombre, arr){
-  try{ localStorage.setItem('vac_'+nombre, JSON.stringify(arr)); }catch(e){}
-}
+// setVacaciones definida arriba con sync Firebase
 
 function guardarVacaciones(){
   if(!vacRecSel){ showToast('⚠️ Selecciona el recorredor'); return; }
@@ -2886,7 +3099,8 @@ getCicloInfo = function(nombre){
   });
   // Shift the reference date forward by vacation days
   if(extraDays > 0){
-    var ref2 = new Date(CICLOS[nombre].getTime() + extraDays * 86400000);
+    var _cicloRef = CICLOS[nombre] || (function(){ var d=new Date(); d.setHours(0,0,0,0); CICLOS[nombre]=d; return d; })();
+    var ref2 = new Date(_cicloRef.getTime() + extraDays * 86400000);
     var dias2 = Math.floor((hoy - ref2)/(1000*60*60*24));
     if(dias2 < 0) dias2 = ((dias2 % 21) + 21) % 21;
     var pos2  = dias2 % 21;
@@ -3135,7 +3349,7 @@ function _continuarEnvio(){
     if(flujoTipo==='estrangulador'){
       estrangLine = '🔩 Estrangulador: '+(v('coEstrangulador')||'—')+' pulg - TP #Vueltas: '+(vueltasTP||'—')+'\n';
     } else if(flujoTipo==='franco'){
-      estrangLine = '🔓 Franco - TP #Vueltas: '+(vueltasTP||'—')+'\n';
+      estrangLine = '⚙️ Franco - TP #Vueltas: '+(vueltasTP||'—')+'\n';
     }
     msg+='══════════════════\n🔧 *CONTROL OPERATIVO*\n📌 Estatus: '+est+'\n💧 Fluye: '+flu+'\n'+estrangLine+'⚙️ SAP: '+sis+'\n'+d+'\n'+(v('coObs')?'📝 '+v('coObs')+'\n':'');ok=true;
   }
@@ -3156,6 +3370,7 @@ function _continuarEnvio(){
     document.getElementById('horaBox').textContent='⏱ '+hr;
     msg+='══════════════════\n📊 *NIVEL FRAC TANK*\n📏 CTM: '+ctm+' cm · 🛢 BLS: '+bls+' bls · 🕐 '+hr+'\n'+(v('nivObs')?'📝 '+v('nivObs')+'\n':'');ok=true;
   }
+  var peraMsg = peraLinea();
   if(checks.trabajo||checks.drenar||checks.aforo||checks.intermitente){
     if(checks.aforo&&!v('regAforo')){showToast('⚠️ Falta cantidad de Aforo');return}
     var a=[];
@@ -3165,8 +3380,9 @@ function _continuarEnvio(){
     a.push(checks.intermitente?'✅ Intermitente':'❌ Intermitente');
     var estado=v('regEstado');
     if(estado) a.push((estado.toLowerCase().includes('estable')&&!estado.toLowerCase().includes('inestable')?'✅':'❌')+' Estado del pozo: '+estado);
-    var peraMsg = peraLinea();
     msg+='══════════════════\n📋 *REGISTRO*\n'+a.join('\n')+'\n'+(peraMsg?peraMsg+'\n':'')+(v('regObs')?'📝 '+v('regObs')+'\n':'');ok=true;
+  } else if(peraMsg){
+    msg+='══════════════════\n'+peraMsg+'\n';ok=true;
   }
   if(!ok){showToast('⚠️ Llena al menos un apartado antes de enviar');return}
   msg+='══════════════════\n'+gpsLine()+'\n';
@@ -3203,6 +3419,8 @@ function cerrarConfirmacion(){
 function limpiarTodo(){ resetFormulario(); }
 
 function resetFormulario(){
+  var pb=document.getElementById('progBtnWrap'); if(pb) pb.style.display='none';
+  var qa=document.getElementById('quickAccessWrap'); if(qa) qa.style.display='none';
   // Limpiar pozo
   W = '???';
   document.getElementById('wellTitle').textContent = 'C-???';
@@ -4408,6 +4626,8 @@ function hcRender(){
 function mostrarBtnHistorialCentral(){
   var wrap = document.getElementById('hcBtnWrap');
   if(wrap) wrap.style.display='block';
+  var qa = document.getElementById('quickAccessWrap');
+  if(qa) qa.style.display='block';
 }
 
 // ══ SISTEMA DE SESIÓN PERSISTENTE (8 horas) ══════
@@ -4517,6 +4737,7 @@ function sesionExpirar(){
   var pp=document.getElementById('profilePicker'); if(pp){pp.style.display='block';pp.style.opacity='1';}
   var sf=document.getElementById('sendFixed'); if(sf) sf.style.display='none';
   var hc=document.getElementById('hcBtnWrap'); if(hc) hc.style.display='none';
+  var qa2=document.getElementById('quickAccessWrap'); if(qa2) qa2.style.display='none';
   switchView('visitas');
   showToast('🔒 Sesión expirada — vuelve a ingresar');
 }
@@ -4605,6 +4826,641 @@ function supSelPozo(pozo){
 
 var _supDropOpen = false;
 
+
+// ── Recorredores ──────────────────────────────────────────
+var SUP_RECORREDORES = [
+  {key:'m',  nombre:'Manrique',   ico:'🌊'},
+  {key:'c',  nombre:'Cirilo',     ico:'⛏️'},
+  {key:'jc', nombre:'Juan Carlos',ico:'🦺'}
+];
+function supGetRecStatus(key){
+  try{ return localStorage.getItem('rec_status_'+key)||'alta'; }catch(e){ return 'alta'; }
+}
+function supSetRecStatus(key, estado){
+  try{ localStorage.setItem('rec_status_'+key, estado); }catch(e){}
+  fbSetConfig('rec_status/'+key, estado);
+  supRenderRecList();
+  var rec = SUP_RECORREDORES.find(function(r){return r.key===key;});
+  var card = document.getElementById('pk-rec-'+key);
+  if(card){
+    card.style.opacity       = estado==='alta'?'1':'.35';
+    card.style.pointerEvents = estado==='alta'?'':'none';
+    card.style.filter        = estado==='alta'?'':'grayscale(1)';
+  }
+  showToast(estado==='alta'?'✅ '+rec.nombre+' dado de ALTA':'🔴 '+rec.nombre+' dado de BAJA');
+}
+var REC_ORIGINALES = ['m','c','jc'];
+
+function supRenderRecList(){
+  var list = document.getElementById('supRecList');
+  if(!list) return;
+  list.innerHTML = SUP_RECORREDORES.map(function(r){
+    var s = supGetRecStatus(r.key), esAlta = s==='alta';
+    var brdA = esAlta?'#16a34a':'#d1d5db', bgA = esAlta?'#16a34a':'var(--surface)', colA = esAlta?'#fff':'var(--txt2)';
+    var brdB = esAlta?'#d1d5db':'#dc2626', bgB = esAlta?'var(--surface)':'#dc2626', colB = esAlta?'var(--txt2)':'#fff';
+    var badge = esAlta
+      ? '<span style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;margin-right:8px;background:#dcfce7;color:#15803d">● ACTIVO</span>'
+      : '<span style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;margin-right:8px;background:#fee2e2;color:#b91c1c">● BAJA</span>';
+    var btnA = '<button onclick="supSetRecStatus(\''+r.key+'\',\'alta\')" style="padding:7px 13px;border-radius:10px;border:2px solid '+brdA+';background:'+bgA+';color:'+colA+';font-size:12px;font-weight:800;cursor:pointer;font-family:Inter,sans-serif;margin-right:4px">ALTA</button>';
+    var btnB = '<button onclick="supSetRecStatus(\''+r.key+'\',\'baja\')" style="padding:7px 13px;border-radius:10px;border:2px solid '+brdB+';background:'+bgB+';color:'+colB+';font-size:12px;font-weight:800;cursor:pointer;font-family:Inter,sans-serif">BAJA</button>';
+    var btnDel = REC_ORIGINALES.indexOf(r.key)===-1
+      ? '<button onclick="supMostrarConfirmEliminar(\''+r.key+'\',this)" style="margin-left:6px;padding:7px 10px;border-radius:10px;border:2px solid #fca5a5;background:transparent;color:#ef4444;font-size:14px;cursor:pointer" title="Eliminar">🗑</button>'
+      : '';
+    return '<div id="supRecRow-'+r.key+'" style="display:flex;align-items:center;padding:13px 16px;border-top:1px solid var(--border);gap:10px">'
+      +'<span style="font-size:22px">'+r.ico+'</span>'
+      +'<span style="flex:1;font-size:15px;font-weight:700;color:var(--txt)">'+r.nombre+'</span>'
+      +badge+btnA+btnB+btnDel+'</div>';
+  }).join('');
+}
+
+// ── Agregar / Cargar Recorredores Dinámicos ─────────────────
+var REC_ICONOS = ['🪖','🔧','⚒️','🛠️','🔩','🪛','🦺','🧰','⛽','🔦'];
+
+function supGetCustomRecs(){
+  try{ return JSON.parse(localStorage.getItem('custom_recs')||'[]'); }catch(e){ return []; }
+}
+// supSaveCustomRecs definido arriba con sync Firebase
+
+function supMostrarFormNuevoRec(){
+  document.getElementById('supFormNuevoRec').style.display='block';
+  document.getElementById('supBtnAgregarRec').style.display='none';
+  document.getElementById('supNuevoRecNombre').value='';
+  document.getElementById('supNuevoRecPass').value='';
+  document.getElementById('supNuevoRecErr').style.display='none';
+  setTimeout(function(){ document.getElementById('supNuevoRecNombre').focus(); },100);
+}
+function supCancelarNuevoRec(){
+  document.getElementById('supFormNuevoRec').style.display='none';
+  document.getElementById('supBtnAgregarRec').style.display='block';
+}
+
+function supConfirmarNuevoRec(){
+  var nombre = document.getElementById('supNuevoRecNombre').value.trim();
+  var pass   = document.getElementById('supNuevoRecPass').value.trim();
+  var err    = document.getElementById('supNuevoRecErr');
+  if(!nombre){ err.textContent='Ingresa un nombre'; err.style.display='block'; return; }
+  if(pass.length < 3){ err.textContent='Contraseña mínimo 3 caracteres'; err.style.display='block'; return; }
+  // Verificar que no exista ya
+  var custom = supGetCustomRecs();
+  var todos  = SUP_RECORREDORES.map(function(r){ return r.nombre.toLowerCase(); });
+  if(todos.indexOf(nombre.toLowerCase())!==-1){
+    err.textContent='Ya existe un recorredor con ese nombre'; err.style.display='block'; return;
+  }
+  // Generar key único
+  var key = nombre.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'').substring(0,8)+'_'+Date.now().toString(36).slice(-4);
+  var ico = REC_ICONOS[Math.floor(Math.random()*REC_ICONOS.length)];
+  var nuevo = {key:key, nombre:nombre, pass:pass, ico:ico};
+  // Guardar
+  custom.push(nuevo);
+  supSaveCustomRecs(custom);
+  // Agregar al ciclo con fecha de hoy
+  if(!CICLOS[nombre]){ var hoyRec=new Date(); hoyRec.setHours(0,0,0,0); CICLOS[nombre]=hoyRec; }
+  // Registrar en el sistema de login
+  REC_MAP[nombre.replace(/\s+/g,'')] = {nombre:nombre, pass:pass, theme:key};
+  // Agregar a la lista live
+  SUP_RECORREDORES.push({key:key, nombre:nombre, ico:ico});
+  // Agregar tarjeta al picker
+  supInyectarTarjetaPicker(nuevo);
+  // Cerrar form
+  supCancelarNuevoRec();
+  supRenderRecList();
+  showToast('✅ '+nombre+' agregado como recorredor');
+}
+
+function supInyectarTarjetaPicker(r){
+  var container = document.getElementById('pp-body-rec');
+  if(!container) return;
+  var div = document.createElement('div');
+  div.className = 'pk-card';
+  div.id = 'pk-rec-'+r.key;
+  div.setAttribute('onclick', "selProfile('"+r.nombre+"','"+r.key+"','rec')");
+  div.innerHTML = '<div class="pk-card-ico">'+r.ico+'</div>'
+    +'<div class="pk-card-nm">'+r.nombre+'</div>'
+    +'<div class="pk-card-lk">🔒 clave</div>';
+  container.appendChild(div);
+}
+
+// Cargar recorredores guardados al iniciar
+(function cargarCustomRecs(){
+  var custom = supGetCustomRecs();
+  custom.forEach(function(r){
+    // Agregar al ciclo si no existe
+    if(!CICLOS[r.nombre]){ var hoyRec2=new Date(); hoyRec2.setHours(0,0,0,0); CICLOS[r.nombre]=hoyRec2; }
+    // Agregar al REC_MAP para login
+    REC_MAP[r.nombre.replace(/\s+/g,'')] = {nombre:r.nombre, pass:r.pass, theme:r.key};
+    // Agregar a lista global
+    if(!SUP_RECORREDORES.find(function(x){ return x.key===r.key; })){
+      SUP_RECORREDORES.push({key:r.key, nombre:r.nombre, ico:r.ico});
+    }
+    // Inyectar tarjeta cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', function(){
+      supInyectarTarjetaPicker(r);
+      // Aplicar estado alta/baja
+      var s = supGetRecStatus(r.key);
+      if(s==='baja'){
+        var card = document.getElementById('pk-rec-'+r.key);
+        if(card){card.style.opacity='.35';card.style.pointerEvents='none';card.style.filter='grayscale(1)';}
+      }
+    });
+  });
+})();
+// ────────────────────────────────────────────────────────────
+
+
+function supMostrarConfirmEliminar(key, btnEl){
+  // Si ya hay una confirmacion abierta para esta fila, cancelar
+  var row = document.getElementById('supRecRow-'+key);
+  if(!row) return;
+  var existing = row.querySelector('.sup-confirm-del');
+  if(existing){ existing.parentNode.removeChild(existing); return; }
+  // Crear mini-panel de confirmacion inline
+  var div = document.createElement('div');
+  div.className = 'sup-confirm-del';
+  div.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 16px 10px;background:#fff1f2;border-top:1px solid #fecaca;';
+  div.innerHTML = '<span style="flex:1;font-size:12px;font-weight:700;color:#b91c1c">¿Eliminar recorredor?</span>'
+    +'<button onclick="supEliminarRec(\''+key+'\',this)" style="padding:6px 14px;border-radius:8px;border:none;background:#dc2626;color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:Inter,sans-serif">Sí, eliminar</button>'
+    +'<button onclick="this.closest(\'.sup-confirm-del\').remove()" style="padding:6px 12px;border-radius:8px;border:1.5px solid #d1d5db;background:var(--surface);color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">Cancelar</button>';
+  row.insertAdjacentElement('afterend', div);
+}
+
+function supEliminarRec(key){
+  // 1. Quitar de custom_recs en localStorage
+  var custom = supGetCustomRecs().filter(function(r){ return r.key !== key; });
+  supSaveCustomRecs(custom);
+  // 2. Quitar de SUP_RECORREDORES
+  var rec = SUP_RECORREDORES.find(function(r){ return r.key === key; });
+  SUP_RECORREDORES = SUP_RECORREDORES.filter(function(r){ return r.key !== key; });
+  // 3. Quitar de REC_MAP
+  if(rec) delete REC_MAP[rec.nombre.replace(/\s+/g,'')];
+  // 4. Quitar estado alta/baja
+  try{ localStorage.removeItem('rec_status_'+key); }catch(e){}
+  // 5. Quitar tarjeta del picker
+  var card = document.getElementById('pk-rec-'+key);
+  if(card) card.parentNode.removeChild(card);
+  // 6. Re-renderizar lista
+  supRenderRecList();
+  showToast('🗑 Recorredor eliminado');
+}
+
+function supToggleRec(){
+  var panel=document.getElementById('supRecPanel'),arrow=document.getElementById('supRecArrow'),btn=document.getElementById('supRecBtn');
+  if(!panel) return;
+  var open=panel.style.display==='block';
+  panel.style.display=open?'none':'block';
+  if(arrow) arrow.style.transform=open?'rotate(0deg)':'rotate(90deg)';
+  if(btn) btn.style.borderColor=open?'var(--border)':'#3B6D11';
+  if(!open) supRenderRecList();
+}
+document.addEventListener('DOMContentLoaded',function(){
+  SUP_RECORREDORES.forEach(function(r){
+    if(supGetRecStatus(r.key)==='baja'){
+      var card=document.getElementById('pk-rec-'+r.key);
+      if(card){card.style.opacity='.35';card.style.pointerEvents='none';card.style.filter='grayscale(1)';}
+    }
+  });
+});
+// ─────────────────────────────────────────────────────────
+
+
+// ══ PROGRAMA DEL DÍA (Recorredor – asignado por supervisión) ═════
+function _progKey(){ return 'prog_asig_'+(typeof REC!=='undefined'?REC:'x')+'_'+new Date().toISOString().slice(0,10); }
+function _progGet(){ try{ return JSON.parse(localStorage.getItem(_progKey())||'[]'); }catch(e){ return []; } }
+// _progSave definido arriba con sync Firebase
+
+function abrirPrograma(){
+  var m=document.getElementById('progModal'); if(!m) return;
+  m.style.display='flex';
+  var hoy=new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+  var sub=document.getElementById('progSubtitle');
+  if(sub) sub.textContent=(typeof REC!=='undefined'?REC:'')+' · '+hoy.charAt(0).toUpperCase()+hoy.slice(1);
+  _progRenderLista();
+}
+function cerrarPrograma(){
+  var m=document.getElementById('progModal'); if(m) m.style.display='none';
+  _progActualizarBadge();
+}
+
+function progToggleHecho(idx){
+  var lista=_progGet();
+  if(lista[idx]) lista[idx].hecho=!lista[idx].hecho;
+  _progSave(lista);
+  _progRenderLista();
+  _progActualizarBadge();
+}
+
+function _progRenderLista(){
+  var el=document.getElementById('progLista'); if(!el) return;
+  var lista=_progGet();
+  var hechos=lista.filter(function(x){ return x.hecho; }).length;
+  var pct=lista.length?Math.round(hechos/lista.length*100):0;
+  var bar=document.getElementById('progBarFill'); if(bar) bar.style.width=pct+'%';
+  var lbl=document.getElementById('progBarLabel');
+  if(lbl) lbl.textContent=lista.length?(hechos+' de '+lista.length+' actividades completadas'):'Sin actividades asignadas hoy';
+
+  if(!lista.length){
+    el.innerHTML='<div style="text-align:center;padding:40px 20px">'
+      +'<div style="font-size:56px;margin-bottom:14px">📋</div>'
+      +'<div style="font-size:18px;font-weight:700;color:var(--txt);margin-bottom:8px">Sin programa asignado</div>'
+      +'<div style="font-size:14px;color:var(--txt2);line-height:1.5">Tu supervisor te asignará<br>las actividades del día</div>'
+      +'</div>';
+    return;
+  }
+  el.innerHTML=lista.map(function(item,i){
+    var hecho=item.hecho;
+    var ico=item.ico||'📋';
+    var nombre=item.tipo==='pozo'?'C-'+item.valor:(item.valor||item.label||'Actividad');
+    return '<div style="display:flex;align-items:center;gap:0;background:var(--surface2);border:2px solid '+(hecho?'#16a34a':'var(--border)')+';border-radius:16px;margin-bottom:12px;overflow:hidden;min-height:70px">'
+      +'<button onclick="progToggleHecho('+i+')" style="width:64px;flex-shrink:0;align-self:stretch;border:none;border-right:1.5px solid '+(hecho?'#16a34a':'var(--border)')+';background:'+(hecho?'#16a34a':'var(--surface)')+';cursor:pointer;display:flex;align-items:center;justify-content:center">'
+        +'<span style="font-size:24px">'+(hecho?'✅':'⬜')+'</span>'
+      +'</button>'
+      +'<div style="flex:1;padding:14px 12px">'
+        +'<div style="display:flex;align-items:center;gap:8px">'
+          +'<span style="font-size:20px">'+ico+'</span>'
+          +'<span style="font-size:19px;font-weight:900;color:'+(hecho?'#16a34a':'var(--txt)')+';'+(hecho?'text-decoration:line-through;opacity:.6':'')+';font-family:Bebas Neue,sans-serif;letter-spacing:1px">'+nombre+'</span>'
+        +'</div>'
+        +(item.nota?'<div style="font-size:12px;color:var(--txt2);margin-top:4px">📝 '+item.nota+'</div>':'')
+        +'<div style="font-size:11px;font-weight:700;color:'+(hecho?'#16a34a':'var(--txt2)')+';margin-top:4px">'+(hecho?'✓ Completado':'Pendiente')+'</div>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+
+function _progActualizarBadge(){
+  var lista=_progGet();
+  var total=lista.length, hechos=lista.filter(function(x){return x.hecho;}).length;
+  var badge=document.getElementById('progBadgeCount');
+  if(!badge) return;
+  if(!total){ badge.textContent='Sin programa hoy'; return; }
+  badge.textContent=hechos+'/'+total+(total===1?' actividad':' actividades');
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  if(typeof REC!=='undefined'&&REC) _progActualizarBadge();
+});
+// ══════════════════════════════════════════════════════════
+
+
+
+// ══ PROGRAMA DE RECORREDORES (Supervisión) ═══════════════
+var _asigRecKey  = null;  // key del recorredor activo
+var _asigTipoSel = null;  // tipo seleccionado
+var _asigPozoSel = null;  // pozo seleccionado en el drop
+
+var ASIG_TIPOS = {
+  pozo:     {ico:'🛢', label:'Pozo'},
+  estacion: {ico:'🏭', label:'Estación'},
+  fractank: {ico:'🪣', label:'Frac Tank'},
+  cabezal:  {ico:'🔧', label:'Cabezal'},
+  visita:   {ico:'🤝', label:'Visita'},
+  otro:     {ico:'📝', label:'Otro'}
+};
+
+function _asigKey(recKey){
+  return 'prog_asig_'+recKey+'_'+new Date().toISOString().slice(0,10);
+}
+function _asigGet(recKey){
+  try{ return JSON.parse(localStorage.getItem(_asigKey(recKey))||'[]'); }catch(e){ return []; }
+}
+// _asigSave definido arriba con sync Firebase
+
+// ── Panel selector de recorredor ─────────────────────────
+function supToggleProgRec(){
+  var panel = document.getElementById('supProgRecPanel');
+  var arrow = document.getElementById('supProgRecArrow');
+  var btn   = document.getElementById('supProgRecBtn');
+  if(!panel) return;
+  var open = panel.style.display === 'block';
+  panel.style.display = open ? 'none' : 'block';
+  if(arrow) arrow.style.transform = open ? '' : 'rotate(90deg)';
+  if(btn) btn.style.borderColor = open ? 'var(--border)' : '#534AB7';
+  if(!open) supRenderProgRecCards();
+}
+
+function supRenderProgRecCards(){
+  var el = document.getElementById('supProgRecCards');
+  if(!el) return;
+  el.innerHTML = SUP_RECORREDORES.map(function(r){
+    var items = _asigGet(r.key);
+    var n = items.length;
+    var hechos = items.filter(function(x){ return x.hecho; }).length;
+    return '<button onclick="abrirAsigProg(\''+r.key+'\')" style="width:100%;padding:0;border:1.5px solid var(--border);border-radius:14px;background:var(--surface);cursor:pointer;overflow:hidden;text-align:left">'
+      +'<div style="display:flex;align-items:center;gap:0">'
+        +'<div style="width:56px;align-self:stretch;background:rgba(124,58,237,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">'
+          +'<span style="font-size:26px">'+r.ico+'</span>'
+        +'</div>'
+        +'<div style="flex:1;padding:13px 12px">'
+          +'<div style="font-size:16px;font-weight:800;color:var(--txt)">'+r.nombre+'</div>'
+          +'<div style="font-size:12px;color:var(--txt2);margin-top:2px">'
+            +(n ? hechos+'/'+n+' actividades · hoy' : 'Sin programa asignado hoy')
+          +'</div>'
+        +'</div>'
+        +'<div style="padding:0 16px;font-size:22px;color:#7c3aed">›</div>'
+      +'</div>'
+    +'</button>';
+  }).join('');
+}
+
+// ── Modal de asignación ──────────────────────────────────
+function abrirAsigProg(recKey){
+  _asigRecKey  = recKey;
+  _asigTipoSel = null;
+  _asigPozoSel = null;
+  var rec = SUP_RECORREDORES.find(function(r){ return r.key === recKey; });
+  var modal = document.getElementById('asigProgModal');
+  if(!modal) return;
+  modal.style.display = 'flex';
+  var hoy = new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+  var sub = document.getElementById('asigProgSubtitle');
+  if(sub) sub.textContent = (rec?rec.ico+' '+rec.nombre:'') + ' · ' + hoy.charAt(0).toUpperCase()+hoy.slice(1);
+  // Reset form
+  _asigResetForm();
+  _asigRenderLista();
+}
+
+function cerrarAsigProg(){
+  var modal = document.getElementById('asigProgModal');
+  if(modal) modal.style.display = 'none';
+  supRenderProgRecCards();
+}
+
+function asigProgGuardar(){
+  cerrarAsigProg();
+  showToast('✅ Programa guardado para '+( SUP_RECORREDORES.find(function(r){return r.key===_asigRecKey;})||{nombre:''}).nombre);
+}
+
+// ── Tipos de actividad ───────────────────────────────────
+function asigSelTipo(tipo, ico, label){
+  _asigTipoSel = tipo;
+  _asigPozoSel = null;
+  // Resaltar botón seleccionado
+  document.querySelectorAll('.asig-tipo-btn').forEach(function(b){
+    b.style.background = 'var(--surface)';
+    b.style.borderColor = 'var(--border)';
+  });
+  var selBtn = document.getElementById('asigTipo-'+tipo);
+  if(selBtn){ selBtn.style.background='rgba(124,58,237,.12)'; selBtn.style.borderColor='#7c3aed'; }
+  // Mostrar campo correcto
+  var campoPozo  = document.getElementById('asigCampoPozo');
+  var campoTexto = document.getElementById('asigCampoTexto');
+  if(tipo === 'pozo'){
+    if(campoPozo)  campoPozo.style.display  = 'block';
+    if(campoTexto) campoTexto.style.display  = 'none';
+    _asigRenderPozoDrop();
+  } else {
+    if(campoPozo)  campoPozo.style.display  = 'none';
+    if(campoTexto){ campoTexto.style.display  = 'block'; campoTexto.placeholder = 'Nombre de '+label+'…'; campoTexto.value=''; }
+  }
+}
+
+function _asigRenderPozoDrop(){
+  var list = document.getElementById('asigPozoDropList');
+  if(!list) return;
+  var TODOS = ['19','106D','119','128','139','167','172','179','187','191',
+               '197','201','213','224','324','326','327','342','346','350',
+               '352','356','359','363','364','367','373','376','385','500',
+               '502','504','505','601','602','603'];
+  list.innerHTML = TODOS.map(function(w){
+    return '<div onclick="asigSelPozo(\''+w+'\')" style="padding:12px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;border-bottom:1px solid var(--border);font-size:14px;font-weight:700;color:var(--txt)">'
+      +'<span>🛢</span>C-'+w+'</div>';
+  }).join('');
+}
+
+function asigTogglePozoDrop(){
+  var list = document.getElementById('asigPozoDropList');
+  if(list) list.style.display = list.style.display==='block' ? 'none' : 'block';
+}
+
+function asigSelPozo(w){
+  _asigPozoSel = w;
+  var lbl = document.getElementById('asigPozoLabel');
+  if(lbl){ lbl.textContent='C-'+w; lbl.style.color='var(--txt)'; }
+  var list = document.getElementById('asigPozoDropList');
+  if(list) list.style.display='none';
+}
+
+// ── Agregar item ─────────────────────────────────────────
+function asigAgregarItem(){
+  if(!_asigTipoSel){ showToast('⚠️ Selecciona el tipo de actividad'); return; }
+  var valor = '';
+  if(_asigTipoSel === 'pozo'){
+    if(!_asigPozoSel){ showToast('⚠️ Selecciona un pozo'); return; }
+    valor = _asigPozoSel;
+  } else {
+    var tf = document.getElementById('asigCampoTexto');
+    valor = tf ? tf.value.trim() : '';
+    if(!valor){ showToast('⚠️ Escribe el nombre de la actividad'); return; }
+  }
+  var nota = (document.getElementById('asigNota')||{}).value||'';
+  var lista = _asigGet(_asigRecKey);
+  lista.push({
+    tipo:  _asigTipoSel,
+    ico:   ASIG_TIPOS[_asigTipoSel].ico,
+    label: ASIG_TIPOS[_asigTipoSel].label,
+    valor: valor,
+    nota:  nota.trim(),
+    hecho: false
+  });
+  _asigSave(_asigRecKey, lista);
+  _asigResetForm();
+  _asigRenderLista();
+}
+
+function asigEliminarItem(idx){
+  var lista = _asigGet(_asigRecKey);
+  lista.splice(idx,1);
+  _asigSave(_asigRecKey, lista);
+  _asigRenderLista();
+}
+
+function _asigResetForm(){
+  _asigTipoSel = null; _asigPozoSel = null;
+  document.querySelectorAll('.asig-tipo-btn').forEach(function(b){
+    b.style.background='var(--surface)'; b.style.borderColor='var(--border)';
+  });
+  var cp = document.getElementById('asigCampoPozo');   if(cp) cp.style.display='none';
+  var ct = document.getElementById('asigCampoTexto');  if(ct){ ct.style.display='none'; ct.value=''; }
+  var lbl = document.getElementById('asigPozoLabel');  if(lbl){ lbl.textContent='— Selecciona un pozo —'; lbl.style.color='var(--txt2)'; }
+  var nota = document.getElementById('asigNota');      if(nota) nota.value='';
+  var drop = document.getElementById('asigPozoDropList'); if(drop) drop.style.display='none';
+}
+
+function _asigRenderLista(){
+  var el = document.getElementById('asigProgLista');
+  if(!el) return;
+  var lista = _asigGet(_asigRecKey);
+  if(!lista.length){
+    el.innerHTML='<div style="text-align:center;padding:30px 20px;color:var(--txt2);font-size:14px">Sin actividades asignadas hoy.<br>Agrega desde abajo.</div>';
+    return;
+  }
+  el.innerHTML = '<div style="font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.8px;margin-bottom:10px">ACTIVIDADES DE HOY</div>'
+    + lista.map(function(item,i){
+    return '<div style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;margin-bottom:8px">'
+      +'<span style="font-size:26px;flex-shrink:0">'+item.ico+'</span>'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:15px;font-weight:800;color:var(--txt)">'+(item.tipo==='pozo'?'C-'+item.valor:item.valor)+'</div>'
+        +'<div style="font-size:11px;color:var(--txt2);margin-top:2px">'+item.label+(item.nota?' · '+item.nota:'')+'</div>'
+      +'</div>'
+      +'<button onclick="asigEliminarItem('+i+')" style="padding:8px 10px;border-radius:10px;border:1.5px solid #fca5a5;background:transparent;color:#ef4444;font-size:16px;cursor:pointer;flex-shrink:0">🗑</button>'
+    +'</div>';
+  }).join('');
+}
+// ══════════════════════════════════════════════════════════
+
+
+document.addEventListener('DOMContentLoaded', function(){
+  try{
+    var hist = JSON.parse(localStorage.getItem('cuichapa_historial_v2')||'[]');
+    var clean = hist.filter(function(r){ return !r._sim; });
+    if(clean.length !== hist.length){
+      localStorage.setItem('cuichapa_historial_v2', JSON.stringify(clean));
+    }
+  }catch(e){}
+});
+
+
+// ══ SINCRONIZACIÓN TOTAL — TIEMPO REAL ═══════════════════
+
+// ID único por dispositivo (persiste en localStorage)
+var DEVICE_ID = (function(){
+  var id = localStorage.getItem('cuichapa_device_id');
+  if(!id){ id = 'dev_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6); localStorage.setItem('cuichapa_device_id',id); }
+  return id;
+})();
+
+// Notificación flotante de cambio externo
+function notifCambio(texto){
+  var n = document.getElementById('syncNotif');
+  if(!n){
+    n = document.createElement('div');
+    n.id = 'syncNotif';
+    n.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:99999;background:#1e3a8a;color:#fff;padding:10px 18px;border-radius:12px;font-size:13px;font-weight:700;font-family:Inter,sans-serif;box-shadow:0 4px 20px rgba(0,0,0,.3);display:none;align-items:center;gap:8px;max-width:90vw;text-align:center';
+    document.body.appendChild(n);
+  }
+  n.innerHTML = '🔄 '+texto;
+  n.style.display = 'flex';
+  clearTimeout(n._t);
+  n._t = setTimeout(function(){ n.style.display='none'; }, 4000);
+}
+
+// ── Vacaciones — sync Firebase ────────────────────────────
+function setVacaciones(nombre, arr){
+  try{ localStorage.setItem('vac_'+nombre, JSON.stringify(arr)); }catch(e){}
+  if(fbDB) fbDB.ref('config/vac/'+nombre).set(arr.length?arr:null).catch(function(){});
+}
+
+// ── Escuchar TODO en config ───────────────────────────────
+function escucharConfigFirebase(){
+  if(!fbDB) return;
+
+  // Estado alta/baja
+  fbDB.ref('config/rec_status').on('value', function(snap){
+    if(!snap.exists()) return;
+    var statuses = snap.val(), cambioExterno = false;
+    Object.keys(statuses).forEach(function(key){
+      var estado = statuses[key];
+      var prev = localStorage.getItem('rec_status_'+key)||'alta';
+      if(estado !== prev) cambioExterno = true;
+      try{ localStorage.setItem('rec_status_'+key, estado); }catch(e){}
+      var card = document.getElementById('pk-rec-'+key);
+      if(card){
+        card.style.opacity       = estado==='alta'?'1':'.35';
+        card.style.pointerEvents = estado==='alta'?'':'none';
+        card.style.filter        = estado==='alta'?'':'grayscale(1)';
+      }
+    });
+    var panel = document.getElementById('supRecPanel');
+    if(panel && panel.style.display==='block') supRenderRecList();
+    if(cambioExterno) notifCambio('Estado de recorredores actualizado');
+  });
+
+  // Recorredores personalizados
+  fbDB.ref('config/custom_recs').on('value', function(snap){
+    var remoteCustom = snap.exists()?snap.val():[];
+    if(!Array.isArray(remoteCustom)) return;
+    var localCustom = [];
+    try{ localCustom = JSON.parse(localStorage.getItem('custom_recs')||'[]'); }catch(e){}
+    var cambioExterno = JSON.stringify(remoteCustom) !== JSON.stringify(localCustom);
+    try{ localStorage.setItem('custom_recs', JSON.stringify(remoteCustom)); }catch(e){}
+    remoteCustom.forEach(function(r){
+      if(!CICLOS[r.nombre]){ var d=new Date(); d.setHours(0,0,0,0); CICLOS[r.nombre]=d; }
+      REC_MAP[r.nombre.replace(/\s+/g,'')] = {nombre:r.nombre, pass:r.pass, theme:r.key};
+      if(!SUP_RECORREDORES.find(function(x){ return x.key===r.key; })){
+        SUP_RECORREDORES.push({key:r.key, nombre:r.nombre, ico:r.ico});
+        supInyectarTarjetaPicker(r);
+      }
+    });
+    // Quitar eliminados
+    var remoteKeys = remoteCustom.map(function(r){ return r.key; });
+    var REC_ORIG = ['m','c','jc'];
+    SUP_RECORREDORES = SUP_RECORREDORES.filter(function(r){
+      if(REC_ORIG.indexOf(r.key)!==-1) return true;
+      if(remoteKeys.indexOf(r.key)!==-1) return true;
+      var card=document.getElementById('pk-rec-'+r.key);
+      if(card) card.parentNode.removeChild(card);
+      return false;
+    });
+    var panel = document.getElementById('supRecPanel');
+    if(panel && panel.style.display==='block') supRenderRecList();
+    if(cambioExterno && remoteCustom.length) notifCambio('Lista de recorredores actualizada');
+  });
+
+  // Programa asignado
+  var hoy = new Date().toISOString().slice(0,10);
+  fbDB.ref('config/prog_asig').on('value', function(snap){
+    if(!snap.exists()) return;
+    var todos = snap.val(), cambioExterno = false;
+    Object.keys(todos).forEach(function(recKey){
+      var dias = todos[recKey];
+      if(dias && dias[hoy]){
+        var arr = dias[hoy];
+        var localKey = 'prog_asig_'+recKey+'_'+hoy;
+        var prev = localStorage.getItem(localKey)||'[]';
+        if(JSON.stringify(arr) !== prev) cambioExterno = true;
+        try{ localStorage.setItem(localKey, JSON.stringify(arr)); }catch(e){}
+      }
+    });
+    var progModal = document.getElementById('progModal');
+    if(progModal && progModal.style.display==='flex') _progRenderLista();
+    var asigModal = document.getElementById('asigProgModal');
+    if(asigModal && asigModal.style.display==='flex') _asigRenderLista();
+    var recPanel = document.getElementById('supProgRecPanel');
+    if(recPanel && recPanel.style.display==='block') supRenderProgRecCards();
+    if(cambioExterno) notifCambio('Programa del día actualizado');
+  });
+
+  // Vacaciones
+  fbDB.ref('config/vac').on('value', function(snap){
+    if(!snap.exists()) return;
+    var vacs = snap.val(), cambioExterno = false;
+    Object.keys(vacs).forEach(function(nombre){
+      var arr = vacs[nombre]||[];
+      var prev = localStorage.getItem('vac_'+nombre)||'[]';
+      if(JSON.stringify(arr) !== prev) cambioExterno = true;
+      try{ localStorage.setItem('vac_'+nombre, JSON.stringify(arr)); }catch(e){}
+    });
+    if(cambioExterno) notifCambio('Vacaciones de recorredores actualizadas');
+  });
+}
+
+// Escribir a Firebase también al guardar vacaciones (hook en setVacaciones arriba)
+// ══════════════════════════════════════════════════════════
+
+
+
+function supToggleInfo(){
+  var panel = document.getElementById('supInfoPanel');
+  var arrow = document.getElementById('supInfoArrow');
+  var btn   = document.getElementById('supInfoBtn');
+  if(!panel) return;
+  var open = panel.style.display === 'block';
+  panel.style.display = open ? 'none' : 'block';
+  if(arrow) arrow.style.transform = open ? 'rotate(0deg)' : 'rotate(90deg)';
+  if(btn){
+    btn.style.borderColor = open ? 'var(--border)' : '#185FA5';
+  }
+  if(!open) supRenderGraficas();
+}
+
 function supToggleDropdown(){
   _supDropOpen = !_supDropOpen;
   var list = document.getElementById('supPozoBar');
@@ -4623,44 +5479,38 @@ function supCerrarDropdown(){
 }
 
 function supRenderPozos(){
-  var hist=[];
-  try{
-    hist=getHistorial().filter(function(r){
-      // Solo pozos reales: no alarmas, no estaciones, no C-??? ni C-Estacion
-      if(r.esAlarma) return false;
-      if(!r.pozo) return false;
-      var p = String(r.pozo);
-      if(p==='???' || p.indexOf('???')!==-1) return false;
-      if(p.toLowerCase().indexOf('estac')!==-1) return false;
-      if(r.modo==='estacion') return false;
-      return true;
-    });
-  }catch(e){}
-  var pozos={};
-  hist.forEach(function(r){ pozos[r.pozo]=true; });
-  var bar=document.getElementById('supPozoBar');
+  // Lista oficial de pozos — igual que en Registro de Visitas
+  var TODOS_SUP = ['19','106D','119','128','139','167','172','179','187','191',
+                   '197','201','213','224','324','326','327','342','346','350',
+                   '352','356','359','363','364','367','373','376','385','500',
+                   '502','504','505','601','602','603'];
+  var sorted = TODOS_SUP.slice();
+
+  var bar = document.getElementById('supPozoBar');
   if(!bar) return;
-  var sorted=Object.keys(pozos).sort(function(a,b){ return parseInt(a)-parseInt(b); });
+
   if(!sorted.length){
-    bar.innerHTML='<div style="padding:16px;text-align:center;color:var(--txt2);font-size:13px">Sin pozos con reportes aún</div>';
+    bar.innerHTML = '<div style="padding:16px;text-align:center;color:var(--txt2);font-size:13px">Sin pozos disponibles</div>';
     return;
   }
-  bar.innerHTML=sorted.map(function(p){
-    var sel=_supPozoSel===p;
-    return '<div data-pozo="'+p+'" style="padding:12px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;border-bottom:1px solid var(--border);background:'+(sel?'rgba(30,74,128,.15)':'transparent')+'">'
+
+  bar.innerHTML = sorted.map(function(p){
+    var sel = _supPozoSel === p;
+    return '<div data-pozo="'+p+'" style="padding:12px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;border-bottom:1px solid var(--border);background:'+(sel?'rgba(30,74,128,.12)':'transparent')+'">'
       +'<span style="font-size:16px">&#x1F6E2;</span>'
       +'<span style="flex:1;font-size:14px;font-weight:800;color:'+(sel?'#1e4a80':'var(--txt)')+'">C-'+p+'</span>'
-      +(sel?'<span style="color:#1e4a80;font-weight:800">&#10003;</span>':'')
+      +(sel?'<span style="color:#1e4a80;font-weight:800;font-size:16px">&#10003;</span>':'')
       +'</div>';
   }).join('');
-  bar.onclick=function(e){
-    var card=e.target.closest('[data-pozo]');
+
+  bar.onclick = function(e){
+    var card = e.target.closest('[data-pozo]');
     if(!card) return;
-    var pozo=card.getAttribute('data-pozo');
-    _supPozoSel=pozo;
-    var label=document.getElementById('supPozoLabel');
-    if(label) label.textContent='POZO C-'+pozo;
-    var btnT=document.getElementById('supBtnTodos');
+    var pozo = card.getAttribute('data-pozo');
+    _supPozoSel = pozo;
+    var label = document.getElementById('supPozoLabel');
+    if(label) label.textContent = 'POZO C-'+pozo;
+    var btnT = document.getElementById('supBtnTodos');
     if(btnT){ btnT.style.background='var(--surface2)'; btnT.style.color='#1e4a80'; }
     supCerrarDropdown();
     supRenderGraficas();
@@ -5037,6 +5887,7 @@ function initFirebase(){
     sincronizarAFirebase();
     escucharFirebase();
     escucharAlarmas();
+    escucharConfigFirebase();
     // FCM: registrar token si ya tenemos permiso, si no esperar
     if(Notification.permission === 'granted'){
       setTimeout(initFCM, 1500);
@@ -5210,8 +6061,11 @@ function escucharFirebase(){
   if(!fbDB) return;
   try{ fbDB.ref('reportes').off('value'); }catch(e){}
 
+  var _fbReportesInit = false;
   fbDB.ref('reportes').orderByChild('fecha').on('value', function(snapshot){
     actualizarSyncBar('conectado');
+    if(_fbReportesInit) notifCambio('Nuevos reportes disponibles');
+    _fbReportesInit = true;
     var data = snapshot.val();
 
     // Obtener locales (solo de ESTE dispositivo, con fotos)
