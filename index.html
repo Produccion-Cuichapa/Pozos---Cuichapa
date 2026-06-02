@@ -6484,6 +6484,13 @@ function enviarConUltramsg(id, callback){
   if(!r){ if(callback) callback(false); return; }
   if(r.estado === 'enviado'){ if(callback) callback(true); return; }
 
+  // Capturar fotos AHORA antes de cualquier escritura asíncrona
+  var fotosSnapshot = (r.fotos || []).slice();
+  var esAlarma = r.esAlarma;
+  var tipoAlarma = r.tipoAlarma || r.tipo || '';
+  var recorredor = r.recorredor || '';
+  var pozo = r.pozo || '';
+
   // 1. Enviar texto del reporte
   umSendText(r.msg, function(okTexto){
     if(!okTexto){
@@ -6497,17 +6504,19 @@ function enviarConUltramsg(id, callback){
     actualizarBadgeHistorial();
     renderHistorial();
 
-    // 2. Enviar fotos si las hay
-    var imgs = r.fotos || [];
+    // 2. Enviar fotos usando el snapshot capturado al inicio
+    var imgs = fotosSnapshot;
     if(!imgs.length){ if(callback) callback(true); return; }
     var i = 0;
     function enviarSigFoto(){
       if(i >= imgs.length){ if(callback) callback(true); return; }
       var foto = imgs[i++];
       var src  = foto.data || foto;
-      var caption = r.esAlarma ? '📸 Foto '+i+' — 🚨 '+r.tipo+' ('+r.recorredor+')' : '📸 Foto '+i+' — C-'+r.pozo+' ('+r.recorredor+')';
+      var caption = esAlarma
+        ? '📸 Foto '+i+' — 🚨 '+tipoAlarma+' ('+recorredor+')'
+        : '📸 Foto '+i+' — C-'+pozo+' ('+recorredor+')';
       umSendImage(src, caption, function(){
-        setTimeout(enviarSigFoto, 1500); // pausa entre fotos
+        setTimeout(enviarSigFoto, 1500);
       });
     }
     enviarSigFoto();
@@ -6660,6 +6669,8 @@ function confirmarEnvio(){
   var nFotos = fotosCopy.length;
   limpiarFotos();
   resetFormulario();
+  // Restaurar botón Historial Central después del reset
+  mostrarBtnHistorialCentral();
 
   // Mostrar tarjetas de confirmación
   var cc = document.getElementById('confirmCards');
