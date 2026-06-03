@@ -4387,7 +4387,7 @@ function enviarAlarma(){
           showToast('⚠️ Sin señal · Alarma guardada · Se enviará al recuperar señal');
         }
         limpiarFotosPostAlarma();
-      });
+      }, fotosCopy);
     } else {
       _alarmCcSet('Msg','💾','Guardado localmente — se enviará al recuperar señal');
       _alarmCcSet('Foto','💾', nFotos>0?nFotos+' foto'+(nFotos>1?'s':'')+' guardada'+(nFotos>1?'s':''):' Sin fotos adjuntas');
@@ -6479,13 +6479,13 @@ function sendImageFormData(base64, caption, callback){ umSendImage(base64, capti
 function sendImageBase64Url(b, c, cb){ umSendImage(b, c, cb); }
 
 // ── Envío completo: texto + fotos ────────────────
-function enviarConUltramsg(id, callback){
+function enviarConUltramsg(id, callback, fotosDirectas){
   var r = getReporte(id);
   if(!r){ if(callback) callback(false); return; }
   if(r.estado === 'enviado'){ if(callback) callback(true); return; }
 
-  // Capturar fotos AHORA antes de cualquier escritura asíncrona
-  var fotosSnapshot = (r.fotos || []).slice();
+  // Si se pasan fotos directas (modo alarma), usarlas — evita depender de localStorage
+  var fotosSnapshot = fotosDirectas ? fotosDirectas.slice() : (r.fotos || []).slice();
   var esAlarma = r.esAlarma;
   var tipoAlarma = r.tipoAlarma || r.tipo || '';
   var recorredor = r.recorredor || '';
@@ -6669,8 +6669,13 @@ function confirmarEnvio(){
   var nFotos = fotosCopy.length;
   limpiarFotos();
   resetFormulario();
-  // Restaurar botón Historial Central después del reset
+  // Restaurar botones después del reset
   mostrarBtnHistorialCentral();
+  // Restaurar Programa del Día si es recorredor
+  var _pb = document.getElementById('progBtnWrap');
+  var _qa = document.getElementById('quickAccessWrap');
+  if(_pb && typeof REC !== 'undefined' && REC) _pb.style.display = 'block';
+  if(_qa && typeof REC !== 'undefined' && REC) _qa.style.display = 'block';
 
   // Mostrar tarjetas de confirmación
   var cc = document.getElementById('confirmCards');
