@@ -1222,7 +1222,11 @@ body.night .chk-row.on{background:#052e1640}
       </div>
     </div>
 
-    <div class="pk-foot">
+    <div id="pkCacheBar" style="background:#fef3c7;padding:8px 16px;font-size:11px;color:#92400e;display:flex;align-items:center;justify-content:space-between;gap:8px">
+  <span>Si tienes problemas para ver usuarios, el caché puede estar desactualizado.</span>
+  <button onclick="(function(){if(navigator.serviceWorker)navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister();});location.reload(true);});else location.reload(true);})()" style="background:#b45309;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">Actualizar</button>
+</div>
+<div class="pk-foot">
       <div class="pk-foot-l"><span class="pk-foot-dot"></span>Sistema activo</div>
       <button onclick="pwaVerificarInstalacion()" style="font-size:11px;color:#6b7280;background:none;border:1px solid #e5e7eb;border-radius:8px;padding:4px 10px;cursor:pointer">📲 Instalar app</button>
     </div>
@@ -1691,14 +1695,70 @@ function ppToggle(id){
 
 
 <!-- Modal EDITAR REPORTE -->
-<div id="editReporteModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:flex-end;justify-content:center">
-  <div style="background:var(--surface);border-radius:22px 22px 0 0;padding:20px 18px 32px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;color:var(--txt)">✏️ EDITAR REPORTE</div>
-      <button onclick="cerrarEditarReporte()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--txt2)">✕</button>
+<div id="editReporteModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;align-items:flex-end;justify-content:center">
+  <div style="background:var(--surface);border-radius:22px 22px 0 0;padding:20px 18px 32px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;box-shadow:0 -8px 40px rgba(0,0,0,.3)">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.5px;color:var(--txt)">✏️ CORREGIR REPORTE</div>
+      <button onclick="cerrarEditarReporte()" style="background:var(--surface2);border:none;width:36px;height:36px;border-radius:10px;font-size:18px;cursor:pointer;color:var(--txt2);display:flex;align-items:center;justify-content:center">✕</button>
     </div>
-    <div id="editReporteFields" style="display:flex;flex-direction:column;gap:10px"></div>
-    <button onclick="guardarCorreccionReporte()" style="margin-top:16px;width:100%;padding:14px;border-radius:14px;border:none;background:#3b82f6;color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1px">GUARDAR CORRECCIÓN</button>
+    <div id="editReporteSub" style="font-size:12px;color:var(--txt2);margin-bottom:16px;font-family:Inter,sans-serif"></div>
+
+    <!-- PTP -->
+    <div style="background:var(--surface2);border-radius:14px;padding:14px 16px;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.08em;margin-bottom:8px">TUBERÍA DE PRODUCCIÓN (PTP)</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1;text-align:center">
+          <div style="font-size:10px;color:var(--txt2);margin-bottom:4px">Valor actual</div>
+          <div id="editPtpOld" style="font-size:18px;font-weight:700;color:var(--txt);text-decoration:line-through;opacity:.5">—</div>
+        </div>
+        <div style="font-size:20px;color:var(--txt2)">→</div>
+        <div style="flex:1;text-align:center">
+          <div style="font-size:10px;color:var(--txt2);margin-bottom:4px">Nuevo valor</div>
+          <input id="editPtpNew" type="number" step="0.1" placeholder="kg/cm²" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--txt);font-size:16px;font-weight:700;text-align:center;font-family:Inter,sans-serif">
+        </div>
+      </div>
+    </div>
+
+    <!-- PTR -->
+    <div style="background:var(--surface2);border-radius:14px;padding:14px 16px;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.08em;margin-bottom:8px">TUBERÍA DE REVESTIMIENTO (PTR)</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1;text-align:center">
+          <div style="font-size:10px;color:var(--txt2);margin-bottom:4px">Valor actual</div>
+          <div id="editPtrOld" style="font-size:18px;font-weight:700;color:var(--txt);text-decoration:line-through;opacity:.5">—</div>
+        </div>
+        <div style="font-size:20px;color:var(--txt2)">→</div>
+        <div style="flex:1;text-align:center">
+          <div style="font-size:10px;color:var(--txt2);margin-bottom:4px">Nuevo valor</div>
+          <input id="editPtrNew" type="number" step="0.1" placeholder="kg/cm²" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--txt);font-size:16px;font-weight:700;text-align:center;font-family:Inter,sans-serif">
+        </div>
+      </div>
+    </div>
+
+    <!-- BLS -->
+    <div style="background:var(--surface2);border-radius:14px;padding:14px 16px;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.08em;margin-bottom:8px">PRODUCCIÓN (BLS)</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1;text-align:center">
+          <div style="font-size:10px;color:var(--txt2);margin-bottom:4px">Valor actual</div>
+          <div id="editBlsOld" style="font-size:18px;font-weight:700;color:var(--txt);text-decoration:line-through;opacity:.5">—</div>
+        </div>
+        <div style="font-size:20px;color:var(--txt2)">→</div>
+        <div style="flex:1;text-align:center">
+          <div style="font-size:10px;color:var(--txt2);margin-bottom:4px">Nuevo valor</div>
+          <input id="editBlsNew" type="number" step="0.5" placeholder="bls" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--txt);font-size:16px;font-weight:700;text-align:center;font-family:Inter,sans-serif">
+        </div>
+      </div>
+    </div>
+
+    <!-- Nota -->
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.08em;margin-bottom:6px">MOTIVO DE CORRECCIÓN</div>
+      <textarea id="editNota" rows="2" placeholder="Ej: Error de captura, presión real fue..." style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface2);color:var(--txt);font-size:13px;font-family:Inter,sans-serif;resize:none;box-sizing:border-box"></textarea>
+    </div>
+
+    <button onclick="guardarCorreccionReporte()" style="width:100%;padding:15px;border-radius:14px;border:none;background:#3b82f6;color:#fff;font-size:16px;font-weight:800;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1.5px">GUARDAR CORRECCIÓN</button>
   </div>
 </div>
 
@@ -2358,7 +2418,14 @@ function ppToggle(id){
   <div style="padding:0 14px 6px;font-size:11px;color:var(--txt2);flex-shrink:0"><span id="hcCount"></span></div>
 
   <!-- Lista -->
-  <div id="hcList" style="flex:1;overflow-y:auto;padding:0 14px 24px"></div>
+  <div id="hcList" style="flex:1;overflow-y:auto;padding:0 14px 100px"></div>
+
+  <!-- Borrar todo — solo super/jefe -->
+  <div id="hcBorrarTodoWrap" style="display:none;position:sticky;bottom:0;padding:12px 14px 20px;background:linear-gradient(to top,var(--bg) 70%,transparent);flex-shrink:0">
+    <button onclick="borrarTodoHistorial()" style="width:100%;padding:13px;border-radius:14px;border:1.5px solid #dc2626;background:rgba(220,38,38,.08);color:#dc2626;font-size:14px;font-weight:800;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px">
+      🗑️ Borrar todo el historial
+    </button>
+  </div>
 
 </div>
 
@@ -7576,9 +7643,13 @@ function renderHistorial(){
       +(r.estado!=='enviado'
         ?'<button class="hist-resend" onclick="intentarEnviar('+r.id+')">📤 Enviar ahora</button>'
         :'<button class="hist-resend" onclick="intentarEnviar('+r.id+')" style="background:#1e5caa">📤 Reenviar</button>')
-      +'<button class="hist-delete" onclick="borrarReporte('+r.id+')">🗑</button>'
+      +((_puedeEliminar())?'<button class="hist-delete" onclick="event.stopPropagation();borrarReporte('+r.id+')" title="Borrar reporte">🗑</button>':'')
       +'</div></div></div>';
   }).join('');
+
+  // Mostrar botón "Borrar todo" solo a super/jefe
+  var bw = document.getElementById('hcBorrarTodoWrap');
+  if(bw) bw.style.display = _puedeEliminar() ? 'block' : 'none';
 }
 
 function escapeHTML(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -7590,17 +7661,38 @@ function toggleHistCard(id){
 
 function reenviarManual(id){ intentarEnviar(id); }
 
+function _puedeEliminar(){
+  var AUT = ['super','jefe'];
+  var t1 = (typeof loggedTheme !== 'undefined') ? String(loggedTheme||'') : '';
+  var t2 = (typeof loggedUser  !== 'undefined') ? String(loggedUser ||'') : '';
+  if(AUT.indexOf(t1)!==-1 || AUT.indexOf(t2)!==-1) return true;
+  try{
+    var s = JSON.parse(localStorage.getItem('cuichapa_session_v1')||'null');
+    if(s && AUT.indexOf(String(s.theme||''))!==-1) return true;
+  }catch(e){}
+  return false;
+}
+
 function borrarReporte(id){
+  if(!_puedeEliminar()){ showToast('⛔ Sin autorización para borrar'); return; }
   if(!confirm('¿Borrar este reporte? No se puede deshacer.')) return;
-  saveHistorial(getHistorial().filter(function(r){ return r.id!==id; }));
-  renderHistorial(); actualizarBadgeHistorial();
+  var hist = getHistorial().filter(function(r){ return r.id !== id; });
+  saveHistorial(hist);
+  // También borrar en Firebase
+  if(typeof fbDB !== 'undefined' && fbDB) fbDB.ref('reportes/'+id).remove();
+  var card = document.getElementById('hc-'+id);
+  if(card){ card.style.transition='opacity .3s,transform .3s'; card.style.opacity='0'; card.style.transform='scale(.95)'; setTimeout(function(){ renderHistorial(); actualizarBadgeHistorial(); },300); }
+  else { renderHistorial(); actualizarBadgeHistorial(); }
 }
 
 function borrarTodoHistorial(){
-  if(!confirm('¿Borrar TODOS los reportes?\nEsta acción es permanente.')) return;
+  if(!_puedeEliminar()){ showToast('⛔ Sin autorización'); return; }
+  if(!confirm('¿Borrar TODOS los reportes?\nEsta acción es permanente y no se puede deshacer.')) return;
   saveHistorial([]);
+  // Firebase
+  if(typeof fbDB !== 'undefined' && fbDB) fbDB.ref('reportes').remove();
   renderHistorial(); actualizarBadgeHistorial();
-  showToast('🗑 Historial borrado');
+  showToast('🗑 Historial borrado completamente');
 }
 
 // ── Badge en ícono de historial ───────────────────
@@ -7633,7 +7725,9 @@ var APP_VERSION = 'v5'; // Cambiar con cada actualización
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
+    // Force cache refresh on new versions
     navigator.serviceWorker.register('sw.js').then(function(reg){
+      reg.update(); // Immediately check for updates
 
       // Verificar actualizaciones inmediatamente
       reg.update();
