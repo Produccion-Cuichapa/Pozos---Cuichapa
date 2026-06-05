@@ -1689,6 +1689,19 @@ function ppToggle(id){
 
 </div>
 
+
+<!-- Modal EDITAR REPORTE -->
+<div id="editReporteModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:flex-end;justify-content:center">
+  <div style="background:var(--surface);border-radius:22px 22px 0 0;padding:20px 18px 32px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;color:var(--txt)">✏️ EDITAR REPORTE</div>
+      <button onclick="cerrarEditarReporte()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--txt2)">✕</button>
+    </div>
+    <div id="editReporteFields" style="display:flex;flex-direction:column;gap:10px"></div>
+    <button onclick="guardarCorreccionReporte()" style="margin-top:16px;width:100%;padding:14px;border-radius:14px;border:none;background:#3b82f6;color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1px">GUARDAR CORRECCIÓN</button>
+  </div>
+</div>
+
 <!-- Modal PROGRAMA -->
 <div id="progModal" style="display:none;position:fixed;inset:0;z-index:9000;background:var(--bg);flex-direction:column;overflow:hidden">
 
@@ -2986,7 +2999,7 @@ function volverAlPicker(){
   if(formContent) formContent.style.display = 'none';
   // Reset recorredor y bloquear sidebar
   REC = '';
-  document.body.className = document.body.className.replace(/\b[mcj]+-active\b/g,'').trim();
+  document.body.className = document.body.className.replace(/\b[a-zA-Z]+-active\b/g,'').trim();
   var sb=document.querySelector('.sidebar');if(sb){sb.classList.remove('sidebar-unlocked');document.body.classList.remove('sidebar-visible');}
 }
 
@@ -5875,7 +5888,7 @@ function guardarCorreccionReporte(){
 
   if(!cambios.length){ showToast('ℹ️ No hubo cambios'); cerrarEditarReporte(); return; }
 
-  var horaOrig = new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',hour12:false});
+  var horaOrig = (function(d){var h=d.getHours(),m=d.getMinutes();return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;})(new Date(r.fecha));
   var corrMsg = ['\uD83D\uDD04 *CORRECCI\u00D3N \u00B7 C-'+r.pozo+'*',
     '\uD83D\uDD50 Reporte original: '+horaOrig,
     '\uD83D\uDC77 '+r.recorredor,
@@ -5939,7 +5952,7 @@ function _excelBuildSheet(wb, recorredor, fecha, reportes){
     'EMBOLADAS (EPM)','CARRERA','OBSERVACIONES'
   ]);
   reportes.forEach(function(r,i){
-    var hora = new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',hour12:false});
+    var hora = (function(d){var h=d.getHours(),m=d.getMinutes();return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;})(new Date(r.fecha));
     var estatus = r.estatus || '';
     if(!estatus && r.msg){ var m=r.msg.match(/Estado[^:]*:[^\r\n]*/i); if(m) estatus=m[0].split(':').pop().trim(); }
     var fluye = r.fluye || '';
@@ -6112,77 +6125,111 @@ function _xlDesc(xml,addr,val){
 }
 
 function _buildSheet(tplXml,rec,fecha,reps){
-  var xml=tplXml;
-  xml=_xlFillCell(xml,'C4',rec,false);
-  xml=_xlFillCell(xml,'M4',fecha,false);
-  xml=_xlWipe(xml,'H4');
+  var xml = tplXml;
 
-  var pozos=[],ft1=[],ft2=[];
-  reps.forEach(function(r){
-    var modo=r.modo||'pozo';
-    if(modo==='guardia'){ ft1.push(r); }
-    else { pozos.push(r); if(r.ctm&&r.fluye==='FT') ft2.push(r); }
-  });
-  pozos.sort(function(a,b){return new Date(a.fecha)-new Date(b.fecha);});
-  ft1.sort(function(a,b){return new Date(a.fecha)-new Date(b.fecha);});
-  ft2.sort(function(a,b){return new Date(a.fecha)-new Date(b.fecha);});
+  // ── Encabezado ─────────────────────────────────
+  xml = _xlFillCell(xml, 'C4', rec,   false);   // Nombre recorredor
+  xml = _xlFillCell(xml, 'M4', fecha, false);   // Fecha
+  xml = _xlWipe(xml, 'H4');                      // Borrar supervisor
 
-  var cols='BCDEFGHIJKLM'.split('');
-  for(var i=0;i<18;i++){
-    var row=8+i, r=pozos[i]||null;
-    if(!r){ cols.forEach(function(c){xml=_xlWipe(xml,c+row);}); continue; }
-    var hora=new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',hour12:false});
-    var modo=r.modo||'pozo';
-    if(modo==='cabezal'||modo==='estacion'||modo==='nota'){
-      var tipo=modo==='cabezal'?'CAB':modo==='estacion'?'ESTACION':'NOTA DE CAMPO';
-      var obs=r.obs||'';
-      if(!obs&&r.msg){ var ls=r.msg.split('\n').filter(function(l){return l.trim()&&!l.startsWith('📍')&&!l.startsWith('🕐')&&!l.startsWith('👷');}); obs=ls.slice(0,3).join(' ').trim(); }
-      xml=_xlWipe(xml,'B'+row);
-      xml=_xlFillCell(xml,'C'+row,hora,false);
-      xml=_xlDesc(xml,'D'+row,tipo+' - '+obs);
-      'EFGHIJKLM'.split('').forEach(function(c){xml=_xlWipe(xml,c+row);});
+  // ── Clasificar reportes ─────────────────────────
+  var pozos = [], ft1 = [], ft2 = [];
+  reps.forEach(function(r) {
+    var modo = r.modo || 'pozo';
+    if (modo === 'guardia') {
+      ft1.push(r);                               // Niveles de Guardia → TURNO 1
     } else {
-      var pozo=r.pozo?'C-'+r.pozo:'';
-      var est=r.estatus||'';
-      if(!est&&r.msg){var em=r.msg.match(/Estado[^:]*:\s*([^\n]+)/i);if(em)est=em[1].trim();}
-      var fluye=r.fluye||'';
-      var sap=r.sap||'';
-      if(!sap&&r.msg){var sm=r.msg.match(/SAP:\s*([^\n]+)/i);if(sm)sap=sm[1].trim().split(' ')[0];}
-      xml=_xlFillCell(xml,'B'+row,pozo,false);
-      xml=_xlFillCell(xml,'C'+row,hora,false);
-      xml=_xlFillCell(xml,'D'+row,est,false);
-      xml=_xlFillCell(xml,'E'+row,fluye,false);
-      xml=_xlFillCell(xml,'F'+row,sap,false);
-      xml=_xlFillCell(xml,'G'+row,r.estrang||'',false);
-      if(r.ptp!=null)xml=_xlFillCell(xml,'H'+row,r.ptp,true);else xml=_xlWipe(xml,'H'+row);
-      if(r.ldd!=null)xml=_xlFillCell(xml,'I'+row,r.ldd,true);else xml=_xlWipe(xml,'I'+row);
-      if(r.ptr!=null)xml=_xlFillCell(xml,'J'+row,r.ptr,true);else xml=_xlWipe(xml,'J'+row);
-      if(r.epm!=null)xml=_xlFillCell(xml,'K'+row,r.epm,true);else xml=_xlWipe(xml,'K'+row);
-      if(r.carrera!=null)xml=_xlFillCell(xml,'L'+row,r.carrera,true);else xml=_xlWipe(xml,'L'+row);
-      xml=_xlFillCell(xml,'M'+row,r.obs||'',false);
+      pozos.push(r);
+      if (r.ctm != null && r.fluye === 'FT') ft2.push(r); // FT con nivel → TURNO 2
+    }
+  });
+  function byT(a,b){ return new Date(a.fecha) - new Date(b.fecha); }
+  pozos.sort(byT); ft1.sort(byT); ft2.sort(byT);
+
+  // ── Filas de pozos (rows 8-25, max 18) ─────────
+  for (var i = 0; i < 18; i++) {
+    var row = 8 + i;
+    var r   = pozos[i] || null;
+    var cols = 'BCDEFGHIJKLM'.split('');
+
+    if (!r) {
+      cols.forEach(function(c){ xml = _xlWipe(xml, c + row); });
+      continue;
+    }
+
+    var d    = new Date(r.fecha);
+    var hora = (d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();
+    var modo = r.modo || 'pozo';
+
+    if (modo === 'cabezal' || modo === 'estacion' || modo === 'nota') {
+      // Fila especial — hora en C, descripción en D, resto vacío
+      var tipo = modo === 'cabezal' ? 'CAB' : modo === 'estacion' ? 'ESTACION' : 'NOTA';
+      var obs  = r.obs || '';
+      if (!obs && r.msg) {
+        obs = r.msg.split('\n')
+          .filter(function(l){ return l.trim() && !/^[📍🕐👷📊]/.test(l); })
+          .slice(0, 2).join(' | ').substring(0, 150);
+      }
+      xml = _xlWipe(xml, 'B' + row);
+      xml = _xlFillCell(xml, 'C' + row, hora, false);
+      xml = _xlDesc(xml,    'D' + row, tipo + ' — ' + obs);
+      'EFGHIJKLM'.split('').forEach(function(c){ xml = _xlWipe(xml, c + row); });
+
+    } else {
+      // Reporte diario normal
+      var pozo   = r.pozo ? 'C-' + r.pozo : '';
+      var est    = r.estatus || '';
+      var fluye  = r.fluye  || '';
+      var sap    = r.sap    || '';
+      if (!est && r.msg) {
+        var em = r.msg.match(/Estado[^:]*:\s*([^\n]+)/i);
+        if (em) est = em[1].trim().substring(0, 20);
+      }
+      if (!sap && r.msg) {
+        var sm = r.msg.match(/SAP:\s*([A-Z]{2,3})/i);
+        if (sm) sap = sm[1];
+      }
+      xml = _xlFillCell(xml, 'B' + row, pozo,   false);
+      xml = _xlFillCell(xml, 'C' + row, hora,   false);
+      xml = _xlFillCell(xml, 'D' + row, est,    false);
+      xml = _xlFillCell(xml, 'E' + row, fluye,  false);
+      xml = _xlFillCell(xml, 'F' + row, sap,    false);
+      xml = _xlFillCell(xml, 'G' + row, r.estrang || '', false);
+      if (r.ptp     != null) xml = _xlFillCell(xml, 'H' + row, r.ptp,     true);  else xml = _xlWipe(xml, 'H' + row);
+      if (r.ldd     != null) xml = _xlFillCell(xml, 'I' + row, r.ldd,     true);  else xml = _xlWipe(xml, 'I' + row);
+      if (r.ptr     != null) xml = _xlFillCell(xml, 'J' + row, r.ptr,     true);  else xml = _xlWipe(xml, 'J' + row);
+      if (r.epm     != null) xml = _xlFillCell(xml, 'K' + row, r.epm,     true);  else xml = _xlWipe(xml, 'K' + row);
+      if (r.carrera != null) xml = _xlFillCell(xml, 'L' + row, r.carrera, true);  else xml = _xlWipe(xml, 'L' + row);
+      xml = _xlFillCell(xml, 'M' + row, r.obs || '', false);
     }
   }
 
-  // FRAC TANK — limpiar
-  var ftCols=['B','C','D','G','H','I','K','L','M'];
-  for(var i=0;i<15;i++){
-    var row=30+i;
-    ftCols.forEach(function(c){xml=_xlWipe(xml,c+row);});
+  // ── FRAC TANK — limpiar primero las 15 filas (30-44) ──
+  for (var i = 0; i < 15; i++) {
+    var row = 30 + i;
+    ['B','C','D','G','H','I','K','L','M'].forEach(function(c){ xml = _xlWipe(xml, c + row); });
   }
-  // TURNO 1
-  ft1.slice(0,15).forEach(function(r,i){
-    var row=30+i, hora=new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',hour12:false});
-    xml=_xlFillCell(xml,'B'+row,'C-'+r.pozo,false);
-    xml=_xlFillCell(xml,'C'+row,hora,false);
-    xml=_xlFillCell(xml,'D'+row,(r.ctm||'')+'cm',false);
+
+  // TURNO 1 — Niveles de Guardia → B/C/D (max 15)
+  ft1.slice(0, 15).forEach(function(r, i) {
+    var row = 30 + i;
+    var d   = new Date(r.fecha);
+    var h   = (d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();
+    xml = _xlFillCell(xml, 'B' + row, 'C-' + r.pozo, false);
+    xml = _xlFillCell(xml, 'C' + row, h,              false);
+    xml = _xlFillCell(xml, 'D' + row, r.ctm || 0,    true);   // numérico (cm)
   });
-  // TURNO 2
-  ft2.slice(0,15).forEach(function(r,i){
-    var row=30+i, hora=new Date(r.fecha).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',hour12:false});
-    xml=_xlFillCell(xml,'G'+row,'C-'+r.pozo,false);
-    xml=_xlFillCell(xml,'H'+row,hora,false);
-    xml=_xlFillCell(xml,'I'+row,(r.ctm||'')+'cm',false);
+
+  // TURNO 2 — Reporte Diario FT → G/H/I (max 15)
+  ft2.slice(0, 15).forEach(function(r, i) {
+    var row = 30 + i;
+    var d   = new Date(r.fecha);
+    var h   = (d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();
+    xml = _xlFillCell(xml, 'G' + row, 'C-' + r.pozo, false);
+    xml = _xlFillCell(xml, 'H' + row, h,              false);
+    xml = _xlFillCell(xml, 'I' + row, r.ctm || 0,    true);   // numérico (cm)
   });
+
   return xml;
 }
 
