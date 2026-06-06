@@ -2473,8 +2473,8 @@ function _continuarEnvio(){
     if(!flu){showToast('⚠️ C.O.: Selecciona Fluye');return}
     if(!sis){showToast('⚠️ C.O.: Selecciona SAP');return}
     var d='';
-    if(sis==='BN'||sis==='FY'){var tp=v('coTP'),ld=v('coLDD'),tr=v('coTR');var lbn=v('coLBN');var kimray=v('coKimray'),conico=v('coConico'),starpack=v('coStarpack'),trVuelta=v('coTrVuelta');d='PTP: '+tp+' kg/cm² · LDD: '+ld+' kg/cm² · PTR: '+tr+' kg/cm²'+(lbn&&sis==='BN'?' · LBN: '+lbn+' kg/cm²':'')+(sis==='BN'&&(kimray||conico||starpack||trVuelta)?'\n'+(kimray?'KIMRAY # VUELTAS: '+kimray+' ':' ')+(conico?'CAMCO: '+conico+' ':' ')+(starpack?'STARPACK: '+starpack+' ':' ')+(trVuelta?'TR#VUELTA: '+trVuelta:''):'');}
-    else if(sis==='BM'){var p2=v('coPresion'),ptr2=v('coPTR_bm'),e2=v('coEmb'),c2=v('coCarrera');d='PTP: '+p2+' · PTR: '+ptr2+' kg/cm² · Vel: '+e2+' EPM · Car: '+c2+' pulg';}
+    if(sis==='BN'||sis==='FY'){var tp=v('coTP'),ld=v('coLDD'),tr=v('coTR');var lbn=v('coLBN');var kimray=v('coKimray'),conico=v('coConico'),starpack=v('coStarpack'),trVuelta=v('coTrVuelta');var _dp=[];if(tp)_dp.push('PTP: '+tp+' kg/cm²');if(ld)_dp.push('LDD: '+ld+' kg/cm²');if(tr)_dp.push('PTR: '+tr+' kg/cm²');if(lbn&&sis==='BN')_dp.push('LBN: '+lbn+' kg/cm²');d=_dp.join(' · ');if(sis==='BN'&&(kimray||conico||starpack||trVuelta))d+='\n'+(kimray?'KIMRAY # VUELTAS: '+kimray+' ':'')+(conico?'CAMCO: '+conico+' ':'')+(starpack?'STARPACK: '+starpack+' ':'')+(trVuelta?'TR#VUELTA: '+trVuelta:'');}
+    else if(sis==='BM'){var p2=v('coPresion'),ptr2=v('coPTR_bm'),e2=v('coEmb'),c2=v('coCarrera');var _dbm=[];if(p2)_dbm.push('PTP: '+p2+' kg/cm²');if(ptr2)_dbm.push('PTR: '+ptr2+' kg/cm²');if(e2)_dbm.push('Vel: '+e2+' EPM');if(c2)_dbm.push('Car: '+c2+' pulg');d=_dbm.join(' · ');}
     var flujoTipo = v('coFlujoTipo');
     var vueltasTP = flujoTipo==='estrangulador' ? v('coVueltasTP_est') : v('coVueltasTP_fra');
     var estrangLine = '';
