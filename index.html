@@ -2473,8 +2473,8 @@ function _continuarEnvio(){
     if(!flu){showToast('⚠️ C.O.: Selecciona Fluye');return}
     if(!sis){showToast('⚠️ C.O.: Selecciona SAP');return}
     var d='';
-    if(sis==='BN'||sis==='FY'){var tp=v('coTP'),ld=v('coLDD'),tr=v('coTR');if(!tp||!ld||!tr){showToast('⚠️ C.O.: Falta PTP, LDD o PTR');return}var lbn=v('coLBN');var kimray=v('coKimray'),conico=v('coConico'),starpack=v('coStarpack'),trVuelta=v('coTrVuelta');d='PTP: '+tp+' kg/cm² · LDD: '+ld+' kg/cm² · PTR: '+tr+' kg/cm²'+(lbn&&sis==='BN'?' · LBN: '+lbn+' kg/cm²':'')+(sis==='BN'&&(kimray||conico||starpack||trVuelta)?'\n'+(kimray?'KIMRAY # VUELTAS: '+kimray+' ':' ')+(conico?'CAMCO: '+conico+' ':' ')+(starpack?'STARPACK: '+starpack+' ':' ')+(trVuelta?'TR#VUELTA: '+trVuelta:''):'');}
-    else if(sis==='BM'){var p2=v('coPresion'),ptr2=v('coPTR_bm'),e2=v('coEmb'),c2=v('coCarrera');if(!p2||!ptr2||!e2||!c2){showToast('⚠️ C.O.: Falta PTP, PTR, Velocidad EPM o Carrera');return}d='PTP: '+p2+' · PTR: '+ptr2+' kg/cm² · Vel: '+e2+' EPM · Car: '+c2+' pulg';}
+    if(sis==='BN'||sis==='FY'){var tp=v('coTP'),ld=v('coLDD'),tr=v('coTR');var lbn=v('coLBN');var kimray=v('coKimray'),conico=v('coConico'),starpack=v('coStarpack'),trVuelta=v('coTrVuelta');d='PTP: '+tp+' kg/cm² · LDD: '+ld+' kg/cm² · PTR: '+tr+' kg/cm²'+(lbn&&sis==='BN'?' · LBN: '+lbn+' kg/cm²':'')+(sis==='BN'&&(kimray||conico||starpack||trVuelta)?'\n'+(kimray?'KIMRAY # VUELTAS: '+kimray+' ':' ')+(conico?'CAMCO: '+conico+' ':' ')+(starpack?'STARPACK: '+starpack+' ':' ')+(trVuelta?'TR#VUELTA: '+trVuelta:''):'');}
+    else if(sis==='BM'){var p2=v('coPresion'),ptr2=v('coPTR_bm'),e2=v('coEmb'),c2=v('coCarrera');d='PTP: '+p2+' · PTR: '+ptr2+' kg/cm² · Vel: '+e2+' EPM · Car: '+c2+' pulg';}
     var flujoTipo = v('coFlujoTipo');
     var vueltasTP = flujoTipo==='estrangulador' ? v('coVueltasTP_est') : v('coVueltasTP_fra');
     var estrangLine = '';
