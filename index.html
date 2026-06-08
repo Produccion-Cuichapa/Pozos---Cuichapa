@@ -827,6 +827,10 @@ function ppToggle(id){
 <!-- ══ NIVELES DE GUARDIA ══ -->
 <div class="step-card" id="card-guardia" style="display:none;border:2.5px solid var(--accent2)">
   <div class="step-label">Niveles de Guardia</div>
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <button id="btn-med-ft" onclick="selTipoGuardia('ft',this)" style="flex:1;padding:8px 4px;border-radius:10px;border:2px solid var(--accent2);background:var(--accent2);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">🪣 Frac Tank</button>
+    <button id="btn-med-pm" onclick="selTipoGuardia('pm',this)" style="flex:1;padding:8px 4px;border-radius:10px;border:2px solid var(--border);background:var(--surface2);color:var(--txt);font-size:12px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">🔩 Presa Metálica</button>
+  </div>
   <div style="display:flex;gap:12px;margin-bottom:14px">
     <div style="flex:1">
       <div class="big-field-label">Centímetros</div>
@@ -893,12 +897,12 @@ function ppToggle(id){
 
     <div class="cond" id="cond-bnfy">
       <div style="display:flex;gap:10px;margin-bottom:10px">
-        <div style="flex:1"><div class="big-field-label">PTP kg/cm² *</div><input class="big-input" type="number" id="coTP" placeholder="" step="0.1"></div>
-        <div style="flex:1"><div class="big-field-label">LDD kg/cm² *</div><input class="big-input" type="number" id="coLDD" placeholder="" step="0.1"></div>
+        <div style="flex:1"><div class="big-field-label">PTP kg/cm² *</div><input class="big-input" type="text" id="coTP" placeholder="ej: 4-11" inputmode="decimal" step="any"></div>
+        <div style="flex:1"><div class="big-field-label">LDD kg/cm² *</div><input class="big-input" type="text" id="coLDD" placeholder="ej: 4-11" inputmode="decimal" step="any"></div>
       </div>
       <div style="display:flex;gap:10px;margin-bottom:10px">
-        <div style="flex:1"><div class="big-field-label">PTR kg/cm² *</div><input class="big-input" type="number" id="coTR" placeholder="" step="0.1"></div>
-        <div id="lbn-field" style="flex:1"><div class="big-field-label">LBN kg/cm²</div><input class="big-input" type="number" id="coLBN" placeholder="" step="0.1"></div>
+        <div style="flex:1"><div class="big-field-label">PTR kg/cm² *</div><input class="big-input" type="text" id="coTR" placeholder="ej: 4-11" inputmode="decimal" step="any"></div>
+        <div id="lbn-field" style="flex:1"><div class="big-field-label">LBN kg/cm²</div><input class="big-input" type="text" id="coLBN" placeholder="ej: 4-11" inputmode="decimal" step="any"></div>
       </div>
       <div class="cond" id="cond-bn-extra">
         <div style="display:flex;gap:10px;margin-bottom:10px">
@@ -925,8 +929,8 @@ function ppToggle(id){
     </div>
     <div class="cond" id="cond-bm">
       <div style="display:flex;gap:10px;margin-bottom:10px">
-        <div style="flex:1"><div class="big-field-label">PTP kg/cm² *</div><input class="big-input" type="number" id="coPresion" placeholder="" step="0.1"></div>
-        <div style="flex:1"><div class="big-field-label">PTR kg/cm² *</div><input class="big-input" type="number" id="coPTR_bm" placeholder="" step="0.1"></div>
+        <div style="flex:1"><div class="big-field-label">PTP kg/cm² *</div><input class="big-input" type="text" id="coPresion" placeholder="ej: 4-11" inputmode="decimal" step="any"></div>
+        <div style="flex:1"><div class="big-field-label">PTR kg/cm² *</div><input class="big-input" type="text" id="coPTR_bm" placeholder="ej: 4-11" inputmode="decimal" step="any"></div>
       </div>
       <div style="display:flex;gap:10px;margin-bottom:10px">
         <div style="flex:1"><div class="big-field-label">Velocidad EPM *</div><input class="big-input" type="number" id="coEmb" placeholder="" step="1"></div>
@@ -939,6 +943,10 @@ function ppToggle(id){
   <!-- NIVEL -->
   <div class="step-card" id="card-nivel" style="display:none">
     <div class="step-label">Nivel Frac Tank</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button id="btn-niv-ft" onclick="selTipoNivel('ft',this)" style="flex:1;padding:8px 4px;border-radius:10px;border:2px solid var(--accent);background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">🪣 Frac Tank</button>
+      <button id="btn-niv-pm" onclick="selTipoNivel('pm',this)" style="flex:1;padding:8px 4px;border-radius:10px;border:2px solid var(--border);background:var(--surface2);color:var(--txt);font-size:12px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">🔩 Presa Metálica</button>
+    </div>
     <div style="display:flex;gap:10px;margin-bottom:14px">
       <div style="flex:1"><div class="big-field-label">CTM (cm)</div><input class="big-input" type="number" id="nivCTM" placeholder="" step="1" oninput="cmABls(this.value,'nivBLS')"></div>
       <div style="flex:1"><div class="big-field-label">Barriles</div><input class="big-input" type="number" id="nivBLS" placeholder="" step="0.1" readonly style="opacity:.7"></div>
@@ -1719,6 +1727,7 @@ function ppToggle(id){
 var W=location.hash.replace('#','')||'???';
 var la=0,lo=0,ac=0,REC='',nightMode=false;
 var checks={trabajo:false,drenar:false,aforo:false,intermitente:false};
+var _nivTipo='ft', _medTipo='ft';
 // ← movido a config.js → CICLOS
 // ← movido a config.js → THEMES
 
@@ -2117,17 +2126,57 @@ function cmABls(cm, blsFieldId){
   if(!blsEl) return;
   var cmVal = parseFloat(cm);
   if(isNaN(cmVal) || cmVal <= 0){ blsEl.value = ''; return; }
-  var cmInt = Math.round(cmVal);
-  if(CM_BLS_TABLE[cmInt] !== undefined){
-    blsEl.value = CM_BLS_TABLE[cmInt];
-  } else if(cmInt > 255){
-    blsEl.value = (CM_BLS_TABLE[255] + (cmInt - 255) * 1.9).toFixed(1);
+  // Pozo 376: cálculo propio — cada cm × 1.6 bls
+  if(W === '376'){
+    blsEl.value = (cmVal * 1.6).toFixed(1);
+    actualizarEnviarBtn();
+    return;
+  }
+  var esPresa = (blsFieldId==='nivBLS' && _nivTipo==='pm') ||
+                (blsFieldId==='medBarriles' && _medTipo==='pm');
+  if(esPresa){
+    blsEl.value = (cmVal * 0.67).toFixed(1);
   } else {
-    var lo = Math.floor(cmVal), hi = Math.ceil(cmVal);
-    var blo = CM_BLS_TABLE[lo]||0, bhi = CM_BLS_TABLE[hi]||blo;
-    blsEl.value = (blo + (bhi-blo)*(cmVal-lo)).toFixed(1);
+    var cmInt = Math.round(cmVal);
+    if(CM_BLS_TABLE[cmInt] !== undefined){
+      blsEl.value = CM_BLS_TABLE[cmInt];
+    } else if(cmInt > 255){
+      blsEl.value = (CM_BLS_TABLE[255] + (cmInt - 255) * 1.9).toFixed(1);
+    } else {
+      var lo = Math.floor(cmVal), hi = Math.ceil(cmVal);
+      var blo = CM_BLS_TABLE[lo]||0, bhi = CM_BLS_TABLE[hi]||blo;
+      blsEl.value = (blo + (bhi-blo)*(cmVal-lo)).toFixed(1);
+    }
   }
   actualizarEnviarBtn();
+}
+function selTipoNivel(tipo, btn){
+  _nivTipo = tipo;
+  var ft=document.getElementById('btn-niv-ft'), pm=document.getElementById('btn-niv-pm');
+  if(ft&&pm){
+    ft.style.background = tipo==='ft'?'var(--accent)':'var(--surface2)';
+    ft.style.color      = tipo==='ft'?'#fff':'var(--txt)';
+    ft.style.borderColor= tipo==='ft'?'var(--accent)':'var(--border)';
+    pm.style.background = tipo==='pm'?'var(--accent)':'var(--surface2)';
+    pm.style.color      = tipo==='pm'?'#fff':'var(--txt)';
+    pm.style.borderColor= tipo==='pm'?'var(--accent)':'var(--border)';
+  }
+  var ctm=document.getElementById('nivCTM');
+  if(ctm&&ctm.value) cmABls(ctm.value,'nivBLS');
+}
+function selTipoGuardia(tipo, btn){
+  _medTipo = tipo;
+  var ft=document.getElementById('btn-med-ft'), pm=document.getElementById('btn-med-pm');
+  if(ft&&pm){
+    ft.style.background = tipo==='ft'?'var(--accent2)':'var(--surface2)';
+    ft.style.color      = tipo==='ft'?'#fff':'var(--txt)';
+    ft.style.borderColor= tipo==='ft'?'var(--accent2)':'var(--border)';
+    pm.style.background = tipo==='pm'?'var(--accent2)':'var(--surface2)';
+    pm.style.color      = tipo==='pm'?'#fff':'var(--txt)';
+    pm.style.borderColor= tipo==='pm'?'var(--accent2)':'var(--border)';
+  }
+  var med=document.getElementById('medCentimetros');
+  if(med&&med.value) cmABls(med.value,'medBarriles');
 }
 
 function selFluye(btn, val){
@@ -2383,7 +2432,7 @@ function enviarTodo(soloPreview){
   // Validar que se haya escogido un pozo
   if(!W || W==='???'){showToast('⚠️ Selecciona el pozo antes de enviar');return}
 
-  // ── Verificación de radio 15m ─────────────────────
+  // ── Verificación de radio 80m ─────────────────────
   var distMetros = 0;
   if(la && lo && WELL_COORDS_ALL[W]){
     var wc = WELL_COORDS_ALL[W];
@@ -2397,7 +2446,7 @@ function enviarTodo(soloPreview){
   }
 
   var ci=getCicloInfo(REC);
-  var fueraDeRango = distMetros > 15 && distMetros > 0;
+  var fueraDeRango = distMetros > 80 && distMetros > 0;
   var diaDescanso  = !ci.trabajando;
 
   // Si está fuera de rango o día de descanso → modal HTML (no confirm() nativo)
@@ -2500,7 +2549,7 @@ function _continuarEnvio(){
     if(!ctm||!bls){showToast('⚠️ Nivel: Falta CTM o BLS');return}
     var hr=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
     document.getElementById('horaBox').textContent='⏱ '+hr;
-    msg+='══════════════════\n📊 *NIVEL FRAC TANK*\n📏 CTM: '+ctm+' cm · 🛢 BLS: '+bls+' bls · 🕐 '+hr+'\n'+(v('nivObs')?'📝 '+v('nivObs')+'\n':'');ok=true;
+    msg+='══════════════════\n📊 *'+(_nivTipo==='pm'?'NIVEL PRESA METÁLICA':'NIVEL FRAC TANK')+'*\n📏 CTM: '+ctm+' cm · 🛢 BLS: '+bls+' bls · 🕐 '+hr+'\n'+(v('nivObs')?'📝 '+v('nivObs')+'\n':'');ok=true;
   }
   var peraMsg = peraLinea();
   if(checks.trabajo||checks.drenar||checks.aforo||checks.intermitente){
@@ -2592,6 +2641,9 @@ function resetFormulario(){
     if(bad) bad.classList.remove('sel');
   });
   // Limpiar Nivel Frac Tank
+  _nivTipo='ft'; _medTipo='ft';
+  selTipoNivel('ft',document.getElementById('btn-niv-ft'));
+  selTipoGuardia('ft',document.getElementById('btn-med-ft'));
   ['nivCTM','nivBLS','nivObs'].forEach(function(id){
     var el = document.getElementById(id); if(el) el.value = '';
   });
@@ -6806,7 +6858,7 @@ document.addEventListener('click', function() { initAlarmAudio(); }, { once: tru
     <div style="font-size:36px;text-align:center;margin-bottom:10px">📍</div>
     <div style="font-size:17px;font-weight:700;color:#1e2761;text-align:center;margin-bottom:8px" id="gpsWarnTitulo">Fuera del rango del pozo</div>
     <div style="font-size:13px;color:#6b7280;text-align:center;margin-bottom:6px">Estás a <strong id="gpsWarnDist">—</strong> de <strong id="gpsWarnPozo"></strong>.</div>
-    <div style="font-size:13px;color:#6b7280;text-align:center;margin-bottom:24px">Radio permitido: <strong>15 metros</strong>. ¿Enviar de todas formas?</div>
+    <div style="font-size:13px;color:#6b7280;text-align:center;margin-bottom:24px">Radio permitido: <strong>80 metros</strong>. ¿Enviar de todas formas?</div>
     <div style="display:flex;gap:10px">
       <button onclick="document.getElementById('gpsWarnOverlay').style.display='none'" style="flex:1;padding:14px;border-radius:12px;border:1.5px solid #e5e7eb;background:#fff;color:#374151;font-size:14px;font-weight:600;cursor:pointer">✕ Cancelar</button>
       <button onclick="document.getElementById('gpsWarnOverlay').style.display='none';if(window._gpsContinueCallback){var cb=window._gpsContinueCallback;window._gpsContinueCallback=null;cb();}else{_continuarEnvio();}" style="flex:1;padding:14px;border-radius:12px;border:none;background:#1e40af;color:#fff;font-size:14px;font-weight:700;cursor:pointer">Enviar de todas formas</button>
