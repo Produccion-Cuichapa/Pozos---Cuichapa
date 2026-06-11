@@ -677,6 +677,7 @@ function ppToggle(id){
         <div style="padding:0 18px;color:var(--txt2);font-size:24px">›</div>
       </div>
     </button>
+        <button onclick="abrirAdmin()" style="padding:8px 14px;border-radius:10px;border:1.5px solid var(--accent2);background:transparent;color:var(--accent2);font-size:12px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">📊 Administración</button>
   </div>
 
   <!-- DESCARGAR EXCEL (recorredor) -->
@@ -5957,6 +5958,463 @@ function borrarReporte(id){
   if(card){ card.style.transition='opacity .3s,transform .3s'; card.style.opacity='0'; card.style.transform='scale(.95)'; setTimeout(function(){ renderHistorial(); actualizarBadgeHistorial(); },300); }
   else { renderHistorial(); actualizarBadgeHistorial(); }
 }
+
+
+// ── ADMIN HELPERS ──
+
+function abrirAdmin(){
+  var p=document.getElementById('adminPanel');
+  if(p){p.style.display='flex';}
+}
+function cerrarAdmin(){
+  var p=document.getElementById('adminPanel');
+  if(p){p.style.display='none';}
+}
+function adminSetHoy(){
+  var h=new Date().toISOString().slice(0,10);
+  document.getElementById('adminFechaIni').value=h;
+  document.getElementById('adminFechaFin').value=h;
+}
+function adminSetMesActual(){
+  var d=new Date();
+  var y=d.getFullYear(), m=d.getMonth()+1;
+  var ini=y+'-'+(m<10?'0':'')+m+'-01';
+  var dias=new Date(y,m,0).getDate();
+  var fin=y+'-'+(m<10?'0':'')+m+'-'+dias;
+  document.getElementById('adminSopIni').value=ini;
+  document.getElementById('adminSopFin').value=fin;
+}
+function adminSetMesAnterior(){
+  var d=new Date(); d.setDate(1); d.setMonth(d.getMonth()-1);
+  var y=d.getFullYear(), m=d.getMonth()+1;
+  var ini=y+'-'+(m<10?'0':'')+m+'-01';
+  var dias=new Date(y,m,0).getDate();
+  var fin=y+'-'+(m<10?'0':'')+m+'-'+dias;
+  document.getElementById('adminSopIni').value=ini;
+  document.getElementById('adminSopFin').value=fin;
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// FASE 2 — ADMINISTRACIÓN DE REPORTES
+// Genera Formato Diario y Soporte/Concentrado desde Firebase
+// ══════════════════════════════════════════════════════════════
+
+var _adminDiarioTpl = null;   // cached template bytes
+var _adminSoporteTpl = null;  // cached template bytes
+
+var MESES_ES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
+                'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+
+var RECORREDORES_FULL = {
+  'Cirilo':     'Cirilo Cancino Gómez',
+  'Juan Carlos':'Juan Carlos Flores',
+  'Manrique':   'Manrique Jiménez P.',
+  'Luis':       'Luis Carlos Flores Cruz',
+  'Jose':       'Jose Guadalupe Torres García'
+};
+
+// ── Cargar template desde GitHub ─────────────────────────────
+function _adminLoadTpl(name, cacheVar, cb){
+  if(cacheVar) return cb(null, cacheVar);
+  fetch('./'+name)
+    .then(function(r){
+      if(!r.ok) throw new Error('No se encontró ./'+name);
+      return r.arrayBuffer();
+    })
+    .then(function(buf){
+      cb(null, new Uint8Array(buf));
+    })
+    .catch(function(e){ cb(e.message || 'Error cargando '+name, null); });
+}
+
+// ── Leer reportes de Firebase en un rango de fechas ──────────
+function _adminGetReportes(recorredor, fechaIni, fechaFin, cb){
+  var reportesLocal = getHistorial();
+  var ini = new Date(fechaIni+'T00:00:00').getTime();
+  var fin = new Date(fechaFin+'T23:59:59').getTime();
+  function filtrar(arr){
+    return arr.filter(function(r){
+      if(recorredor && r.recorredor !== recorredor) return false;
+      var t = new Date(r.fecha).getTime();
+      return t >= ini && t <= fin;
+    });
+  }
+  if(fbDB){
+    fbDB.ref('reportes').orderByChild('fecha')
+      .startAt(new Date(ini).toISOString())
+      .endAt(new Date(fin+1).toISOString())
+      .once('value', function(snap){
+        var arr = [];
+        snap.forEach(function(c){ arr.push(c.val()); });
+        if(recorredor) arr = arr.filter(function(r){ return r.recorredor===recorredor; });
+        cb(arr.length > 0 ? arr : filtrar(reportesLocal));
+      }, function(){ cb(filtrar(reportesLocal)); });
+  } else {
+    cb(filtrar(reportesLocal));
+  }
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+function _mxDate(isoStr){
+  var d = new Date(isoStr);
+  return new Date(d.getTime() - 6*3600000);  // UTC-6
+}
+function _fmtFecha(d){
+  return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear();
+}
+function _sheetName(d){
+  var dia = ('0'+d.getDate()).slice(-2);
+  var mes = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][d.getMonth()];
+  return dia+'-'+mes;
+}
+
+// ════════════════════════════════════════════════════════════
+// FORMATO DIARIO — Generación
+// ════════════════════════════════════════════════════════════
+function adminGenerarDiario(recorredor, fechaIni, fechaFin){
+  if(!recorredor||!fechaIni||!fechaFin){
+    showToast('⚠️ Selecciona recorredor y fechas'); return;
+  }
+  showToast('🔄 Cargando datos...');
+  _adminLoadTpl('tpl_diario.xlsx', _adminDiarioTpl, function(err, bytes){
+    if(err){ showToast('❌ '+err); return; }
+    _adminDiarioTpl = bytes;
+    _adminGetReportes(recorredor, fechaIni, fechaFin, function(reportes){
+      if(!reportes.length){ showToast('⚠️ Sin reportes en ese rango'); return; }
+      showToast('⚙️ Generando Excel...');
+      _adminBuildDiario(bytes, recorredor, fechaIni, fechaFin, reportes);
+    });
+  });
+}
+
+function _adminBuildDiario(tplBytes, recorredor, fechaIni, fechaFin, reportes){
+  if(typeof JSZip==='undefined'){ showToast('⚠️ Cargando JSZip...'); return; }
+  JSZip.loadAsync(tplBytes).then(function(tplZip){
+    // Group reports by day
+    var byDay = {};
+    reportes.forEach(function(r){
+      var d = _mxDate(r.fecha);
+      var key = d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate();
+      if(!byDay[key]) byDay[key] = {date: d, list: []};
+      byDay[key].list.push(r);
+    });
+
+    // Build list of days
+    var days = Object.keys(byDay).map(function(k){ return byDay[k]; });
+    days.sort(function(a,b){ return a.date - b.date; });
+
+    // Read template sheet XML once
+    return tplZip.file('xl/worksheets/sheet1.xml').async('string').then(function(baseSheXml){
+      var outZip = new JSZip();
+      // Copy all template files
+      var copyPromises = [];
+      tplZip.forEach(function(path, file){
+        if(path !== 'xl/worksheets/sheet1.xml' &&
+           path !== 'xl/workbook.xml' &&
+           path !== 'xl/_rels/workbook.xml.rels' &&
+           path !== '[Content_Types].xml'){
+          copyPromises.push(
+            file.async('uint8array').then(function(data){
+              outZip.file(path, data);
+            })
+          );
+        }
+      });
+      return Promise.all(copyPromises).then(function(){
+        // Build one sheet per day
+        var sheetDefs = '';
+        var sheetRels = '';
+        var ctSheets  = '';
+        var nombre    = RECORREDORES_FULL[recorredor] || recorredor;
+
+        days.forEach(function(day, idx){
+          var shIdx  = idx + 1;
+          var sName  = _sheetName(day.date);
+          var fecha  = _fmtFecha(day.date);
+          var coRpts = day.list.filter(function(r){ return !r.esAlarma; });
+          var nivRpts= day.list.filter(function(r){ return r.nivel || r.ctm; });
+          var shXml  = _adminFillDiarioSheet(baseSheXml, nombre, fecha, coRpts, nivRpts);
+          outZip.file('xl/worksheets/sheet'+shIdx+'.xml', shXml);
+          sheetDefs += '<sheet name="'+_escXml(sName)+'" sheetId="'+shIdx+'" r:id="rId'+shIdx+'"/>';
+          sheetRels += '<Relationship Id="rId'+shIdx+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet'+shIdx+'.xml"/>';
+          ctSheets  += '<Override PartName="/xl/worksheets/sheet'+shIdx+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>';
+        });
+
+        // Shared rels (styles, strings, theme)
+        sheetRels += '<Relationship Id="rId99" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>'
+                   + '<Relationship Id="rId98" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
+                   + '<Relationship Id="rId97" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="theme/theme1.xml"/>';
+
+        // Update workbook.xml
+        var wbXml = tplZip.file('xl/workbook.xml') ? '' : '';
+        return tplZip.file('xl/workbook.xml').async('string').then(function(wbBase){
+          var wb = wbBase.replace(/<sheets>.*?<\/sheets>/s, '<sheets>'+sheetDefs+'</sheets>');
+          outZip.file('xl/workbook.xml', wb);
+          outZip.file('xl/_rels/workbook.xml.rels',
+            '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+sheetRels+'</Relationships>');
+          // Update content types
+          return tplZip.file('[Content_Types].xml').async('string').then(function(ct){
+            var ctNew = ct.replace(/<Override PartName="\/xl\/worksheets\/sheet1\.xml"[^\/]*\/>/,'');
+            ctNew = ctNew.replace('</Types>', ctSheets+'</Types>');
+            outZip.file('[Content_Types].xml', ctNew);
+            return outZip.generateAsync({type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+          });
+        });
+      });
+    });
+  }).then(function(blob){
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'Reporte_'+recorredor+'_'+fechaIni+'_al_'+fechaFin+'.xlsx';
+    a.click();
+    showToast('✅ Excel descargado');
+  }).catch(function(e){ showToast('❌ Error: '+(e.message||e)); console.error(e); });
+}
+
+function _escXml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function _adminFillDiarioSheet(xml, nombre, fecha, coRpts, nivRpts){
+  // Fill header
+  xml = _xlFillStrCell(xml, 'D3', nombre);
+  xml = _xlFillStrCell(xml, 'P3', fecha);
+
+  // Fill CO rows 7-27 (max 21)
+  for(var i=0; i<21; i++){
+    var row = 7 + i;
+    if(i < coRpts.length){
+      var r = coRpts[i];
+      var pozo = r.pozo ? 'C-'+r.pozo : '';
+      xml = _xlFillVal(xml, 'B'+row, i+1);
+      xml = _xlFillStrCell(xml, 'C'+row, pozo);
+      xml = _xlFillStrCell(xml, 'D'+row, r.hora || '');
+      xml = _xlFillStrCell(xml, 'E'+row, r.estatus || '');
+      xml = _xlFillStrCell(xml, 'F'+row, r.fluye  || '');
+      xml = _xlFillStrCell(xml, 'G'+row, r.sap    || '');
+      xml = _xlFillStrCell(xml, 'H'+row, r.estrang|| '');
+      xml = _xlFillNumCell(xml, 'I'+row, r.ptp);
+      xml = _xlFillNumCell(xml, 'J'+row, r.ldd);
+      xml = _xlFillNumCell(xml, 'K'+row, r.ptr);
+      xml = _xlFillNumCell(xml, 'L'+row, r.epm);
+      xml = _xlFillNumCell(xml, 'M'+row, r.carrera);
+      xml = _xlFillStrCell(xml, 'N'+row, r.observaciones || r.obs || '');
+    } else {
+      xml = _xlFillVal(xml, 'B'+row, i+1);
+    }
+  }
+
+  // Fill Nivel rows 32-46 (max 15)
+  var nivAM = nivRpts.filter(function(r){ return (r.hora||'') < '12:00'; });
+  var nivPM = nivRpts.filter(function(r){ return (r.hora||'') >= '12:00'; });
+  for(var j=0; j<15; j++){
+    var nrow = 32 + j;
+    // Turno 1
+    if(j < nivAM.length){
+      var nv = nivAM[j];
+      var np = nv.pozo ? 'C-'+nv.pozo : '';
+      var nh = (nv.nivel && nv.nivel.hora) || nv.hora || '';
+      var nc = (nv.nivel && nv.nivel.ctm) || nv.ctm || '';
+      xml = _xlFillVal(xml,'B'+nrow,j+1);
+      xml = _xlFillStrCell(xml,'C'+nrow,np);
+      xml = _xlFillStrCell(xml,'D'+nrow,nh);
+      xml = _xlFillNumCell(xml,'E'+nrow,nc);
+    } else { xml = _xlFillVal(xml,'B'+nrow,j+1); }
+    // Turno 2
+    if(j < nivPM.length){
+      var nv2 = nivPM[j];
+      var np2 = nv2.pozo ? 'C-'+nv2.pozo : '';
+      var nh2 = (nv2.nivel && nv2.nivel.hora) || nv2.hora || '';
+      var nc2 = (nv2.nivel && nv2.nivel.ctm) || nv2.ctm || '';
+      xml = _xlFillVal(xml,'G'+nrow,j+1);
+      xml = _xlFillStrCell(xml,'H'+nrow,np2);
+      xml = _xlFillStrCell(xml,'I'+nrow,nh2);
+      xml = _xlFillNumCell(xml,'J'+nrow,nc2);
+    } else { xml = _xlFillVal(xml,'G'+nrow,j+1); }
+    xml = _xlFillVal(xml,'L'+nrow,j+1);
+  }
+  return xml;
+}
+
+// ── XML cell helpers ─────────────────────────────────────────
+function _xlFillStrCell(xml, addr, val){
+  if(!val && val !== 0) return xml;
+  var esc = _escXml(String(val));
+  var pat = new RegExp('<c r="'+addr+'"([^>]*)>([\\s\\S]*?)<\\/c>');
+  var m = pat.exec(xml);
+  if(m){
+    var attrs = m[1].replace(/ t="[^"]*"/g,'');
+    return xml.replace(m[0], '<c r="'+addr+'"'+attrs+' t="inlineStr"><is><t>'+esc+'</t></is></c>');
+  }
+  return xml;
+}
+function _xlFillNumCell(xml, addr, val){
+  if(val === null || val === undefined || val === '') return xml;
+  var num = parseFloat(val);
+  if(isNaN(num)) return _xlFillStrCell(xml, addr, val);
+  var pat = new RegExp('<c r="'+addr+'"([^>]*)>([\\s\\S]*?)<\\/c>');
+  var m = pat.exec(xml);
+  if(m){
+    var attrs = m[1].replace(/ t="[^"]*"/g,'');
+    return xml.replace(m[0], '<c r="'+addr+'"'+attrs+'><v>'+num+'</v></c>');
+  }
+  return xml;
+}
+function _xlFillVal(xml, addr, val){
+  if(typeof val === 'number') return _xlFillNumCell(xml, addr, val);
+  return _xlFillStrCell(xml, addr, val);
+}
+
+// ════════════════════════════════════════════════════════════
+// SOPORTE / CONCENTRADO — Generación
+// ════════════════════════════════════════════════════════════
+var _SOPORTE_POZOS = {};  // cache: "106D" → row
+
+function adminGenerarSoporte(fechaIni, fechaFin){
+  if(!fechaIni||!fechaFin){ showToast('⚠️ Selecciona rango de fechas'); return; }
+  showToast('🔄 Cargando datos...');
+  _adminLoadTpl('tpl_soporte.xlsx', _adminSoporteTpl, function(err, bytes){
+    if(err){ showToast('❌ '+err); return; }
+    _adminSoporteTpl = bytes;
+    _adminGetReportes(null, fechaIni, fechaFin, function(reportes){
+      if(!reportes.length){ showToast('⚠️ Sin reportes en ese rango'); return; }
+      showToast('⚙️ Generando Soporte...');
+      _adminBuildSoporte(bytes, fechaIni, fechaFin, reportes);
+    });
+  });
+}
+
+function _adminBuildSoporte(tplBytes, fechaIni, fechaFin, reportes){
+  if(typeof JSZip==='undefined'){ showToast('⚠️ Cargando JSZip...'); return; }
+  JSZip.loadAsync(tplBytes).then(function(tplZip){
+    return tplZip.file('xl/worksheets/sheet1.xml').async('string').then(function(shXml){
+      var mesNum  = new Date(fechaIni+'T12:00:00').getMonth(); // 0-based
+      var mesName = MESES_ES[mesNum];
+      // Rename "ABRIL" sheet in workbook.xml
+      return tplZip.file('xl/workbook.xml').async('string').then(function(wbXml){
+        var wb = wbXml.replace(/name="ABRIL"/g, 'name="'+mesName+'"');
+        // Fill counts into sheet XML
+        var filledXml = _adminFillSoporte(shXml, fechaIni, reportes);
+        var outZip = new JSZip();
+        var copyPromises = [];
+        tplZip.forEach(function(path, file){
+          if(path !== 'xl/worksheets/sheet1.xml' && path !== 'xl/workbook.xml'){
+            copyPromises.push(file.async('uint8array').then(function(d){ outZip.file(path,d); }));
+          }
+        });
+        return Promise.all(copyPromises).then(function(){
+          outZip.file('xl/worksheets/sheet1.xml', filledXml);
+          outZip.file('xl/workbook.xml', wb);
+          return outZip.generateAsync({type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+        });
+      });
+    });
+  }).then(function(blob){
+    var d1 = new Date(fechaIni+'T12:00:00');
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'Soporte_'+MESES_ES[d1.getMonth()]+'_'+d1.getFullYear()+'.xlsx';
+    a.click();
+    showToast('✅ Soporte descargado');
+  }).catch(function(e){ showToast('❌ '+(e.message||e)); console.error(e); });
+}
+
+function _adminFillSoporte(shXml, fechaIniStr, reportes){
+  // Build counts: pozo → day → {super, nivel, trabajo, drenar, aforo, interm}
+  var counts = {};
+  var baseDate = new Date(fechaIniStr+'T00:00:00');
+  var baseYear = baseDate.getFullYear();
+  var baseMon  = baseDate.getMonth();
+
+  reportes.forEach(function(r){
+    var d = _mxDate(r.fecha);
+    if(d.getFullYear() !== baseYear || d.getMonth() !== baseMon) return;
+    var day = d.getDate();  // 1-31
+    var pz  = String(r.pozo||'').replace(/^C-/i,'');
+    if(!pz) return;
+    if(!counts[pz]) counts[pz] = {};
+    if(!counts[pz][day]) counts[pz][day] = {sup:0,niv:0,trab:0,dren:0,aforo:0,inter:0};
+    var c = counts[pz][day];
+    if(!r.esAlarma && r.modo !== 'guardia') c.sup++;
+    if(r.nivel || r.ctm) c.niv++;
+    if(r.checks){
+      if(r.checks.trabajo)      c.trab++;
+      if(r.checks.drenar)       c.dren++;
+      if(r.checks.aforo)        c.aforo++;
+      if(r.checks.intermitente) c.inter++;
+    }
+  });
+
+  // Build pozo→row map from shXml (parse CUICHAPA XXX entries)
+  var pozoRows = {};
+  var rowPat = /<row r="(\d+)"[^>]*>[\s\S]*?CUICHAPA (\w+)[\s\S]*?<\/row>/g;
+  var m;
+  while((m = rowPat.exec(shXml)) !== null){
+    pozoRows[m[2]] = parseInt(m[1]);
+  }
+
+  // Fill cells
+  for(var pz in counts){
+    for(var day in counts[pz]){
+      var d  = parseInt(day);
+      var c  = counts[pz][d];
+      // Find the correct row for this pozo+day
+      // Each pozo block has 31 rows; base row + (day-1)
+      var pzKey = pz;
+      var baseRow = _adminPozoRow(shXml, pzKey);
+      if(!baseRow) continue;
+      var targetRow = baseRow + d - 1;
+      // Column offsets (day d: 0-indexed)
+      var dayIdx   = d - 1;
+      var supCol   = 6  + dayIdx*8;  // F=6 for day1
+      var nivCol   = supCol + 1;
+      var trabCol  = supCol + 2;
+      var drenCol  = supCol + 3;
+      // skip MEDICION at +4
+      var aforoCol = supCol + 5;
+      var interCol = supCol + 6;
+      if(c.sup)   shXml = _soFill(shXml, targetRow, supCol,   c.sup);
+      if(c.niv)   shXml = _soFill(shXml, targetRow, nivCol,   c.niv);
+      if(c.trab)  shXml = _soFill(shXml, targetRow, trabCol,  c.trab);
+      if(c.dren)  shXml = _soFill(shXml, targetRow, drenCol,  c.dren);
+      if(c.aforo) shXml = _soFill(shXml, targetRow, aforoCol, c.aforo);
+      if(c.inter) shXml = _soFill(shXml, targetRow, interCol, c.inter);
+    }
+  }
+  return shXml;
+}
+
+// Find first row of a pozo block in sheet XML
+function _adminPozoRow(shXml, pozoNum){
+  var pat = new RegExp('CUICHAPA ' + pozoNum.replace('D','D?') + '(?:\\b|[^0-9])');
+  // Scan row by row — find the row number containing this pozo
+  var rowPat = /<row r="(\d+)"[^>]*>([\s\S]*?)<\/row>/g;
+  var m;
+  while((m = rowPat.exec(shXml)) !== null){
+    if(pat.test(m[2])){
+      return parseInt(m[1]);
+    }
+  }
+  return null;
+}
+
+function _soFill(shXml, row, col, val){
+  var addr = _colLetter(col) + row;
+  var cellPat = new RegExp('<c r="'+addr+'"([^>]*)>([\\s\\S]*?)<\\/c>');
+  var newCell = '<c r="'+addr+'" t="n"><v>'+val+'</v></c>';
+  if(cellPat.test(shXml)){
+    return shXml.replace(cellPat, newCell);
+  }
+  // Cell doesn't exist — insert it in the row
+  var rowPat = new RegExp('(<row r="'+row+'"[^>]*>)');
+  return shXml.replace(rowPat, '$1'+newCell);
+}
+
+function _colLetter(n){
+  var s=''; n=n-1;
+  while(n>=0){ s=String.fromCharCode(65+(n%26))+s; n=Math.floor(n/26)-1; }
+  return s;
+}
+
 
 function hcBorrarReporte(btnEl){
   if(!_puedeEliminar()){ showToast('⛔ Sin autorización para borrar'); return; }
