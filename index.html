@@ -1725,6 +1725,15 @@ function ppToggle(id){
 
 <script>
 var W=location.hash.replace('#','')||'???';
+// ── Parche C-131 (garantiza presencia independiente de caché de config.js) ──
+if(typeof WELLS_ALL!=='undefined' && WELLS_ALL.indexOf('131')===-1){
+  var _i131=WELLS_ALL.indexOf('129');
+  if(_i131!==-1) WELLS_ALL.splice(_i131+1,0,'131');
+  else WELLS_ALL.push('131');
+}
+if(typeof WELL_COORDS_ALL!=='undefined' && !WELL_COORDS_ALL['131']){
+  WELL_COORDS_ALL['131']={lat:17.942964,lon:-94.287442};
+}
 var la=0,lo=0,ac=0,REC='',nightMode=false;
 var checks={trabajo:false,drenar:false,aforo:false,intermitente:false};
 var _nivTipo='ft', _medTipo='ft';
@@ -5149,31 +5158,47 @@ function guardarEnFirebase(reporte){
     // No subir fotos a Firebase (muy pesadas) — solo metadata
     var deviceName = typeof hcGetDeviceName === 'function' ? hcGetDeviceName() : '';
     fbDB.ref('reportes/' + reporte.id).set({
+      // ── Identificación ────────────────────────────────────
       id:            reporte.id,
       fecha:         reporte.fecha,
+      hora:          reporte.hora          || null,
       pozo:          reporte.pozo,
       recorredor:    reporte.recorredor,
-      msg:           reporte.msg,
-      nFotos:        (reporte.fotos||[]).length,
+      perfil:        reporte.perfil        || null,
+      modo:          reporte.modo          || 'co',
       estado:        reporte.estado,
-      modo:          reporte.modo || 'co',
-      esAlarma:      reporte.esAlarma || false,
-      tipoAlarma:    reporte.tipoAlarma || null,
       device:        deviceName,
-      ptp:           reporte.ptp || null,
-      ptr:           reporte.ptr || null,
-      bls:           reporte.bls || null,
-      ctm:           reporte.ctm || null,
-      ldd:           reporte.ldd || null,
-      epm:           reporte.epm || null,
-      carrera:       reporte.carrera || null,
-      estatus:       reporte.estatus || null,
-      fluye:         reporte.fluye || null,
-      sap:           reporte.sap || null,
-      estrang:       reporte.estrang || null,
-      obs:           reporte.obs || null,
+      nFotos:        (reporte.fotos||[]).length,
+      esAlarma:      reporte.esAlarma      || false,
+      tipoAlarma:    reporte.tipoAlarma    || null,
+      // ── Mensaje completo (mantener siempre) ───────────────
+      msg:           reporte.msg,
+      // ── C.O. — campos estructurados ───────────────────────
+      estatus:       reporte.estatus       || null,
+      fluye:         reporte.fluye         || null,
+      sap:           reporte.sap           || null,
+      estrang:       reporte.estrang       || null,
+      ptp:           reporte.ptp           || null,
+      ldd:           reporte.ldd           || null,
+      ptr:           reporte.ptr           || null,
+      lbn:           reporte.lbn           || null,
+      epm:           reporte.epm           || null,
+      carrera:       reporte.carrera       || null,
+      // ── Nivel FT / Guardia ────────────────────────────────
+      nivel:         reporte.nivel         || null,
+      // Legacy flat (para código existente)
+      bls:           reporte.bls           || null,
+      ctm:           reporte.ctm           || null,
+      // ── Checks de registro ────────────────────────────────
+      checks:        reporte.checks        || null,
+      // ── GPS estructurado ──────────────────────────────────
+      gps:           reporte.gps           || null,
+      // ── Observaciones ─────────────────────────────────────
+      observaciones: reporte.observaciones || null,
+      obs:           reporte.obs           || null,
+      // ── Control interno ───────────────────────────────────
       ultimoIntento: reporte.ultimoIntento || null,
-      intentos:      reporte.intentos || 0
+      intentos:      reporte.intentos      || 0
     }).catch(function(e){ console.warn('FB write:', e); });
   } catch(e){}
 }
@@ -5349,7 +5374,7 @@ function getPendientes(){
 // ── Configuración Ultramsg ────────────────────────
 var UM_INSTANCE  = 'instance177727';
 var UM_TOKEN     = '0olfbxq3zi0rbsd1';
-var UM_TO = '120363424993135472@g.us';
+var UM_TO        = '5217821670258-1586464715@g.us'; // Grupo Pozos
 var UM_BASE      = 'https://api.ultramsg.com/' + UM_INSTANCE;
 var UM_URL       = UM_BASE + '/messages/chat';
 var UM_URL_IMG   = UM_BASE + '/messages/image';
@@ -5632,35 +5657,80 @@ function confirmarEnvio(){
   ov.style.cssText = '';
   ov.style.display = 'none';
   var ahora = new Date().toISOString();
+  // ── Capturar hora local antes de resetear ────────────────────
+  var _ahoraLocal = new Date();
+  var _horaStr = _ahoraLocal.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  var _esGuardia = (modoRegistro === 'guardia');
+  // Nivel: guardia usa medBarriles/medCentimetros; CO usa nivCTM/nivBLS
+  var _nivCtm = _esGuardia
+    ? parseFloat((document.getElementById('medCentimetros')||{}).value)||null
+    : parseFloat((document.getElementById('nivCTM')||{}).value)||null;
+  var _nivBls = _esGuardia
+    ? parseFloat((document.getElementById('medBarriles')||{}).value)||null
+    : parseFloat((document.getElementById('nivBLS')||{}).value)||null;
+  // GPS rango
+  var _gpsObj = null;
+  if(la && lo){
+    var _wc = WELL_COORDS_ALL[W];
+    var _dist = _wc ? _calcDist(_wc) : null;
+    _gpsObj = {
+      lat:       la,
+      lon:       lo,
+      precision: ac,
+      rango:     (_dist !== null && _dist <= 80) ? 'dentro' : 'fuera'
+    };
+  }
+  // Observaciones — prioridad: coObs > regObs > medObs
+  var _obs = (document.getElementById('coObs') ||{}).value  ||
+             (document.getElementById('regObs')||{}).value  ||
+             (document.getElementById('medObs')||{}).value  || null;
   var reporte = {
     id: Date.now(),
     fecha: ahora,
+    hora: _horaStr,
     pozo: W,
     recorredor: REC,
+    perfil: loggedTheme || loggedUser || '',
     msg: msgPendiente,
     fotos: fotos.map(function(f){ return {data:(f.data||f), nombre:(f.nombre||'')}; }),
     estado: 'pendiente',
     ultimoIntento: null,
     intentos: 0,
     modo: modoRegistro || 'co',
-    // Datos numéricos para gráficas
-    ptp: parseFloat(document.getElementById('coTP')    ? document.getElementById('coTP').value    :
-                    document.getElementById('coPresion')? document.getElementById('coPresion').value : '') || null,
-    ptr: parseFloat(document.getElementById('coTR')     ? document.getElementById('coTR').value     :
-                    document.getElementById('coPTR_bm') ? document.getElementById('coPTR_bm').value  : '') || null,
-    bls: parseFloat(document.getElementById('nivBLS')   ? document.getElementById('nivBLS').value   :
-                    document.getElementById('medBarriles')? document.getElementById('medBarriles').value : '') || null,
-    ctm: parseFloat(document.getElementById('nivCTM')   ? document.getElementById('nivCTM').value   :
-                    document.getElementById('medCentimetros')? document.getElementById('medCentimetros').value : '') || null,
-    // Campos extra para reporte Excel
-    ldd:       parseFloat((document.getElementById('coLDD')     ||{}).value) || null,
-    epm:       parseFloat((document.getElementById('coEmb')     ||{}).value) || null,
-    carrera:   parseFloat((document.getElementById('coCarrera') ||{}).value) || null,
-    estatus:   (document.getElementById('coEstatus')   ||{}).value || null,
-    fluye:     (document.getElementById('coFlujo')     ||{}).value || null,
-    sap:       (document.getElementById('coSistema')   ||{}).value || null,
+    // C.O.
+    estatus:   (document.getElementById('coEstatus')    ||{}).value || null,
+    fluye:     (document.getElementById('coFlujo')      ||{}).value || null,
+    sap:       (document.getElementById('coSistema')    ||{}).value || null,
     estrang:   (document.getElementById('coEstrangulador')||{}).value || null,
-    obs:       (document.getElementById('regObs')||document.getElementById('coObs')||{}).value || null
+    ptp: parseFloat((document.getElementById('coTP')     ||(document.getElementById('coPresion')||{})).value)||null,
+    ldd: parseFloat((document.getElementById('coLDD')    ||{}).value)||null,
+    ptr: parseFloat((document.getElementById('coTR')     ||(document.getElementById('coPTR_bm')||{})).value)||null,
+    lbn: parseFloat((document.getElementById('coLBN')    ||{}).value)||null,
+    epm: parseFloat((document.getElementById('coEmb')    ||{}).value)||null,
+    carrera: parseFloat((document.getElementById('coCarrera')||{}).value)||null,
+    // Nivel (FT o Guardia)
+    nivel: (_nivCtm||_nivBls) ? {
+      ctm:  _nivCtm,
+      bls:  _nivBls,
+      hora: _horaStr,
+      tipo: _esGuardia ? 'guardia' : (_nivTipo || 'ft')
+    } : null,
+    // Legacy flat (compatibilidad con código existente)
+    bls: _nivBls,
+    ctm: _nivCtm,
+    // Checks de registro
+    checks: {
+      trabajo:      checks.trabajo      || false,
+      drenar:       checks.drenar       || false,
+      aforo:        checks.aforo        || false,
+      intermitente: checks.intermitente || false,
+      aforo_bph:    parseFloat((document.getElementById('regAforo')||{}).value)||null
+    },
+    // GPS estructurado
+    gps: _gpsObj,
+    // Observaciones
+    observaciones: _obs,
+    obs:           _obs
   };
   // 1. SIEMPRE guardar primero — nunca perder
   guardarReporte(reporte);
