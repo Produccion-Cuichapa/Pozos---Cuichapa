@@ -6031,8 +6031,10 @@ function _adminLoadTpl(name, cacheVar, cb){
 // ── Leer reportes de Firebase en un rango de fechas ──────────
 function _adminGetReportes(recorredor, fechaIni, fechaFin, cb){
   var reportesLocal = getHistorial();
-  var ini = new Date(fechaIni+'T00:00:00').getTime();
-  var fin = new Date(fechaFin+'T23:59:59').getTime();
+  // Add UTC-6 offset so filter works correctly regardless of browser timezone
+  var _tz = 6*3600000;
+  var ini = new Date(fechaIni+'T00:00:00Z').getTime() + _tz;
+  var fin = new Date(fechaFin+'T23:59:59Z').getTime() + _tz;
   function filtrar(arr){
     return arr.filter(function(r){
       if(recorredor && r.recorredor !== recorredor) return false;
@@ -6204,8 +6206,15 @@ function _adminFillDiarioSheet(xml, nombre, fecha, coRpts, nivRpts){
   }
 
   // Fill Nivel rows 32-46 (max 15)
-  var nivAM = nivRpts.filter(function(r){ return (r.hora||'') < '12:00'; });
-  var nivPM = nivRpts.filter(function(r){ return (r.hora||'') >= '12:00'; });
+  // Split by real hour (UTC-6) to avoid a.m./p.m. string comparison errors
+  var nivAM = nivRpts.filter(function(r){
+    var h = _mxDate(r.fecha).getHours();
+    return h < 14;  // Before 2pm Mexico = Turno 1
+  });
+  var nivPM = nivRpts.filter(function(r){
+    var h = _mxDate(r.fecha).getHours();
+    return h >= 14; // 2pm+ Mexico = Turno 2
+  });
   for(var j=0; j<15; j++){
     var nrow = 32 + j;
     // Turno 1
@@ -6372,6 +6381,7 @@ function _adminFillSoporte(shXml, fechaIniStr, reportes){
       // skip MEDICION at +4
       var aforoCol = supCol + 5;
       var interCol = supCol + 6;
+      if(targetRow === 54) continue;  // protect SUM formulas row
       if(c.sup)   shXml = _soFill(shXml, targetRow, supCol,   c.sup);
       if(c.niv)   shXml = _soFill(shXml, targetRow, nivCol,   c.niv);
       if(c.trab)  shXml = _soFill(shXml, targetRow, trabCol,  c.trab);
@@ -6385,7 +6395,7 @@ function _adminFillSoporte(shXml, fechaIniStr, reportes){
 
 // Find first row of a pozo block in sheet XML
 function _adminPozoRow(shXml, pozoNum){
-  var pat = new RegExp('CUICHAPA ' + pozoNum.replace('D','D?') + '(?:\\b|[^0-9])');
+  var pat = new RegExp('CUICHAPA ' + pozoNum.replace(/[-]/g,'') + '(?:\\b|[^0-9A-Za-z])');
   // Scan row by row — find the row number containing this pozo
   var rowPat = /<row r="(\d+)"[^>]*>([\s\S]*?)<\/row>/g;
   var m;
@@ -6400,9 +6410,12 @@ function _adminPozoRow(shXml, pozoNum){
 function _soFill(shXml, row, col, val){
   var addr = _colLetter(col) + row;
   var cellPat = new RegExp('<c r="'+addr+'"([^>]*)>([\\s\\S]*?)<\\/c>');
-  var newCell = '<c r="'+addr+'" t="n"><v>'+val+'</v></c>';
-  if(cellPat.test(shXml)){
-    return shXml.replace(cellPat, newCell);
+  // Skip if cell contains a formula (starts with =)
+  var existing = cellPat.exec(shXml);
+  if(existing && existing[2].indexOf('<f>') !== -1) return shXml;
+  var newCell = '<c r="'+addr+'"><v>'+val+'</v></c>';
+  if(existing){
+    return shXml.replace(existing[0], newCell);
   }
   // Cell doesn't exist — insert it in the row
   var rowPat = new RegExp('(<row r="'+row+'"[^>]*>)');
