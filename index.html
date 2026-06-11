@@ -5963,8 +5963,10 @@ function borrarReporte(id){
 // ── ADMIN HELPERS ──
 
 function abrirAdmin(){
+  console.log('[Admin] abrirAdmin called');
   var p=document.getElementById('adminPanel');
-  if(p){p.style.display='flex';}
+  if(!p){ console.error('[Admin] #adminPanel NOT FOUND in DOM'); showToast('Error: panel no encontrado'); return; }
+  p.style.display='flex';
 }
 function cerrarAdmin(){
   var p=document.getElementById('adminPanel');
@@ -7969,3 +7971,49 @@ function ubiFiltrar(){ /* replaced by filter buttons */ }
 
 
 </script>
+<div id="adminPanel" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.55);align-items:flex-end;justify-content:center" onclick="if(event.target===this)cerrarAdmin()">
+  <div style="background:var(--bg);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;padding:20px 16px 36px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div style="font-size:14px;font-weight:700;color:var(--txt)">📊 ADMINISTRACIÓN DE REPORTES</div>
+      <button onclick="cerrarAdmin()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--txt2)">✕</button>
+    </div>
+    <div style="background:var(--surface2);border-radius:14px;padding:14px;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:12px">📋 FORMATO DIARIO POR RECORREDOR</div>
+      <div style="margin-bottom:10px"><div style="font-size:11px;color:var(--txt2);margin-bottom:4px">Recorredor</div>
+        <select id="adminRec" style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--txt);font-size:13px">
+          <option value="">— Seleccionar —</option>
+          <option value="Cirilo">Cirilo Cancino Gómez</option>
+          <option value="Juan Carlos">Juan Carlos Flores</option>
+          <option value="Manrique">Manrique Jiménez P.</option>
+          <option value="Luis">Luis Carlos Flores Cruz</option>
+          <option value="Jose">Jose Guadalupe Torres García</option>
+        </select></div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <div style="flex:1"><div style="font-size:11px;color:var(--txt2);margin-bottom:4px">Inicio</div>
+          <input type="date" id="adminFechaIni" style="width:100%;padding:7px 10px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--txt);font-size:13px"></div>
+        <div style="flex:1"><div style="font-size:11px;color:var(--txt2);margin-bottom:4px">Fin</div>
+          <input type="date" id="adminFechaFin" style="width:100%;padding:7px 10px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--txt);font-size:13px"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="adminGenerarDiario(document.getElementById('adminRec').value,document.getElementById('adminFechaIni').value,document.getElementById('adminFechaFin').value)" style="flex:1;padding:10px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:pointer">📥 Generar</button>
+        <button onclick="adminSetHoy()" style="padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:11px;cursor:pointer">Hoy</button>
+      </div>
+    </div>
+    <div style="background:var(--surface2);border-radius:14px;padding:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--accent2);margin-bottom:12px">📊 SOPORTE / CONCENTRADO</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <div style="flex:1"><div style="font-size:11px;color:var(--txt2);margin-bottom:4px">Inicio</div>
+          <input type="date" id="adminSopIni" style="width:100%;padding:7px 10px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--txt);font-size:13px"></div>
+        <div style="flex:1"><div style="font-size:11px;color:var(--txt2);margin-bottom:4px">Fin</div>
+          <input type="date" id="adminSopFin" style="width:100%;padding:7px 10px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--txt);font-size:13px"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button onclick="adminSetMesActual()" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:11px;cursor:pointer">📅 Mes actual</button>
+        <button onclick="adminSetMesAnterior()" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:11px;cursor:pointer">📅 Mes anterior</button>
+      </div>
+      <button onclick="adminGenerarSoporte(document.getElementById('adminSopIni').value,document.getElementById('adminSopFin').value)" style="width:100%;padding:10px;border-radius:10px;border:none;background:var(--accent2);color:#fff;font-size:12px;font-weight:700;cursor:pointer">📥 Generar Soporte</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
