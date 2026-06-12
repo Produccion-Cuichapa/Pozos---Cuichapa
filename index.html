@@ -6168,14 +6168,34 @@ function _getBls(r){
 
 // Extraer texto de nota desde msg cuando pozo no es real
 function _notaText(r){
-  if(!r.msg)return r.pozo||'';
-  // Buscar línea de descripción después del asterisco o en observaciones
-  var m=/📝\s*([^\n\r]+)/.exec(r.msg)||/\*NOTA[^*]*\*\n?([^\n\r]+)/.exec(r.msg);
-  if(m)return m[1].trim();
-  // Usar pozo si tiene texto descriptivo
+  if(!r||!r.msg)return '';
+  var msg=r.msg;
+  // Skip lines that are meta/system: *NOTA DE CAMPO*, GPS, maps, ═══, emoji headers
+  var SKIP=/^(\*?NOTA DE CAMPO\*?|GPS:|🗺|maps\.google|https?:|═+|📝|👷|📅|🛢|📋|✅|⚠️)/i;
+  // Find separator line ══════
+  var sepIdx=msg.indexOf('══');
+  var startFrom=0;
+  if(sepIdx!==-1){
+    // Text after the separator
+    startFrom=sepIdx;
+    while(startFrom<msg.length&&(msg[startFrom]==='═'||msg[startFrom]==='\n'||msg[startFrom]==='\r'))startFrom++;
+  }
+  // Scan lines for first real user text
+  var lines=msg.substring(startFrom).split(/[\n\r]+/);
+  for(var i=0;i<lines.length;i++){
+    var l=lines[i].trim();
+    if(!l)continue;
+    if(SKIP.test(l))continue;
+    if(/^\d{1,2}\.\d{1,2}\.\d{4}/.test(l))continue; // fecha
+    if(/^\d{1,2}:\d{2}/.test(l))continue;               // hora sola
+    if(l.indexOf(',')!==-1&&l.indexOf('.')!==-1&&l.length<40&&/^[\d\.,\s-]+$/.test(l))continue; // coordenadas
+    // Found real text
+    return l.replace(/^\*|\*$/g,'').trim();
+  }
+  // Fallback: pozo field if descriptive
   var pz=String(r.pozo||'');
-  if(!_isRealWell(pz)&&pz.length<60&&!/^\d/.test(pz))return pz;
-  return _rField(r,'observaciones')||'';
+  if(pz&&pz!=='NOTA'&&!/^[\d,\.\s-]+$/.test(pz)&&pz.length<80)return pz;
+  return '';
 }
 
 // ── Diagnóstico ───────────────────────────────────────────────
@@ -6332,11 +6352,11 @@ function _fillDiarioSheet(xml,nombre,fecha,coRpts,nvRpts){
     xml=_wcNum(xml,'B'+nr,j+1);
     xml=_wcStr(xml,'C'+nr,nv1&&_isRealWell(nv1.pozo)?'C-'+_normPozo(nv1.pozo):'');
     xml=_wcStr(xml,'D'+nr,nv1?_rField(nv1,'hora')||'':'');
-    xml=_wcNum(xml,'E'+nr,nv1?_rField(nv1,'ctm')||'':'');
+    xml=_wcNum(xml,'E'+nr,nv1?_getNivelCtm(nv1)||'':'');
     xml=_wcNum(xml,'G'+nr,j+1);
     xml=_wcStr(xml,'H'+nr,nv2&&_isRealWell(nv2.pozo)?'C-'+_normPozo(nv2.pozo):'');
     xml=_wcStr(xml,'I'+nr,nv2?_rField(nv2,'hora')||'':'');
-    xml=_wcNum(xml,'J'+nr,nv2?_rField(nv2,'ctm')||'':'');
+    xml=_wcNum(xml,'J'+nr,nv2?_getNivelCtm(nv2)||'':'');
     xml=_wcNum(xml,'L'+nr,j+1);
   }
   return xml;
