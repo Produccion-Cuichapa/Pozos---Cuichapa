@@ -6016,157 +6016,25 @@ function _colNum(l){var n=0;for(var i=0;i<l.length;i++)n=n*26+l.charCodeAt(i)-64
 function _normPozo(p){return String(p||'').replace(/^C-/i,'').replace(/^CUICHAPA\s*/i,'').trim();}
 function _isRealWell(p){return /^\d{1,4}[A-Z]?$/i.test(_normPozo(p));}
 // Detectar reportes de guardia aunque modo esté mal almacenado
-function _esGuardia(r){
-  if(!r)return false;
-  if(r.modo==='guardia'||r.modo==='nivel')return true;
-  if(r.msg&&/NIVELES DE GUARDIA/i.test(r.msg))return true;
-  // Reporte sin estatus/fluye pero con Centímetros = guardia
-  if(r.msg&&/Centímetros:\s*\d+/i.test(r.msg)&&!/Estatus:/i.test(r.msg))return true;
-  return false;
-}
-
-// ── XML: reemplazar/insertar celda con indexOf ────────────────
-function _wcSet(xml,addr,val,asNum){
-  var search='<c r="'+addr+'"';
-  var pos=xml.indexOf(search);
-  if(pos!==-1){
-    // Verificar que es exactamente ADDR (no ADDR seguido de otro número)
-    var nextChar=xml[pos+search.length];
-    if(nextChar!=='"'&&nextChar!=='>'&&nextChar!=='/'&&nextChar!==' '){
-      // No es una coincidencia exacta, buscar siguiente
-      var pos2=xml.indexOf(search,pos+1);
-      if(pos2!==-1){
-        var nc2=xml[pos2+search.length];
-        if(nc2==='"'||nc2==='>'||nc2==='/'||nc2===' ')pos=pos2;
-        else pos=-1;
-      }else pos=-1;
-    }
-  }
-  if(pos===-1)return xml;
-  var es=xml.indexOf('/>',pos);var ec=xml.indexOf('</c>',pos);
-  var cellEnd=(es!==-1&&(ec===-1||es<ec))?es+2:ec+4;
-  var tagEnd=xml.indexOf('>',pos);
-  var attrs=xml.substring(pos+search.length,tagEnd).replace(/\s+t="[^"]*"/g,'').replace(/\//g,'');
-  var nc;
-  if(val===null||val===undefined||val===''||val==='0'&&asNum&&!val){
-    nc='<c r="'+addr+'"'+attrs+'></c>';
-  }else if(asNum){
-    nc='<c r="'+addr+'"'+attrs+'><v>'+val+'</v></c>';
-  }else{
-    nc='<c r="'+addr+'"'+attrs+' t="inlineStr"><is><t>'+_escXml(String(val))+'</t></is></c>';
-  }
-  return xml.substring(0,pos)+nc+xml.substring(cellEnd);
-}
-function _wcStr(xml,a,v){
-  if(v===null||v===undefined)v='';
-  return _wcSet(xml,a,v,false);
-}
-function _wcNum(xml,a,v){
-  // Siempre escribe — si null/undefined limpia la celda
-  if(v===null||v===undefined||v==='')return _wcSet(xml,a,null,true);
-  var n=parseFloat(v);return _wcSet(xml,a,isNaN(n)?v:n,!isNaN(n));
-}
-
-// ── Fetch con cache ───────────────────────────────────────────
-function _adminFetch(name,cached,cb){
-  if(cached){cb(null,cached);return;}
-  fetch('./'+name).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status+': ./'+name);return r.arrayBuffer();}).then(function(b){cb(null,new Uint8Array(b));}).catch(function(e){cb(String(e.message||e),null);});
-}
-
-// ── Reportes ──────────────────────────────────────────────────
-function _adminReportes(recorredor,fechaIni,fechaFin,cb){
-  function filtrar(arr){
-    var r=arr.filter(function(x){var ds=_mxDateStr(x.fecha);return ds>=fechaIni&&ds<=fechaFin;});
-    if(recorredor)r=r.filter(function(x){return x.recorredor===recorredor;});
-    return r;
-  }
-  if(fbDB){
-    fbDB.ref('reportes').orderByChild('fecha').startAt(fechaIni+'T00:00:00.000Z').endAt(fechaFin+'T23:59:59.999Z')
-      .once('value',function(s){var a=[];s.forEach(function(c){a.push(c.val());});cb(filtrar(a));},
-      function(){cb(filtrar(getHistorial()));});
-  }else{cb(filtrar(getHistorial()));}
-}
-
-// ── Parsear campo desde msg ───────────────────────────────────
-function _rField(r,field){
-  if(r[field]!==undefined&&r[field]!==null&&r[field]!=='')return r[field];
-  if(!r.msg)return null;
-  var ps={hora:/(\d{1,2}:\d{2}\s*[apm\.]+)/i,estatus:/Estatus:\s*([^\n\r]+)/,fluye:/Fluye:\s*([^\n\r]+)/,sap:/SAP:\s*(\w+)/,ptp:/PTP:\s*([\d\.\-]+)/,ldd:/LDD:\s*([\d\.\-]+)/,ptr:/PTR:\s*([\d\.\-]+)/,lbn:/LBN:\s*([\d\.\-]+)/,epm:/Vel:\s*([\d\.]+)\s*EPM/,carrera:/Car:\s*([\d\.]+)\s*pulg/,observaciones:/📝\s*([^\n\r]+)/,ctm:/CTM:\s*([\d\.]+)\s*cm/,bls:/BLS:\s*([\d\.]+)\s*bls/};
-  var p=ps[field];if(!p)return null;
-  var m=p.exec(r.msg);return m?m[1].trim():null;
-}
-function _hasNivel(r){
-  if(r.nivel&&typeof r.nivel==='object'&&(r.nivel.ctm||r.nivel.bls))return true;
-  if(r.ctm||r.bls)return true;
-  if(r.modo==='guardia')return true;
-  if(r.msg&&(/CTM:\s*[\d.]+\s*cm/i.test(r.msg)||/Centímetros:\s*[\d.]+/i.test(r.msg)))return true;
-  return false;
-}
-function _msgHas(r,campo){return r.msg?new RegExp('✅\\s*'+campo,'i').test(r.msg):false;}
-
 // ══════════════════════════════════════════════════════════════
-// FUNCIONES DE CLASIFICACIÓN — SEPARADAS DEL FORMATO
+// CLASIFICACIÓN POR CONTENIDO DE MSG (no confiar en r.modo)
 // ══════════════════════════════════════════════════════════════
-
-// Clasificar un reporte: qué columnas del Soporte activa
-function _clasificar(r){
-  var result={super_:false,nivel:false,trabajo:false,drenar:false,aforo:false,inter:false,motivo:''};
-  if(!r||r.esAlarma)return result;
-
-  var modo=r.modo||'';
-  var pz=_normPozo(r.pozo);
-  var ctm=_getNivelCtm(r);
-  var fluye=String(_rField(r,'fluye')||'').toUpperCase();
-  var bls=_getBls(r);
-  var chk=r.checks||r.registro||{};
-
-  // SUPER: solo reportes diarios CO — excluir guardia detectados por msg
-  if(modo==='co'&&_isRealWell(pz)&&!_esGuardia(r)){
-    result.super_=true;
-    result.motivo='Registro Diario';
-  }
-
-  // NIVEL:
-  // A) Guardia/nivel con CTM real (detectado por modo o por msg)
-  if(_esGuardia(r)&&ctm!==null&&ctm>0){
-    result.nivel=true;
-    result.motivo='Nivel Guardia CTM='+ctm;
-  }
-  // B) CO + fluye=FT + CTM + BLS
-  if(modo==='co'&&fluye==='FT'&&ctm!==null&&ctm>0&&bls>0){
-    result.nivel=true;
-    result.motivo+=(result.motivo?' / ':'')+'CO+FT CTM='+ctm+' BLS='+bls;
-  }
-
-  // TRABAJO / DRENAR / AFORO / INTERMITENTE
-  if(chk.trabajo===true||r.trabajo===true||_msgHas(r,'Trabajo'))result.trabajo=true;
-  if(chk.drenar===true||r.drenar===true||_msgHas(r,'Drenar'))result.drenar=true;
-  if(chk.aforo===true||r.aforo===true||_msgHas(r,'Aforo'))result.aforo=true;
-  if(chk.intermitente===true||r.intermitente===true||_msgHas(r,'Intermitente'))result.inter=true;
-
-  return result;
+function _getTipo(r){
+  var msg=r&&r.msg||'';
+  if(r&&r.esAlarma)return 'alarma';
+  if(msg.indexOf('🌙 *NIVELES DE GUARDIA*')!==-1)return 'guardia';
+  if(msg.indexOf('📋 *REPORTE DE VISITA*')!==-1)return 'visita';
+  if(msg.indexOf('📝 *NOTA DE CAMPO*')!==-1)return 'nota';
+  if(msg.indexOf('🚨')!==-1)return 'alarma';
+  // Fallback por modo
+  if(r&&(r.modo==='guardia'||r.modo==='nivel'))return 'guardia';
+  if(r&&r.modo==='co')return 'visita';
+  return 'otro';
 }
+function _esGuardia(r){return _getTipo(r)==='guardia';}
+function _esVisita(r) {return _getTipo(r)==='visita';}
+function _esNota(r)   {return _getTipo(r)==='nota';}
 
-function _getNivelCtm(r){
-  if(r.nivel&&typeof r.nivel==='object'){var v=parseFloat(r.nivel.ctm);if(!isNaN(v)&&v>0)return v;}
-  var cv=parseFloat(r.ctm);if(!isNaN(cv)&&cv>0)return cv;
-  if(r.msg){
-    var m=/Centímetros:\s*([\d.]+)/i.exec(r.msg)||/CTM:\s*([\d.]+)\s*cm/i.exec(r.msg);
-    if(m){var pv=parseFloat(m[1]);if(!isNaN(pv)&&pv>0)return pv;}
-  }
-  return null;
-}
-function _getBls(r){
-  if(r.nivel&&typeof r.nivel==='object'){var b=parseFloat(r.nivel.bls);if(!isNaN(b)&&b>0)return b;}
-  var bv=parseFloat(r.bls);if(!isNaN(bv)&&bv>0)return bv;
-  if(r.msg){
-    var m=/BLS:\s*([\d.]+)\s*bls/i.exec(r.msg)||/Barriles:\s*([\d.]+)/i.exec(r.msg);
-    if(m)return parseFloat(m[1])||0;
-  }
-  return 0;
-}
-
-// Extraer texto de nota desde msg cuando pozo no es real
 function _notaText(r){
   if(!r||!r.msg)return '';
   var msg=r.msg;
@@ -6238,6 +6106,14 @@ function adminGenerarDiario(recorredor,fechaIni,fechaFin){
       reportes.forEach(function(r){var ds=_mxDateStr(r.fecha);if(!byDay[ds])byDay[ds]={ds:ds,date:_mxDate(r.fecha),list:[]};byDay[ds].list.push(r);});
       var days=Object.values(byDay).sort(function(a,b){return a.ds<b.ds?-1:1;});
       console.log('[Diario] días:',days.map(function(d){return d.ds+'('+d.list.length+')';}));
+      // Diagnóstico por día
+      days.forEach(function(d){
+        var visitas=d.list.filter(function(r){return _getTipo(r)==='visita';}).length;
+        var guardias=d.list.filter(function(r){return _getTipo(r)==='guardia';}).length;
+        var notas=d.list.filter(function(r){return _getTipo(r)==='nota';}).length;
+        var total=d.list.length;
+        console.log('['+_sheetLabel(d.date)+'] VISITAS='+visitas+' GUARDIAS='+guardias+' NOTAS='+notas+' TOTAL='+total);
+      });
       showToast('⚙️ Generando '+days.length+' hojas...');
       _buildDiario(bytes,recorredor,days);
     });
@@ -6270,20 +6146,17 @@ function _buildDiario(tplBytes,recorredor,days){
             var label=_sheetLabel(dayObj.date);var fecha=_fmtFecha(dayObj.date);
             if(sh.name!==label)newWbXml=newWbXml.replace('name="'+sh.name+'"','name="'+_escXml(label)+'"');
             var shFile='xl/'+(relMap[sh.rId]||'worksheets/sheet'+(idx+1)+'.xml');
-            // ERROR 1 FIX: CO = solo modo co (no guardia), Nivel = guardia + reportes con nivel
-            var coRpts=dayObj.list.filter(function(r){return !r.esAlarma&&r.modo==='co'&&!_esGuardia(r);});
-            var coFallback=[];//ist.filter(function(r){return !r.esAlarma&&(!r.modo||r.modo==='undefined')&&_rField(r,'estatus');});
-            coRpts=coRpts.concat(coFallback);
-            // Nivel ABAJO: guardia real (por modo O por msg) + pozo real + CTM real
+            // CO section: visita + nota (classificado por msg)
+            var coRpts=dayObj.list.filter(function(r){
+              var t=_getTipo(r);return t==='visita'||t==='nota';
+            });
+            // Nivel ABAJO: tipo='guardia' + pozo real + CTM real
             var nvRpts=dayObj.list.filter(function(r){
-              if(r.esAlarma)return false;
               if(!_isRealWell(r.pozo))return false;
-              if(!_esGuardia(r))return false;  // debe ser guardia
+              if(_getTipo(r)!=='guardia')return false;
               var hora=_rField(r,'hora');if(!hora)return false;
               var ctm=_getNivelCtm(r);
-              var ok=ctm!==null&&ctm>0;
-              console.log('[NIVEL]',r.pozo,hora,'ctm='+ctm,'entra='+ok);
-              return ok;
+              return ctm!==null&&ctm>0;
             });
             console.log('[Diario]',label,'CO='+coRpts.length,'Niv='+nvRpts.length,'shFile='+shFile);
             var f=zip.file(shFile);if(!f){console.error('[Diario] NOT FOUND:',shFile);return;}
@@ -6319,11 +6192,10 @@ function _fillDiarioSheet(xml,nombre,fecha,coRpts,nvRpts){
     var row=7+i;
     var r=i<coRpts.length?coRpts[i]:null;
     xml=_wcNum(xml,'B'+row,i+1);
-    var isWell=r&&_isRealWell(r.pozo);
-    // ERROR 3 FIX: no usar C-NOTA — notas van como texto en columna E
+    var tipo=r?_getTipo(r):'';var isWell=r&&_isRealWell(r.pozo)&&tipo!=='nota';
     xml=_wcStr(xml,'C'+row,isWell?'C-'+_normPozo(r.pozo):'');
     xml=_wcStr(xml,'D'+row,r?_rField(r,'hora')||'':'');
-    if(r&&!isWell){
+    if(r&&(!isWell||tipo==='nota')){
       // Nota/cabezal/estación: texto va en columna E, el resto vacío
       xml=_wcStr(xml,'E'+row,_notaText(r));
       xml=_wcStr(xml,'F'+row,'');xml=_wcStr(xml,'G'+row,'');xml=_wcStr(xml,'H'+row,'');
