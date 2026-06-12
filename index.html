@@ -6014,6 +6014,16 @@ function _escXml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').
 function _colLetter(n){var s='';n=n-1;while(n>=0){s=String.fromCharCode(65+(n%26))+s;n=Math.floor(n/26)-1;}return s;}
 function _colNum(l){var n=0;for(var i=0;i<l.length;i++)n=n*26+l.charCodeAt(i)-64;return n;}
 function _normPozo(p){return String(p||'').replace(/^C-/i,'').replace(/^CUICHAPA\s*/i,'').trim();}
+function _hora24(h){
+  // Convert "04:23 a.m." / "01:53 p.m." to "04:23" / "13:53"
+  if(!h)return h;
+  var m=/^(\d{1,2}):(\d{2})\s*(a\.?m\.?|p\.?m\.?)/i.exec(String(h).trim());
+  if(!m)return h; // already 24h or unknown format
+  var hrs=parseInt(m[1],10),mins=m[2],ampm=m[3].toLowerCase().replace(/\./g,'');
+  if(ampm==='am'&&hrs===12)hrs=0;
+  if(ampm==='pm'&&hrs!==12)hrs+=12;
+  return ('0'+hrs).slice(-2)+':'+mins;
+}
 function _isRealWell(p){return /^\d{1,4}[A-Z]?$/i.test(_normPozo(p));}
 
 // ── Clasificación por MSG (no confiar en r.modo) ──────────────
@@ -6245,21 +6255,45 @@ function adminGenerarDiario(recorredor,fechaIni,fechaFin){
         var n=d.list.filter(function(r){return _getTipo(r)==='nota';}).length;
         console.log('['+_sheetLabel(d.date)+'] VISITAS='+v+' GUARDIAS='+g+' NOTAS='+n+' TOTAL='+d.list.length);
       });
-      // DIAGNÓSTICO FINAL antes de generar
+      // TABLA DE DIAGNÓSTICO POR REGISTRO
       var totV=0,totG=0,totN=0,totA=0;
+      var tblRows=['id|fecha|recorredor|pozo|tipo|hora|ctm|bls|fluye|entraArriba|entraAbajo|super|nivel|trab|dren|afor|inter|motivo'];
       days.forEach(function(d){
         d.list.forEach(function(r){
           var t=_getTipo(r);
+          var msg=r.msg||'';
+          var pozo=_normPozo(r.pozo);
+          var well=_isRealWell(r.pozo);
+          var hora=_rField(r,'hora')||'—';
+          var ctm=_getNivelCtm(r);
+          var bls=_getBls(r);
+          var fluye=String(_rField(r,'fluye')||'').toUpperCase();
+          var chk=r.checks||r.registro||{};
+          var arriba=t==='visita'||t==='nota';
+          var abajo=t==='guardia'&&well&&ctm&&ctm>0;
+          var sup=t==='visita'&&well;
+          var niv=(t==='guardia'&&ctm&&ctm>0)||(t==='visita'&&fluye==='FT'&&ctm&&bls);
+          var trab=chk.trabajo===true||_msgHas(r,'Trabajo');
+          var dren=chk.drenar===true||_msgHas(r,'Drenar');
+          var afor=chk.aforo===true||_msgHas(r,'Aforo');
+          var inte=chk.intermitente===true||_msgHas(r,'Intermitente');
+          var motivo=t==='alerta'?'EXCLUIDA':(!arriba&&!abajo?'sin_CTM_o_pozo':'OK');
           if(t==='visita')totV++;else if(t==='guardia')totG++;else if(t==='nota')totN++;else if(t==='alarma')totA++;
+          tblRows.push([_mxDateStr(r.fecha),r.recorredor||'?','C-'+pozo,t,hora,
+            ctm||'—',bls||'—',fluye,arriba?'Y':'N',abajo?'Y':'N',
+            sup?'Y':'N',niv?'Y':'N',trab?'Y':'N',dren?'Y':'N',afor?'Y':'N',inte?'Y':'N',motivo].join('|'));
         });
       });
-      console.log('====== DIAGNÓSTICO GENERACIÓN ======');
+      console.log('====== TABLA REGISTROS ======');
+      tblRows.forEach(function(row){console.log(row);});
+      console.log('====== DIAGNÓSTICO FINAL ======');
       console.log('VISITAS             =',totV);
       console.log('GUARDIAS            =',totG);
       console.log('NOTAS               =',totN);
       console.log('ALERTAS EXCLUIDAS   =',totA);
       console.log('TOTAL USADO         =',totV+totG+totN);
-      console.log('=====================================');
+      console.log('CUADRE              =',totV+totG+totN+totA,'registros procesados');
+      console.log('================================');
       showToast('⚙️ Generando '+days.length+' hojas...');
       _buildDiario(bytes,recorredor,days);
     });
@@ -6365,7 +6399,7 @@ function _fillDiarioSheet(xml,nombre,fecha,coRpts,nvRpts){
     var isWell=r&&_isRealWell(r.pozo)&&tipo!=='nota';
     xml=_wcNum(xml,'B'+row,i+1);
     xml=_wcStr(xml,'C'+row,isWell?'C-'+_normPozo(r.pozo):'');
-    xml=_wcStr(xml,'D'+row,r?_rField(r,'hora')||'':'');
+    xml=_wcStr(xml,'D'+row,r?_hora24(_rField(r,'hora'))||'':'');
     if(r&&(!isWell||tipo==='nota')){
       xml=_wcStr(xml,'E'+row,_notaText(r));
       xml=_wcStr(xml,'F'+row,'');xml=_wcStr(xml,'G'+row,'');xml=_wcStr(xml,'H'+row,'');
@@ -6392,11 +6426,11 @@ function _fillDiarioSheet(xml,nombre,fecha,coRpts,nvRpts){
     var nv2=j<pm.length?pm[j]:null;
     xml=_wcNum(xml,'B'+nr,j+1);
     xml=_wcStr(xml,'C'+nr,nv1&&_isRealWell(nv1.pozo)?'C-'+_normPozo(nv1.pozo):'');
-    xml=_wcStr(xml,'D'+nr,nv1?_rField(nv1,'hora')||'':'');
+    xml=_wcStr(xml,'D'+nr,nv1?_hora24(_rField(nv1,'hora'))||'':'');
     xml=_wcNum(xml,'E'+nr,nv1?_getNivelCtm(nv1)||'':'');
     xml=_wcNum(xml,'G'+nr,j+1);
     xml=_wcStr(xml,'H'+nr,nv2&&_isRealWell(nv2.pozo)?'C-'+_normPozo(nv2.pozo):'');
-    xml=_wcStr(xml,'I'+nr,nv2?_rField(nv2,'hora')||'':'');
+    xml=_wcStr(xml,'I'+nr,nv2?_hora24(_rField(nv2,'hora'))||'':'');
     xml=_wcNum(xml,'J'+nr,nv2?_getNivelCtm(nv2)||'':'');
     xml=_wcNum(xml,'L'+nr,j+1);
   }
