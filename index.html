@@ -5389,7 +5389,7 @@ var UM_INSTANCE  = 'instance177727';
 var UM_TOKEN     = '0olfbxq3zi0rbsd1';
 
 // ── MODO PRUEBAS ─────────────────────────────────────────────
-var MODO_PRUEBAS  = true;   // ← false para producción
+var MODO_PRUEBAS  = false;  // PRODUCCIÓN
 var TEST_GROUP_ID = '120363424993135472@g.us';
 var PROD_GROUP_ID = '5217821670258-1586464715@g.us'; // Grupo Pozos
 
@@ -5400,6 +5400,7 @@ var UM_URL_IMG   = UM_BASE + '/messages/image';
 
 // ── Enviar texto por Ultramsg ─────────────────────
 function umSendText(texto, callback){
+  console.log('[PRODUCCION] Grupo destino:', UM_TO);
   var body = 'token=' + encodeURIComponent(UM_TOKEN)
            + '&to='   + encodeURIComponent(UM_TO)
            + '&body=' + encodeURIComponent(texto);
