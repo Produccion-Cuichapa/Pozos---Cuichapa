@@ -3395,10 +3395,18 @@ function hcCargar(){
       try{
         var localIds={};
         locales.forEach(function(r){ if(r.id) localIds[r.id]=true; });
+        var fbCount = 0;
         snap.forEach(function(child){
           var r=child.val();
           if(r&&r.id&&!localIds[r.id]) _hcData.push(r);
+          if(r&&r.id) fbCount++;
         });
+        // Si Firebase está vacío, es la fuente de verdad: limpiar local también
+        if(fbCount === 0 && _hcData.length > 0){
+          console.log('[HISTORIAL] Firebase vacío — limpiando localStorage');
+          saveHistorial([]);
+          _hcData = [];
+        }
         _hcFbLoaded=true;
         if(statusEl) statusEl.textContent='✅ '+_hcData.length+' reporte'+(_hcData.length!==1?'s':'')+' · Todos los dispositivos';
         hcRender();
@@ -4405,6 +4413,29 @@ function escucharConfigFirebase(){
   if(!fbDB) return;
 
   // Estado alta/baja
+  // ── Listener: borrado remoto de historial ─────────────────
+  var _hcUltimoBorrado = 0;
+  fbDB.ref('config/historial_borrado_en').on('value', function(snap){
+    var ts = snap.val();
+    if(ts && ts > _hcUltimoBorrado){
+      _hcUltimoBorrado = ts;
+      var local = getHistorial();
+      if(local.length > 0){
+        console.log('[HISTORIAL] Señal de borrado remoto recibida — limpiando local');
+        saveHistorial([]);
+        renderHistorial();
+        actualizarBadgeHistorial();
+        // Si el HC está abierto, recargarlo
+        var hcModal = document.getElementById('historialCentralModal');
+        if(hcModal && hcModal.style.display !== 'none'){
+          _hcData = [];
+          hcRender();
+        }
+        showToast('🗑 Historial central actualizado');
+      }
+    }
+  });
+
   fbDB.ref('config/rec_status').on('value', function(snap){
     if(!snap.exists()) return;
     var statuses = snap.val(), cambioExterno = false;
@@ -6037,7 +6068,12 @@ function hcBorrarReporte(btnEl){
   var id = btnEl && btnEl.getAttribute ? btnEl.getAttribute('data-rid') : String(btnEl||'');
   if(!id){ showToast('❌ ID no encontrado'); return; }
   if(!confirm('¿Borrar este reporte? No se puede deshacer.')) return;
-  if(typeof fbDB !== 'undefined' && fbDB) fbDB.ref('reportes/'+id).remove();
+  if(typeof fbDB !== 'undefined' && fbDB){
+    console.log('[HISTORIAL] Eliminando Firebase reportes/'+id);
+    fbDB.ref('reportes/'+id).remove()
+      .then(function(){ console.log('[HISTORIAL] Eliminado OK:', id); })
+      .catch(function(e){ console.error('[HISTORIAL] Error Firebase:', e); });
+  }
   var hist = getHistorial().filter(function(r){ return String(r.id||r.fbKey||'')!==id; });
   saveHistorial(hist);
   _hcData = _hcData.filter(function(r){ return String(r.id||r.fbKey||'')!==id; });
@@ -6048,13 +6084,51 @@ function hcBorrarReporte(btnEl){
 
 function borrarTodoHistorial(){
   if(!_puedeEliminar()){ showToast('⛔ Sin autorización'); return; }
-  if(!confirm('¿Borrar TODOS los reportes?\nEsta acción es permanente y no se puede deshacer.')) return;
+  if(!confirm(
+    '⚠️ BORRAR HISTORIAL CENTRAL COMPLETO\n\n' +
+    'Esta acción eliminará TODOS los reportes de Firebase\n' +
+    'y se sincronizará con TODOS los dispositivos.\n\n' +
+    '¿Confirmar? Esta acción NO se puede deshacer.'
+  )) return;
+
+  console.log('[HISTORIAL] Iniciando borrado completo...');
+
+  // 1. Limpiar local inmediatamente
   saveHistorial([]);
   _hcData = [];
-  if(typeof fbDB !== 'undefined' && fbDB) fbDB.ref('reportes').remove();
-  renderHistorial(); actualizarBadgeHistorial();
+  renderHistorial();
+  actualizarBadgeHistorial();
   hcRender();
-  showToast('🗑 Historial borrado completamente');
+  showToast('🗑 Borrando historial en todos los dispositivos...');
+
+  if(typeof fbDB !== 'undefined' && fbDB){
+    var ts = Date.now();
+    var ruta = 'reportes';
+    console.log('[HISTORIAL] Ruta:', ruta);
+
+    // 2. Borrar reportes en Firebase
+    fbDB.ref(ruta).remove()
+      .then(function(){
+        console.log('[HISTORIAL] Eliminado OK — Firebase reportes');
+        // 3. Escribir señal para que TODOS los dispositivos limpien local
+        return fbDB.ref('config/historial_borrado_en').set(ts);
+      })
+      .then(function(){
+        console.log('[HISTORIAL] Señal enviada ts:', ts);
+        showToast('✅ Historial eliminado en todos los dispositivos');
+        hcRender();
+      })
+      .catch(function(e){
+        console.error('[HISTORIAL] Error al borrar Firebase:', e);
+        showToast('⚠️ Error al borrar Firebase: ' + (e.message||e));
+      });
+
+    // 4. Borrar también alarmas locales si las hubiera
+    fbDB.ref('alarmas').remove().catch(function(){});
+  } else {
+    showToast('⚠️ Sin Firebase — solo borrado local');
+  }
+  console.log('[HISTORIAL] Local limpiado');
 }
 
 // ── Badge en ícono de historial ───────────────────
