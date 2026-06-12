@@ -3181,6 +3181,12 @@ function alarmCcVerificar(){
 
 function enviarAlarma(){
   console.log('[ALARMA] CLICK ENVIAR');
+  if(_enviandoAhora){ console.log('[ANTI-DUP] bloqueado: alarma doble clic'); return; }
+  var _alKey = _dedupKey(W||'ALARMA', REC, 'alarma');
+  if(_dedupCheck(_alKey)){ showToast('⚠️ Alarma ya enviada recientemente'); return; }
+  _enviandoAhora = true;
+  _dedupMark(_alKey);
+  console.log('[ANTI-DUP] sendId:', _alKey);
   console.log('[ALARMA] INICIO FLUJO');
   var _ov = document.getElementById('alarmConfirmOverlay'); if(_ov) _ov.style.display = 'none';
 
@@ -3276,10 +3282,12 @@ function enviarAlarma(){
           _alarmCcSet('Msg','✅','Enviado correctamente al grupo');
           var nF2 = nFotos;
           _alarmCcSet('Foto', nF2>0?'✅':'📷', nF2>0?nF2+' foto'+(nF2>1?'s':'')+' enviada'+(nF2>1?'s':''):' Sin fotos adjuntas');
+          _enviandoAhora = false;
         } else {
           _alarmCcSet('Msg','⚠️','Sin respuesta — verifica tu señal');
           _alarmCcSet('Foto','⚠️','Pendiente de reenvío');
           showToast('⚠️ Sin señal · Alarma guardada · Se enviará al recuperar señal');
+          _enviandoAhora = false;
         }
         limpiarFotosPostAlarma();
       }, fotosCopy);
@@ -5526,11 +5534,34 @@ function enviarUrlUltramsg(imgUrl, caption, callback){
 function sendImageFormData(base64, caption, callback){ umSendImage(base64, caption, callback); }
 function sendImageBase64Url(b, c, cb){ umSendImage(b, c, cb); }
 
+// ══ ANTI-DUPLICADO WHATSAPP ══════════════════════════════════
+var _enviandoAhora = false;    // bloqueo por clic rápido/doble tap
+var _DEDUP_TTL_MS  = 120000;   // ventana de 2 min
+
+function _dedupKey(pozo, rec, tipo){
+  var slot = Math.floor(Date.now() / _DEDUP_TTL_MS);
+  return 'dup_'+(pozo||'x')+'_'+(rec||'x')+'_'+(tipo||'x')+'_'+slot;
+}
+function _dedupCheck(k){
+  try{ return !!localStorage.getItem(k); }catch(e){ return false; }
+}
+function _dedupMark(k){
+  try{
+    localStorage.setItem(k,'1');
+    setTimeout(function(){ try{localStorage.removeItem(k);}catch(e){}}, _DEDUP_TTL_MS+5000);
+  }catch(e){}
+}
+// ═════════════════════════════════════════════════════════════
+
 // ── Envío completo: texto + fotos ────────────────
 function enviarConUltramsg(id, callback, fotosDirectas){
   var r = getReporte(id);
   if(!r){ if(callback) callback(false); return; }
   if(r.estado === 'enviado'){ if(callback) callback(true); return; }
+  // Guard interno: si este id ya está siendo enviado ahora mismo
+  if(!enviarConUltramsg._inFlight) enviarConUltramsg._inFlight = {};
+  if(enviarConUltramsg._inFlight[id]){ console.log('[ANTI-DUP] enviarConUltramsg bloqueado para id:',id); if(callback) callback(false); return; }
+  enviarConUltramsg._inFlight[id] = true;
 
   // Si se pasan fotos directas (modo alarma), usarlas — evita depender de localStorage
   var fotosSnapshot = fotosDirectas ? fotosDirectas.slice() : (r.fotos || []).slice();
@@ -5543,12 +5574,14 @@ function enviarConUltramsg(id, callback, fotosDirectas){
   umSendText(r.msg, function(okTexto){
     if(!okTexto){
       actualizarEstadoReporte(id, 'pendiente', new Date().toISOString());
+      if(enviarConUltramsg._inFlight) delete enviarConUltramsg._inFlight[id];
       renderHistorial();
       if(callback) callback(false);
       return;
     }
     // Texto enviado — marcar enviado
     actualizarEstadoReporte(id, 'enviado', new Date().toISOString());
+    if(enviarConUltramsg._inFlight) delete enviarConUltramsg._inFlight[id];
     actualizarBadgeHistorial();
     renderHistorial();
 
@@ -5664,6 +5697,12 @@ setTimeout(function(){
 
 function confirmarEnvio(){
   console.log('[VISITAS] CLICK ENVIAR');
+  // ── Anti-duplicado ─────────────────────────────────────────
+  if(_enviandoAhora){ console.log('[ANTI-DUP] bloqueado: clic rápido'); return; }
+  var _sendKey = _dedupKey(W, REC, modoRegistro||'co');
+  if(_dedupCheck(_sendKey)){ showToast('⚠️ Reporte ya enviado recientemente'); console.log('[ANTI-DUP] bloqueado: duplicado',_sendKey); return; }
+  _enviandoAhora = true;
+  console.log('[ANTI-DUP] sendId:', _sendKey);
   try{
   var ov = document.getElementById('confirmOverlay');
   ov.classList.remove('open');
@@ -5790,11 +5829,13 @@ function confirmarEnvio(){
   }, fotosCopy);
 
   console.log('[VISITAS] FIREBASE OK — id:', reporte.id);
+  _dedupMark(_sendKey);   // marcar enviado DESPUÉS de iniciar
 
   }catch(e){
     console.error('[VISITAS] ERROR:', e);
     alert('Error en envío: '+e.message);
-    return;
+  }finally{
+    _enviandoAhora = false;   // siempre liberar
   }
 
   // 5. Limpiar y resetear DESPUÉS de iniciar el envío y mostrar estado
