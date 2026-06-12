@@ -6005,294 +6005,168 @@ var MESES_ES=['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO',
 var RECORREDORES_FULL={'Cirilo':'Cirilo Cancino Gómez','Juan Carlos':'Juan Carlos Flores','Manrique':'Manrique Jiménez P.','Luis':'Luis Carlos Flores Cruz','Jose':'Jose Guadalupe Torres García'};
 var _SOPORTE_ROW={"106D":3,"107":4,"119":5,"124D":6,"128":7,"131":8,"137":9,"138":10,"139":11,"167":12,"169":13,"172":14,"176":15,"179":16,"180":17,"187":18,"19":19,"191":20,"201":21,"207":22,"213":23,"306":24,"324":25,"342":26,"346":27,"350":28,"352":29,"363":30,"364":31,"367":32,"373":33,"376":34,"385":35,"401":36,"407":37,"411":38,"413":39,"419":40,"421":41,"423":42,"427":43,"431":44,"451":45,"452":46,"460":47,"500":48,"502":49,"503":50,"504":51,"505":52,"601":53};
 
-// ── Helpers de fecha (UTC-6 México) ──────────────────────────
+// ── Fecha helpers ─────────────────────────────────────────────
 function _mxDate(iso){return new Date(new Date(iso).getTime()-6*3600000);}
-function _mxDateStr(iso){
-  var d=_mxDate(iso);
-  return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
-}
+function _mxDateStr(iso){var d=_mxDate(iso);return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
 function _fmtFecha(d){return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear();}
 function _sheetLabel(d){return ('0'+d.getDate()).slice(-2)+'-'+['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][d.getMonth()];}
 function _escXml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function _colLetter(n){var s='';n=n-1;while(n>=0){s=String.fromCharCode(65+(n%26))+s;n=Math.floor(n/26)-1;}return s;}
 
-// ── Fetch template con cache ──────────────────────────────────
+// ── Fetch con cache ───────────────────────────────────────────
 function _adminFetch(name,cached,cb){
   if(cached){cb(null,cached);return;}
   fetch('./'+name).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status+': ./'+name);return r.arrayBuffer();}).then(function(b){cb(null,new Uint8Array(b));}).catch(function(e){cb(String(e.message||e),null);});
 }
 
-// ── Leer reportes Firebase + diagnóstico completo ────────────
+// ── Reportes Firebase + filtro por fecha string México ────────
 function _adminReportes(recorredor,fechaIni,fechaFin,cb){
-  console.log('════ [Admin] DIAGNÓSTICO ════');
-  console.log('  fechaInicio:', fechaIni, '  fechaFin:', fechaFin);
-  console.log('  recorredor:', recorredor||'(todos)');
-
   function filtrar(arr){
-    console.log('  Total en fuente:', arr.length);
-    // Filtrar por rango usando comparación de strings de fecha México
-    var byRango=arr.filter(function(r){
-      var ds=_mxDateStr(r.fecha);
-      return ds>=fechaIni && ds<=fechaFin;
-    });
-    console.log('  Después filtro rango:', byRango.length);
-    // Mostrar fechas únicas encontradas
-    var fechasUnicas={};
-    byRango.forEach(function(r){fechasUnicas[_mxDateStr(r.fecha)]=(fechasUnicas[_mxDateStr(r.fecha)]||0)+1;});
-    console.log('  Fechas detectadas:', JSON.stringify(fechasUnicas));
-    if(recorredor){
-      var byRec=byRango.filter(function(r){return r.recorredor===recorredor;});
-      console.log('  Después filtro recorredor ('+recorredor+'):', byRec.length);
-      return byRec;
-    }
-    return byRango;
+    var r1=arr.filter(function(r){var ds=_mxDateStr(r.fecha);return ds>=fechaIni&&ds<=fechaFin;});
+    if(recorredor) r1=r1.filter(function(r){return r.recorredor===recorredor;});
+    return r1;
   }
-
   if(fbDB){
-    // Firebase: usar fechaIni/Fin como límites UTC amplios para capturar todo
-    var fbStart=fechaIni+'T00:00:00.000Z';
-    var fbEnd  =fechaFin+'T23:59:59.999Z';
-    console.log('  Firebase query:', fbStart, '→', fbEnd);
-    fbDB.ref('reportes').orderByChild('fecha').startAt(fbStart).endAt(fbEnd)
+    fbDB.ref('reportes').orderByChild('fecha').startAt(fechaIni+'T00:00:00.000Z').endAt(fechaFin+'T23:59:59.999Z')
       .once('value',function(snap){
         var arr=[];snap.forEach(function(c){arr.push(c.val());});
-        console.log('  Firebase raw devolvió:', arr.length);
         cb(filtrar(arr));
-      },function(e){
-        console.warn('  Firebase error:',e,'. Usando local.');
-        cb(filtrar(getHistorial()));
-      });
-  }else{
-    console.log('  Sin Firebase, usando historial local');
-    cb(filtrar(getHistorial()));
-  }
+      },function(){cb(filtrar(getHistorial()));});
+  }else{cb(filtrar(getHistorial()));}
 }
 
-// ── XML: reemplazar valor de celda conservando s= (estilo) ───
-function _wcSet(xml,addr,val,asNum){
-  // Soporta: <c r="X" s="N" t="s"><v>0</v></c>  y  <c r="X" s="N"/>
-  var reOpen=new RegExp('<c r="'+addr+'"([^>]*)>([\\s\\S]*?)<\\/c>');
-  var reSelf=new RegExp('<c r="'+addr+'"([^/]*)\\/>')
-  var m=reOpen.exec(xml);
-  if(!m) m=reSelf.exec(xml);
-  if(!m) return xml;  // celda no existe en XML
-  var attrs=m[1].replace(/\s+t="[^"]*"/g,'');  // quitar t=, preservar s=
-  var repl;
-  if(val===null||val===undefined||val===''){
-    repl='<c r="'+addr+'"'+attrs+'></c>';
-  }else if(asNum){
-    repl='<c r="'+addr+'"'+attrs+'><v>'+val+'</v></c>';
-  }else{
-    repl='<c r="'+addr+'"'+attrs+' t="inlineStr"><is><t>'+_escXml(String(val))+'</t></is></c>';
-  }
-  return xml.replace(m[0],repl);
-}
-function _wcStr(xml,addr,val){return _wcSet(xml,addr,val,false);}
-function _wcNum(xml,addr,val){
-  if(val===null||val===undefined||val==='')return xml;
-  var n=parseFloat(val);
-  if(isNaN(n))return _wcStr(xml,addr,val);
-  return _wcSet(xml,addr,n,true);
-}
-
-// ══════════════════════════════════════════════════════════════
-// FORMATO DIARIO
-// ══════════════════════════════════════════════════════════════
-
-// ── MODO DIAGNÓSTICO ADMINISTRACIÓN ──────────────────────────
+// ── Diagnóstico visual ────────────────────────────────────────
 function adminDiagnosticar(){
-  var recorredor = document.getElementById('adminRec').value;
-  var fechaIni   = document.getElementById('adminFechaIni').value;
-  var fechaFin   = document.getElementById('adminFechaFin').value;
-  if(!fechaIni||!fechaFin){ showToast('⚠️ Selecciona fechas primero'); return; }
-
-  var diagDiv = document.getElementById('adminDiagResult');
-  diagDiv.style.display="block";
-  diagDiv.innerHTML = '<div style="color:var(--txt2);font-size:12px;padding:10px">🔄 Consultando Firebase...</div>';
-
-  // Buscar SIN filtro de recorredor para ver todo
-  var _tz=6*3600000;
-  var fbStart=fechaIni+'T00:00:00.000Z';
-  var fbEnd  =fechaFin+'T23:59:59.999Z';
-
-  function procesarReportes(arr){
-    console.log('════ DIAGNÓSTICO ADMIN ════');
-    console.log('Firebase total devolvió:', arr.length);
-    if(arr.length>0) console.log('REPORTE PRUEBA (primer elemento):', JSON.stringify(arr[0], null, 2));
-
-    // Filtrar por rango usando fecha México (YYYY-MM-DD string)
-    var enRango = arr.filter(function(r){
-      var ds = _mxDateStr(r.fecha);
-      return ds >= fechaIni && ds <= fechaFin;
-    });
-    console.log('Dentro del rango ('+fechaIni+' - '+fechaFin+'):', enRango.length);
-
-    // Agrupar por día
-    var porDia = {};
-    enRango.forEach(function(r){
-      var ds = _mxDateStr(r.fecha);
-      if(!porDia[ds]) porDia[ds]=[];
-      porDia[ds].push(r);
-    });
-    var diasOrdenados = Object.keys(porDia).sort();
-    console.log('Días detectados:', diasOrdenados);
-
-    // Filtrar por recorredor si está seleccionado
-    var porDiaRec = {};
-    if(recorredor){
-      diasOrdenados.forEach(function(ds){
-        porDiaRec[ds] = porDia[ds].filter(function(r){ return r.recorredor===recorredor; });
-      });
-    }
-
-    // Conteos Soporte por pozo
-    var conteosSoporte = {};
-    enRango.forEach(function(r){
-      var pz = String(r.pozo||'').replace(/^C-/i,'').trim();
-      if(!pz) return;
-      var ds = _mxDateStr(r.fecha);
-      if(!conteosSoporte[pz]) conteosSoporte[pz]={};
-      if(!conteosSoporte[pz][ds]) conteosSoporte[pz][ds]={s:0,n:0,t:0,d:0,a:0,i:0};
-      var c=conteosSoporte[pz][ds];
-      if(!r.esAlarma&&r.modo!=='guardia') c.s++;
-      if(_hasNivel(r)) c.n++;
-      var chk=r.checks||r.registro||{};
-      if(chk.trabajo===true||r.trabajo===true) c.t++;
-      if(chk.drenar===true||r.drenar===true)   c.d++;
-      if(chk.aforo===true||r.aforo===true)     c.a++;
-      if(chk.intermitente===true||r.intermitente===true) c.i++;
-    });
-
-    // ── Construir HTML del diagnóstico ─────────────────────
-    var html = '<div style="font-size:12px;color:var(--txt)">';
-
-    // Sección 1: Rango
-    html += '<div style="font-weight:700;color:var(--accent);margin-bottom:6px">📅 RANGO SOLICITADO</div>';
-    html += '<div style="background:var(--bg);border-radius:8px;padding:8px;margin-bottom:10px;font-size:11px">';
-    html += '• Inicio: <b>'+fechaIni+'</b><br>';
-    html += '• Fin: <b>'+fechaFin+'</b><br>';
-    html += '• Recorredor: <b>'+(recorredor||'(todos)')+'</b>';
-    html += '</div>';
-
-    // Sección 2: Totales
-    html += '<div style="font-weight:700;color:var(--accent);margin-bottom:6px">📊 REPORTES ENCONTRADOS</div>';
-    html += '<div style="background:var(--bg);border-radius:8px;padding:8px;margin-bottom:10px;font-size:11px">';
-    html += '• Total en Firebase: <b>'+arr.length+'</b><br>';
-    html += '• Dentro del rango: <b>'+enRango.length+'</b><br>';
-    html += '<br><b>Por día (todos los recorredores):</b><br>';
-    diasOrdenados.forEach(function(ds){
+  var recorredor=document.getElementById('adminRec').value;
+  var fechaIni=document.getElementById('adminFechaIni').value;
+  var fechaFin=document.getElementById('adminFechaFin').value;
+  if(!fechaIni||!fechaFin){showToast('⚠️ Selecciona fechas primero');return;}
+  var diagDiv=document.getElementById('adminDiagResult');
+  diagDiv.style.display='block';
+  diagDiv.innerHTML='<div style="color:var(--txt2);font-size:12px;padding:10px">🔄 Consultando Firebase...</div>';
+  function procesarDiag(arr){
+    console.log('════ DIAGNÓSTICO ════');
+    console.log('Firebase devolvió:',arr.length,'reportes');
+    var enRango=arr.filter(function(r){var ds=_mxDateStr(r.fecha);return ds>=fechaIni&&ds<=fechaFin;});
+    console.log('En rango:',enRango.length);
+    if(enRango.length>0){console.log('REPORTE PRUEBA:',JSON.stringify(enRango[0],null,2));}
+    var porDia={};
+    enRango.forEach(function(r){var ds=_mxDateStr(r.fecha);if(!porDia[ds])porDia[ds]=[];porDia[ds].push(r);});
+    var dias=Object.keys(porDia).sort();
+    var html='<div style="font-size:11px;color:var(--txt)">';
+    html+='<b style="color:var(--accent)">📅 RANGO:</b> '+fechaIni+' → '+fechaFin+'<br>';
+    html+='Firebase: '+arr.length+' | En rango: '+enRango.length+'<br><br>';
+    html+='<b>Días detectados:</b><br>';
+    dias.forEach(function(ds){
       var d=new Date(ds+'T12:00:00');
       var lbl=_sheetLabel(d);
-      html += '&nbsp;&nbsp;'+ds+' ('+lbl+'): <b>'+porDia[ds].length+'</b> reportes<br>';
+      var recN=recorredor?porDia[ds].filter(function(r){return r.recorredor===recorredor;}).length:porDia[ds].length;
+      html+='&nbsp;'+ds+' ('+lbl+'): <b>'+porDia[ds].length+'</b> total / <b>'+recN+'</b> '+(recorredor||'todos')+'<br>';
     });
-    if(recorredor){
-      html += '<br><b>Por día ('+recorredor+'):</b><br>';
-      diasOrdenados.forEach(function(ds){
-        var d=new Date(ds+'T12:00:00');
-        var lbl=_sheetLabel(d);
-        var n=porDiaRec[ds]?porDiaRec[ds].length:0;
-        html += '&nbsp;&nbsp;'+ds+' ('+lbl+'): <b>'+n+'</b> reportes<br>';
-      });
-    }
-    html += '</div>';
-
-    // Sección 3: Hojas a generar
-    html += '<div style="font-weight:700;color:var(--accent);margin-bottom:6px">📋 HOJAS A GENERAR (Formato Diario)</div>';
-    html += '<div style="background:var(--bg);border-radius:8px;padding:8px;margin-bottom:10px;font-size:11px">';
-    if(!recorredor){
-      html += '⚠️ Selecciona un recorredor para ver las hojas';
-    } else {
-      var hojasARec = diasOrdenados.filter(function(ds){ return porDiaRec[ds]&&porDiaRec[ds].length>0; });
-      if(hojasARec.length===0){
-        html += '❌ No hay hojas para generar — 0 reportes de '+recorredor+' en el rango';
-      } else {
-        hojasARec.forEach(function(ds){
-          var d=new Date(ds+'T12:00:00');
-          html += '✅ <b>'+_sheetLabel(d)+'</b> — '+porDiaRec[ds].length+' reportes<br>';
-        });
-      }
-    }
-    html += '</div>';
-
-    // Sección 4: Campos del primer reporte
     if(enRango.length>0){
       var r0=enRango[0];
-      html += '<div style="font-weight:700;color:var(--accent);margin-bottom:6px">🔍 CAMPOS DEL PRIMER REPORTE</div>';
-      html += '<div style="background:var(--bg);border-radius:8px;padding:8px;margin-bottom:10px;font-size:10px;font-family:monospace;word-break:break-all">';
-      var campos=['pozo','recorredor','fecha','hora','modo','esAlarma','estatus','fluye','sap','ptp','ldd','ptr','lbn','ctm','bls','nivel','checks','trabajo','drenar','aforo','intermitente','observaciones'];
-      campos.forEach(function(k){
+      html+='<br><b>Campos primer reporte:</b><br>';
+      ['pozo','recorredor','fecha','modo','esAlarma','hora','estatus','fluye','sap','ptp','ctm','bls','nivel','checks'].forEach(function(k){
         var v=r0[k];
-        if(v!==undefined) html += '<b>'+k+'</b>: '+JSON.stringify(v)+'<br>';
-        else html += '<span style="color:var(--txt2)"><b>'+k+'</b>: (no existe)</span><br>';
+        html+='&nbsp;<b>'+k+'</b>: '+(v===undefined?'<span style="color:var(--txt2)">(sin campo)</span>':JSON.stringify(v).slice(0,60))+'<br>';
       });
-      html += '</div>';
     }
-
-    // Sección 5: Tabla Soporte (primeros 10 pozos)
-    var pozosConDatos = Object.keys(conteosSoporte).filter(function(pz){
-      return Object.values(conteosSoporte[pz]).some(function(d){return d.s||d.n||d.t||d.d||d.a||d.i;});
-    }).slice(0,15);
-    if(pozosConDatos.length>0){
-      html += '<div style="font-weight:700;color:var(--accent2);margin-bottom:6px">📊 CONTEOS SOPORTE ('+pozosConDatos.length+' pozos con datos)</div>';
-      html += '<div style="overflow-x:auto;margin-bottom:10px">';
-      html += '<table style="font-size:10px;border-collapse:collapse;width:100%">';
-      html += '<tr style="background:var(--accent2);color:#fff"><th style="padding:3px 5px">Pozo</th><th>Día</th><th>SUP</th><th>NIV</th><th>TRAB</th><th>DREN</th><th>AFOR</th><th>INT</th></tr>';
-      var altRow=false;
-      pozosConDatos.forEach(function(pz){
-        diasOrdenados.forEach(function(ds){
-          var c=conteosSoporte[pz]&&conteosSoporte[pz][ds];
-          if(!c||(!c.s&&!c.n&&!c.t&&!c.d&&!c.a&&!c.i)) return;
-          var d=new Date(ds+'T12:00:00');
-          var bg=altRow?'var(--surface2)':'var(--bg)';
-          html += '<tr style="background:'+bg+'"><td style="padding:2px 5px;font-weight:500">C-'+pz+'</td><td>'+_sheetLabel(d)+'</td>';
-          html += '<td style="text-align:center">'+c.s+'</td>';
-          html += '<td style="text-align:center;color:'+(c.n?'var(--accent)':'var(--txt2)')+'">'+c.n+'</td>';
-          html += '<td style="text-align:center;color:'+(c.t?'var(--accent)':'var(--txt2)')+'">'+c.t+'</td>';
-          html += '<td style="text-align:center;color:'+(c.d?'var(--accent)':'var(--txt2)')+'">'+c.d+'</td>';
-          html += '<td style="text-align:center;color:'+(c.a?'var(--accent)':'var(--txt2)')+'">'+c.a+'</td>';
-          html += '<td style="text-align:center;color:'+(c.i?'var(--accent)':'var(--txt2)')+'">'+c.i+'</td></tr>';
-          altRow=!altRow;
+    // Conteos soporte
+    var counts={};
+    enRango.forEach(function(r){
+      var pz=String(r.pozo||'').replace(/^C-/i,'').trim();if(!pz)return;
+      var ds=_mxDateStr(r.fecha);
+      if(!counts[pz])counts[pz]={};
+      if(!counts[pz][ds])counts[pz][ds]={s:0,n:0,t:0,d:0,a:0,i:0};
+      var c=counts[pz][ds];
+      if(!r.esAlarma&&r.modo!=='guardia')c.s++;
+      if(_hasNivel(r))c.n++;
+      var chk=r.checks||r.registro||{};
+      if(chk.trabajo===true||r.trabajo===true||_msgHas(r,'Trabajo'))c.t++;
+      if(chk.drenar===true||r.drenar===true||_msgHas(r,'Drenar'))c.d++;
+      if(chk.aforo===true||r.aforo===true||_msgHas(r,'Aforo'))c.a++;
+      if(chk.intermitente===true||r.intermitente===true||_msgHas(r,'Intermitente'))c.i++;
+    });
+    var pzKeys=Object.keys(counts).filter(function(pz){return Object.values(counts[pz]).some(function(c){return c.s||c.n||c.t||c.d||c.a||c.i;});}).slice(0,10);
+    if(pzKeys.length){
+      html+='<br><b>Conteos Soporte ('+pzKeys.length+' pozos):</b><br>';
+      html+='<table style="font-size:10px;border-collapse:collapse"><tr style="background:var(--accent);color:#fff"><th style="padding:2px 4px">Pozo</th><th>Día</th><th>S</th><th>N</th><th>T</th><th>D</th><th>A</th><th>I</th></tr>';
+      pzKeys.forEach(function(pz){
+        dias.forEach(function(ds){
+          var c=counts[pz]&&counts[pz][ds];if(!c||(c.s+c.n+c.t+c.d+c.a+c.i===0))return;
+          html+='<tr><td style="padding:2px 4px">C-'+pz+'</td><td>'+ds.slice(8)+'</td><td>'+c.s+'</td><td>'+c.n+'</td><td>'+c.t+'</td><td>'+c.d+'</td><td>'+c.a+'</td><td>'+c.i+'</td></tr>';
         });
       });
-      html += '</table></div>';
-      // Advertencia si todos los conteos de nivel/checks son 0
-      var totalNiv=0,totalTrab=0;
-      pozosConDatos.forEach(function(pz){
-        diasOrdenados.forEach(function(ds){
-          var c=conteosSoporte[pz]&&conteosSoporte[pz][ds];
-          if(c){totalNiv+=c.n;totalTrab+=c.t;}
-        });
-      });
-      if(totalNiv===0){
-        html += '<div style="background:#FEE2E2;border-radius:8px;padding:8px;font-size:11px;color:#991B1B;margin-bottom:8px">';
-        html += '⚠️ <b>NIVEL=0 en todos los reportes.</b> El campo <code>nivel.ctm</code>, <code>r.ctm</code> y <code>r.bls</code> son null o inexistentes en los datos del rango seleccionado. Esto es normal para reportes pre-FASE 1 que no registraron nivel.';
-        html += '</div>';
-      }
-      if(totalTrab===0){
-        html += '<div style="background:#FEF3C7;border-radius:8px;padding:8px;font-size:11px;color:#92400E;margin-bottom:8px">';
-        html += '⚠️ <b>TRABAJO=0 en todos los reportes.</b> Los campos <code>checks.trabajo</code> y <code>r.trabajo</code> son null/false. Reportes pre-FASE 1 no tienen campos estructurados de checks.';
-        html += '</div>';
-      }
+      html+='</table>';
     }
-
-    html += '</div>';
-    diagDiv.innerHTML = html;
+    html+='</div>';
+    diagDiv.innerHTML=html;
   }
-
-  if(typeof fbDB !== 'undefined' && fbDB){
-    fbDB.ref('reportes').orderByChild('fecha').startAt(fbStart).endAt(fbEnd)
-      .once('value', function(snap){
-        var arr=[]; snap.forEach(function(c){ arr.push(c.val()); });
-        procesarReportes(arr);
-      }, function(e){
-        console.warn('Firebase error:', e);
-        procesarReportes(getHistorial());
-      });
-  } else {
-    procesarReportes(getHistorial());
-  }
+  if(fbDB){
+    fbDB.ref('reportes').orderByChild('fecha').startAt(fechaIni+'T00:00:00.000Z').endAt(fechaFin+'T23:59:59.999Z')
+      .once('value',function(snap){var arr=[];snap.forEach(function(c){arr.push(c.val());});procesarDiag(arr);},
+      function(){procesarDiag(getHistorial());});
+  }else{procesarDiag(getHistorial());}
 }
 
+// ── Helpers de campos ─────────────────────────────────────────
+function _hasNivel(r){
+  if(r.nivel&&typeof r.nivel==='object'&&(r.nivel.ctm||r.nivel.bls))return true;
+  if(r.ctm||r.bls)return true;
+  if(r.modo==='guardia')return true;
+  if(r.msg&&/CTM:\s*[\d.]+\s*cm/i.test(r.msg))return true;
+  if(r.msg&&/Centímetros:\s*[\d.]+/i.test(r.msg))return true;
+  return false;
+}
+function _msgHas(r,campo){
+  if(!r.msg)return false;
+  return new RegExp('✅\\s*'+campo,'i').test(r.msg);
+}
+
+// ── XML: reemplazar valor de celda preservando s= ─────────────
+function _wcSet(xml,addr,val,asNum){
+  var reO=new RegExp('<c r="'+addr+'"([^>]*)>([\\s\\S]*?)<\\/c>');
+  var reS=new RegExp('<c r="'+addr+'"([^/]*)\\/>')
+  var m=reO.exec(xml);if(!m)m=reS.exec(xml);
+  if(!m)return xml;
+  var attrs=m[1].replace(/\s+t="[^"]*"/g,'');
+  if(val===null||val===undefined||val==='')return xml.replace(m[0],'<c r="'+addr+'"'+attrs+'></c>');
+  if(asNum)return xml.replace(m[0],'<c r="'+addr+'"'+attrs+'><v>'+val+'</v></c>');
+  return xml.replace(m[0],'<c r="'+addr+'"'+attrs+' t="inlineStr"><is><t>'+_escXml(String(val))+'</t></is></c>');
+}
+function _wcStr(xml,a,v){return _wcSet(xml,a,v,false);}
+function _wcNum(xml,a,v){
+  if(v===null||v===undefined||v==='')return xml;
+  var n=parseFloat(v);return _wcSet(xml,a,isNaN(n)?v:n,!isNaN(n));
+}
+
+// ── Parsear campo de reporte con fallback a msg ───────────────
+function _rField(r,field){
+  if(r[field]!==undefined&&r[field]!==null)return r[field];
+  // Fallback: extraer del msg para datos pre-FASE 1
+  if(!r.msg)return null;
+  var pats={
+    'hora':    /(\d{1,2}:\d{2}\s*[apm\.]+)/i,
+    'estatus': /Estatus:\s*(.+)/,
+    'fluye':   /Fluye:\s*(.+)/,
+    'sap':     /SAP:\s*(\w+)/,
+    'ptp':     /PTP:\s*([\d\.\-]+)/,
+    'ldd':     /LDD:\s*([\d\.\-]+)/,
+    'ptr':     /PTR:\s*([\d\.\-]+)/,
+    'lbn':     /LBN:\s*([\d\.\-]+)/,
+    'epm':     /Vel:\s*([\d\.]+)\s*EPM/,
+    'carrera': /Car:\s*([\d\.]+)\s*pulg/,
+    'observaciones': /📝\s*(.+)/,
+    'ctm':     /CTM:\s*([\d\.]+)\s*cm/,
+    'bls':     /BLS:\s*([\d\.]+)\s*bls/
+  };
+  var pat=pats[field];if(!pat)return null;
+  var m=pat.exec(r.msg);return m?m[1].trim():null;
+}
+
+// ══════════════════════════════════════════════════════════════
+// FORMATO DIARIO — solo hojas del rango, elimina el resto
+// ══════════════════════════════════════════════════════════════
 function adminGenerarDiario(recorredor,fechaIni,fechaFin){
   if(!recorredor||!fechaIni||!fechaFin){showToast('⚠️ Selecciona recorredor y fechas');return;}
   showToast('🔄 Cargando datos...');
@@ -6301,31 +6175,26 @@ function adminGenerarDiario(recorredor,fechaIni,fechaFin){
     _adminDiarioTpl=bytes;
     _adminReportes(recorredor,fechaIni,fechaFin,function(reportes){
       if(!reportes.length){showToast('⚠️ Sin reportes en ese rango');return;}
-      // Agrupar por fecha México (YYYY-MM-DD)
       var byDay={};
       reportes.forEach(function(r){
         var ds=_mxDateStr(r.fecha);
-        if(!byDay[ds])byDay[ds]={dateStr:ds,date:_mxDate(r.fecha),list:[]};
+        if(!byDay[ds])byDay[ds]={ds:ds,date:_mxDate(r.fecha),list:[]};
         byDay[ds].list.push(r);
       });
-      var days=Object.values(byDay).sort(function(a,b){return a.dateStr<b.dateStr?-1:1;});
-      // Log por día
-      days.forEach(function(d){
-        var co=d.list.filter(function(r){return !r.esAlarma&&(r.modo==='co'||r.modo==='undefined'||!r.modo);}).length;
-        console.log('  [Diario] '+_sheetLabel(d.date)+': '+d.list.length+' reportes ('+co+' C.O.)');
-      });
+      var days=Object.values(byDay).sort(function(a,b){return a.ds<b.ds?-1:1;});
+      console.log('[Diario] días encontrados:',days.map(function(d){return d.ds+'('+d.list.length+')'}));
       showToast('⚙️ Generando '+days.length+' hoja(s)...');
-      _buildDiario(bytes,recorredor,fechaIni,fechaFin,days);
+      _buildDiario(bytes,recorredor,days);
     });
   });
 }
 
-function _buildDiario(tplBytes,recorredor,fechaIni,fechaFin,days){
+function _buildDiario(tplBytes,recorredor,days){
   if(typeof JSZip==='undefined'){showToast('⚠️ JSZip no cargado');return;}
   JSZip.loadAsync(tplBytes).then(function(zip){
     return zip.file('xl/workbook.xml').async('string').then(function(wbXml){
       return zip.file('xl/_rels/workbook.xml.rels').async('string').then(function(wbRels){
-        // Mapa rId → archivo
+        // rId → filename
         var relMap={};
         (wbRels.match(/<Relationship [^>]*>/g)||[]).forEach(function(rel){
           var id=(rel.match(/Id="([^"]+)"/)||[])[1];
@@ -6333,46 +6202,57 @@ function _buildDiario(tplBytes,recorredor,fechaIni,fechaFin,days){
           if(id&&tg)relMap[id]=tg;
         });
         // Hojas reales
-        var sheetEntries=[];
+        var allSheets=[];
         (wbXml.match(/<sheet [^>]*\/>/g)||[]).forEach(function(sh){
           var nm=(sh.match(/name="([^"]+)"/)||[])[1]||'';
+          var sid=(sh.match(/sheetId="([^"]+)"/)||[])[1]||'';
           var rid=(sh.match(/r:id="([^"]+)"/)||[])[1]||'';
           if(nm&&!nm.startsWith('_xlnm')&&!nm.includes('microsoft.com'))
-            sheetEntries.push({name:nm,rId:rid});
+            allSheets.push({name:nm,sheetId:sid,rId:rid,orig:sh});
         });
-        console.log('[Diario] Hojas plantilla:',sheetEntries.map(function(s){return s.name;}));
-        console.log('[Diario] Días a procesar:',days.map(function(d){return _sheetLabel(d.date);}));
+        console.log('[Diario] Hojas plantilla:',allSheets.map(function(s){return s.name;}));
+        console.log('[Diario] Hojas a generar:',days.map(function(d){return _sheetLabel(d.date);}));
 
-        var newWbXml=wbXml;
         var nombre=RECORREDORES_FULL[recorredor]||recorredor;
         var promises=[];
+        // Solo procesar hasta days.length hojas
+        var sheetsToUse=allSheets.slice(0,days.length);
+        var sheetsToRemove=allSheets.slice(days.length);
 
-        sheetEntries.forEach(function(sheet,idx){
-          if(idx>=days.length){return;}  // no hay más días para este sheet
+        // Construir nuevo workbook.xml con solo las hojas del rango
+        var newWbXml=wbXml;
+        // Eliminar hojas fuera del rango del workbook.xml
+        sheetsToRemove.forEach(function(sh){
+          newWbXml=newWbXml.replace(sh.orig,'');
+        });
+
+        sheetsToUse.forEach(function(sheet,idx){
           (function(sh,dayObj){
             var label=_sheetLabel(dayObj.date);
             var fecha=_fmtFecha(dayObj.date);
-            // Renombrar hoja solo si el nombre cambia
-            if(sh.name!==label){
-              newWbXml=newWbXml.replace('name="'+sh.name+'"','name="'+_escXml(label)+'"');
-            }
-            var shFile='xl/'+(relMap[sh.rId]||('worksheets/sheet'+(idx+1)+'.xml'));
-            // CO: incluir cualquier reporte que NO sea alarma ni guardia
-            var coRpts=dayObj.list.filter(function(r){
-              return !r.esAlarma && r.modo!=='guardia';
-            });
-            var nvRpts=dayObj.list.filter(function(r){
-              return (r.nivel&&(r.nivel.ctm||r.nivel.bls))||r.ctm||r.bls||r.modo==='guardia';
-            });
-            console.log('[Diario] Procesando hoja',label,'(',sh.name,'): CO='+coRpts.length+' Niv='+nvRpts.length);
+            // Renombrar si hace falta
+            newWbXml=newWbXml.replace('name="'+sh.name+'"','name="'+_escXml(label)+'"');
+            var shFile='xl/'+(relMap[sh.rId]||'worksheets/sheet'+(idx+1)+'.xml');
+            var coRpts=dayObj.list.filter(function(r){return !r.esAlarma&&r.modo!=='guardia';});
+            var nvRpts=dayObj.list.filter(function(r){return _hasNivel(r);});
+            console.log('[Diario] Hoja',label,': CO='+coRpts.length+' Niv='+nvRpts.length,'shFile='+shFile);
             var f=zip.file(shFile);
-            if(!f){console.warn('[Diario] Archivo no encontrado:',shFile);return;}
+            if(!f){console.warn('[Diario] NOT FOUND:',shFile);return;}
             promises.push(f.async('string').then(function(shXml){
-              console.log('[Diario] Sheet XML leído para',label,'(',shXml.length,'chars)');
+              console.log('[Diario] XML cargado',label,'('+shXml.length+' chars), coRpts='+coRpts.length);
               var filled=_fillDiarioSheet(shXml,nombre,fecha,coRpts,nvRpts);
               zip.file(shFile,filled);
             }));
           })(sheet,days[idx]);
+        });
+
+        // Eliminar archivos de hojas fuera del rango del ZIP
+        sheetsToRemove.forEach(function(sh){
+          var fn=relMap[sh.rId];
+          if(fn){
+            zip.remove('xl/'+fn);
+            zip.remove('xl/worksheets/_rels/'+fn.split('/').pop()+'.rels');
+          }
         });
 
         return Promise.all(promises).then(function(){
@@ -6383,8 +6263,9 @@ function _buildDiario(tplBytes,recorredor,fechaIni,fechaFin,days){
     });
   }).then(function(blob){
     var a=document.createElement('a');a.href=URL.createObjectURL(blob);
-    a.download='Reporte_'+recorredor+'_'+fechaIni+(fechaFin!==fechaIni?'_'+fechaFin:'')+'.xlsx';
-    a.click();showToast('✅ Excel descargado');
+    var d0=days[0],d1=days[days.length-1];
+    a.download='Reporte_'+recorredor+'_'+d0.ds+(days.length>1?'_'+d1.ds:'')+'.xlsx';
+    a.click();showToast('✅ '+days.length+' hoja(s) generadas');
   }).catch(function(e){showToast('❌ '+(e.message||e));console.error('[Diario]',e);});
 }
 
@@ -6392,25 +6273,23 @@ function _fillDiarioSheet(xml,nombre,fecha,coRpts,nvRpts){
   xml=_wcStr(xml,'D3',nombre);
   xml=_wcStr(xml,'P3',fecha);
   xml=_wcStr(xml,'J3','');
-  // Sobreescribir TODAS las filas 7-27 (así se limpian las anteriores y se preservan bordes)
   for(var i=0;i<21;i++){
-    var r7=7+i;
+    var row=7+i;
     var r=i<coRpts.length?coRpts[i]:null;
-    xml=_wcNum(xml,'B'+r7,i+1);
-    xml=_wcStr(xml,'C'+r7,r&&r.pozo?'C-'+r.pozo:'');
-    xml=_wcStr(xml,'D'+r7,r?r.hora||'':'');
-    xml=_wcStr(xml,'E'+r7,r?r.estatus||'':'');
-    xml=_wcStr(xml,'F'+r7,r?r.fluye||'':'');
-    xml=_wcStr(xml,'G'+r7,r?r.sap||'':'');
-    xml=_wcStr(xml,'H'+r7,r?r.estrang||'':'');
-    xml=_wcNum(xml,'I'+r7,r?r.ptp:null);
-    xml=_wcNum(xml,'J'+r7,r?r.ldd:null);
-    xml=_wcNum(xml,'K'+r7,r?r.ptr:null);
-    xml=_wcNum(xml,'L'+r7,r?r.epm:null);
-    xml=_wcNum(xml,'M'+r7,r?r.carrera:null);
-    xml=_wcStr(xml,'N'+r7,r?r.observaciones||r.obs||'':'');
+    xml=_wcNum(xml,'B'+row,i+1);
+    xml=_wcStr(xml,'C'+row,r&&r.pozo?'C-'+r.pozo:'');
+    xml=_wcStr(xml,'D'+row,r?_rField(r,'hora')||'':'');
+    xml=_wcStr(xml,'E'+row,r?_rField(r,'estatus')||'':'');
+    xml=_wcStr(xml,'F'+row,r?_rField(r,'fluye')||'':'');
+    xml=_wcStr(xml,'G'+row,r?_rField(r,'sap')||'':'');
+    xml=_wcStr(xml,'H'+row,r?r.estrang||'':'');
+    xml=_wcNum(xml,'I'+row,r?_rField(r,'ptp'):null);
+    xml=_wcNum(xml,'J'+row,r?_rField(r,'ldd'):null);
+    xml=_wcNum(xml,'K'+row,r?_rField(r,'ptr'):null);
+    xml=_wcNum(xml,'L'+row,r?_rField(r,'epm'):null);
+    xml=_wcNum(xml,'M'+row,r?_rField(r,'carrera'):null);
+    xml=_wcStr(xml,'N'+row,r?_rField(r,'observaciones')||r.obs||'':'');
   }
-  // Niveles filas 32-46
   var am=nvRpts.filter(function(r){return _mxDate(r.fecha).getHours()<14;});
   var pm=nvRpts.filter(function(r){return _mxDate(r.fecha).getHours()>=14;});
   for(var j=0;j<15;j++){
@@ -6418,20 +6297,20 @@ function _fillDiarioSheet(xml,nombre,fecha,coRpts,nvRpts){
     var nv1=j<am.length?am[j]:null;
     var nv2=j<pm.length?pm[j]:null;
     xml=_wcNum(xml,'B'+nr,j+1);
-    xml=_wcStr(xml,'C'+nr,nv1&&nv1.pozo?'C-'+nv1.pozo:'');
-    xml=_wcStr(xml,'D'+nr,nv1?(nv1.nivel&&nv1.nivel.hora)||nv1.hora||'':'');
-    xml=_wcNum(xml,'E'+nr,nv1?(nv1.nivel&&nv1.nivel.ctm)||nv1.ctm||'':'');
+    xml=_wcStr(xml,'C'+nr,nv1?'C-'+nv1.pozo:'');
+    xml=_wcStr(xml,'D'+nr,nv1?_rField(nv1,'hora')||'':'');
+    xml=_wcNum(xml,'E'+nr,nv1?_rField(nv1,'ctm')||'':'');
     xml=_wcNum(xml,'G'+nr,j+1);
-    xml=_wcStr(xml,'H'+nr,nv2&&nv2.pozo?'C-'+nv2.pozo:'');
-    xml=_wcStr(xml,'I'+nr,nv2?(nv2.nivel&&nv2.nivel.hora)||nv2.hora||'':'');
-    xml=_wcNum(xml,'J'+nr,nv2?(nv2.nivel&&nv2.nivel.ctm)||nv2.ctm||'':'');
+    xml=_wcStr(xml,'H'+nr,nv2?'C-'+nv2.pozo:'');
+    xml=_wcStr(xml,'I'+nr,nv2?_rField(nv2,'hora')||'':'');
+    xml=_wcNum(xml,'J'+nr,nv2?_rField(nv2,'ctm')||'':'');
     xml=_wcNum(xml,'L'+nr,j+1);
   }
   return xml;
 }
 
 // ══════════════════════════════════════════════════════════════
-// SOPORTE / CONCENTRADO
+// SOPORTE — usa plantilla original, solo escribe conteos
 // ══════════════════════════════════════════════════════════════
 function adminGenerarSoporte(fechaIni,fechaFin){
   if(!fechaIni||!fechaFin){showToast('⚠️ Selecciona rango de fechas');return;}
@@ -6441,44 +6320,10 @@ function adminGenerarSoporte(fechaIni,fechaFin){
     _adminSoporteTpl=bytes;
     _adminReportes(null,fechaIni,fechaFin,function(reportes){
       if(!reportes.length){showToast('⚠️ Sin reportes en ese rango');return;}
-      _adminLogConteos(reportes,fechaIni);
       showToast('⚙️ Generando Soporte...');
       _buildSoporte(bytes,fechaIni,fechaFin,reportes);
     });
   });
-}
-
-function _adminLogConteos(reportes,fechaIni){
-  var pozos={};
-  reportes.forEach(function(r){
-    var pz=String(r.pozo||'').replace(/^C-/i,'').trim();
-    if(!pz)return;
-    if(!pozos[pz])pozos[pz]={};
-    var ds=_mxDateStr(r.fecha);
-    if(!pozos[pz][ds])pozos[pz][ds]={s:0,n:0,t:0,d:0,a:0,i:0};
-    var c=pozos[pz][ds];
-    if(!r.esAlarma&&r.modo!=='guardia')c.s++;
-    if(_hasNivel(r))c.n++;
-    var chk=r.checks||r.registro||{};
-    if(chk.trabajo===true||r.trabajo===true)c.t++;
-    if(chk.drenar===true||r.drenar===true)c.d++;
-    if(chk.aforo===true||r.aforo===true)c.a++;
-    if(chk.intermitente===true||r.intermitente===true)c.i++;
-  });
-  // Mostrar C-106D como ejemplo
-  var pz106=pozos['106D']||{};
-  console.log('[Soporte] Pozos detectados:',Object.keys(pozos).sort().join(', '));
-  for(var ds in pz106){
-    var c=pz106[ds];
-    console.log('[Soporte] C-106D',ds+': SUPER='+c.s+' NIVEL='+c.n+' TRABAJO='+c.t+' DRENAR='+c.d+' AFORO='+c.a+' INTERM='+c.i);
-  }
-}
-
-function _hasNivel(r){
-  if(r.nivel&&typeof r.nivel==='object'){if(r.nivel.ctm||r.nivel.bls||r.nivel.hora)return true;}
-  if(r.ctm||r.bls)return true;
-  if(r.modo==='guardia')return true;
-  return false;
 }
 
 function _buildSoporte(tplBytes,fechaIni,fechaFin,reportes){
@@ -6504,58 +6349,46 @@ function _buildSoporte(tplBytes,fechaIni,fechaFin,reportes){
 }
 
 function _fillSoporte(shXml,fechaIni,reportes){
-  // Contar por pozo normalizado y fecha México
+  var refMon=parseInt(fechaIni.slice(5,7));
+  var refYear=parseInt(fechaIni.slice(0,4));
   var counts={};
   reportes.forEach(function(r){
-    var pz=String(r.pozo||'').replace(/^C-/i,'').trim();
-    if(!pz||pz.length>6)return;
+    var pz=String(r.pozo||'').replace(/^C-/i,'').trim();if(!pz||pz.length>6)return;
     var ds=_mxDateStr(r.fecha);
-    var day=parseInt(ds.slice(-2));
-    if(day<1||day>31)return;
-    var mon=parseInt(ds.slice(5,7));
-    var refMon=parseInt(fechaIni.slice(5,7));
-    if(mon!==refMon)return;
+    var year=parseInt(ds.slice(0,4)),mon=parseInt(ds.slice(5,7)),day=parseInt(ds.slice(8));
+    if(year!==refYear||mon!==refMon||day<1||day>31)return;
     if(!counts[pz])counts[pz]={};
     if(!counts[pz][day])counts[pz][day]={s:0,n:0,t:0,d:0,a:0,i:0};
     var c=counts[pz][day];
     if(!r.esAlarma&&r.modo!=='guardia')c.s++;
     if(_hasNivel(r))c.n++;
     var chk=r.checks||r.registro||{};
-    if(chk.trabajo===true||r.trabajo===true)c.t++;
-    if(chk.drenar===true||r.drenar===true)c.d++;
-    if(chk.aforo===true||r.aforo===true)c.a++;
-    if(chk.intermitente===true||r.intermitente===true)c.i++;
+    if(chk.trabajo===true||r.trabajo===true||_msgHas(r,'Trabajo'))c.t++;
+    if(chk.drenar===true||r.drenar===true||_msgHas(r,'Drenar'))c.d++;
+    if(chk.aforo===true||r.aforo===true||_msgHas(r,'Aforo'))c.a++;
+    if(chk.intermitente===true||r.intermitente===true||_msgHas(r,'Intermitente'))c.i++;
   });
-
   var filled=0;
   for(var pz in counts){
-    var row=_SOPORTE_ROW[pz];
-    if(!row){console.warn('[Soporte] Sin fila para pozo:',pz);continue;}
+    var row=_SOPORTE_ROW[pz];if(!row)continue;
     for(var day in counts[pz]){
-      var d=parseInt(day);
-      var c=counts[pz][d];
-      var cb=6+(d-1)*8;  // F=6 para día 1, AT=46 para día 6, BB=54 para día 7
+      var d=parseInt(day);var c=counts[pz][d];
+      var cb=6+(d-1)*8;
       [{o:0,v:c.s},{o:1,v:c.n},{o:2,v:c.t},{o:3,v:c.d},{o:5,v:c.a},{o:6,v:c.i}].forEach(function(p){
         if(!p.v)return;
-        shXml=_soSetVal(shXml,_colLetter(cb+p.o)+row,p.v);
-        filled++;
+        var addr=_colLetter(cb+p.o)+row;
+        shXml=_soSetVal(shXml,addr,p.v);filled++;
       });
     }
   }
-  console.log('[Soporte] Celdas llenadas:',filled);
+  console.log('[Soporte] Celdas escritas:',filled,'en',Object.keys(counts).length,'pozos');
   return shXml;
 }
-
 function _soSetVal(xml,addr,val){
-  var reOpen=new RegExp('<c r="'+addr+'"([^>]*)>([\\s\\S]*?)<\\/c>');
-  var reSelf=new RegExp('<c r="'+addr+'"([^/]*)\\/>')
-  var m=reOpen.exec(xml);
-  if(!m)m=reSelf.exec(xml);
-  if(m){
-    if(m[0].indexOf('<f>')!==-1)return xml;
-    var attrs=m[1].replace(/\s+t="[^"]*"/g,'');
-    return xml.replace(m[0],'<c r="'+addr+'"'+attrs+'><v>'+val+'</v></c>');
-  }
+  var reO=new RegExp('<c r="'+addr+'"([^>]*)>([\\s\\S]*?)<\\/c>');
+  var reS=new RegExp('<c r="'+addr+'"([^/]*)\\/>');
+  var m=reO.exec(xml);if(!m)m=reS.exec(xml);
+  if(m){if(m[0].indexOf('<f>')!==-1)return xml;var a=m[1].replace(/\s+t="[^"]*"/g,'');return xml.replace(m[0],'<c r="'+addr+'"'+a+'><v>'+val+'</v></c>');}
   var rn=addr.match(/\d+$/)[0];
   var rp=new RegExp('(<row r="'+rn+'"[^>]*>)');
   if(rp.test(xml))return xml.replace(rp,'$1<c r="'+addr+'"><v>'+val+'</v></c>');
