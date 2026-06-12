@@ -6087,11 +6087,25 @@ function _rField(r,field){
   var m=p.exec(r.msg);return m?m[1].trim():null;
 }
 function _hasNivel(r){
-  if(r.nivel&&typeof r.nivel==='object'&&(r.nivel.ctm||r.nivel.bls))return true;
-  if(r.ctm||r.bls)return true;
-  if(r.modo==='guardia')return true;
-  if(r.msg&&(/CTM:\s*[\d.]+\s*cm/i.test(r.msg)||/Centímetros:\s*[\d.]+/i.test(r.msg)))return true;
+  // ESTRICTO: solo si hay un valor numérico real de CTM/cm
+  if(r.nivel&&typeof r.nivel==='object'){
+    var v=parseFloat(r.nivel.ctm);if(!isNaN(v)&&v>0)return true;
+  }
+  var cv=parseFloat(r.ctm);if(!isNaN(cv)&&cv>0)return true;
+  // Guardia sin CTM explícito: buscar en msg
+  if(r.msg){
+    var m=/CTM:\s*([\d.]+)\s*cm/i.exec(r.msg)||/Centímetros:\s*([\d.]+)/i.exec(r.msg);
+    if(m&&parseFloat(m[1])>0)return true;
+    var m2=/Barriles:\s*([\d.]+)/i.exec(r.msg);
+    if(m2&&r.modo==='guardia'&&parseFloat(m2[1])>0)return true;
+  }
   return false;
+}
+function _getNivelCtm(r){
+  if(r.nivel&&typeof r.nivel==='object'){var v=parseFloat(r.nivel.ctm);if(!isNaN(v)&&v>0)return v;}
+  var cv=parseFloat(r.ctm);if(!isNaN(cv)&&cv>0)return cv;
+  if(r.msg){var m=/CTM:\s*([\d.]+)\s*cm/i.exec(r.msg)||/Centímetros:\s*([\d.]+)/i.exec(r.msg);if(m)return parseFloat(m[1]);}
+  return null;
 }
 function _msgHas(r,campo){return r.msg?new RegExp('✅\\s*'+campo,'i').test(r.msg):false;}
 // Extraer texto de nota desde msg cuando pozo no es real
@@ -6194,8 +6208,16 @@ function _buildDiario(tplBytes,recorredor,days){
             // CO: SOLO modo==='co' estricto — sin fallback ni mezcla
             var coRpts=dayObj.list.filter(function(r){return !r.esAlarma&&r.modo==='co'&&!_hasNivel(r)===false||(!r.esAlarma&&r.modo==='co');});
             coRpts=dayObj.list.filter(function(r){return !r.esAlarma&&r.modo==='co';});
-            // Nivel: guardia + cualquier reporte con CTM/BLS (aunque sea co)
-            var nvRpts=dayObj.list.filter(function(r){return r.modo==='guardia'||r.modo==='nivel'||_hasNivel(r);});
+            // Nivel ESTRICTO: pozo real + hora + CTM numérico real
+            var nvRpts=dayObj.list.filter(function(r){
+              if(r.esAlarma)return false;
+              if(!_isRealWell(r.pozo))return false;
+              if(!_rField(r,'hora'))return false;
+              var ctm=_getNivelCtm(r);
+              var entra=ctm!==null&&ctm>0;
+              console.log('[NIVEL]',{pozo:r.pozo,hora:_rField(r,'hora'),ctm:ctm,entra:entra});
+              return entra;
+            });
             console.log('[Diario]',label,'CO='+coRpts.length,'Niv='+nvRpts.length,'shFile='+shFile);
             var f=zip.file(shFile);if(!f){console.error('[Diario] NOT FOUND:',shFile);return;}
             promises.push(f.async('string').then(function(shXml){
@@ -6263,11 +6285,11 @@ function _fillDiarioSheet(xml,nombre,fecha,coRpts,nvRpts){
     xml=_wcNum(xml,'B'+nr,j+1);
     xml=_wcStr(xml,'C'+nr,nv1&&_isRealWell(nv1.pozo)?'C-'+_normPozo(nv1.pozo):'');
     xml=_wcStr(xml,'D'+nr,nv1?_rField(nv1,'hora')||'':'');
-    xml=_wcNum(xml,'E'+nr,nv1?_rField(nv1,'ctm')||'':'');
+    xml=_wcNum(xml,'E'+nr,nv1?_getNivelCtm(nv1)||'':'');
     xml=_wcNum(xml,'G'+nr,j+1);
     xml=_wcStr(xml,'H'+nr,nv2&&_isRealWell(nv2.pozo)?'C-'+_normPozo(nv2.pozo):'');
     xml=_wcStr(xml,'I'+nr,nv2?_rField(nv2,'hora')||'':'');
-    xml=_wcNum(xml,'J'+nr,nv2?_rField(nv2,'ctm')||'':'');
+    xml=_wcNum(xml,'J'+nr,nv2?_getNivelCtm(nv2)||'':'');
     xml=_wcNum(xml,'L'+nr,j+1);
   }
   return xml;
