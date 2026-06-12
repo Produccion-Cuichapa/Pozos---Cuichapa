@@ -6015,6 +6015,15 @@ function _colLetter(n){var s='';n=n-1;while(n>=0){s=String.fromCharCode(65+(n%26
 function _colNum(l){var n=0;for(var i=0;i<l.length;i++)n=n*26+l.charCodeAt(i)-64;return n;}
 function _normPozo(p){return String(p||'').replace(/^C-/i,'').replace(/^CUICHAPA\s*/i,'').trim();}
 function _isRealWell(p){return /^\d{1,4}[A-Z]?$/i.test(_normPozo(p));}
+// Detectar reportes de guardia aunque modo esté mal almacenado
+function _esGuardia(r){
+  if(!r)return false;
+  if(r.modo==='guardia'||r.modo==='nivel')return true;
+  if(r.msg&&/NIVELES DE GUARDIA/i.test(r.msg))return true;
+  // Reporte sin estatus/fluye pero con Centímetros = guardia
+  if(r.msg&&/Centímetros:\s*\d+/i.test(r.msg)&&!/Estatus:/i.test(r.msg))return true;
+  return false;
+}
 
 // ── XML: reemplazar/insertar celda con indexOf ────────────────
 function _wcSet(xml,addr,val,asNum){
@@ -6111,15 +6120,15 @@ function _clasificar(r){
   var bls=_getBls(r);
   var chk=r.checks||r.registro||{};
 
-  // SUPER: solo reportes diarios CO
-  if(modo==='co'&&_isRealWell(pz)){
+  // SUPER: solo reportes diarios CO — excluir guardia detectados por msg
+  if(modo==='co'&&_isRealWell(pz)&&!_esGuardia(r)){
     result.super_=true;
     result.motivo='Registro Diario';
   }
 
   // NIVEL:
-  // A) Guardia/nivel con CTM real
-  if((modo==='guardia'||modo==='nivel')&&ctm!==null&&ctm>0){
+  // A) Guardia/nivel con CTM real (detectado por modo o por msg)
+  if(_esGuardia(r)&&ctm!==null&&ctm>0){
     result.nivel=true;
     result.motivo='Nivel Guardia CTM='+ctm;
   }
@@ -6138,6 +6147,15 @@ function _clasificar(r){
   return result;
 }
 
+function _getNivelCtm(r){
+  if(r.nivel&&typeof r.nivel==='object'){var v=parseFloat(r.nivel.ctm);if(!isNaN(v)&&v>0)return v;}
+  var cv=parseFloat(r.ctm);if(!isNaN(cv)&&cv>0)return cv;
+  if(r.msg){
+    var m=/Centímetros:\s*([\d.]+)/i.exec(r.msg)||/CTM:\s*([\d.]+)\s*cm/i.exec(r.msg);
+    if(m){var pv=parseFloat(m[1]);if(!isNaN(pv)&&pv>0)return pv;}
+  }
+  return null;
+}
 function _getBls(r){
   if(r.nivel&&typeof r.nivel==='object'){var b=parseFloat(r.nivel.bls);if(!isNaN(b)&&b>0)return b;}
   var bv=parseFloat(r.bls);if(!isNaN(bv)&&bv>0)return bv;
@@ -6233,16 +6251,14 @@ function _buildDiario(tplBytes,recorredor,days){
             if(sh.name!==label)newWbXml=newWbXml.replace('name="'+sh.name+'"','name="'+_escXml(label)+'"');
             var shFile='xl/'+(relMap[sh.rId]||'worksheets/sheet'+(idx+1)+'.xml');
             // ERROR 1 FIX: CO = solo modo co (no guardia), Nivel = guardia + reportes con nivel
-            var coRpts=dayObj.list.filter(function(r){return !r.esAlarma&&r.modo==='co';});
-            // Para datos pre-FASE1 sin modo definido pero con estatus (son reportes CO)
-            var coFallback=dayObj.list.filter(function(r){return !r.esAlarma&&(!r.modo||r.modo==='undefined')&&_rField(r,'estatus');});
+            var coRpts=dayObj.list.filter(function(r){return !r.esAlarma&&r.modo==='co'&&!_esGuardia(r);});
+            var coFallback=[];//ist.filter(function(r){return !r.esAlarma&&(!r.modo||r.modo==='undefined')&&_rField(r,'estatus');});
             coRpts=coRpts.concat(coFallback);
-            // Nivel ABAJO: SOLO modo guardia/nivel + pozo real + CTM real
+            // Nivel ABAJO: guardia real (por modo O por msg) + pozo real + CTM real
             var nvRpts=dayObj.list.filter(function(r){
               if(r.esAlarma)return false;
               if(!_isRealWell(r.pozo))return false;
-              var modo=r.modo||'';
-              if(modo!=='guardia'&&modo!=='nivel')return false;
+              if(!_esGuardia(r))return false;  // debe ser guardia
               var hora=_rField(r,'hora');if(!hora)return false;
               var ctm=_getNivelCtm(r);
               var ok=ctm!==null&&ctm>0;
