@@ -5375,8 +5375,25 @@ function getPendientes(){
 // ── Configuración Ultramsg ────────────────────────
 var UM_INSTANCE  = 'instance177727';
 var UM_TOKEN     = '0olfbxq3zi0rbsd1';
-var UM_TO        = '120363424993135472@g.us'; // Grupo Pozos
-var UM_BASE      = 'https://api.ultramsg.com/' + UM_INSTANCE;
+
+// ── MODO PRUEBAS ─────────────────────────────────────────────
+// Cambiar a false cuando se autorice pasar a producción
+const MODO_PRUEBAS  = true;
+const TEST_GROUP_ID = '120363424993135472@g.us';
+const PROD_GROUP_ID = '5217821670258-1586464715@g.us'; // Grupo Pozos (producción)
+
+var UM_TO   = MODO_PRUEBAS ? TEST_GROUP_ID : PROD_GROUP_ID;
+var UM_BASE = 'https://api.ultramsg.com/' + UM_INSTANCE;
+
+// Mostrar banner si estamos en modo pruebas
+if(MODO_PRUEBAS){
+  document.addEventListener('DOMContentLoaded',function(){
+    var b=document.createElement('div');
+    b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#b45309;color:#fff;font-size:11px;font-weight:700;text-align:center;padding:4px 8px;letter-spacing:.5px';
+    b.textContent='⚠️ MODO PRUEBAS — Mensajes al grupo de pruebas';
+    document.body.appendChild(b);
+  });
+}
 var UM_URL       = UM_BASE + '/messages/chat';
 var UM_URL_IMG   = UM_BASE + '/messages/image';
 
