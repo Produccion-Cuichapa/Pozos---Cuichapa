@@ -48,7 +48,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
-<div id="modoPruebasBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;background:#b45309;color:#fff;font-size:11px;font-weight:700;text-align:center;padding:4px 8px;letter-spacing:.5px">⚠️ MODO PRUEBAS — Mensajes al grupo de pruebas</div>
 
 <button class="toggle-btn" id="modeBtn" onclick="toggleMode()">🌙 Noche</button>
 
@@ -1717,7 +1716,7 @@ function ppToggle(id){
 
     <div class="confirm-btns">
       <button class="confirm-cancel" onclick="cerrarConfirmacion()">✕ Cancelar</button>
-      <button class="confirm-send" onclick="console.log('CLICK ENVIAR OK');alert('CLICK ENVIAR OK');confirmarEnvio()">📤 Enviar ahora</button>
+      <button class="confirm-send" onclick="confirmarEnvio()">📤 Enviar ahora</button>
     </div>
   </div>
 </div>
@@ -2490,8 +2489,6 @@ function enviarTodo(soloPreview){
 
 // Continuación real del envío (después de pasar el aviso GPS)
 function _continuarEnvio(){
-  try{
-  console.log('INICIO _continuarEnvio');
   if(!REC||!W||W==='???') return;
   var ci=getCicloInfo(REC);
 
@@ -2596,9 +2593,8 @@ function _continuarEnvio(){
     var ct=document.getElementById('confirmTime');
     if(ct){ var d=new Date(); ct.textContent=d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
   }
-
-  }catch(e){console.error('ERROR _continuarEnvio:',e);alert('Error en _continuarEnvio:\n'+e.message);}
 }
+
 function cerrarConfirmacion(){
   var ov = document.getElementById('confirmOverlay');
   if(ov){
@@ -5158,7 +5154,6 @@ function enviarPushATodos(alarmaData){
 
 // Guardar reporte en Firebase
 function guardarEnFirebase(reporte){
-  console.log('GUARDANDO FIREBASE — pozo:', reporte.pozo, 'rec:', reporte.recorredor);
   if(!fbDB || !reporte.id) return;
   try{
     // No subir fotos a Firebase (muy pesadas) — solo metadata
@@ -5383,23 +5378,27 @@ var UM_TOKEN     = '0olfbxq3zi0rbsd1';
 
 // ── MODO PRUEBAS ─────────────────────────────────────────────
 // Cambiar a false cuando se autorice pasar a producción
-var MODO_PRUEBAS  = true;
-var TEST_GROUP_ID = '120363424993135472@g.us';
-var PROD_GROUP_ID = '5217821670258-1586464715@g.us'; // Grupo Pozos (producción)
+const MODO_PRUEBAS  = true;
+const TEST_GROUP_ID = '120363424993135472@g.us';
+const PROD_GROUP_ID = '5217821670258-1586464715@g.us'; // Grupo Pozos (producción)
 
 var UM_TO   = MODO_PRUEBAS ? TEST_GROUP_ID : PROD_GROUP_ID;
 var UM_BASE = 'https://api.ultramsg.com/' + UM_INSTANCE;
+
+// Mostrar banner si estamos en modo pruebas
 if(MODO_PRUEBAS){
-  var _b=document.getElementById('modoPruebasBanner');
-  if(_b)_b.style.display='block';
+  document.addEventListener('DOMContentLoaded',function(){
+    var b=document.createElement('div');
+    b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#b45309;color:#fff;font-size:11px;font-weight:700;text-align:center;padding:4px 8px;letter-spacing:.5px';
+    b.textContent='⚠️ MODO PRUEBAS — Mensajes al grupo de pruebas';
+    document.body.appendChild(b);
+  });
 }
 var UM_URL       = UM_BASE + '/messages/chat';
 var UM_URL_IMG   = UM_BASE + '/messages/image';
 
 // ── Enviar texto por Ultramsg ─────────────────────
 function umSendText(texto, callback){
-  console.log('ABRIENDO WHATSAPP — umSendText');
-  console.log('GRUPO DESTINO:', UM_TO);
   var body = 'token=' + encodeURIComponent(UM_TOKEN)
            + '&to='   + encodeURIComponent(UM_TO)
            + '&body=' + encodeURIComponent(texto);
@@ -5671,9 +5670,6 @@ setTimeout(function(){
 }, 3000);
 
 function confirmarEnvio(){
-  try{
-  console.log('CLICK ENVIAR — confirmarEnvio iniciado');
-  console.log('GRUPO DESTINO:', UM_TO);
   var ov = document.getElementById('confirmOverlay');
   ov.classList.remove('open');
   ov.style.cssText = '';
@@ -5806,9 +5802,8 @@ function confirmarEnvio(){
     _ccSet('msg', '💾', 'Mensaje WhatsApp', 'Guardado localmente — se enviará al recuperar señal');
     _ccSet('foto', '💾', 'Evidencia fotográfica', nFotos > 0 ? nFotos+' foto'+(nFotos>1?'s':'')+' guardada'+(nFotos>1?'s':'')+' localmente' : 'Sin fotos adjuntas');
   }
-
-  }catch(e){console.error('ERROR confirmarEnvio:',e);alert('Error en confirmarEnvio:\n'+e.message);}
 }
+
 function _ccSet(tipo, icon, titulo, sub){
   var cap = tipo.charAt(0).toUpperCase()+tipo.slice(1);
   var iconEl  = document.getElementById('cc'+cap+'Icon');
