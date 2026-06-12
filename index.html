@@ -6096,14 +6096,27 @@ function _hasNivel(r){
 function _msgHas(r,campo){return r.msg?new RegExp('✅\\s*'+campo,'i').test(r.msg):false;}
 // Extraer texto de nota desde msg cuando pozo no es real
 function _notaText(r){
-  if(!r.msg)return r.pozo||'';
-  // Buscar línea de descripción después del asterisco o en observaciones
-  var m=/📝\s*([^\n\r]+)/.exec(r.msg)||/\*NOTA[^*]*\*\n?([^\n\r]+)/.exec(r.msg);
-  if(m)return m[1].trim();
-  // Usar pozo si tiene texto descriptivo
+  if(!r.msg)return '';
+  var msg=r.msg;
+  // Texto real va después de ══════ y antes de GPS/mapa
+  var sepIdx=msg.indexOf('══════');
+  if(sepIdx!==-1){
+    var afterSep=msg.substring(sepIdx).replace(/^[═\n\r\s]+/,'');
+    var lines=afterSep.split(/[\n\r]+/);
+    for(var i=0;i<lines.length;i++){
+      var l=lines[i].trim();
+      if(l&&!l.startsWith('GPS')&&!l.startsWith('🗺')&&!l.startsWith('maps.')&&!l.match(/^═+$/)&&l.length>2){
+        return l;
+      }
+    }
+  }
+  // Fallback: observaciones si no es el header
+  var obs=/📝\s*([^\n\r]+)/.exec(msg);
+  if(obs&&obs[1].trim()!=='*NOTA DE CAMPO*')return obs[1].trim();
+  // Estacion-B u otro texto descriptivo
   var pz=String(r.pozo||'');
-  if(!_isRealWell(pz)&&pz.length<60&&!/^\d/.test(pz))return pz;
-  return _rField(r,'observaciones')||'';
+  if(pz&&pz!=='NOTA'&&!/^[\d,\.\s]+$/.test(pz)&&pz.length<60)return pz;
+  return '';
 }
 
 // ── Diagnóstico ───────────────────────────────────────────────
@@ -6178,12 +6191,11 @@ function _buildDiario(tplBytes,recorredor,days){
             var label=_sheetLabel(dayObj.date);var fecha=_fmtFecha(dayObj.date);
             if(sh.name!==label)newWbXml=newWbXml.replace('name="'+sh.name+'"','name="'+_escXml(label)+'"');
             var shFile='xl/'+(relMap[sh.rId]||'worksheets/sheet'+(idx+1)+'.xml');
-            // ERROR 1 FIX: CO = solo modo co (no guardia), Nivel = guardia + reportes con nivel
-            var coRpts=dayObj.list.filter(function(r){return !r.esAlarma&&r.modo==='co';});
-            // Para datos pre-FASE1 sin modo definido pero con estatus (son reportes CO)
-            var coFallback=dayObj.list.filter(function(r){return !r.esAlarma&&(!r.modo||r.modo==='undefined')&&_rField(r,'estatus');});
-            coRpts=coRpts.concat(coFallback);
-            var nvRpts=dayObj.list.filter(function(r){return r.modo==='guardia'||_hasNivel(r);});
+            // CO: SOLO modo==='co' estricto — sin fallback ni mezcla
+            var coRpts=dayObj.list.filter(function(r){return !r.esAlarma&&r.modo==='co'&&!_hasNivel(r)===false||(!r.esAlarma&&r.modo==='co');});
+            coRpts=dayObj.list.filter(function(r){return !r.esAlarma&&r.modo==='co';});
+            // Nivel: guardia + cualquier reporte con CTM/BLS (aunque sea co)
+            var nvRpts=dayObj.list.filter(function(r){return r.modo==='guardia'||r.modo==='nivel'||_hasNivel(r);});
             console.log('[Diario]',label,'CO='+coRpts.length,'Niv='+nvRpts.length,'shFile='+shFile);
             var f=zip.file(shFile);if(!f){console.error('[Diario] NOT FOUND:',shFile);return;}
             promises.push(f.async('string').then(function(shXml){
@@ -6283,7 +6295,11 @@ function _buildSoporte(tplBytes,fechaIni,fechaFin,reportes){
   JSZip.loadAsync(tplBytes).then(function(zip){
     var mesNum=new Date(fechaIni+'T12:00:00').getMonth();
     var mesName=MESES_ES[mesNum];
-    var p1=zip.file('xl/workbook.xml').async('string').then(function(wb){zip.file('xl/workbook.xml',wb.replace(/name="ABRIL"/g,'name="'+mesName+'"'));});
+    var p1=zip.file('xl/workbook.xml').async('string').then(function(wb){
+    wb=wb.replace(/name="ABRIL"/g,'name="'+mesName+'"');
+    wb=wb.replace(/<calcPr ([^/]*)\/>/,'<calcPr $1 fullCalcOnLoad="1"/>');
+    zip.file('xl/workbook.xml',wb);
+  });
     var p2=zip.file('xl/worksheets/sheet1.xml').async('string').then(function(sh){
       // ERROR 4&5 FIX: limpiar TODOS los conteos del template antes de escribir
       sh=_clearSoporteCounts(sh);
