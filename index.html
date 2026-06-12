@@ -2694,7 +2694,8 @@ function resetFormulario(){
 
 // ══ LOGIN ══
 var loginTarget='';
-var loggedIn=false;
+var loggedIn=false
+var loggedTheme = '';;
 var loggedUser=''; // 'AntonioS' | 'JaimeG'
 
 function requireLogin(target){
@@ -5702,7 +5703,7 @@ function confirmarEnvio(){
     hora: _horaStr,
     pozo: W,
     recorredor: REC,
-    perfil: loggedTheme || loggedUser || '',
+    perfil: (typeof loggedTheme !== 'undefined' ? loggedTheme : '') || loggedUser || '',
     msg: msgPendiente,
     fotos: fotos.map(function(f){ return {data:(f.data||f), nombre:(f.nombre||'')}; }),
     estado: 'pendiente',
