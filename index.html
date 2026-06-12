@@ -5377,7 +5377,12 @@ var RADIO_GPS_METROS = 80; // Radio GPS unificado — cambiar aquí para afectar
 var UM_INSTANCE  = 'instance177727';
 var UM_TOKEN     = '0olfbxq3zi0rbsd1';
 
-var UM_TO   = '5217821670258-1586464715@g.us'; // Grupo Pozos
+// ── MODO PRUEBAS ─────────────────────────────────────────────
+var MODO_PRUEBAS  = true;   // ← false para producción
+var TEST_GROUP_ID = '20363424993135472@g.us';
+var PROD_GROUP_ID = '5217821670258-1586464715@g.us'; // Grupo Pozos
+
+var UM_TO   = MODO_PRUEBAS ? TEST_GROUP_ID : PROD_GROUP_ID;
 var UM_BASE = 'https://api.ultramsg.com/' + UM_INSTANCE;
 var UM_URL       = UM_BASE + '/messages/chat';
 var UM_URL_IMG   = UM_BASE + '/messages/image';
@@ -5743,9 +5748,8 @@ function confirmarEnvio(){
   actualizarBadgeHistorial();
   _ccLastReporteId = reporte.id;
 
-  // Intentar enviar automáticamente con Ultramsg (silencioso)
-  if(navigator.onLine){
-    enviarConUltramsg(reporte.id, function(ok){
+  // Siempre intentar enviar — navigator.onLine es poco fiable en Android
+  enviarConUltramsg(reporte.id, function(ok){
       actualizarBadgeHistorial();
       if(ok){
         _ccSet('msg', '✅', 'Mensaje WhatsApp', 'Enviado correctamente al grupo');
@@ -5757,7 +5761,6 @@ function confirmarEnvio(){
         showToast('⚠️ Sin respuesta · Reintentando automáticamente');
       }
     });
-  }
   // Capturar datos antes de resetear
   var fotosCopy = fotos.map(function(f){ return f.data || f; });
   var nFotos = fotosCopy.length;
@@ -5779,14 +5782,9 @@ function confirmarEnvio(){
     setTimeout(function(){ cc.scrollIntoView({behavior:'smooth', block:'center'}); }, 150);
   }
 
-  if(navigator.onLine){
-    // Estado inicial: enviando
-    _ccSet('msg', '⏳', 'Mensaje WhatsApp', 'Enviando al grupo...');
-    _ccSet('foto', '⏳', 'Evidencia fotográfica', nFotos > 0 ? 'Enviando '+nFotos+' foto'+(nFotos>1?'s':'')+'...' : 'Sin fotos adjuntas');
-  } else {
-    _ccSet('msg', '💾', 'Mensaje WhatsApp', 'Guardado localmente — se enviará al recuperar señal');
-    _ccSet('foto', '💾', 'Evidencia fotográfica', nFotos > 0 ? nFotos+' foto'+(nFotos>1?'s':'')+' guardada'+(nFotos>1?'s':'')+' localmente' : 'Sin fotos adjuntas');
-  }
+  // Siempre mostrar estado enviando
+  _ccSet('msg', '⏳', 'Mensaje WhatsApp', 'Enviando al grupo...');
+  _ccSet('foto', '⏳', 'Evidencia fotográfica', nFotos > 0 ? 'Enviando '+nFotos+' foto'+(nFotos>1?'s':'')+'...' : 'Sin fotos adjuntas');
 
 }
 function _ccSet(tipo, icon, titulo, sub){
