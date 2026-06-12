@@ -5998,14 +5998,14 @@ function adminSetMesAnterior(){
 
 
 // ══════════════════════════════════════════════════════════════
-// FASE 2 — ADMINISTRACIÓN DE REPORTES v5
+// FASE 2 — ADMINISTRACIÓN DE REPORTES
 // ══════════════════════════════════════════════════════════════
 var _adminDiarioTpl=null,_adminSoporteTpl=null;
 var MESES_ES=['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
 var RECORREDORES_FULL={'Cirilo':'Cirilo Cancino Gómez','Juan Carlos':'Juan Carlos Flores','Manrique':'Manrique Jiménez P.','Luis':'Luis Carlos Flores Cruz','Jose':'Jose Guadalupe Torres García'};
 var _SOPORTE_ROW={"106D":3,"107":4,"119":5,"124D":6,"128":7,"131":8,"137":9,"138":10,"139":11,"167":12,"169":13,"172":14,"176":15,"179":16,"180":17,"187":18,"19":19,"191":20,"201":21,"207":22,"213":23,"306":24,"324":25,"342":26,"346":27,"350":28,"352":29,"363":30,"364":31,"367":32,"373":33,"376":34,"385":35,"401":36,"407":37,"411":38,"413":39,"419":40,"421":41,"423":42,"427":43,"431":44,"451":45,"452":46,"460":47,"500":48,"502":49,"503":50,"504":51,"505":52,"601":53};
 
-// ── Helpers fecha ─────────────────────────────────────────────
+// ── Fecha ─────────────────────────────────────────────────────
 function _mxDate(iso){return new Date(new Date(iso).getTime()-6*3600000);}
 function _mxDateStr(iso){var d=_mxDate(iso);return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
 function _fmtFecha(d){return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear();}
@@ -6015,80 +6015,205 @@ function _colLetter(n){var s='';n=n-1;while(n>=0){s=String.fromCharCode(65+(n%26
 function _colNum(l){var n=0;for(var i=0;i<l.length;i++)n=n*26+l.charCodeAt(i)-64;return n;}
 function _normPozo(p){return String(p||'').replace(/^C-/i,'').replace(/^CUICHAPA\s*/i,'').trim();}
 function _isRealWell(p){return /^\d{1,4}[A-Z]?$/i.test(_normPozo(p));}
-// Detectar reportes de guardia aunque modo esté mal almacenado
-// ══════════════════════════════════════════════════════════════
-// CLASIFICACIÓN POR CONTENIDO DE MSG (no confiar en r.modo)
-// ══════════════════════════════════════════════════════════════
+
+// ── Clasificación por MSG (no confiar en r.modo) ──────────────
 function _getTipo(r){
-  var msg=r&&r.msg||'';
-  if(r&&r.esAlarma)return 'alarma';
+  if(!r)return 'otro';
+  var msg=r.msg||'';
+  if(r.esAlarma||msg.indexOf('🚨')!==-1)return 'alarma';
   if(msg.indexOf('🌙 *NIVELES DE GUARDIA*')!==-1)return 'guardia';
   if(msg.indexOf('📋 *REPORTE DE VISITA*')!==-1)return 'visita';
   if(msg.indexOf('📝 *NOTA DE CAMPO*')!==-1)return 'nota';
-  if(msg.indexOf('🚨')!==-1)return 'alarma';
-  // Fallback por modo
-  if(r&&(r.modo==='guardia'||r.modo==='nivel'))return 'guardia';
-  if(r&&r.modo==='co')return 'visita';
+  if(r.modo==='guardia'||r.modo==='nivel')return 'guardia';
+  if(r.modo==='co')return 'visita';
   return 'otro';
 }
 function _esGuardia(r){return _getTipo(r)==='guardia';}
-function _esVisita(r) {return _getTipo(r)==='visita';}
-function _esNota(r)   {return _getTipo(r)==='nota';}
+function _msgHas(r,campo){return r&&r.msg?new RegExp('✅\\s*'+campo,'i').test(r.msg):false;}
 
+// ── Extracción de campos desde msg ───────────────────────────
+function _rField(r,field){
+  if(!r)return null;
+  if(r[field]!==undefined&&r[field]!==null&&r[field]!=='')return r[field];
+  var msg=r.msg||'';if(!msg)return null;
+  var ps={
+    hora:/(\d{1,2}:\d{2}\s*[apm\.]+)/i,
+    estatus:/Estatus:\s*([^\n\r]+)/,
+    fluye:/Fluye:\s*([^\n\r]+)/,
+    sap:/SAP:\s*(\w+)/,
+    ptp:/PTP:\s*([\d\.\-]+)/,
+    ldd:/LDD:\s*([\d\.\-]+)/,
+    ptr:/PTR:\s*([\d\.\-]+)/,
+    lbn:/LBN:\s*([\d\.\-]+)/,
+    epm:/Vel:\s*([\d\.]+)\s*EPM/,
+    carrera:/Car:\s*([\d\.]+)\s*pulg/,
+    observaciones:/📝\s*([^\n\r]+)/,
+    ctm:/Centímetros:\s*([\d\.]+)/i,
+    bls:/Barriles:\s*([\d\.]+)/i
+  };
+  var p=ps[field];if(!p)return null;
+  var m=p.exec(msg);return m?m[1].trim():null;
+}
+
+function _getNivelCtm(r){
+  if(!r)return null;
+  if(r.nivel&&typeof r.nivel==='object'){var v=parseFloat(r.nivel.ctm);if(!isNaN(v)&&v>0)return v;}
+  var cv=parseFloat(r.ctm);if(!isNaN(cv)&&cv>0)return cv;
+  var msg=r.msg||'';
+  var m=/Centímetros:\s*([\d\.]+)/i.exec(msg)||/CTM:\s*([\d\.]+)\s*cm/i.exec(msg);
+  if(m){var pv=parseFloat(m[1]);if(!isNaN(pv)&&pv>0)return pv;}
+  return null;
+}
+
+function _getBls(r){
+  if(!r)return 0;
+  if(r.nivel&&typeof r.nivel==='object'){var b=parseFloat(r.nivel.bls);if(!isNaN(b)&&b>0)return b;}
+  var bv=parseFloat(r.bls);if(!isNaN(bv)&&bv>0)return bv;
+  var msg=r.msg||'';
+  var m=/Barriles:\s*([\d\.]+)/i.exec(msg)||/BLS:\s*([\d\.]+)\s*bls/i.exec(msg);
+  if(m)return parseFloat(m[1])||0;
+  return 0;
+}
+
+// ── Clasificación para Soporte ────────────────────────────────
+function _clasificar(r){
+  var result={super_:false,nivel:false,trabajo:false,drenar:false,aforo:false,inter:false,motivo:''};
+  if(!r||r.esAlarma)return result;
+  var tipo=_getTipo(r);
+  var pz=_normPozo(r.pozo);
+  var ctm=_getNivelCtm(r);
+  var fluye=String(_rField(r,'fluye')||'').toUpperCase();
+  var bls=_getBls(r);
+  var chk=r.checks||r.registro||{};
+  if(tipo==='visita'&&_isRealWell(pz)){result.super_=true;result.motivo='Visita';}
+  if(tipo==='guardia'&&ctm&&ctm>0){result.nivel=true;result.motivo='Guardia CTM='+ctm;}
+  if(tipo==='visita'&&fluye==='FT'&&ctm&&ctm>0&&bls>0){result.nivel=true;result.motivo+=(result.motivo?' / ':'')+'FT CTM='+ctm;}
+  if(chk.trabajo===true||r.trabajo===true||_msgHas(r,'Trabajo'))result.trabajo=true;
+  if(chk.drenar===true||r.drenar===true||_msgHas(r,'Drenar'))result.drenar=true;
+  if(chk.aforo===true||r.aforo===true||_msgHas(r,'Aforo'))result.aforo=true;
+  if(chk.intermitente===true||r.intermitente===true||_msgHas(r,'Intermitente'))result.inter=true;
+  return result;
+}
+
+// ── Nota texto real ───────────────────────────────────────────
 function _notaText(r){
   if(!r||!r.msg)return '';
   var msg=r.msg;
-  // Skip lines that are meta/system: *NOTA DE CAMPO*, GPS, maps, ═══, emoji headers
   var SKIP=/^(\*?NOTA DE CAMPO\*?|GPS:|🗺|maps\.google|https?:|═+|📝|👷|📅|🛢|📋|✅|⚠️)/i;
-  // Find separator line ══════
   var sepIdx=msg.indexOf('══');
   var startFrom=0;
-  if(sepIdx!==-1){
-    // Text after the separator
-    startFrom=sepIdx;
-    while(startFrom<msg.length&&(msg[startFrom]==='═'||msg[startFrom]==='\n'||msg[startFrom]==='\r'))startFrom++;
-  }
-  // Scan lines for first real user text
+  if(sepIdx!==-1){startFrom=sepIdx;while(startFrom<msg.length&&(msg[startFrom]==='═'||msg[startFrom]==='\n'||msg[startFrom]==='\r'))startFrom++;}
   var lines=msg.substring(startFrom).split(/[\n\r]+/);
   for(var i=0;i<lines.length;i++){
     var l=lines[i].trim();
-    if(!l)continue;
-    if(SKIP.test(l))continue;
-    if(/^\d{1,2}\.\d{1,2}\.\d{4}/.test(l))continue; // fecha
-    if(/^\d{1,2}:\d{2}/.test(l))continue;               // hora sola
-    if(l.indexOf(',')!==-1&&l.indexOf('.')!==-1&&l.length<40&&/^[\d\.,\s-]+$/.test(l))continue; // coordenadas
-    // Found real text
+    if(!l||SKIP.test(l))continue;
+    if(/^\d{1,2}\.\d{1,2}\.\d{4}/.test(l))continue;
+    if(/^\d{1,2}:\d{2}/.test(l))continue;
+    if(l.indexOf(',')!==-1&&l.length<40&&/^[\d,\.\s\-]+$/.test(l))continue;
     return l.replace(/^\*|\*$/g,'').trim();
   }
-  // Fallback: pozo field if descriptive
   var pz=String(r.pozo||'');
-  if(pz&&pz!=='NOTA'&&!/^[\d,\.\s-]+$/.test(pz)&&pz.length<80)return pz;
+  if(pz&&pz!=='NOTA'&&!/^[\d,\.\s\-]+$/.test(pz)&&pz.length<80)return pz;
   return '';
 }
 
-// ── Diagnóstico ───────────────────────────────────────────────
+// ── XML: reemplazar celda con indexOf ─────────────────────────
+function _wcSet(xml,addr,val,asNum){
+  var search='<c r="'+addr+'"';
+  var pos=xml.indexOf(search);
+  if(pos!==-1){
+    var nc=xml[pos+search.length];
+    if(nc!=='"'&&nc!=='>'&&nc!=='/'&&nc!==' '){
+      var pos2=xml.indexOf(search,pos+1);
+      if(pos2!==-1){var nc2=xml[pos2+search.length];if(nc2==='"'||nc2==='>'||nc2==='/'||nc2===' ')pos=pos2;else pos=-1;}
+      else pos=-1;
+    }
+  }
+  if(pos===-1)return xml;
+  var es=xml.indexOf('/>',pos);var ec=xml.indexOf('</c>',pos);
+  var cellEnd=(es!==-1&&(ec===-1||es<ec))?es+2:ec+4;
+  var tagEnd=xml.indexOf('>',pos);
+  var attrs=xml.substring(pos+search.length,tagEnd).replace(/\s+t="[^"]*"/g,'').replace(/\//g,'');
+  var nc2;
+  if(val===null||val===undefined||val===''){ nc2='<c r="'+addr+'"'+attrs+'></c>'; }
+  else if(asNum){ nc2='<c r="'+addr+'"'+attrs+'><v>'+val+'</v></c>'; }
+  else{ nc2='<c r="'+addr+'"'+attrs+' t="inlineStr"><is><t>'+_escXml(String(val))+'</t></is></c>'; }
+  return xml.substring(0,pos)+nc2+xml.substring(cellEnd);
+}
+function _wcStr(xml,a,v){if(v===null||v===undefined)v='';return _wcSet(xml,a,v,false);}
+function _wcNum(xml,a,v){
+  if(v===null||v===undefined||v==='')return _wcSet(xml,a,null,true);
+  var n=parseFloat(v);return _wcSet(xml,a,isNaN(n)?v:n,!isNaN(n));
+}
+
+// ── Fetch plantilla con cache ─────────────────────────────────
+function _adminFetch(name,cached,cb){
+  if(cached){cb(null,cached);return;}
+  fetch('./'+name)
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status+' al cargar ./'+name);return r.arrayBuffer();})
+    .then(function(b){cb(null,new Uint8Array(b));})
+    .catch(function(e){cb(String(e.message||e),null);});
+}
+
+// ── Reportes Firebase + filtro por fecha ─────────────────────
+function _adminReportes(recorredor,fechaIni,fechaFin,cb){
+  function filtrar(arr){
+    var r=arr.filter(function(x){
+      if(x.esAlarma)return false;
+      var ds=_mxDateStr(x.fecha);
+      return ds>=fechaIni&&ds<=fechaFin;
+    });
+    if(recorredor)r=r.filter(function(x){return x.recorredor===recorredor;});
+    return r;
+  }
+  if(typeof fbDB!=='undefined'&&fbDB){
+    fbDB.ref('reportes').orderByChild('fecha')
+      .startAt(fechaIni+'T00:00:00.000Z')
+      .endAt(fechaFin+'T23:59:59.999Z')
+      .once('value',function(s){
+        var a=[];s.forEach(function(c){a.push(c.val());});
+        cb(filtrar(a));
+      },function(e){
+        console.warn('[Admin] Firebase error:',e);
+        cb(filtrar(getHistorial()));
+      });
+  }else{
+    cb(filtrar(getHistorial()));
+  }
+}
+
+// ── Diagnóstico visual ────────────────────────────────────────
 function adminDiagnosticar(){
   var rec=document.getElementById('adminRec').value;
   var fi=document.getElementById('adminFechaIni').value;
   var ff=document.getElementById('adminFechaFin').value;
   if(!fi||!ff){showToast('⚠️ Selecciona fechas primero');return;}
   var div=document.getElementById('adminDiagResult');
-  div.style.display='block';div.innerHTML='<div style="color:var(--txt2);font-size:12px;padding:10px">🔄 Consultando...</div>';
+  div.style.display='block';
+  div.innerHTML='<div style="color:var(--txt2);font-size:12px;padding:10px">🔄 Consultando...</div>';
   function proc(arr){
     var enRango=arr.filter(function(r){var ds=_mxDateStr(r.fecha);return ds>=fi&&ds<=ff;});
-    var porDia={};enRango.forEach(function(r){var ds=_mxDateStr(r.fecha);if(!porDia[ds])porDia[ds]=[];porDia[ds].push(r);});
+    var porDia={};
+    enRango.forEach(function(r){var ds=_mxDateStr(r.fecha);if(!porDia[ds])porDia[ds]=[];porDia[ds].push(r);});
     var dias=Object.keys(porDia).sort();
-    console.log('DIAG:',arr.length,'enRango:',enRango.length,'días:',dias);
     if(enRango.length>0)console.log('REPORTE PRUEBA:',JSON.stringify(enRango[0]));
-    var html='<div style="font-size:11px;color:var(--txt)">Firebase:'+arr.length+' | Rango:'+enRango.length+'<br>';
+    var html='<div style="font-size:11px;color:var(--txt)">FB:'+arr.length+' Rango:'+enRango.length+'<br>';
     dias.forEach(function(ds){
-      var d=new Date(ds+'T12:00:00');var nr=rec?porDia[ds].filter(function(r){return r.recorredor===rec;}).length:porDia[ds].length;
-      html+=_sheetLabel(d)+'('+porDia[ds].length+'/'+nr+rec+') ';
+      var d=new Date(ds+'T12:00:00');
+      var v=porDia[ds].filter(function(r){return _getTipo(r)==='visita';}).length;
+      var g=porDia[ds].filter(function(r){return _getTipo(r)==='guardia';}).length;
+      var n=porDia[ds].filter(function(r){return _getTipo(r)==='nota';}).length;
+      var nr=rec?porDia[ds].filter(function(r){return r.recorredor===rec;}).length:porDia[ds].length;
+      html+=_sheetLabel(d)+': V='+v+' G='+g+' N='+n+(rec?' ('+rec+'='+nr+')':'')+'<br>';
     });
-    if(enRango.length>0){var r0=enRango[0];html+='<br>1er: '+['pozo','recorredor','modo','hora','checks'].map(function(k){return k+'='+JSON.stringify(r0[k]);}).join(' ');}
-    html+='</div>';div.innerHTML=html;
+    html+='</div>';
+    div.innerHTML=html;
   }
-  if(fbDB){fbDB.ref('reportes').orderByChild('fecha').startAt(fi+'T00:00:00.000Z').endAt(ff+'T23:59:59.999Z').once('value',function(s){var a=[];s.forEach(function(c){a.push(c.val());});proc(a);},function(){proc(getHistorial());});}else{proc(getHistorial());}
+  if(typeof fbDB!=='undefined'&&fbDB){
+    fbDB.ref('reportes').orderByChild('fecha').startAt(fi+'T00:00:00.000Z').endAt(ff+'T23:59:59.999Z')
+      .once('value',function(s){var a=[];s.forEach(function(c){a.push(c.val());});proc(a);},
+      function(){proc(getHistorial());});
+  }else{proc(getHistorial());}
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -6096,23 +6221,27 @@ function adminDiagnosticar(){
 // ══════════════════════════════════════════════════════════════
 function adminGenerarDiario(recorredor,fechaIni,fechaFin){
   if(!recorredor||!fechaIni||!fechaFin){showToast('⚠️ Selecciona recorredor y fechas');return;}
-  showToast('🔄 Cargando...');
+  console.log('INICIO GENERAR DIARIO',recorredor,fechaIni,'→',fechaFin);
+  showToast('🔄 Cargando plantilla...');
   _adminFetch('tpl_diario.xlsx',_adminDiarioTpl,function(err,bytes){
-    if(err){showToast('❌ '+err);return;}
+    if(err){showToast('❌ Plantilla: '+err);alert('Error cargando plantilla: '+err);return;}
     _adminDiarioTpl=bytes;
+    console.log('PLANTILLA DIARIO CARGADA',bytes.length,'bytes');
     _adminReportes(recorredor,fechaIni,fechaFin,function(reportes){
       if(!reportes.length){showToast('⚠️ Sin reportes para '+recorredor+' en ese rango');return;}
+      console.log('REPORTES CARGADOS',reportes.length);
       var byDay={};
-      reportes.forEach(function(r){var ds=_mxDateStr(r.fecha);if(!byDay[ds])byDay[ds]={ds:ds,date:_mxDate(r.fecha),list:[]};byDay[ds].list.push(r);});
+      reportes.forEach(function(r){
+        var ds=_mxDateStr(r.fecha);
+        if(!byDay[ds])byDay[ds]={ds:ds,date:_mxDate(r.fecha),list:[]};
+        byDay[ds].list.push(r);
+      });
       var days=Object.values(byDay).sort(function(a,b){return a.ds<b.ds?-1:1;});
-      console.log('[Diario] días:',days.map(function(d){return d.ds+'('+d.list.length+')';}));
-      // Diagnóstico por día
       days.forEach(function(d){
-        var visitas=d.list.filter(function(r){return _getTipo(r)==='visita';}).length;
-        var guardias=d.list.filter(function(r){return _getTipo(r)==='guardia';}).length;
-        var notas=d.list.filter(function(r){return _getTipo(r)==='nota';}).length;
-        var total=d.list.length;
-        console.log('['+_sheetLabel(d.date)+'] VISITAS='+visitas+' GUARDIAS='+guardias+' NOTAS='+notas+' TOTAL='+total);
+        var v=d.list.filter(function(r){return _getTipo(r)==='visita';}).length;
+        var g=d.list.filter(function(r){return _getTipo(r)==='guardia';}).length;
+        var n=d.list.filter(function(r){return _getTipo(r)==='nota';}).length;
+        console.log('['+_sheetLabel(d.date)+'] VISITAS='+v+' GUARDIAS='+g+' NOTAS='+n+' TOTAL='+d.list.length);
       });
       showToast('⚙️ Generando '+days.length+' hojas...');
       _buildDiario(bytes,recorredor,days);
@@ -6121,13 +6250,16 @@ function adminGenerarDiario(recorredor,fechaIni,fechaFin){
 }
 
 function _buildDiario(tplBytes,recorredor,days){
-  if(typeof JSZip==='undefined'){showToast('⚠️ JSZip no cargado');return;}
+  if(typeof JSZip==='undefined'){showToast('❌ JSZip no cargado');alert('JSZip no disponible');return;}
+  console.log('BUILD DIARIO start, days='+days.length);
   JSZip.loadAsync(tplBytes).then(function(zip){
+    console.log('ZIP cargado');
     return zip.file('xl/workbook.xml').async('string').then(function(wbXml){
       return zip.file('xl/_rels/workbook.xml.rels').async('string').then(function(wbRels){
         var relMap={};
         (wbRels.match(/<Relationship [^>]*>/g)||[]).forEach(function(r){
-          var id=(r.match(/Id="([^"]+)"/)||[])[1];var tg=(r.match(/Target="([^"]+)"/)||[])[1];
+          var id=(r.match(/Id="([^"]+)"/)||[])[1];
+          var tg=(r.match(/Target="([^"]+)"/)||[])[1];
           if(id&&tg)relMap[id]=tg;
         });
         var allSheets=[];
@@ -6137,51 +6269,72 @@ function _buildDiario(tplBytes,recorredor,days){
           if(nm&&!nm.startsWith('_xlnm')&&!nm.includes('microsoft.com'))
             allSheets.push({name:nm,rId:rid,orig:sh});
         });
+        console.log('Hojas plantilla:',allSheets.map(function(s){return s.name;}));
         var nombre=RECORREDORES_FULL[recorredor]||recorredor;
         var newWbXml=wbXml;
         var promises=[];
+        // Eliminar hojas extra del workbook
         allSheets.slice(days.length).forEach(function(sh){newWbXml=newWbXml.replace(sh.orig,'');});
+        // Procesar hojas a generar
         allSheets.slice(0,days.length).forEach(function(sheet,idx){
           (function(sh,dayObj){
-            var label=_sheetLabel(dayObj.date);var fecha=_fmtFecha(dayObj.date);
+            var label=_sheetLabel(dayObj.date);
+            var fecha=_fmtFecha(dayObj.date);
             if(sh.name!==label)newWbXml=newWbXml.replace('name="'+sh.name+'"','name="'+_escXml(label)+'"');
             var shFile='xl/'+(relMap[sh.rId]||'worksheets/sheet'+(idx+1)+'.xml');
-            // CO section: visita + nota (classificado por msg)
             var coRpts=dayObj.list.filter(function(r){
               var t=_getTipo(r);return t==='visita'||t==='nota';
             });
-            // Nivel ABAJO: tipo='guardia' + pozo real + CTM real
             var nvRpts=dayObj.list.filter(function(r){
               if(!_isRealWell(r.pozo))return false;
               if(_getTipo(r)!=='guardia')return false;
-              var hora=_rField(r,'hora');if(!hora)return false;
               var ctm=_getNivelCtm(r);
               return ctm!==null&&ctm>0;
             });
-            console.log('[Diario]',label,'CO='+coRpts.length,'Niv='+nvRpts.length,'shFile='+shFile);
-            var f=zip.file(shFile);if(!f){console.error('[Diario] NOT FOUND:',shFile);return;}
+            console.log(label,'shFile='+shFile,'CO='+coRpts.length,'Niv='+nvRpts.length);
+            var f=zip.file(shFile);
+            if(!f){console.error('Archivo no encontrado:',shFile);return;}
             promises.push(f.async('string').then(function(shXml){
               var filled=_fillDiarioSheet(shXml,nombre,fecha,coRpts,nvRpts);
-              console.log('[Diario]',label,'filled:',filled.indexOf(nombre.slice(0,5))!==-1?'OK':'FAIL');
               zip.file(shFile,filled);
+              console.log(label,'escrito OK');
             }));
           })(sheet,days[idx]);
         });
+        // Eliminar archivos de hojas extra del ZIP
         allSheets.slice(days.length).forEach(function(sh){
           var fn=relMap[sh.rId];
-          if(fn){zip.remove('xl/'+fn);zip.remove('xl/worksheets/_rels/'+fn.split('/').pop()+'.rels');}
+          if(fn){
+            zip.remove('xl/'+fn);
+            zip.remove('xl/worksheets/_rels/'+fn.split('/').pop()+'.rels');
+          }
         });
+        console.log('ZIP MODIFICADO, generando blob...');
         return Promise.all(promises).then(function(){
           zip.file('xl/workbook.xml',newWbXml);
-          return zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',compression:'DEFLATE'});
+          return zip.generateAsync({
+            type:'blob',
+            mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            compression:'DEFLATE'
+          });
         });
       });
     });
   }).then(function(blob){
-    var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    console.log('BLOB GENERADO',blob.size,'bytes');
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
     a.download='Reporte_'+recorredor+'_'+days[0].ds+(days.length>1?'_'+days[days.length-1].ds:'')+'.xlsx';
-    a.click();showToast('✅ '+days.length+' hoja(s) generadas');
-  }).catch(function(e){showToast('❌ '+(e.message||e));console.error('[Diario]',e);});
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast('✅ '+days.length+' hoja(s) descargadas');
+    console.log('DESCARGA EJECUTADA');
+  }).catch(function(e){
+    console.error('ERROR GENERANDO EXCEL DIARIO:',e);
+    showToast('❌ Error: '+(e.message||e));
+    alert('Error generando Excel:\n'+(e.message||String(e)));
+  });
 }
 
 function _fillDiarioSheet(xml,nombre,fecha,coRpts,nvRpts){
@@ -6191,12 +6344,12 @@ function _fillDiarioSheet(xml,nombre,fecha,coRpts,nvRpts){
   for(var i=0;i<21;i++){
     var row=7+i;
     var r=i<coRpts.length?coRpts[i]:null;
+    var tipo=r?_getTipo(r):'';
+    var isWell=r&&_isRealWell(r.pozo)&&tipo!=='nota';
     xml=_wcNum(xml,'B'+row,i+1);
-    var tipo=r?_getTipo(r):'';var isWell=r&&_isRealWell(r.pozo)&&tipo!=='nota';
     xml=_wcStr(xml,'C'+row,isWell?'C-'+_normPozo(r.pozo):'');
     xml=_wcStr(xml,'D'+row,r?_rField(r,'hora')||'':'');
     if(r&&(!isWell||tipo==='nota')){
-      // Nota/cabezal/estación: texto va en columna E, el resto vacío
       xml=_wcStr(xml,'E'+row,_notaText(r));
       xml=_wcStr(xml,'F'+row,'');xml=_wcStr(xml,'G'+row,'');xml=_wcStr(xml,'H'+row,'');
       xml=_wcNum(xml,'I'+row,null);xml=_wcNum(xml,'J'+row,null);xml=_wcNum(xml,'K'+row,null);
@@ -6206,7 +6359,6 @@ function _fillDiarioSheet(xml,nombre,fecha,coRpts,nvRpts){
       xml=_wcStr(xml,'F'+row,r?_rField(r,'fluye')||'':'');
       xml=_wcStr(xml,'G'+row,r?_rField(r,'sap')||'':'');
       xml=_wcStr(xml,'H'+row,r?r.estrang||'':'');
-      // ERROR 2 FIX: _wcNum limpia celdas cuando r=null
       xml=_wcNum(xml,'I'+row,r?_rField(r,'ptp'):null);
       xml=_wcNum(xml,'J'+row,r?_rField(r,'ldd'):null);
       xml=_wcNum(xml,'K'+row,r?_rField(r,'ptr'):null);
@@ -6235,16 +6387,19 @@ function _fillDiarioSheet(xml,nombre,fecha,coRpts,nvRpts){
 }
 
 // ══════════════════════════════════════════════════════════════
-// SOPORTE — limpiar template + escribir solo datos nuevos
+// SOPORTE
 // ══════════════════════════════════════════════════════════════
 function adminGenerarSoporte(fechaIni,fechaFin){
   if(!fechaIni||!fechaFin){showToast('⚠️ Selecciona rango de fechas');return;}
-  showToast('🔄 Cargando...');
+  console.log('INICIO GENERAR SOPORTE',fechaIni,'→',fechaFin);
+  showToast('🔄 Cargando plantilla...');
   _adminFetch('tpl_soporte.xlsx',_adminSoporteTpl,function(err,bytes){
-    if(err){showToast('❌ '+err);return;}
+    if(err){showToast('❌ Plantilla: '+err);alert('Error cargando plantilla: '+err);return;}
     _adminSoporteTpl=bytes;
+    console.log('PLANTILLA SOPORTE CARGADA',bytes.length,'bytes');
     _adminReportes(null,fechaIni,fechaFin,function(reportes){
       if(!reportes.length){showToast('⚠️ Sin reportes en ese rango');return;}
+      console.log('REPORTES CARGADOS',reportes.length);
       showToast('⚙️ Generando Soporte...');
       _buildSoporte(bytes,fechaIni,fechaFin,reportes);
     });
@@ -6252,30 +6407,55 @@ function adminGenerarSoporte(fechaIni,fechaFin){
 }
 
 function _buildSoporte(tplBytes,fechaIni,fechaFin,reportes){
-  if(typeof JSZip==='undefined'){showToast('⚠️ JSZip no cargado');return;}
+  if(typeof JSZip==='undefined'){showToast('❌ JSZip no cargado');alert('JSZip no disponible');return;}
+  console.log('BUILD SOPORTE start');
   JSZip.loadAsync(tplBytes).then(function(zip){
+    console.log('ZIP SOPORTE cargado');
     var mesNum=new Date(fechaIni+'T12:00:00').getMonth();
     var mesName=MESES_ES[mesNum];
-    var p1=zip.file('xl/workbook.xml').async('string').then(function(wb){zip.file('xl/workbook.xml',wb.replace(/name="ABRIL"/g,'name="'+mesName+'"'));});
-    var p2=zip.file('xl/worksheets/sheet1.xml').async('string').then(function(sh){
-      // ERROR 4&5 FIX: limpiar TODOS los conteos del template antes de escribir
-      sh=_clearSoporteCounts(sh);
-      zip.file('xl/worksheets/sheet1.xml',_fillSoporte(sh,fechaIni,reportes));
+    var p1=zip.file('xl/workbook.xml').async('string').then(function(wb){
+      wb=wb.replace(/name="ABRIL"/g,'name="'+mesName+'"');
+      wb=wb.replace(/<calcPr ([^/]*)\/>/,'<calcPr $1 fullCalcOnLoad="1"/>');
+      zip.file('xl/workbook.xml',wb);
     });
-    return Promise.all([p1,p2]).then(function(){return zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',compression:'DEFLATE'});});
+    var p2=zip.file('xl/worksheets/sheet1.xml').async('string').then(function(sh){
+      console.log('Sheet1 cargado, limpiando conteos...');
+      sh=_clearSoporteCounts(sh);
+      console.log('ZIP MODIFICADO, llenando...');
+      sh=_fillSoporte(sh,fechaIni,reportes);
+      zip.file('xl/worksheets/sheet1.xml',sh);
+    });
+    return Promise.all([p1,p2]).then(function(){
+      console.log('Generando blob...');
+      return zip.generateAsync({
+        type:'blob',
+        mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        compression:'DEFLATE'
+      });
+    });
   }).then(function(blob){
+    console.log('BLOB GENERADO',blob.size,'bytes');
     var d1=new Date(fechaIni+'T12:00:00');
-    var a=document.createElement('a');a.href=URL.createObjectURL(blob);
-    a.download='Soporte_'+MESES_ES[d1.getMonth()]+'_'+d1.getFullYear()+'.xlsx';a.click();showToast('✅ Soporte descargado');
-  }).catch(function(e){showToast('❌ '+(e.message||e));console.error('[Soporte]',e);});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='Soporte_'+MESES_ES[d1.getMonth()]+'_'+d1.getFullYear()+'.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast('✅ Soporte descargado');
+    console.log('DESCARGA EJECUTADA');
+  }).catch(function(e){
+    console.error('ERROR GENERANDO SOPORTE:',e);
+    showToast('❌ Error: '+(e.message||e));
+    alert('Error generando Soporte:\n'+(e.message||String(e)));
+  });
 }
 
-// Limpiar todos los conteos del template (cols SUPER/NIVEL/TRAB/DREN/AFORO/INTERM × 31 días × 51 pozos)
 function _clearSoporteCounts(shXml){
   for(var d=1;d<=31;d++){
     var cb=6+(d-1)*8;
     for(var o=0;o<=6;o++){
-      if(o===4)continue; // skip MEDICION
+      if(o===4)continue;
       var col=_colLetter(cb+o);
       for(var row=3;row<=53;row++){
         shXml=_soSetVal(shXml,col+row,'');
@@ -6286,17 +6466,19 @@ function _clearSoporteCounts(shXml){
 }
 
 function _fillSoporte(shXml,fechaIni,reportes){
-  var refMon=parseInt(fechaIni.slice(5,7)),refYear=parseInt(fechaIni.slice(0,4));
+  var refMon=parseInt(fechaIni.slice(5,7));
+  var refYear=parseInt(fechaIni.slice(0,4));
   var counts={};var pzSin=[];
   reportes.forEach(function(r){
-    var pz=_normPozo(r.pozo);if(!pz||!_isRealWell(pz))return;
+    var pz=_normPozo(r.pozo);
+    if(!pz||!_isRealWell(pz))return;
     var ds=_mxDateStr(r.fecha);
     var year=parseInt(ds.slice(0,4)),mon=parseInt(ds.slice(5,7)),day=parseInt(ds.slice(8));
     if(year!==refYear||mon!==refMon||day<1||day>31)return;
     if(!_SOPORTE_ROW[pz]){if(pzSin.indexOf(pz)===-1)pzSin.push(pz);return;}
-    if(!counts[pz])counts[pz]={};if(!counts[pz][day])counts[pz][day]={s:0,n:0,t:0,d:0,a:0,i:0};
+    if(!counts[pz])counts[pz]={};
+    if(!counts[pz][day])counts[pz][day]={s:0,n:0,t:0,d:0,a:0,i:0};
     var c=counts[pz][day];
-    // Usar _clasificar para lógica de conteo limpia
     var cl=_clasificar(r);
     if(cl.super_)c.s++;
     if(cl.nivel)c.n++;
@@ -6304,39 +6486,33 @@ function _fillSoporte(shXml,fechaIni,reportes){
     if(cl.drenar)c.d++;
     if(cl.aforo)c.a++;
     if(cl.inter)c.i++;
-    // Diagnóstico por reporte
-    console.log('[CONTEO]','C-'+pz,'|',ds.slice(5),'|',r.modo,
-      '| SUPER='+(cl.super_?1:0),'NIVEL='+(cl.nivel?1:0),
-      'TRAB='+(cl.trabajo?1:0),'DREN='+(cl.drenar?1:0),
-      'AFOR='+(cl.aforo?1:0),'INT='+(cl.inter?1:0),
-      '|',cl.motivo||'-');
+    console.log('[CONTEO]','C-'+pz,'día'+day,'tipo='+_getTipo(r),'S='+c.s,'N='+c.n,'T='+c.t);
   });
-  if(pzSin.length)console.log('[Soporte] Sin fila:',pzSin);
+  if(pzSin.length)console.warn('[Soporte] Sin fila:',pzSin);
   var filled=0;
   for(var pz in counts){
     var row=_SOPORTE_ROW[pz];
     for(var day in counts[pz]){
-      var d=parseInt(day),c=counts[pz][d],cb=6+(d-1)*8;
+      var d=parseInt(day);var c=counts[pz][d];var cb=6+(d-1)*8;
       [{o:0,v:c.s},{o:1,v:c.n},{o:2,v:c.t},{o:3,v:c.d},{o:5,v:c.a},{o:6,v:c.i}].forEach(function(p){
         if(!p.v)return;
         shXml=_soSetVal(shXml,_colLetter(cb+p.o)+row,p.v);filled++;
       });
     }
   }
-  console.log('[Soporte] Celdas escritas:',filled,'pozos:',Object.keys(counts).length,'sin fila:',pzSin.length);
+  console.log('[Soporte] Celdas escritas:',filled,'pozos:',Object.keys(counts).length);
   return shXml;
 }
 
-// Insertar/reemplazar valor en Soporte con orden de columna correcto
 function _soSetVal(xml,addr,val){
   var search='<c r="'+addr+'"';
   var pos=xml.indexOf(search);
   if(pos!==-1){
     var nc=xml[pos+search.length];
-    if(nc!=='"'&&nc!=='>'&&nc!=='/'&&nc!==' ')pos=-1; // falsa coincidencia
+    if(nc!=='"'&&nc!=='>'&&nc!=='/'&&nc!==' ')pos=-1;
   }
   if(pos!==-1){
-    if(xml.indexOf('<f>',pos)!==-1&&xml.indexOf('<f>',pos)<xml.indexOf('</c>',pos))return xml;
+    if(xml.indexOf('<f>',pos)!==-1&&xml.indexOf('<f>',pos)<(xml.indexOf('</c>',pos)+9999)&&xml.indexOf('</c>',pos)!==-1&&xml.indexOf('<f>',pos)<xml.indexOf('</c>',pos))return xml;
     var es=xml.indexOf('/>',pos);var ec=xml.indexOf('</c>',pos);
     var cellEnd=(es!==-1&&(ec===-1||es<ec))?es+2:ec+4;
     var tagEnd=xml.indexOf('>',pos);
@@ -6344,22 +6520,18 @@ function _soSetVal(xml,addr,val){
     if(!val&&val!==0)return xml.substring(0,pos)+'<c r="'+addr+'"'+attrs+'></c>'+xml.substring(cellEnd);
     return xml.substring(0,pos)+'<c r="'+addr+'"'+attrs+'><v>'+val+'</v></c>'+xml.substring(cellEnd);
   }
-  if(!val&&val!==0)return xml; // si es limpieza y no existe, no hacer nada
-  // Insertar celda en posición correcta (ordenada por columna)
+  if(!val&&val!==0)return xml;
   var rn=addr.match(/\d+$/)[0];
   var colStr=addr.replace(/\d+$/,'');var colN=_colNum(colStr);
   var rowSearch='<row r="'+rn+'"';var rpos=xml.indexOf(rowSearch);
   if(rpos===-1)return xml;
   var rgt=xml.indexOf('>',rpos)+1;
-  // Buscar posición correcta: antes de la primera celda con columna mayor
-  var insertAt=rgt;
-  var cellRe=/<c r="([A-Z]+)\d+"/g;cellRe.lastIndex=rgt-1;
-  var m;var rowEndPos=xml.indexOf('</row>',rpos);
+  var rowEndPos=xml.indexOf('</row>',rpos);
   var rowPart=xml.substring(rgt,rowEndPos);
-  var ce=/<c r="([A-Z]+)\d+"/g;var offset=0;
+  var ce=/<c r="([A-Z]+)\d+"/g;var insertAt=rgt;var m;
   while((m=ce.exec(rowPart))!==null){
     if(_colNum(m[1])>colN){insertAt=rgt+m.index;break;}
-    offset=m.index;insertAt=rgt+rowPart.length;
+    insertAt=rgt+rowPart.length;
   }
   return xml.substring(0,insertAt)+'<c r="'+addr+'"><v>'+val+'</v></c>'+xml.substring(insertAt);
 }
