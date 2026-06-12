@@ -6020,10 +6020,12 @@ function _isRealWell(p){return /^\d{1,4}[A-Z]?$/i.test(_normPozo(p));}
 function _getTipo(r){
   if(!r)return 'otro';
   var msg=r.msg||'';
-  if(r.esAlarma||msg.indexOf('🚨')!==-1)return 'alarma';
-  if(msg.indexOf('🌙 *NIVELES DE GUARDIA*')!==-1)return 'guardia';
-  if(msg.indexOf('📋 *REPORTE DE VISITA*')!==-1)return 'visita';
-  if(msg.indexOf('📝 *NOTA DE CAMPO*')!==-1)return 'nota';
+  // Clasificar por contenido del msg — NO depender de r.modo
+  if(r.esAlarma||msg.indexOf('🚨 *ALERTA')!==-1||msg.indexOf('🚨')===0)return 'alarma';
+  if(msg.indexOf('🌙 *NIVELES DE GUARDIA*')!==-1||msg.indexOf('NIVELES DE GUARDIA')!==-1)return 'guardia';
+  if(msg.indexOf('📋 *REPORTE DE VISITA*')!==-1||msg.indexOf('REPORTE DE VISITA')!==-1)return 'visita';
+  if(msg.indexOf('📝 *NOTA DE CAMPO*')!==-1||msg.indexOf('NOTA DE CAMPO')!==-1)return 'nota';
+  // Fallback si msg no tiene header claro
   if(r.modo==='guardia'||r.modo==='nivel')return 'guardia';
   if(r.modo==='co')return 'visita';
   return 'otro';
@@ -6243,6 +6245,21 @@ function adminGenerarDiario(recorredor,fechaIni,fechaFin){
         var n=d.list.filter(function(r){return _getTipo(r)==='nota';}).length;
         console.log('['+_sheetLabel(d.date)+'] VISITAS='+v+' GUARDIAS='+g+' NOTAS='+n+' TOTAL='+d.list.length);
       });
+      // DIAGNÓSTICO FINAL antes de generar
+      var totV=0,totG=0,totN=0,totA=0;
+      days.forEach(function(d){
+        d.list.forEach(function(r){
+          var t=_getTipo(r);
+          if(t==='visita')totV++;else if(t==='guardia')totG++;else if(t==='nota')totN++;else if(t==='alarma')totA++;
+        });
+      });
+      console.log('====== DIAGNÓSTICO GENERACIÓN ======');
+      console.log('VISITAS             =',totV);
+      console.log('GUARDIAS            =',totG);
+      console.log('NOTAS               =',totN);
+      console.log('ALERTAS EXCLUIDAS   =',totA);
+      console.log('TOTAL USADO         =',totV+totG+totN);
+      console.log('=====================================');
       showToast('⚙️ Generando '+days.length+' hojas...');
       _buildDiario(bytes,recorredor,days);
     });
@@ -6400,6 +6417,16 @@ function adminGenerarSoporte(fechaIni,fechaFin){
     _adminReportes(null,fechaIni,fechaFin,function(reportes){
       if(!reportes.length){showToast('⚠️ Sin reportes en ese rango');return;}
       console.log('REPORTES CARGADOS',reportes.length);
+      // DIAGNÓSTICO FINAL Soporte
+      var sv=0,sg=0,sn=0,sa=0;
+      reportes.forEach(function(r){var t=_getTipo(r);if(t==='visita')sv++;else if(t==='guardia')sg++;else if(t==='nota')sn++;else if(t==='alarma')sa++;});
+      console.log('====== DIAGNÓSTICO SOPORTE ======');
+      console.log('VISITAS             =',sv);
+      console.log('GUARDIAS            =',sg);
+      console.log('NOTAS               =',sn);
+      console.log('ALERTAS EXCLUIDAS   =',sa);
+      console.log('TOTAL USADO         =',sv+sg+sn);
+      console.log('=================================');
       showToast('⚙️ Generando Soporte...');
       _buildSoporte(bytes,fechaIni,fechaFin,reportes);
     });
