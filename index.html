@@ -1717,7 +1717,7 @@ function ppToggle(id){
 
     <div class="confirm-btns">
       <button class="confirm-cancel" onclick="cerrarConfirmacion()">✕ Cancelar</button>
-      <button class="confirm-send" onclick="confirmarEnvio()">📤 Enviar ahora</button>
+      <button class="confirm-send" onclick="console.log('CLICK ENVIAR OK');alert('CLICK ENVIAR OK');confirmarEnvio()">📤 Enviar ahora</button>
     </div>
   </div>
 </div>
@@ -2490,6 +2490,7 @@ function enviarTodo(soloPreview){
 
 // Continuación real del envío (después de pasar el aviso GPS)
 function _continuarEnvio(){
+  try{
   console.log('INICIO _continuarEnvio');
   if(!REC||!W||W==='???') return;
   var ci=getCicloInfo(REC);
@@ -2595,8 +2596,9 @@ function _continuarEnvio(){
     var ct=document.getElementById('confirmTime');
     if(ct){ var d=new Date(); ct.textContent=d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
   }
-}
 
+  }catch(e){console.error('ERROR _continuarEnvio:',e);alert('Error en _continuarEnvio:\n'+e.message);}
+}
 function cerrarConfirmacion(){
   var ov = document.getElementById('confirmOverlay');
   if(ov){
@@ -5669,6 +5671,7 @@ setTimeout(function(){
 }, 3000);
 
 function confirmarEnvio(){
+  try{
   console.log('CLICK ENVIAR — confirmarEnvio iniciado');
   console.log('GRUPO DESTINO:', UM_TO);
   var ov = document.getElementById('confirmOverlay');
@@ -5803,8 +5806,9 @@ function confirmarEnvio(){
     _ccSet('msg', '💾', 'Mensaje WhatsApp', 'Guardado localmente — se enviará al recuperar señal');
     _ccSet('foto', '💾', 'Evidencia fotográfica', nFotos > 0 ? nFotos+' foto'+(nFotos>1?'s':'')+' guardada'+(nFotos>1?'s':'')+' localmente' : 'Sin fotos adjuntas');
   }
-}
 
+  }catch(e){console.error('ERROR confirmarEnvio:',e);alert('Error en confirmarEnvio:\n'+e.message);}
+}
 function _ccSet(tipo, icon, titulo, sub){
   var cap = tipo.charAt(0).toUpperCase()+tipo.slice(1);
   var iconEl  = document.getElementById('cc'+cap+'Icon');
