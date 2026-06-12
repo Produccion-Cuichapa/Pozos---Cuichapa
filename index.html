@@ -6003,61 +6003,96 @@ function adminSetMesAnterior(){
 var _adminDiarioTpl=null,_adminSoporteTpl=null;
 var MESES_ES=['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
 var RECORREDORES_FULL={'Cirilo':'Cirilo Cancino Gómez','Juan Carlos':'Juan Carlos Flores','Manrique':'Manrique Jiménez P.','Luis':'Luis Carlos Flores Cruz','Jose':'Jose Guadalupe Torres García'};
-
-// Mapa hardcodeado pozo→fila en Soporte (1 fila por pozo, estructura real)
 var _SOPORTE_ROW={"106D":3,"107":4,"119":5,"124D":6,"128":7,"131":8,"137":9,"138":10,"139":11,"167":12,"169":13,"172":14,"176":15,"179":16,"180":17,"187":18,"19":19,"191":20,"201":21,"207":22,"213":23,"306":24,"324":25,"342":26,"346":27,"350":28,"352":29,"363":30,"364":31,"367":32,"373":33,"376":34,"385":35,"401":36,"407":37,"411":38,"413":39,"419":40,"421":41,"423":42,"427":43,"431":44,"451":45,"452":46,"460":47,"500":48,"502":49,"503":50,"504":51,"505":52,"601":53};
 
-function _adminFetch(name,cached,cb){
-  if(cached){cb(null,cached);return;}
-  fetch('./'+name).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status+': ./'+name);return r.arrayBuffer();}).then(function(b){cb(null,new Uint8Array(b));}).catch(function(e){cb(String(e.message||e),null);});
-}
-
-function _adminReportes(recorredor,fechaIni,fechaFin,cb){
-  var _tz=6*3600000;
-  var ini=new Date(fechaIni+'T00:00:00Z').getTime()+_tz;
-  var fin=new Date(fechaFin+'T23:59:59Z').getTime()+_tz;
-  function filtrar(arr){return arr.filter(function(r){if(recorredor&&r.recorredor!==recorredor)return false;var t=new Date(r.fecha).getTime();return t>=ini&&t<=fin;});}
-  if(fbDB){
-    fbDB.ref('reportes').orderByChild('fecha').startAt(new Date(ini).toISOString()).endAt(new Date(fin+1).toISOString()).once('value',function(snap){
-      var arr=[];snap.forEach(function(c){arr.push(c.val());});
-      console.log('[Admin] Firebase raw total:',arr.length);
-      if(recorredor)arr=arr.filter(function(r){return r.recorredor===recorredor;});
-      console.log('[Admin] Después filtro recorredor:',arr.length);
-      cb(arr.length?arr:filtrar(getHistorial()));
-    },function(e){console.warn('[Admin] Firebase error:',e);cb(filtrar(getHistorial()));});
-  }else{var f=filtrar(getHistorial());console.log('[Admin] Local only:',f.length);cb(f);}
-}
-
+// ── Helpers de fecha (UTC-6 México) ──────────────────────────
 function _mxDate(iso){return new Date(new Date(iso).getTime()-6*3600000);}
+function _mxDateStr(iso){
+  var d=_mxDate(iso);
+  return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+}
 function _fmtFecha(d){return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear();}
 function _sheetLabel(d){return ('0'+d.getDate()).slice(-2)+'-'+['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][d.getMonth()];}
 function _escXml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function _colLetter(n){var s='';n=n-1;while(n>=0){s=String.fromCharCode(65+(n%26))+s;n=Math.floor(n/26)-1;}return s;}
 
-// Reemplaza valor de celda preservando atributo s= (estilo y bordes)
-function _wcSet(xml,addr,val,asNum){
-  // Maneja: <c r="ADDR" s="N" t="s"><v>X</v></c>  (shared string)
-  //         <c r="ADDR" s="N"></c>                  (empty)
-  //         <c r="ADDR" s="N"/>                     (self-closing)
-  var openClose=new RegExp('<c r="'+addr+'"([^>]*)>([\\s\\S]*?)</c>');
-  var selfClose=new RegExp('<c r="'+addr+'"([^/]*)/>');
-  var m=openClose.exec(xml)||selfClose.exec(xml);
-  if(!m)return xml; // celda no existe en XML — no se puede escribir sin conocer el estilo
-  var attrs=m[1].replace(/\s+t="[^"]*"/g,''); // preservar s=, quitar tipo
-  var newCell;
-  if(!val&&val!==0){
-    newCell='<c r="'+addr+'"'+attrs+'></c>';
-  }else if(asNum){
-    newCell='<c r="'+addr+'"'+attrs+'><v>'+parseFloat(val)+'</v></c>';
-  }else{
-    newCell='<c r="'+addr+'"'+attrs+' t="inlineStr"><is><t>'+_escXml(String(val))+'</t></is></c>';
+// ── Fetch template con cache ──────────────────────────────────
+function _adminFetch(name,cached,cb){
+  if(cached){cb(null,cached);return;}
+  fetch('./'+name).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status+': ./'+name);return r.arrayBuffer();}).then(function(b){cb(null,new Uint8Array(b));}).catch(function(e){cb(String(e.message||e),null);});
+}
+
+// ── Leer reportes Firebase + diagnóstico completo ────────────
+function _adminReportes(recorredor,fechaIni,fechaFin,cb){
+  console.log('════ [Admin] DIAGNÓSTICO ════');
+  console.log('  fechaInicio:', fechaIni, '  fechaFin:', fechaFin);
+  console.log('  recorredor:', recorredor||'(todos)');
+
+  function filtrar(arr){
+    console.log('  Total en fuente:', arr.length);
+    // Filtrar por rango usando comparación de strings de fecha México
+    var byRango=arr.filter(function(r){
+      var ds=_mxDateStr(r.fecha);
+      return ds>=fechaIni && ds<=fechaFin;
+    });
+    console.log('  Después filtro rango:', byRango.length);
+    // Mostrar fechas únicas encontradas
+    var fechasUnicas={};
+    byRango.forEach(function(r){fechasUnicas[_mxDateStr(r.fecha)]=(fechasUnicas[_mxDateStr(r.fecha)]||0)+1;});
+    console.log('  Fechas detectadas:', JSON.stringify(fechasUnicas));
+    if(recorredor){
+      var byRec=byRango.filter(function(r){return r.recorredor===recorredor;});
+      console.log('  Después filtro recorredor ('+recorredor+'):', byRec.length);
+      return byRec;
+    }
+    return byRango;
   }
-  return xml.replace(m[0],newCell);
+
+  if(fbDB){
+    // Firebase: usar fechaIni/Fin como límites UTC amplios para capturar todo
+    var fbStart=fechaIni+'T00:00:00.000Z';
+    var fbEnd  =fechaFin+'T23:59:59.999Z';
+    console.log('  Firebase query:', fbStart, '→', fbEnd);
+    fbDB.ref('reportes').orderByChild('fecha').startAt(fbStart).endAt(fbEnd)
+      .once('value',function(snap){
+        var arr=[];snap.forEach(function(c){arr.push(c.val());});
+        console.log('  Firebase raw devolvió:', arr.length);
+        cb(filtrar(arr));
+      },function(e){
+        console.warn('  Firebase error:',e,'. Usando local.');
+        cb(filtrar(getHistorial()));
+      });
+  }else{
+    console.log('  Sin Firebase, usando historial local');
+    cb(filtrar(getHistorial()));
+  }
+}
+
+// ── XML: reemplazar valor de celda conservando s= (estilo) ───
+function _wcSet(xml,addr,val,asNum){
+  // Soporta: <c r="X" s="N" t="s"><v>0</v></c>  y  <c r="X" s="N"/>
+  var reOpen=new RegExp('<c r="'+addr+'"([^>]*)>([\\s\\S]*?)<\\/c>');
+  var reSelf=new RegExp('<c r="'+addr+'"([^/]*)\\/>')
+  var m=reOpen.exec(xml);
+  if(!m) m=reSelf.exec(xml);
+  if(!m) return xml;  // celda no existe en XML
+  var attrs=m[1].replace(/\s+t="[^"]*"/g,'');  // quitar t=, preservar s=
+  var repl;
+  if(val===null||val===undefined||val===''){
+    repl='<c r="'+addr+'"'+attrs+'></c>';
+  }else if(asNum){
+    repl='<c r="'+addr+'"'+attrs+'><v>'+val+'</v></c>';
+  }else{
+    repl='<c r="'+addr+'"'+attrs+' t="inlineStr"><is><t>'+_escXml(String(val))+'</t></is></c>';
+  }
+  return xml.replace(m[0],repl);
 }
 function _wcStr(xml,addr,val){return _wcSet(xml,addr,val,false);}
 function _wcNum(xml,addr,val){
   if(val===null||val===undefined||val==='')return xml;
-  var n=parseFloat(val);return _wcSet(xml,addr,isNaN(n)?val:n,!isNaN(n));
+  var n=parseFloat(val);
+  if(isNaN(n))return _wcStr(xml,addr,val);
+  return _wcSet(xml,addr,n,true);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -6065,73 +6100,80 @@ function _wcNum(xml,addr,val){
 // ══════════════════════════════════════════════════════════════
 function adminGenerarDiario(recorredor,fechaIni,fechaFin){
   if(!recorredor||!fechaIni||!fechaFin){showToast('⚠️ Selecciona recorredor y fechas');return;}
-  showToast('🔄 Cargando plantilla...');
+  showToast('🔄 Cargando datos...');
   _adminFetch('tpl_diario.xlsx',_adminDiarioTpl,function(err,bytes){
     if(err){showToast('❌ '+err);return;}
     _adminDiarioTpl=bytes;
     _adminReportes(recorredor,fechaIni,fechaFin,function(reportes){
-      console.log('[Diario] Reportes recibidos:',reportes.length,'para',recorredor,fechaIni,'-',fechaFin);
-      var pozos={};reportes.forEach(function(r){pozos[r.pozo]=(pozos[r.pozo]||0)+1;});
-      console.log('[Diario] Pozos encontrados:',Object.keys(pozos));
       if(!reportes.length){showToast('⚠️ Sin reportes en ese rango');return;}
-      showToast('⚙️ Generando...');
-      _buildDiario(bytes,recorredor,fechaIni,fechaFin,reportes);
+      // Agrupar por fecha México (YYYY-MM-DD)
+      var byDay={};
+      reportes.forEach(function(r){
+        var ds=_mxDateStr(r.fecha);
+        if(!byDay[ds])byDay[ds]={dateStr:ds,date:_mxDate(r.fecha),list:[]};
+        byDay[ds].list.push(r);
+      });
+      var days=Object.values(byDay).sort(function(a,b){return a.dateStr<b.dateStr?-1:1;});
+      // Log por día
+      days.forEach(function(d){
+        var co=d.list.filter(function(r){return !r.esAlarma&&(r.modo==='co'||r.modo==='undefined'||!r.modo);}).length;
+        console.log('  [Diario] '+_sheetLabel(d.date)+': '+d.list.length+' reportes ('+co+' C.O.)');
+      });
+      showToast('⚙️ Generando '+days.length+' hoja(s)...');
+      _buildDiario(bytes,recorredor,fechaIni,fechaFin,days);
     });
   });
 }
 
-function _buildDiario(tplBytes,recorredor,fechaIni,fechaFin,reportes){
+function _buildDiario(tplBytes,recorredor,fechaIni,fechaFin,days){
   if(typeof JSZip==='undefined'){showToast('⚠️ JSZip no cargado');return;}
   JSZip.loadAsync(tplBytes).then(function(zip){
-    // Agrupar reportes por día (hora México UTC-6)
-    var byDay={};
-    reportes.forEach(function(r){
-      var d=_mxDate(r.fecha);
-      var k=d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate();
-      if(!byDay[k])byDay[k]={date:d,list:[]};
-      byDay[k].list.push(r);
-    });
-    var days=Object.values(byDay).sort(function(a,b){return a.date-b.date;});
-    console.log('[Diario] Días a generar:',days.length,days.map(function(d){return _sheetLabel(d.date);}));
-
     return zip.file('xl/workbook.xml').async('string').then(function(wbXml){
       return zip.file('xl/_rels/workbook.xml.rels').async('string').then(function(wbRels){
-        // Mapa rId → archivo de hoja
+        // Mapa rId → archivo
         var relMap={};
         (wbRels.match(/<Relationship [^>]*>/g)||[]).forEach(function(rel){
           var id=(rel.match(/Id="([^"]+)"/)||[])[1];
-          var target=(rel.match(/Target="([^"]+)"/)||[])[1];
-          if(id&&target)relMap[id]=target;
+          var tg=(rel.match(/Target="([^"]+)"/)||[])[1];
+          if(id&&tg)relMap[id]=tg;
         });
-        // Hojas reales (excluir defined names internos)
+        // Hojas reales
         var sheetEntries=[];
         (wbXml.match(/<sheet [^>]*\/>/g)||[]).forEach(function(sh){
-          var name=(sh.match(/name="([^"]+)"/)||[])[1]||'';
-          var sid =(sh.match(/sheetId="([^"]+)"/)||[])[1]||'';
-          var rid =(sh.match(/r:id="([^"]+)"/)||[])[1]||'';
-          if(name&&!name.startsWith('_xlnm')&&!name.includes('microsoft.com'))
-            sheetEntries.push({name:name,sheetId:sid,rId:rid});
+          var nm=(sh.match(/name="([^"]+)"/)||[])[1]||'';
+          var rid=(sh.match(/r:id="([^"]+)"/)||[])[1]||'';
+          if(nm&&!nm.startsWith('_xlnm')&&!nm.includes('microsoft.com'))
+            sheetEntries.push({name:nm,rId:rid});
         });
-        console.log('[Diario] Hojas en plantilla:',sheetEntries.map(function(s){return s.name;}));
+        console.log('[Diario] Hojas plantilla:',sheetEntries.map(function(s){return s.name;}));
+        console.log('[Diario] Días a procesar:',days.map(function(d){return _sheetLabel(d.date);}));
 
         var newWbXml=wbXml;
         var nombre=RECORREDORES_FULL[recorredor]||recorredor;
         var promises=[];
 
         sheetEntries.forEach(function(sheet,idx){
-          if(idx>=days.length)return;
-          // IIFE para capturar variables del loop
+          if(idx>=days.length){return;}  // no hay más días para este sheet
           (function(sh,dayObj){
             var label=_sheetLabel(dayObj.date);
             var fecha=_fmtFecha(dayObj.date);
-            newWbXml=newWbXml.replace('name="'+sh.name+'"','name="'+_escXml(label)+'"');
+            // Renombrar hoja solo si el nombre cambia
+            if(sh.name!==label){
+              newWbXml=newWbXml.replace('name="'+sh.name+'"','name="'+_escXml(label)+'"');
+            }
             var shFile='xl/'+(relMap[sh.rId]||('worksheets/sheet'+(idx+1)+'.xml'));
-            var coRpts=dayObj.list.filter(function(r){return !r.esAlarma&&r.modo!=='guardia';});
-            var nvRpts=dayObj.list.filter(function(r){return r.nivel||r.ctm;});
-            console.log('[Diario] Hoja',label,': CO='+coRpts.length+' Nivel='+nvRpts.length);
-            var p=zip.file(shFile);
-            if(!p){console.warn('[Diario] No encontrado:',shFile);return;}
-            promises.push(p.async('string').then(function(shXml){
+            // CO: incluir cualquier reporte que NO sea alarma ni guardia
+            var coRpts=dayObj.list.filter(function(r){
+              return !r.esAlarma && r.modo!=='guardia';
+            });
+            var nvRpts=dayObj.list.filter(function(r){
+              return (r.nivel&&(r.nivel.ctm||r.nivel.bls))||r.ctm||r.bls||r.modo==='guardia';
+            });
+            console.log('[Diario] Procesando hoja',label,'(',sh.name,'): CO='+coRpts.length+' Niv='+nvRpts.length);
+            var f=zip.file(shFile);
+            if(!f){console.warn('[Diario] Archivo no encontrado:',shFile);return;}
+            promises.push(f.async('string').then(function(shXml){
+              console.log('[Diario] Sheet XML leído para',label,'(',shXml.length,'chars)');
               var filled=_fillDiarioSheet(shXml,nombre,fecha,coRpts,nvRpts);
               zip.file(shFile,filled);
             }));
@@ -6148,50 +6190,47 @@ function _buildDiario(tplBytes,recorredor,fechaIni,fechaFin,reportes){
     var a=document.createElement('a');a.href=URL.createObjectURL(blob);
     a.download='Reporte_'+recorredor+'_'+fechaIni+(fechaFin!==fechaIni?'_'+fechaFin:'')+'.xlsx';
     a.click();showToast('✅ Excel descargado');
-  }).catch(function(e){showToast('❌ '+(e.message||e));console.error('[Diario] Error:',e);});
+  }).catch(function(e){showToast('❌ '+(e.message||e));console.error('[Diario]',e);});
 }
 
 function _fillDiarioSheet(xml,nombre,fecha,coRpts,nvRpts){
-  // Encabezado
   xml=_wcStr(xml,'D3',nombre);
   xml=_wcStr(xml,'P3',fecha);
   xml=_wcStr(xml,'J3','');
-  // Filas de pozos 7-27 — sobreescribe TODOS (incluidos vacíos) para mantener bordes
+  // Sobreescribir TODAS las filas 7-27 (así se limpian las anteriores y se preservan bordes)
   for(var i=0;i<21;i++){
-    var row=7+i;
-    if(i<coRpts.length){
-      var r=coRpts[i];
-      xml=_wcNum(xml,'B'+row,i+1);
-      xml=_wcStr(xml,'C'+row,r.pozo?'C-'+r.pozo:'');
-      xml=_wcStr(xml,'D'+row,r.hora||'');
-      xml=_wcStr(xml,'E'+row,r.estatus||'');
-      xml=_wcStr(xml,'F'+row,r.fluye||'');
-      xml=_wcStr(xml,'G'+row,r.sap||'');
-      xml=_wcStr(xml,'H'+row,r.estrang||'');
-      xml=_wcNum(xml,'I'+row,r.ptp);
-      xml=_wcNum(xml,'J'+row,r.ldd);
-      xml=_wcNum(xml,'K'+row,r.ptr);
-      xml=_wcNum(xml,'L'+row,r.epm);
-      xml=_wcNum(xml,'M'+row,r.carrera);
-      xml=_wcStr(xml,'N'+row,r.observaciones||r.obs||'');
-    }else{
-      // Limpiar fila vacía (preserva bordes, borra valores)
-      xml=_wcNum(xml,'B'+row,i+1);
-      ['C','D','E','F','G','H','I','J','K','L','M','N'].forEach(function(col){xml=_wcStr(xml,col+row,'');});
-    }
+    var r7=7+i;
+    var r=i<coRpts.length?coRpts[i]:null;
+    xml=_wcNum(xml,'B'+r7,i+1);
+    xml=_wcStr(xml,'C'+r7,r&&r.pozo?'C-'+r.pozo:'');
+    xml=_wcStr(xml,'D'+r7,r?r.hora||'':'');
+    xml=_wcStr(xml,'E'+r7,r?r.estatus||'':'');
+    xml=_wcStr(xml,'F'+r7,r?r.fluye||'':'');
+    xml=_wcStr(xml,'G'+r7,r?r.sap||'':'');
+    xml=_wcStr(xml,'H'+r7,r?r.estrang||'':'');
+    xml=_wcNum(xml,'I'+r7,r?r.ptp:null);
+    xml=_wcNum(xml,'J'+r7,r?r.ldd:null);
+    xml=_wcNum(xml,'K'+r7,r?r.ptr:null);
+    xml=_wcNum(xml,'L'+r7,r?r.epm:null);
+    xml=_wcNum(xml,'M'+r7,r?r.carrera:null);
+    xml=_wcStr(xml,'N'+r7,r?r.observaciones||r.obs||'':'');
   }
   // Niveles filas 32-46
   var am=nvRpts.filter(function(r){return _mxDate(r.fecha).getHours()<14;});
   var pm=nvRpts.filter(function(r){return _mxDate(r.fecha).getHours()>=14;});
   for(var j=0;j<15;j++){
     var nr=32+j;
+    var nv1=j<am.length?am[j]:null;
+    var nv2=j<pm.length?pm[j]:null;
     xml=_wcNum(xml,'B'+nr,j+1);
+    xml=_wcStr(xml,'C'+nr,nv1&&nv1.pozo?'C-'+nv1.pozo:'');
+    xml=_wcStr(xml,'D'+nr,nv1?(nv1.nivel&&nv1.nivel.hora)||nv1.hora||'':'');
+    xml=_wcNum(xml,'E'+nr,nv1?(nv1.nivel&&nv1.nivel.ctm)||nv1.ctm||'':'');
     xml=_wcNum(xml,'G'+nr,j+1);
+    xml=_wcStr(xml,'H'+nr,nv2&&nv2.pozo?'C-'+nv2.pozo:'');
+    xml=_wcStr(xml,'I'+nr,nv2?(nv2.nivel&&nv2.nivel.hora)||nv2.hora||'':'');
+    xml=_wcNum(xml,'J'+nr,nv2?(nv2.nivel&&nv2.nivel.ctm)||nv2.ctm||'':'');
     xml=_wcNum(xml,'L'+nr,j+1);
-    if(j<am.length){var nv=am[j];xml=_wcStr(xml,'C'+nr,nv.pozo?'C-'+nv.pozo:'');xml=_wcStr(xml,'D'+nr,(nv.nivel&&nv.nivel.hora)||nv.hora||'');xml=_wcNum(xml,'E'+nr,(nv.nivel&&nv.nivel.ctm)||nv.ctm||'');}
-    else{xml=_wcStr(xml,'C'+nr,'');xml=_wcStr(xml,'D'+nr,'');xml=_wcStr(xml,'E'+nr,'');}
-    if(j<pm.length){var nv2=pm[j];xml=_wcStr(xml,'H'+nr,nv2.pozo?'C-'+nv2.pozo:'');xml=_wcStr(xml,'I'+nr,(nv2.nivel&&nv2.nivel.hora)||nv2.hora||'');xml=_wcNum(xml,'J'+nr,(nv2.nivel&&nv2.nivel.ctm)||nv2.ctm||'');}
-    else{xml=_wcStr(xml,'H'+nr,'');xml=_wcStr(xml,'I'+nr,'');xml=_wcStr(xml,'J'+nr,'');}
   }
   return xml;
 }
@@ -6201,45 +6240,50 @@ function _fillDiarioSheet(xml,nombre,fecha,coRpts,nvRpts){
 // ══════════════════════════════════════════════════════════════
 function adminGenerarSoporte(fechaIni,fechaFin){
   if(!fechaIni||!fechaFin){showToast('⚠️ Selecciona rango de fechas');return;}
-  showToast('🔄 Cargando plantilla...');
+  showToast('🔄 Cargando datos...');
   _adminFetch('tpl_soporte.xlsx',_adminSoporteTpl,function(err,bytes){
     if(err){showToast('❌ '+err);return;}
     _adminSoporteTpl=bytes;
     _adminReportes(null,fechaIni,fechaFin,function(reportes){
-      console.log('[Soporte] Reportes recibidos:',reportes.length,'rango:',fechaIni,'-',fechaFin);
       if(!reportes.length){showToast('⚠️ Sin reportes en ese rango');return;}
-      // Debug: mostrar conteos para C-106D
-      _adminDebugConteo(reportes,fechaIni,'106D');
-      showToast('⚙️ Generando...');
+      _adminLogConteos(reportes,fechaIni);
+      showToast('⚙️ Generando Soporte...');
       _buildSoporte(bytes,fechaIni,fechaFin,reportes);
     });
   });
 }
 
-function _adminDebugConteo(reportes,fechaIni,pozoTest){
-  var _tz=6*3600000;
-  var baseDate=new Date(fechaIni+'T00:00:00Z');
-  var baseYear=baseDate.getUTCFullYear(),baseMon=baseDate.getUTCMonth();
-  var dias={};
+function _adminLogConteos(reportes,fechaIni){
+  var pozos={};
   reportes.forEach(function(r){
-    var d=_mxDate(r.fecha);
-    if(d.getFullYear()!==baseYear||d.getMonth()!==baseMon)return;
     var pz=String(r.pozo||'').replace(/^C-/i,'').trim();
-    if(pz!==pozoTest)return;
-    var day=d.getDate();
-    if(!dias[day])dias[day]={s:0,n:0,t:0,d:0,a:0,i:0};
-    var c=dias[day];
+    if(!pz)return;
+    if(!pozos[pz])pozos[pz]={};
+    var ds=_mxDateStr(r.fecha);
+    if(!pozos[pz][ds])pozos[pz][ds]={s:0,n:0,t:0,d:0,a:0,i:0};
+    var c=pozos[pz][ds];
     if(!r.esAlarma&&r.modo!=='guardia')c.s++;
-    if(r.nivel||r.ctm)c.n++;
-    if(r.checks){if(r.checks.trabajo)c.t++;if(r.checks.drenar)c.d++;if(r.checks.aforo)c.a++;if(r.checks.intermitente)c.i++;}
+    if(_hasNivel(r))c.n++;
+    var chk=r.checks||r.registro||{};
+    if(chk.trabajo===true||r.trabajo===true)c.t++;
+    if(chk.drenar===true||r.drenar===true)c.d++;
+    if(chk.aforo===true||r.aforo===true)c.a++;
+    if(chk.intermitente===true||r.intermitente===true)c.i++;
   });
-  var pozos={};reportes.forEach(function(r){var pz=String(r.pozo||'').replace(/^C-/i,'').trim();pozos[pz]=(pozos[pz]||0)+1;});
-  console.log('[Soporte] Pozos detectados:',Object.keys(pozos).sort());
-  console.log('[Soporte] C-'+pozoTest+' por día:',dias);
-  for(var d in dias){
-    var c=dias[d];
-    console.log('  C-'+pozoTest+' día '+d+': SUPER='+c.s+' NIVEL='+c.n+' TRABAJO='+c.t+' DRENAR='+c.d+' AFORO='+c.a+' INTERM='+c.i);
+  // Mostrar C-106D como ejemplo
+  var pz106=pozos['106D']||{};
+  console.log('[Soporte] Pozos detectados:',Object.keys(pozos).sort().join(', '));
+  for(var ds in pz106){
+    var c=pz106[ds];
+    console.log('[Soporte] C-106D',ds+': SUPER='+c.s+' NIVEL='+c.n+' TRABAJO='+c.t+' DRENAR='+c.d+' AFORO='+c.a+' INTERM='+c.i);
   }
+}
+
+function _hasNivel(r){
+  if(r.nivel&&typeof r.nivel==='object'){if(r.nivel.ctm||r.nivel.bls||r.nivel.hora)return true;}
+  if(r.ctm||r.bls)return true;
+  if(r.modo==='guardia')return true;
+  return false;
 }
 
 function _buildSoporte(tplBytes,fechaIni,fechaFin,reportes){
@@ -6250,8 +6294,8 @@ function _buildSoporte(tplBytes,fechaIni,fechaFin,reportes){
     var p1=zip.file('xl/workbook.xml').async('string').then(function(wb){
       zip.file('xl/workbook.xml',wb.replace(/name="ABRIL"/g,'name="'+mesName+'"'));
     });
-    var p2=zip.file('xl/worksheets/sheet1.xml').async('string').then(function(shXml){
-      zip.file('xl/worksheets/sheet1.xml',_fillSoporte(shXml,fechaIni,reportes));
+    var p2=zip.file('xl/worksheets/sheet1.xml').async('string').then(function(sh){
+      zip.file('xl/worksheets/sheet1.xml',_fillSoporte(sh,fechaIni,reportes));
     });
     return Promise.all([p1,p2]).then(function(){
       return zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',compression:'DEFLATE'});
@@ -6261,65 +6305,64 @@ function _buildSoporte(tplBytes,fechaIni,fechaFin,reportes){
     var a=document.createElement('a');a.href=URL.createObjectURL(blob);
     a.download='Soporte_'+MESES_ES[d1.getMonth()]+'_'+d1.getFullYear()+'.xlsx';
     a.click();showToast('✅ Soporte descargado');
-  }).catch(function(e){showToast('❌ '+(e.message||e));console.error('[Soporte] Error:',e);});
+  }).catch(function(e){showToast('❌ '+(e.message||e));console.error('[Soporte]',e);});
 }
 
-function _fillSoporte(shXml,fechaIniStr,reportes){
-  var baseDate=new Date(fechaIniStr+'T00:00:00Z');
-  var baseYear=baseDate.getUTCFullYear(),baseMon=baseDate.getUTCMonth();
-  // Contar por pozo normalizado y día
+function _fillSoporte(shXml,fechaIni,reportes){
+  // Contar por pozo normalizado y fecha México
   var counts={};
   reportes.forEach(function(r){
-    var d=_mxDate(r.fecha);
-    if(d.getFullYear()!==baseYear||d.getMonth()!==baseMon)return;
-    var day=d.getDate();
-    // Normalizar pozo: "C-106D" → "106D", "106D" → "106D"
-    var pz=String(r.pozo||'').replace(/^C-/i,'').replace(/^c-/i,'').trim();
+    var pz=String(r.pozo||'').replace(/^C-/i,'').trim();
     if(!pz||pz.length>6)return;
+    var ds=_mxDateStr(r.fecha);
+    var day=parseInt(ds.slice(-2));
+    if(day<1||day>31)return;
+    var mon=parseInt(ds.slice(5,7));
+    var refMon=parseInt(fechaIni.slice(5,7));
+    if(mon!==refMon)return;
     if(!counts[pz])counts[pz]={};
     if(!counts[pz][day])counts[pz][day]={s:0,n:0,t:0,d:0,a:0,i:0};
     var c=counts[pz][day];
     if(!r.esAlarma&&r.modo!=='guardia')c.s++;
-    if(r.nivel||r.ctm||r.bls)c.n++;
-    if(r.checks){
-      if(r.checks.trabajo===true)c.t++;
-      if(r.checks.drenar===true)c.d++;
-      if(r.checks.aforo===true)c.a++;
-      if(r.checks.intermitente===true)c.i++;
-    }
+    if(_hasNivel(r))c.n++;
+    var chk=r.checks||r.registro||{};
+    if(chk.trabajo===true||r.trabajo===true)c.t++;
+    if(chk.drenar===true||r.drenar===true)c.d++;
+    if(chk.aforo===true||r.aforo===true)c.a++;
+    if(chk.intermitente===true||r.intermitente===true)c.i++;
   });
-  console.log('[Soporte] counts calculados:',Object.keys(counts).length,'pozos');
-  // Llenar celdas usando mapa hardcodeado _SOPORTE_ROW
+
+  var filled=0;
   for(var pz in counts){
     var row=_SOPORTE_ROW[pz];
-    if(!row){console.warn('[Soporte] Pozo no mapeado:',pz);continue;}
+    if(!row){console.warn('[Soporte] Sin fila para pozo:',pz);continue;}
     for(var day in counts[pz]){
-      var d=parseInt(day);if(d<1||d>31)continue;
+      var d=parseInt(day);
       var c=counts[pz][d];
-      var colBase=6+(d-1)*8; // F=6 para día 1, AT=46 para día 6
-      var pairs=[{o:0,v:c.s},{o:1,v:c.n},{o:2,v:c.t},{o:3,v:c.d},{o:5,v:c.a},{o:6,v:c.i}];
-      pairs.forEach(function(p){
+      var cb=6+(d-1)*8;  // F=6 para día 1, AT=46 para día 6, BB=54 para día 7
+      [{o:0,v:c.s},{o:1,v:c.n},{o:2,v:c.t},{o:3,v:c.d},{o:5,v:c.a},{o:6,v:c.i}].forEach(function(p){
         if(!p.v)return;
-        var addr=_colLetter(colBase+p.o)+row;
-        shXml=_soSetVal(shXml,addr,p.v);
+        shXml=_soSetVal(shXml,_colLetter(cb+p.o)+row,p.v);
+        filled++;
       });
     }
   }
+  console.log('[Soporte] Celdas llenadas:',filled);
   return shXml;
 }
 
 function _soSetVal(xml,addr,val){
-  var opClose=new RegExp('<c r="'+addr+'"([^>]*)>([\\s\\S]*?)</c>');
-  var selfCl =new RegExp('<c r="'+addr+'"([^/]*)/>');
-  var m=opClose.exec(xml)||selfCl.exec(xml);
+  var reOpen=new RegExp('<c r="'+addr+'"([^>]*)>([\\s\\S]*?)<\\/c>');
+  var reSelf=new RegExp('<c r="'+addr+'"([^/]*)\\/>')
+  var m=reOpen.exec(xml);
+  if(!m)m=reSelf.exec(xml);
   if(m){
-    if(m[0].indexOf('<f>')!==-1)return xml; // no tocar fórmulas
+    if(m[0].indexOf('<f>')!==-1)return xml;
     var attrs=m[1].replace(/\s+t="[^"]*"/g,'');
     return xml.replace(m[0],'<c r="'+addr+'"'+attrs+'><v>'+val+'</v></c>');
   }
-  // Insertar celda nueva en la fila (sin estilo — datos de conteo simples)
-  var rowNum=addr.match(/\d+$/)[0];
-  var rp=new RegExp('(<row r="'+rowNum+'"[^>]*>)');
+  var rn=addr.match(/\d+$/)[0];
+  var rp=new RegExp('(<row r="'+rn+'"[^>]*>)');
   if(rp.test(xml))return xml.replace(rp,'$1<c r="'+addr+'"><v>'+val+'</v></c>');
   return xml;
 }
