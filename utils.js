@@ -13,7 +13,7 @@ function diffDays(a,b){return Math.floor((b-a)/(1000*60*60*24));}
 function _rangoLabel(dm, tipo){
   tipo = tipo || 'pozo';
   if(dm < 0) return '';
-  var ok = dm <= 15;
+  var ok = dm <= 80;  // Radio unificado 80m (antes: 15m)
   var distTxt = dm < 1000 ? Math.round(dm)+'m' : (dm/1000).toFixed(2)+'km';
   return (ok ? '✅ Dentro del rango del '+tipo : '⚠️ Fuera del rango del '+tipo+' ('+distTxt+')');
 }
