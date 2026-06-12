@@ -2593,8 +2593,8 @@ function _continuarEnvio(){
     var ct=document.getElementById('confirmTime');
     if(ct){ var d=new Date(); ct.textContent=d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
   }
-}
 
+}
 function cerrarConfirmacion(){
   var ov = document.getElementById('confirmOverlay');
   if(ov){
@@ -3179,6 +3179,8 @@ function alarmCcVerificar(){
 }
 
 function enviarAlarma(){
+  console.log('[ALARMA] CLICK ENVIAR');
+  console.log('[ALARMA] INICIO FLUJO');
   var _ov = document.getElementById('alarmConfirmOverlay'); if(_ov) _ov.style.display = 'none';
 
   // Detectar quien reporta automáticamente
@@ -5373,10 +5375,17 @@ function getPendientes(){
 
 // ── Enviar a WhatsApp ─────────────────────────────
 // ── Configuración Ultramsg ────────────────────────
+var RADIO_GPS_METROS = 80; // Radio GPS unificado — cambiar aquí para afectar todas las validaciones
 var UM_INSTANCE  = 'instance177727';
 var UM_TOKEN     = '0olfbxq3zi0rbsd1';
-var UM_TO        = '5217821670258-1586464715@g.us'; // Grupo Pozos
-var UM_BASE      = 'https://api.ultramsg.com/' + UM_INSTANCE;
+
+// ── MODO PRUEBAS ─────────────────────────────────────────────
+var MODO_PRUEBAS  = true;   // ← false para producción
+var TEST_GROUP_ID = '120363424993135472@g.us';
+var PROD_GROUP_ID = '5217821670258-1586464715@g.us'; // Grupo Pozos
+
+var UM_TO   = MODO_PRUEBAS ? TEST_GROUP_ID : PROD_GROUP_ID;
+var UM_BASE = 'https://api.ultramsg.com/' + UM_INSTANCE;
 var UM_URL       = UM_BASE + '/messages/chat';
 var UM_URL_IMG   = UM_BASE + '/messages/image';
 
@@ -5653,6 +5662,8 @@ setTimeout(function(){
 }, 3000);
 
 function confirmarEnvio(){
+  console.log('[VISITAS] CLICK ENVIAR');
+  try{
   var ov = document.getElementById('confirmOverlay');
   ov.classList.remove('open');
   ov.style.cssText = '';
@@ -5741,52 +5752,62 @@ function confirmarEnvio(){
   actualizarBadgeHistorial();
   _ccLastReporteId = reporte.id;
 
-  // Intentar enviar automáticamente con Ultramsg (silencioso)
-  if(navigator.onLine){
-    enviarConUltramsg(reporte.id, function(ok){
-      actualizarBadgeHistorial();
-      if(ok){
-        _ccSet('msg', '✅', 'Mensaje WhatsApp', 'Enviado correctamente al grupo');
-        var nF = (reporte.fotos||[]).length;
-        _ccSet('foto', nF > 0 ? '✅' : '📷', 'Evidencia fotográfica', nF > 0 ? nF+' foto'+(nF>1?'s':'')+' enviada'+(nF>1?'s':'')+' correctamente' : 'Sin fotos adjuntas');
-      } else {
-        _ccSet('msg', '⚠️', 'Mensaje WhatsApp', 'Sin respuesta — reintentando automáticamente');
-        _ccSet('foto', '⚠️', 'Evidencia fotográfica', 'Pendiente de reenvío');
-        showToast('⚠️ Sin respuesta · Reintentando automáticamente');
-      }
-    });
-  }
-  // Capturar datos antes de resetear
-  var fotosCopy = fotos.map(function(f){ return f.data || f; });
+  // ── FLUJO VISITAS (igual que Alarma) ────────────────────────
+  // 1. Capturar fotos ANTES de limpiar
+  var fotosCopy = fotos.map(function(f){ return {data:(f.data||f), nombre:(f.nombre||'')}; });
   var nFotos = fotosCopy.length;
-  limpiarFotos();
-  resetFormulario();
-  // Restaurar botones después del reset
-  mostrarBtnHistorialCentral();
-  // Restaurar Programa del Día si es recorredor
-  var _pb = document.getElementById('progBtnWrap');
-  var _qa = document.getElementById('quickAccessWrap');
-  if(_pb && typeof REC !== 'undefined' && REC) _pb.style.display = 'block';
-  if(_qa && typeof REC !== 'undefined' && REC) _qa.style.display = 'block';
+  console.log('[VISITAS] INICIO FLUJO');
+  console.log('[VISITAS] FOTOS:', nFotos);
+  console.log('[VISITAS] GRUPO DESTINO:', UM_TO);
 
-  // Mostrar tarjetas de confirmación
+  // 2. Mostrar tarjetas de confirmación PRIMERO (antes de resetear)
   var cc = document.getElementById('confirmCards');
   if(cc){
     cc.style.display = 'block';
-    // Scroll hasta las tarjetas
     setTimeout(function(){ cc.scrollIntoView({behavior:'smooth', block:'center'}); }, 150);
   }
 
-  if(navigator.onLine){
-    // Estado inicial: enviando
-    _ccSet('msg', '⏳', 'Mensaje WhatsApp', 'Enviando al grupo...');
-    _ccSet('foto', '⏳', 'Evidencia fotográfica', nFotos > 0 ? 'Enviando '+nFotos+' foto'+(nFotos>1?'s':'')+'...' : 'Sin fotos adjuntas');
-  } else {
-    _ccSet('msg', '💾', 'Mensaje WhatsApp', 'Guardado localmente — se enviará al recuperar señal');
-    _ccSet('foto', '💾', 'Evidencia fotográfica', nFotos > 0 ? nFotos+' foto'+(nFotos>1?'s':'')+' guardada'+(nFotos>1?'s':'')+' localmente' : 'Sin fotos adjuntas');
-  }
-}
+  // 3. Mostrar estado "Enviando" inmediatamente
+  _ccSet('msg', '⏳', 'Mensaje WhatsApp', 'Enviando al grupo...');
+  _ccSet('foto', '⏳', 'Evidencia fotográfica', nFotos > 0 ? 'Enviando '+nFotos+' foto'+(nFotos>1?'s':'')+'...' : 'Sin fotos adjuntas');
 
+  // 4. Enviar con fotos directas (igual que Alarma — no depende de localStorage fotos)
+  enviarConUltramsg(reporte.id, function(ok){
+    console.log('[VISITAS] WHATSAPP RESULTADO:', ok);
+    actualizarBadgeHistorial();
+    if(ok){
+      _ccSet('msg', '✅', 'Mensaje WhatsApp', 'Enviado correctamente al grupo');
+      var nF = fotosCopy.length;
+      _ccSet('foto', nF > 0 ? '✅' : '📷', 'Evidencia fotográfica', nF > 0 ? nF+' foto'+(nF>1?'s':'')+' enviada'+(nF>1?'s':'')+' correctamente' : 'Sin fotos adjuntas');
+      console.log('[VISITAS] FIN FLUJO — OK');
+    } else {
+      _ccSet('msg', '⚠️', 'Mensaje WhatsApp', 'Sin respuesta — reintentando automáticamente');
+      _ccSet('foto', '⚠️', 'Evidencia fotográfica', 'Pendiente de reenvío');
+      showToast('⚠️ Sin respuesta · Reintentando');
+      console.log('[VISITAS] FIN FLUJO — FALLO');
+    }
+  }, fotosCopy);
+
+  console.log('[VISITAS] FIREBASE OK — id:', reporte.id);
+
+  }catch(e){
+    console.error('[VISITAS] ERROR:', e);
+    alert('Error en envío: '+e.message);
+    return;
+  }
+
+  // 5. Limpiar y resetear DESPUÉS de iniciar el envío y mostrar estado
+  limpiarFotos();
+  setTimeout(function(){
+    resetFormulario();
+    mostrarBtnHistorialCentral();
+    var _pb = document.getElementById('progBtnWrap');
+    var _qa = document.getElementById('quickAccessWrap');
+    if(_pb && typeof REC !== 'undefined' && REC) _pb.style.display = 'block';
+    if(_qa && typeof REC !== 'undefined' && REC) _qa.style.display = 'block';
+  }, 500);
+
+}
 function _ccSet(tipo, icon, titulo, sub){
   var cap = tipo.charAt(0).toUpperCase()+tipo.slice(1);
   var iconEl  = document.getElementById('cc'+cap+'Icon');
@@ -7043,7 +7064,7 @@ function _abrirConfirmOverlay(msg){
   // GPS check for cab/est/nota modes
   if(modoRegistro==='cab'||modoRegistro==='estacion'){
     var d=calcDistanciaPozo();
-    if(d>15&&d>=0){
+    if(d>RADIO_GPS_METROS&&d>=0){
       var dt=d<1000?d+'m':(d/1000).toFixed(2)+'km';
       var wo=document.getElementById('gpsWarnOverlay');
       var wd=document.getElementById('gpsWarnDist'),wp=document.getElementById('gpsWarnPozo');
@@ -7171,10 +7192,10 @@ function _initUbiMap(){
     _ubiLineObjs.push({name: l.n, pl: pl, catId: catId, col: l.col});
   });
 
-  // Círculos de radio 15m en pozos operativos y todos los cabezales/estaciones
+  // Círculos de radio 80m en pozos operativos y todos los cabezales/estaciones
   _UBI_P.forEach(function(p){
     if(!p.la||!p.lo) return;
-    L.circle([p.la,p.lo],{radius:15,color:'rgba(59,130,246,0.5)',fillColor:'rgba(59,130,246,0.08)',fillOpacity:1,weight:1,dashArray:'3,3'}).addTo(_ubiMap);
+    L.circle([p.la,p.lo],{radius:RADIO_GPS_METROS,color:'rgba(59,130,246,0.5)',fillColor:'rgba(59,130,246,0.08)',fillOpacity:1,weight:1,dashArray:'3,3'}).addTo(_ubiMap);
   });
   _UBI_I.forEach(function(p){
     if(!p.la||!p.lo) return;
