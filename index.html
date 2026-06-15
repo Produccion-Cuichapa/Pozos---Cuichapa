@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+// [SW PROCESAR_COLA duplicado eliminado]<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -3297,10 +3297,8 @@ function enviarAlarma(){
       showToast('⚠️ Sin señal · Alarma guardada · Se enviará cuando haya señal');
       limpiarFotosPostAlarma();
       window.addEventListener('online', function retryOnline(){
-        var todos = typeof getReportes==='function'?getReportes():[];
-        todos.filter(function(r){return r.estado==='pendiente';}).forEach(function(r,i){
-          setTimeout(function(){ enviarConUltramsg(r.id, function(){ actualizarBadgeHistorial(); renderHistorial(); }); }, i*1500);
-        });
+        window.removeEventListener('online', retryOnline); // ← ejecutar solo UNA vez
+        setTimeout(function(){ verificarYEnviar(); }, 1000);
       });
     }
   }
@@ -5410,7 +5408,7 @@ function actualizarEstadoReporte(id, estado, ultimoIntento){
 
 // ── Cola: pendientes por enviar ───────────────────
 function getPendientes(){
-  return getHistorial().filter(function(r){ return r.estado==='pendiente'||r.estado==='fallido'; });
+  return getHistorial().filter(function(r){ return (r.estado==='pendiente'||r.estado==='fallido')&&r.estado!=='enviando'; });
 }
 
 // ── Enviar a WhatsApp ─────────────────────────────
@@ -5594,6 +5592,8 @@ function enviarConUltramsg(id, callback, fotosDirectas){
   if(!enviarConUltramsg._inFlight) enviarConUltramsg._inFlight = {};
   if(enviarConUltramsg._inFlight[id]){ console.log('[ANTI-DUP] enviarConUltramsg bloqueado para id:',id); if(callback) callback(false); return; }
   enviarConUltramsg._inFlight[id] = true;
+  // Marcar 'enviando' inmediatamente — getPendientes() no lo volverá a tomar
+  actualizarEstadoReporte(id, 'enviando', new Date().toISOString());
 
   // Si se pasan fotos directas (modo alarma), usarlas — evita depender de localStorage
   var fotosSnapshot = fotosDirectas ? fotosDirectas.slice() : (r.fotos || []).slice();
@@ -5605,7 +5605,7 @@ function enviarConUltramsg(id, callback, fotosDirectas){
   // 1. Enviar texto del reporte
   umSendText(r.msg, function(okTexto){
     if(!okTexto){
-      actualizarEstadoReporte(id, 'pendiente', new Date().toISOString());
+      actualizarEstadoReporte(id, 'pendiente', new Date().toISOString()); // fallo → volver a pendiente
       if(enviarConUltramsg._inFlight) delete enviarConUltramsg._inFlight[id];
       renderHistorial();
       if(callback) callback(false);
@@ -5697,8 +5697,13 @@ function verificarConectividad(callback){
   }
 }
 
+var _vyv_timer = null;
 function verificarYEnviar(){
-  var pendientes = getPendientes();
+  // Debounce: múltiples triggers en <2s se colapsan en uno solo
+  if(_vyv_timer) clearTimeout(_vyv_timer);
+  _vyv_timer = setTimeout(function(){
+    _vyv_timer = null;
+    var pendientes = getPendientes();
   if(!pendientes.length) return;
   verificarConectividad(function(haySenal){
     if(haySenal){
@@ -5708,6 +5713,7 @@ function verificarYEnviar(){
     }
     actualizarBadgeHistorial();
   });
+  }, 800); // debounce 800ms
 }
 
 // Método 3: revisión periódica cada 30s
@@ -5847,6 +5853,7 @@ function confirmarEnvio(){
   enviarConUltramsg(reporte.id, function(ok){
     console.log('[VISITAS] WHATSAPP RESULTADO:', ok);
     actualizarBadgeHistorial();
+    _enviandoAhora = false; // liberar DESPUÉS de que llega la respuesta
     if(ok){
       _ccSet('msg', '✅', 'Mensaje WhatsApp', 'Enviado correctamente al grupo');
       var nF = fotosCopy.length;
