@@ -5408,7 +5408,7 @@ function actualizarEstadoReporte(id, estado, ultimoIntento){
 
 // ── Cola: pendientes por enviar ───────────────────
 function getPendientes(){
-  return getHistorial().filter(function(r){ return (r.estado==='pendiente'||r.estado==='fallido')&&r.estado!=='enviando'; });
+  return getHistorial().filter(function(r){ return r.estado==='pendiente'||r.estado==='fallido'; });
 }
 
 // ── Enviar a WhatsApp ─────────────────────────────
@@ -5433,18 +5433,22 @@ function umSendText(texto, callback){
   var body = 'token=' + encodeURIComponent(UM_TOKEN)
            + '&to='   + encodeURIComponent(UM_TO)
            + '&body=' + encodeURIComponent(texto);
+  // Timeout de 25s para no quedarse esperando indefinidamente
+  var _fetchCtrl = typeof AbortController!=='undefined' ? new AbortController() : null;
+  var _fetchTimeout = setTimeout(function(){ if(_fetchCtrl) _fetchCtrl.abort(); }, 25000);
   fetch(UM_URL, {
     method:'POST',
     headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body: body
+    body: body,
+    signal: _fetchCtrl ? _fetchCtrl.signal : undefined
   })
-  .then(function(r){ return r.json(); })
+  .then(function(r){ clearTimeout(_fetchTimeout); return r.json(); })
   .then(function(d){
     console.log('Ultramsg respuesta:', JSON.stringify(d));
     var ok = !!(d && (d.sent==='true'||d.sent===true||d.id));
     if(callback) callback(ok);
   })
-  .catch(function(err){ console.error('Ultramsg error:', err); if(callback) callback(false); });
+  .catch(function(err){ clearTimeout(_fetchTimeout); console.error('Ultramsg error:', err); if(callback) callback(false); });
 }
 
 // ── Enviar imagen: Firebase Storage → UltraMsg URL ──────────────────
@@ -5592,8 +5596,6 @@ function enviarConUltramsg(id, callback, fotosDirectas){
   if(!enviarConUltramsg._inFlight) enviarConUltramsg._inFlight = {};
   if(enviarConUltramsg._inFlight[id]){ console.log('[ANTI-DUP] enviarConUltramsg bloqueado para id:',id); if(callback) callback(false); return; }
   enviarConUltramsg._inFlight[id] = true;
-  // Marcar 'enviando' inmediatamente — getPendientes() no lo volverá a tomar
-  actualizarEstadoReporte(id, 'enviando', new Date().toISOString());
 
   // Si se pasan fotos directas (modo alarma), usarlas — evita depender de localStorage
   var fotosSnapshot = fotosDirectas ? fotosDirectas.slice() : (r.fotos || []).slice();
@@ -5653,9 +5655,11 @@ function procesarCola(){
   var pendientes = getPendientes();
   if(!pendientes.length) return;
   _colaEnProceso = true;
+  // Fix 3 — safety: liberar si se atasca internamente
+  var _colaTimeout = setTimeout(function(){ _colaEnProceso = false; }, 60000);
   var idx = 0;
   function enviarSiguiente(){
-    if(idx >= pendientes.length){ _colaEnProceso = false; return; }
+    if(idx >= pendientes.length){ clearTimeout(_colaTimeout); _colaEnProceso = false; return; }
     var r = pendientes[idx++];
     enviarConUltramsg(r.id, function(ok){
       setTimeout(enviarSiguiente, 2500);
@@ -5704,15 +5708,15 @@ function verificarYEnviar(){
   _vyv_timer = setTimeout(function(){
     _vyv_timer = null;
     var pendientes = getPendientes();
-  if(!pendientes.length) return;
-  verificarConectividad(function(haySenal){
+    if(!pendientes.length) return;
+    // Fix 4 — usar navigator.onLine en lugar de ping a /instance/status
+    // verificarConectividad puede falso-negativo si ese endpoint está caído
+    var haySenal = navigator.onLine !== false; // true si no sabemos (mejor que bloquear)
     if(haySenal){
       procesarCola();
-      // También sincronizar a Firebase
       if(fbDB) sincronizarAFirebase();
     }
     actualizarBadgeHistorial();
-  });
   }, 800); // debounce 800ms
 }
 
@@ -5741,6 +5745,10 @@ function confirmarEnvio(){
   if(_dedupCheck(_sendKey)){ showToast('⚠️ Reporte ya enviado recientemente'); console.log('[ANTI-DUP] bloqueado: duplicado',_sendKey); return; }
   _enviandoAhora = true;
   console.log('[ANTI-DUP] sendId:', _sendKey);
+  // Seguro: si la red no responde en 30s, liberar el flag automáticamente
+  var _envioTimeout = setTimeout(function(){
+    if(_enviandoAhora){ _enviandoAhora = false; console.warn('[ANTI-DUP] timeout 30s — flag liberado'); }
+  }, 30000);
   try{
   var ov = document.getElementById('confirmOverlay');
   ov.classList.remove('open');
@@ -5853,8 +5861,10 @@ function confirmarEnvio(){
   enviarConUltramsg(reporte.id, function(ok){
     console.log('[VISITAS] WHATSAPP RESULTADO:', ok);
     actualizarBadgeHistorial();
-    _enviandoAhora = false; // liberar DESPUÉS de que llega la respuesta
+    clearTimeout(_envioTimeout);
+    _enviandoAhora = false; // liberar cuando llega la respuesta
     if(ok){
+      _dedupMark(_sendKey); // Fix 1 — solo marcar dedup en éxito real
       _ccSet('msg', '✅', 'Mensaje WhatsApp', 'Enviado correctamente al grupo');
       var nF = fotosCopy.length;
       _ccSet('foto', nF > 0 ? '✅' : '📷', 'Evidencia fotográfica', nF > 0 ? nF+' foto'+(nF>1?'s':'')+' enviada'+(nF>1?'s':'')+' correctamente' : 'Sin fotos adjuntas');
@@ -5868,7 +5878,6 @@ function confirmarEnvio(){
   }, fotosCopy);
 
   console.log('[VISITAS] FIREBASE OK — id:', reporte.id);
-  _dedupMark(_sendKey);   // marcar enviado DESPUÉS de iniciar
 
   }catch(e){
     console.error('[VISITAS] ERROR:', e);
