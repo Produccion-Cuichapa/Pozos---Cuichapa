@@ -46,12 +46,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
+<script>
 // ══ DIAGNÓSTICO GLOBAL DE ERRORES ════════════════════════════
 window.onerror = function(msg, src, line, col, err){
   var info = '[ERROR] '+msg+' | '+src+':'+line+':'+col;
   console.error(info, err||'');
-  // Mostrar en UI si el error rompe el formulario
   try{
     var body = document.body;
     if(body && !body.dataset.errToastShown){
@@ -60,15 +59,15 @@ window.onerror = function(msg, src, line, col, err){
       if(typeof showToast === 'function') showToast('⚠️ Error JS: '+String(msg).slice(0,60));
     }
   }catch(e2){}
-  return false; // no suprimir
+  return false;
 };
 window.addEventListener('unhandledrejection', function(e){
   console.error('[PROMISE REJECTED]', e.reason);
   try{ if(typeof showToast === 'function') showToast('⚠️ Error async: '+String(e.reason).slice(0,50)); }catch(ex){}
 });
-// ═════════════════════════════════════════════════════════════
+</script>
 </head>
-<body>
+<body style="padding-bottom:env(safe-area-inset-bottom,0px)">
 
 <button class="toggle-btn" id="modeBtn" onclick="toggleMode()">🌙 Noche</button>
 
@@ -7713,6 +7712,7 @@ function ubiFiltrar(){ /* replaced by filter buttons */ }
 </script>
 </div>
 
+<script>
 // ══ ANDROID: teclado virtual, textarea, viewport ════════════
 (function(){
   var isAndroid = /android/i.test(navigator.userAgent);
@@ -7812,5 +7812,6 @@ function ubiFiltrar(){ /* replaced by filter buttons */ }
   console.log('[ANDROID] keyboard fix instalado. isAndroid='+isAndroid+' visualViewport='+(!!window.visualViewport));
 })();
 // ═════════════════════════════════════════════════════════════
+</script>
 </body>
-</html>padding-bottom:env(safe-area-inset-bottom,0px);}
+</html>
