@@ -1246,7 +1246,35 @@ function ppToggle(id){
         <span id="supRecArrow" style="display:none"></span>
       </button>
 
+
+      <!-- ESTADO FT — 3ra fila, full width -->
+      <button onclick="abrirFT()" style="background:var(--surface);border:1.5px solid var(--border);border-radius:18px;padding:16px;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;transition:border-color .15s;grid-column:1/-1">
+        <div style="width:48px;height:48px;border-radius:14px;background:#FFF3E0;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:26px">🛢</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--txt)">Estado FT</div>
+          <div style="font-size:11px;color:var(--txt2);margin-top:2px">Niveles · Frac Tanks</div>
+        </div>
+        <div id="ftBadge" style="margin-left:auto;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;background:#fee2e2;color:#b91c1c;display:none">⚠️</div>
+      </button>
+
     </div><!-- /grid 2 col -->
+
+    <!-- Panel ESTADO FT -->
+    <div id="ftPanel" style="display:none;margin-bottom:14px">
+      <div style="background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;padding:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:12px;font-weight:800;color:var(--txt2);letter-spacing:.5px">🛢 ESTADO FRAC TANKS</div>
+          <div style="display:flex;gap:8px">
+            <button onclick="ftEnviarWA()" style="padding:6px 12px;border-radius:10px;border:1.5px solid #25D366;background:transparent;color:#25D366;font-size:11px;font-weight:700;cursor:pointer">📤 WA</button>
+            <button onclick="ftRender()" style="padding:6px 12px;border-radius:10px;border:1.5px solid var(--border);background:transparent;color:var(--txt2);font-size:11px;font-weight:700;cursor:pointer">↺</button>
+          </div>
+        </div>
+        <div id="ftContent" style="display:flex;flex-direction:column;gap:10px">
+          <div style="color:var(--txt2);font-size:12px;text-align:center;padding:20px 0">Cargando niveles...</div>
+        </div>
+        <div style="margin-top:12px;font-size:10px;color:var(--txt2);text-align:right" id="ftTimestamp"></div>
+      </div>
+    </div>
 
     <!-- Panel colapsable Información de Campo (FUERA del grid) -->
     <div id="supInfoPanel" style="display:none;margin-bottom:14px;overflow:hidden">
@@ -5627,6 +5655,198 @@ function _dedupMark(k){
 // ═════════════════════════════════════════════════════════════
 
 // ── Envío completo: texto + fotos ────────────────
+
+
+// ══ ESTADO FT — FRAC TANKS ════════════════════════════════════
+// Configuración de capacidades por pozo FT (en centímetros)
+// Editar aquí para ajustar capacidades reales de campo
+var FT_CONFIG = [
+  {pozo:'172',   nombre:'C-172',    capacidadCM:260},
+  {pozo:'106D',  nombre:'C-106D',   capacidadCM:260},
+  {pozo:'505',   nombre:'C-505',    capacidadCM:260},
+  {pozo:'180',   nombre:'C-180',    capacidadCM:260},
+  {pozo:'19',    nombre:'C-19',     capacidadCM:260},
+  {pozo:'601',   nombre:'C-601',    capacidadCM:260},
+  {pozo:'201',   nombre:'C-201',    capacidadCM:260},
+  {pozo:'376',   nombre:'C-376',    capacidadCM:260},
+  {pozo:'385',   nombre:'C-385',    capacidadCM:260},
+  {pozo:'602',   nombre:'C-602',    capacidadCM:260},
+  {pozo:'139',   nombre:'C-139V',   capacidadCM:260},
+  {pozo:'107',   nombre:'C-107',    capacidadCM:260},
+  {pozo:'179',   nombre:'C-179',    capacidadCM:260},
+  {pozo:'352',   nombre:'FT-352',   capacidadCM:260},
+];
+
+// ── Obtener último CTM válido de historial para un pozo ────────
+function _ftGetLast(pozo){
+  var hist = getHistorial();
+  var norm = String(pozo).replace(/^C-/i,'').replace(/V$/,'').trim();
+  // Buscar de más reciente a más antiguo
+  for(var i=0; i<hist.length; i++){
+    var r = hist[i];
+    if(!r || !r.pozo) continue;
+    var rp = String(r.pozo).replace(/^C-/i,'').replace(/V$/,'').trim();
+    if(rp !== norm) continue;
+    // Solo reportes con CTM (Nivel de Guardia o Diario con FT)
+    var ctm = _ftExtractCTM(r);
+    if(ctm !== null && ctm > 0) return {ctm:ctm, fecha:r.fecha, recorredor:r.recorredor||''};
+  }
+  return null;
+}
+
+// ── Extraer CTM del msg o campos del reporte ──────────────────
+function _ftExtractCTM(r){
+  if(!r) return null;
+  // Campo directo
+  if(r.nivel && typeof r.nivel==='object' && r.nivel.ctm > 0) return parseFloat(r.nivel.ctm);
+  if(r.ctm > 0) return parseFloat(r.ctm);
+  // Del msg
+  if(r.msg){
+    var m = r.msg.match(/Centímetros:\s*([\d.]+)/i) || r.msg.match(/CTM:\s*([\d.]+)/i);
+    if(m){ var v=parseFloat(m[1]); if(v>0) return v; }
+  }
+  return null;
+}
+
+// ── Estado según porcentaje ────────────────────────────────────
+function _ftGetStatus(pct){
+  if(pct >= 95) return {label:'⚠️ RIESGO DERRAME',  color:'#dc2626', bg:'#fee2e2', emoji:'🔴', cls:'red'};
+  if(pct >= 85) return {label:'PROGRAMAR VACIADO',  color:'#ea580c', bg:'#ffedd5', emoji:'🟠', cls:'orange'};
+  if(pct >= 70) return {label:'ATENCIÓN',            color:'#d97706', bg:'#fef9c3', emoji:'🟡', cls:'yellow'};
+  return          {label:'OPERACIÓN NORMAL',         color:'#16a34a', bg:'#dcfce7', emoji:'🟢', cls:'green'};
+}
+
+// ── SVG del tanque (puro, ~200 bytes) ─────────────────────────
+function _ftSvgTank(pct, color){
+  var H = 70; // height of tank fill area
+  var fillH = Math.max(2, Math.round(H * pct / 100));
+  var fillY = 8 + (H - fillH);
+  var s = '<svg width="48" height="100" viewBox="0 0 48 100" xmlns="http://www.w3.org/2000/svg">';
+  // Shadow
+  s += '<ellipse cx="24" cy="92" rx="18" ry="4" fill="rgba(0,0,0,.12)"/>';
+  // Tank body
+  s += '<rect x="4" y="8" width="40" height="'+H+'" rx="4" fill="rgba(0,0,0,.05)" stroke="var(--border)" stroke-width="1.5"/>';
+  // Fill
+  s += '<rect x="6" y="'+fillY+'" width="36" height="'+fillH+'" rx="3" fill="'+color+'"/>';
+  // Level line
+  s += '<line x1="4" y1="'+fillY+'" x2="44" y2="'+fillY+'" stroke="'+color+'" stroke-width="1" opacity=".6"/>';
+  // Pct text
+  s += '<text x="24" y="97" text-anchor="middle" font-size="10" font-weight="700" fill="var(--txt)" font-family="Inter,sans-serif">'+Math.round(pct)+'%</text>';
+  s += '</svg>';
+  return s;
+}
+
+// ── Render principal ───────────────────────────────────────────
+function ftRender(){
+  var el = document.getElementById('ftContent');
+  var ts = document.getElementById('ftTimestamp');
+  if(!el) return;
+
+  var html = '';
+  var hasAlert = false;
+  var now = new Date();
+
+  FT_CONFIG.forEach(function(cfg){
+    var last = _ftGetLast(cfg.pozo);
+    var ctm  = last ? last.ctm : null;
+    var pct  = ctm !== null ? Math.min(100, Math.max(0, (ctm/cfg.capacidadCM)*100)) : null;
+    var st   = pct !== null ? _ftGetStatus(pct) : null;
+    if(st && (st.cls==='red'||st.cls==='orange')) hasAlert = true;
+
+    var cuando = '';
+    if(last && last.fecha){
+      try{ cuando = new Date(last.fecha).toLocaleString('es-MX',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){}
+    }
+
+    html += '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">';
+    // Tank SVG
+    html += '<div style="flex-shrink:0">';
+    if(pct !== null){
+      html += _ftSvgTank(pct, st.color);
+    } else {
+      html += '<div style="width:48px;height:100px;display:flex;align-items:center;justify-content:center;color:var(--txt2);font-size:20px">—</div>';
+    }
+    html += '</div>';
+    // Info
+    html += '<div style="flex:1;min-width:0">';
+    html += '<div style="font-size:14px;font-weight:800;color:var(--txt);margin-bottom:3px">'+cfg.nombre+'</div>';
+    if(pct !== null){
+      html += '<div style="font-size:18px;font-weight:900;color:'+st.color+';line-height:1">'+Math.round(pct)+'%</div>';
+      html += '<div style="font-size:11px;font-weight:700;color:'+st.color+';margin:2px 0">'+st.emoji+' '+st.label+'</div>';
+      html += '<div style="font-size:11px;color:var(--txt2)">'+Math.round(ctm)+' cm / '+cfg.capacidadCM+' cm</div>';
+      if(cuando) html += '<div style="font-size:10px;color:var(--txt2);margin-top:2px">'+cuando+'</div>';
+    } else {
+      html += '<div style="font-size:12px;color:var(--txt2)">Sin datos recientes</div>';
+    }
+    html += '</div></div>';
+  });
+
+  if(!html) html = '<div style="color:var(--txt2);font-size:12px;padding:16px;text-align:center">Sin datos de nivel disponibles</div>';
+  el.innerHTML = html;
+
+  // Badge alerta
+  var badge = document.getElementById('ftBadge');
+  if(badge) badge.style.display = hasAlert ? 'block' : 'none';
+
+  if(ts) ts.textContent = 'Actualizado: '+now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ── Abrir / cerrar panel FT ────────────────────────────────────
+function abrirFT(){
+  var panel = document.getElementById('ftPanel');
+  if(!panel) return;
+  var isOpen = panel.style.display === 'block';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if(!isOpen) ftRender();
+}
+
+// ── Enviar resumen al grupo WhatsApp (texto plano — ligero, Android) ──
+function ftEnviarWA(){
+  var lineas = [];
+  var now = new Date();
+  var fechaStr = now.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'});
+  var horaStr  = now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+
+  lineas.push('🛢 *ESTADO FRAC TANKS — Cuichapa*');
+  lineas.push('📅 '+fechaStr+'  '+horaStr);
+  lineas.push('══════════════════════════');
+
+  var items = [];
+  FT_CONFIG.forEach(function(cfg){
+    var last = _ftGetLast(cfg.pozo);
+    var ctm  = last ? last.ctm : null;
+    var pct  = ctm !== null ? Math.min(100, Math.max(0, (ctm/cfg.capacidadCM)*100)) : null;
+    if(pct === null) return;
+    var st = _ftGetStatus(pct);
+    items.push({cfg:cfg, ctm:ctm, pct:pct, st:st});
+  });
+
+  // Ordenar de mayor a menor riesgo
+  items.sort(function(a,b){ return b.pct - a.pct; });
+
+  if(!items.length){
+    showToast('⚠️ Sin datos de nivel para enviar');
+    return;
+  }
+
+  items.forEach(function(it){
+    var pctStr = String(Math.round(it.pct)).padStart(3,' ')+'%';
+    var ctmStr = String(Math.round(it.ctm)).padStart(3,' ')+'cm';
+    lineas.push(it.st.emoji+' '+it.cfg.nombre.padEnd(8,' ')+' | '+ctmStr+' | '+pctStr+' | '+it.st.label);
+  });
+
+  lineas.push('══════════════════════════');
+  lineas.push('_Campo Cuichapa U-39 · Lifting de Mexico_');
+
+  var msg = lineas.join('\n');
+  console.log('[FT] Enviando estado FT a WhatsApp');
+  showToast('📤 Enviando estado FT...');
+  umSendText(msg, function(ok){
+    if(ok){ showToast('✅ Estado FT enviado al grupo'); }
+    else   { showToast('⚠️ Error al enviar — intenta de nuevo'); }
+  });
+}
+// ═════════════════════════════════════════════════════════════
 
 // ══ WA_SENT_REGISTRY — Registro persistente de envíos WhatsApp ══
 // Sobrevive cierres de app, recargas de SW, modo avión y reanudaciones.
