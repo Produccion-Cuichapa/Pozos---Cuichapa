@@ -170,7 +170,7 @@
     <div class="pk-divider"></div>
     <div class="pk-cards" id="pp-body-rec">
       <div class="pk-card" id="pk-rec-m" onclick="selProfile('Manrique','m','rec')"><div class="pk-card-ico">🌊</div><div class="pk-card-nm">Manrique</div><div class="pk-card-lk">🔒 clave</div></div>
-      <div class="pk-card" id="pk-rec-c" onclick="selProfile('Cirilo','c','rec')"><div class="pk-card-ico">⛏️</div><div class="pk-card-nm">Cirilo</div><div class="pk-card-lk">🔒 clave</div></div>
+      <div class="pk-card" id="pk-rec-c" onclick="selProfile('Cirilo','c','rec')" style="display:none"><div class="pk-card-ico">⛏️</div><div class="pk-card-nm">Cirilo</div><div class="pk-card-lk">🔒 clave</div></div>
       <div class="pk-card" id="pk-rec-jc" onclick="selProfile('Juan Carlos','jc','rec')"><div class="pk-card-ico">🦺</div><div class="pk-card-nm">Juan Carlos</div><div class="pk-card-lk">🔒 clave</div></div>
       <div class="pk-card" id="pk-rec-j" onclick="selProfile('Jose','j','rec')"><div class="pk-card-ico">🛢️</div><div class="pk-card-nm">Jose</div><div class="pk-card-lk">🔒 clave</div></div>
       <div class="pk-card" id="pk-rec-l" onclick="selProfile('Luis','l','rec')"><div class="pk-card-ico">🚧</div><div class="pk-card-nm">Luis</div><div class="pk-card-lk">🔒 clave</div></div>
@@ -1744,7 +1744,7 @@ var _nivTipo='ft', _medTipo='ft';
 var _wt=document.getElementById('wellTitle'); if(_wt) _wt.textContent='C-'+W;
 document.title='C-'+W;
 
-['Manrique','Cirilo','Juan Carlos','Jose','Luis'].forEach(function(n){
+['Manrique','Juan Carlos','Jose','Luis'].forEach(function(n){
   var i=getCicloInfo(n);
   var dotEl=document.getElementById('dot-'+n);if(dotEl)dotEl.className='dot '+(i.trabajando?'dot-green':'dot-yellow');
 });
@@ -1798,7 +1798,7 @@ function selRec(btn,nombre,theme){
   THEMES.forEach(function(t){document.body.classList.remove(t)});
   document.body.classList.add(theme+'-active');
   // Update header subtitle
-  var subs={'Manrique':'🌊 Plataforma Offshore · Cuichapa','Cirilo':'🏭 Refinería · Cuichapa','Juan Carlos':'🛢 Producción de Campo · Cuichapa','Jose':'🔧 Campo · Cuichapa','Luis':'🪛 Campo · Cuichapa'};
+  var subs={'Manrique':'🌊 Plataforma Offshore · Cuichapa','Juan Carlos':'🛢 Producción de Campo · Cuichapa','Jose':'🔧 Campo · Cuichapa','Luis':'🪛 Campo · Cuichapa'};
   document.getElementById('headerSub').textContent=subs[nombre]||'Campo Cuichapa';
   // Show name badge in header
   var badge=document.getElementById('recBadge');
@@ -2324,7 +2324,7 @@ function guardarVacaciones(){
   var vdClr=document.getElementById('vacDias'); if(vdClr) vdClr.value='';
   renderVacStatus();
   // Refresh dots and counter
-  ['Manrique','Cirilo','Juan Carlos','Jose','Luis'].forEach(function(n){
+  ['Manrique','Juan Carlos','Jose','Luis'].forEach(function(n){
     var i = getCicloInfo(n);
     var dotEl2=document.getElementById('dot-'+n);if(dotEl2)dotEl2.className='dot '+(i.trabajando?'dot-green':'dot-yellow');
   });
@@ -2342,7 +2342,7 @@ function borrarVacacion(nombre, idx){
 
 function renderVacStatus(){
   var html = '';
-  var nombres = vacRecSel ? [vacRecSel] : ['Manrique','Cirilo','Juan Carlos','Jose','Luis'];
+  var nombres = vacRecSel ? [vacRecSel] : ['Manrique','Juan Carlos','Jose','Luis'];
   nombres.forEach(function(nombre){
     var arr = getVacaciones(nombre);
     if(!arr.length) return;
@@ -2802,10 +2802,10 @@ function doLogin(){
 // ══ LOGIN RECORREDORES ══════════════════════════
 var REC_MAP = {
   'Manrique':   { nombre:'Manrique',   pass:'Canada',    theme:'m'  },
-  'Cirilo':     { nombre:'Cirilo',      pass:'Brasil',    theme:'c'  },
+  'Cirilo':     { nombre:'Cirilo',      pass:'Brasil',    theme:'c',  status:'inactive' },
   'JuanCarlos': { nombre:'Juan Carlos', pass:'JCYNL041084', theme:'jc' },
   'Jose':       { nombre:'Jose',        pass:'Mexico',    theme:'j'  },
-  'Luis':       { nombre:'Luis',        pass:'Colombia',  theme:'l'  }
+  'Luis':       { nombre:'Luis',        pass:'Carlos1903', theme:'l'  }
 };
 
 function abrirRecLogin(nombre, theme){
@@ -2828,6 +2828,13 @@ function doRecLogin(){
   var err = document.getElementById('recLoginErr');
   var found = REC_MAP[u];
   if(found && p === found.pass){
+    // Verificar que el usuario no esté dado de baja
+    if(found.status === 'inactive'){
+      err.textContent = 'Usuario dado de baja';
+      err.style.display = 'block';
+      document.getElementById('recLoginPass').value = '';
+      return;
+    }
     cerrarRecLogin();
     sesionGuardar(found.theme, found.nombre);
     mostrarFormRecorredor(found.nombre, found.theme);
@@ -3056,7 +3063,7 @@ function abrirVistaAlarma(){
   // Detectar si es recorredor:
   // REC puede ser 'Manrique', 'Cirilo', 'Juan Carlos' (nombre corto de selRec)
   // loggedUser puede ser 'm', 'c', 'jc' (theme del login de recorredor)
-  var RECS_SHORT = ['Manrique','Cirilo','Juan Carlos','Jose','Luis'];
+  var RECS_SHORT = ['Manrique','Juan Carlos','Jose','Luis'];
   var RECS_THEMES = ['m','c','jc'];
   var RECS_NOMBRES = {'m':'Manrique','c':'Cirilo','jc':'Juan Carlos','j':'Jose','l':'Luis'};
   var esRecorredor = RECS_SHORT.indexOf(REC) !== -1 || RECS_THEMES.indexOf(loggedUser) !== -1;
@@ -3192,7 +3199,7 @@ function enviarAlarma(){
 
   // Detectar quien reporta automáticamente
   var RECS = {'m':'Manrique','c':'Cirilo','jc':'Juan Carlos','j':'Jose','l':'Luis'};
-  var RECS_SHORT = ['Manrique','Cirilo','Juan Carlos','Jose','Luis'];
+  var RECS_SHORT = ['Manrique','Juan Carlos','Jose','Luis'];
   var quien = REC || RECS[loggedUser] || loggedUser || 'Campo Cuichapa';
   var esRecorredor = RECS_SHORT.indexOf(REC) !== -1 || ['m','c','jc'].indexOf(loggedUser) !== -1;
 
@@ -3476,7 +3483,7 @@ function hcRender(){
     var arr=_hcData.slice();
     if(HC_FILTRO!=='todos') arr=arr.filter(function(r){ return hcTipoReporte(r)===HC_FILTRO; });
     if(HC_FILTRO_REC!=='todos'){
-      var recs=['Manrique','Cirilo','Juan Carlos','Jose','Luis'];
+      var recs=['Manrique','Juan Carlos','Jose','Luis'];
       if(HC_FILTRO_REC==='otros') arr=arr.filter(function(r){ return recs.indexOf(r.recorredor)===-1; });
       else arr=arr.filter(function(r){ return r.recorredor===HC_FILTRO_REC; });
     }
@@ -4472,7 +4479,7 @@ function escucharConfigFirebase(){
     });
     // Quitar eliminados
     var remoteKeys = remoteCustom.map(function(r){ return r.key; });
-    var REC_ORIG = ['m','c','jc'];
+    var REC_ORIG = ['m','c','jc','j','l']; // Fix: Jose y Luis son recorredores base
     SUP_RECORREDORES = SUP_RECORREDORES.filter(function(r){
       if(REC_ORIG.indexOf(r.key)!==-1) return true;
       if(remoteKeys.indexOf(r.key)!==-1) return true;
@@ -5613,18 +5620,28 @@ function enviarConUltramsg(id, callback, fotosDirectas){
       if(callback) callback(false);
       return;
     }
-    // Texto enviado — marcar enviado
-    actualizarEstadoReporte(id, 'enviado', new Date().toISOString());
-    if(enviarConUltramsg._inFlight) delete enviarConUltramsg._inFlight[id];
-    actualizarBadgeHistorial();
-    renderHistorial();
-
-    // 2. Enviar fotos usando el snapshot capturado al inicio
+    // Texto enviado OK — 2. Enviar fotos
     var imgs = fotosSnapshot;
-    if(!imgs.length){ if(callback) callback(true); return; }
+    if(!imgs.length){
+      // Sin fotos: marcar enviado y liberar todo ahora
+      actualizarEstadoReporte(id, 'enviado', new Date().toISOString());
+      if(enviarConUltramsg._inFlight) delete enviarConUltramsg._inFlight[id];
+      actualizarBadgeHistorial();
+      renderHistorial();
+      if(callback) callback(true);
+      return;
+    }
     var i = 0;
     function enviarSigFoto(){
-      if(i >= imgs.length){ if(callback) callback(true); return; }
+      if(i >= imgs.length){
+        // FIX 2: marcar enviado y liberar _inFlight SOLO después de todas las fotos
+        actualizarEstadoReporte(id, 'enviado', new Date().toISOString());
+        if(enviarConUltramsg._inFlight) delete enviarConUltramsg._inFlight[id];
+        actualizarBadgeHistorial();
+        renderHistorial();
+        if(callback) callback(true);
+        return;
+      }
       var foto = imgs[i++];
       var src  = foto.data || foto;
       var caption = esAlarma
@@ -5661,6 +5678,9 @@ function procesarCola(){
   function enviarSiguiente(){
     if(idx >= pendientes.length){ clearTimeout(_colaTimeout); _colaEnProceso = false; return; }
     var r = pendientes[idx++];
+    // FIX 3: leer estado fresco — confirmarEnvio pudo haberlo enviado ya
+    var rFresh = getReporte(r.id);
+    if(rFresh && rFresh.estado === 'enviado'){ enviarSiguiente(); return; }
     enviarConUltramsg(r.id, function(ok){
       setTimeout(enviarSiguiente, 2500);
     });
@@ -5882,8 +5902,7 @@ function confirmarEnvio(){
   }catch(e){
     console.error('[VISITAS] ERROR:', e);
     alert('Error en envío: '+e.message);
-  }finally{
-    _enviandoAhora = false;   // siempre liberar
+    _enviandoAhora = false; // liberar en catch
   }
 
   // 5. Limpiar y resetear DESPUÉS de iniciar el envío y mostrar estado
