@@ -1,8 +1,8 @@
-// [SW PROCESAR_COLA duplicado eliminado]<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>Pozos Campo Cuichapa</title>
 <link rel="manifest" id="pwa-manifest">
 <script>
@@ -46,6 +46,27 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+// ══ DIAGNÓSTICO GLOBAL DE ERRORES ════════════════════════════
+window.onerror = function(msg, src, line, col, err){
+  var info = '[ERROR] '+msg+' | '+src+':'+line+':'+col;
+  console.error(info, err||'');
+  // Mostrar en UI si el error rompe el formulario
+  try{
+    var body = document.body;
+    if(body && !body.dataset.errToastShown){
+      body.dataset.errToastShown = '1';
+      setTimeout(function(){ delete body.dataset.errToastShown; }, 5000);
+      if(typeof showToast === 'function') showToast('⚠️ Error JS: '+String(msg).slice(0,60));
+    }
+  }catch(e2){}
+  return false; // no suprimir
+};
+window.addEventListener('unhandledrejection', function(e){
+  console.error('[PROMISE REJECTED]', e.reason);
+  try{ if(typeof showToast === 'function') showToast('⚠️ Error async: '+String(e.reason).slice(0,50)); }catch(ex){}
+});
+// ═════════════════════════════════════════════════════════════
 </head>
 <body>
 
@@ -236,6 +257,16 @@
 <script src="./excel.js"></script>
 <script>
 var fotos = [];
+// Proxy para limitar fotos en Android (max 4)
+function _fotosCheck(){
+  if(fotos.length > MAX_FOTOS_ANDROID){
+    fotos.splice(MAX_FOTOS_ANDROID);
+    console.warn('[ANDROID] Fotos limitadas a MAX_FOTOS_ANDROID='+MAX_FOTOS_ANDROID);
+    if(typeof showToast==='function') showToast('⚠️ Máximo 4 fotos por reporte');
+    return false;
+  }
+  return true;
+}
 var fotosAlarma = [];
 </script>
 <script src="./fotos.js"></script>
@@ -938,7 +969,7 @@ function ppToggle(id){
         <div style="flex:1"><div class="big-field-label">Carrera (pulg) *</div><input class="big-input" type="number" id="coCarrera" placeholder="" step="1"></div>
       </div>
     </div>
-    <textarea id="coObs" placeholder="Observaciones..." style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--surface2);color:var(--txt);resize:none;height:64px;font-family:'Inter',sans-serif"></textarea>
+    <textarea id="coObs" placeholder="Observaciones..." autocomplete="off" autocorrect="off" autocapitalize="sentences" inputmode="text" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--surface2);color:var(--txt);resize:none;height:80px;font-family:'Inter',sans-serif;-webkit-user-select:text;user-select:text;touch-action:auto"></textarea>
   </div>
 
   <!-- NIVEL -->
@@ -953,7 +984,7 @@ function ppToggle(id){
       <div style="flex:1"><div class="big-field-label">Barriles</div><input class="big-input" type="number" id="nivBLS" placeholder="" step="0.1" readonly style="opacity:.7"></div>
     </div>
     <div class="hora-box" id="horaBox">⏱ Hora: se captura al enviar</div>
-    <textarea id="nivObs" placeholder="Observaciones..." style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--surface2);color:var(--txt);resize:none;height:64px;margin-top:10px;font-family:'Inter',sans-serif"></textarea>
+    <textarea id="nivObs" autocomplete="off" autocorrect="off" autocapitalize="sentences" inputmode="text" placeholder="Observaciones..." style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--surface2);color:var(--txt);resize:none;height:64px;margin-top:10px;font-family:'Inter',sans-serif;-webkit-user-select:text;user-select:text;touch-action:auto"></textarea>
   </div>
 
   <!-- REGISTRO -->
@@ -2457,6 +2488,7 @@ function enviarTodo(soloPreview){
 
   var ci=getCicloInfo(REC);
   var fueraDeRango = distMetros > 80 && distMetros > 0;
+  console.log('[GPS] la='+la+' lo='+lo+' ac='+ac+'m dist='+distMetros+'m RADIO='+RADIO_GPS_METROS+'m fueraDeRango='+fueraDeRango);
   var diaDescanso  = !ci.trabajando;
 
   // Si está fuera de rango o día de descanso → modal HTML (no confirm() nativo)
@@ -3097,7 +3129,7 @@ function abrirVistaAlarma(){
             var t = document.getElementById('alarmGpsTxt');
             if(t) t.textContent = '⚠️ Sin GPS — se enviará ubicación aproximada';
           },
-          {enableHighAccuracy:true, timeout:6000, maximumAge:30000}
+          {enableHighAccuracy:true, timeout:6000, maximumAge:5000}
         );
       }
     }catch(e){}
@@ -5055,7 +5087,7 @@ function activarGPSContinuo(){
     navigator.geolocation.watchPosition(
       function(p){ la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy); actualizarGPSbar(); },
       function(){},
-      {enableHighAccuracy:true, maximumAge:30000, timeout:15000}
+      {enableHighAccuracy:true, maximumAge:5000, timeout:15000}
     );
   }
 }
@@ -5365,6 +5397,7 @@ window.addEventListener('load', function(){
   setTimeout(initFirebase, 1000);
 });
 // Re-intentar conexión Firebase cuando vuelva señal
+window.addEventListener('unload', function(){ try{ var m=document.getElementById('pwa-manifest'); if(m&&m.href&&m.href.startsWith('blob:'))URL.revokeObjectURL(m.href); }catch(e){} });
 window.addEventListener('online', function(){
   if(!fbDB) setTimeout(initFirebase, 1000);
   else sincronizarAFirebase();
@@ -5758,7 +5791,8 @@ setTimeout(function(){
 }, 3000);
 
 function confirmarEnvio(){
-  console.log('[VISITAS] CLICK ENVIAR');
+  console.log('[ANDROID] CLICK ENVIAR — userAgent:', navigator.userAgent.slice(0,60));
+  console.log('[ANDROID] online:', navigator.onLine, 'vvp:', !!(window.visualViewport));
   // ── Anti-duplicado ─────────────────────────────────────────
   if(_enviandoAhora){ console.log('[ANTI-DUP] bloqueado: clic rápido'); return; }
   var _sendKey = _dedupKey(W, REC, modoRegistro||'co');
@@ -6192,36 +6226,34 @@ actualizarBadgeHistorial();
 setInterval(actualizarBadgeHistorial, 5000);
 
 // ══ PWA SERVICE WORKER ══
-var APP_VERSION = 'v5'; // Cambiar con cada actualización
+var APP_VERSION = 'v6'; // Incrementar con cada deploy
+// Android PWA: forzar recarga limpia si el SW detecta nueva versión
+window.addEventListener('message', function(e){
+  if(e.data && e.data.type === 'NEW_VERSION_AVAILABLE'){
+    console.log('[SW] Nueva versión detectada — recargando...');
+    var t = typeof showToast==='function';
+    if(t) showToast('🔄 Actualizando app...');
+    setTimeout(function(){ window.location.reload(true); }, 1500);
+  }
+});
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
-    // Force cache refresh on new versions
-    navigator.serviceWorker.register('sw.js').then(function(reg){
-      reg.update(); // Immediately check for updates
-
-      // Verificar actualizaciones inmediatamente
-      reg.update();
-
-      // Cuando haya un nuevo SW esperando → forzar activación
+    navigator.serviceWorker.register('./sw.js').then(function(reg){
       reg.addEventListener('updatefound', function(){
         var newWorker = reg.installing;
         if(!newWorker) return;
         newWorker.addEventListener('statechange', function(){
           if(newWorker.state === 'installed' && navigator.serviceWorker.controller){
-            // Hay nueva versión — forzar recarga silenciosa
             newWorker.postMessage({ type: 'SKIP_WAITING' });
           }
         });
       });
-
-      // Background Sync
       if('SyncManager' in window){
         reg.sync.register('enviar-reportes-pendientes').catch(function(){});
       }
     }).catch(function(){});
 
-    // Cuando el SW tome control → recargar para usar versión nueva
     var refreshing = false;
     navigator.serviceWorker.addEventListener('controllerchange', function(){
       if(!refreshing){
@@ -6229,8 +6261,6 @@ if('serviceWorker' in navigator){
         window.location.reload();
       }
     });
-
-    // Escuchar mensajes del SW
     navigator.serviceWorker.addEventListener('message', function(e){
       if(e.data && e.data.type === 'PROCESAR_COLA'){
         procesarCola();
@@ -7682,5 +7712,105 @@ function ubiFiltrar(){ /* replaced by filter buttons */ }
 
 </script>
 </div>
+
+// ══ ANDROID: teclado virtual, textarea, viewport ════════════
+(function(){
+  var isAndroid = /android/i.test(navigator.userAgent);
+  var isChrome  = /chrome/i.test(navigator.userAgent);
+
+  // ── Scroll al textarea activo cuando el teclado sube ───────
+  function scrollToActive(){
+    var el = document.activeElement;
+    if(!el || (el.tagName!=='TEXTAREA' && el.tagName!=='INPUT')) return;
+    console.log('[ANDROID] scrollToActive:', el.id||el.tagName);
+    try{ el.scrollIntoView({behavior:'smooth', block:'center'}); }catch(e){}
+  }
+
+  // ── visualViewport API (Android Chrome ≥ 56) ───────────────
+  // Más confiable que window.resize para detectar teclado
+  if(window.visualViewport){
+    var lastVVH = window.visualViewport.height;
+    window.visualViewport.addEventListener('resize', function(){
+      var newH = window.visualViewport.height;
+      var diff = lastVVH - newH;
+      lastVVH = newH;
+      if(diff > 100){
+        // Teclado subió
+        console.log('[ANDROID] teclado ABIERTO, altura reducida:', Math.round(diff)+'px');
+        setTimeout(scrollToActive, 200);
+      } else if(diff < -100){
+        // Teclado bajó
+        console.log('[ANDROID] teclado CERRADO, altura restaurada');
+        setTimeout(function(){
+          try{ window.scrollTo(0, 0); }catch(e){}
+        }, 100);
+      }
+    });
+    console.log('[ANDROID] visualViewport API activa');
+  } else {
+    // Fallback: window.resize (menos preciso en Android)
+    var lastWH = window.innerHeight;
+    window.addEventListener('resize', function(){
+      var newH = window.innerHeight;
+      var diff = lastWH - newH;
+      lastWH = newH;
+      console.log('[ANDROID] resize: diff='+Math.round(diff)+'px innerH='+newH);
+      if(diff > 100){ setTimeout(scrollToActive, 200); }
+    });
+  }
+
+  // ── Focus/blur logging en todos los textareas ──────────────
+  function attachTextareaListeners(ta){
+    if(!ta || ta._androidFixed) return;
+    ta._androidFixed = true;
+    ta.addEventListener('focus', function(){
+      console.log('[ANDROID] FOCUS textarea:', this.id||'?', 'val len:', this.value.length);
+      // Quitar pointer-events:none si quedó bloqueado
+      if(getComputedStyle(this).pointerEvents === 'none'){
+        console.warn('[ANDROID] textarea tenía pointer-events:none — corrigiendo');
+        this.style.pointerEvents = 'auto';
+      }
+      setTimeout(function(){ try{ ta.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){} }, 300);
+    });
+    ta.addEventListener('blur', function(){
+      console.log('[ANDROID] BLUR textarea:', this.id||'?');
+    });
+    ta.addEventListener('input', function(){
+      console.log('[ANDROID] INPUT textarea:', this.id||'?', 'chars:', this.value.length);
+    });
+  }
+
+  // Aplicar a los textareas existentes
+  function attachAll(){
+    document.querySelectorAll('textarea, input[type="text"]').forEach(attachTextareaListeners);
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', attachAll);
+  } else {
+    attachAll();
+  }
+
+  // MutationObserver para elementos dinámicos
+  if(typeof MutationObserver !== 'undefined'){
+    var _obs = new MutationObserver(function(muts){
+      muts.forEach(function(m){
+        m.addedNodes.forEach(function(n){
+          if(!n.querySelectorAll) return;
+          n.querySelectorAll('textarea, input[type="text"]').forEach(attachTextareaListeners);
+        });
+      });
+    });
+    if(document.body){
+      _obs.observe(document.body, {childList:true, subtree:true});
+    } else {
+      document.addEventListener('DOMContentLoaded', function(){
+        _obs.observe(document.body, {childList:true, subtree:true});
+      });
+    }
+  }
+
+  console.log('[ANDROID] keyboard fix instalado. isAndroid='+isAndroid+' visualViewport='+(!!window.visualViewport));
+})();
+// ═════════════════════════════════════════════════════════════
 </body>
-</html>
+</html>padding-bottom:env(safe-area-inset-bottom,0px);}
