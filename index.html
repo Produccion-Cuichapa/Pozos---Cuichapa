@@ -5627,14 +5627,113 @@ function _dedupMark(k){
 // ═════════════════════════════════════════════════════════════
 
 // ── Envío completo: texto + fotos ────────────────
+
+// ══ WA_SENT_REGISTRY — Registro persistente de envíos WhatsApp ══
+// Sobrevive cierres de app, recargas de SW, modo avión y reanudaciones.
+// Es la fuente de verdad definitiva: si está aquí como 'sent', NUNCA se vuelve a enviar.
+var WA_REGISTRY_KEY = 'wa_sent_registry_v1';
+
+function _waRegistryLoad(){
+  try{ return JSON.parse(localStorage.getItem(WA_REGISTRY_KEY)||'{}'); }catch(e){ return {}; }
+}
+function _waRegistrySave(reg){
+  try{ localStorage.setItem(WA_REGISTRY_KEY, JSON.stringify(reg)); }catch(e){}
+}
+function _waDedupeKey(r){
+  // Clave estable: usa el id del reporte (generado una sola vez con Date.now())
+  // + pozo + recorredor como redundancia ante ids corruptos
+  var id   = String(r.id   || r.fbKey || '');
+  var pozo = String(r.pozo || '');
+  var rec  = String(r.recorredor || '');
+  var ts   = String(r.fecha || '').slice(0, 16); // YYYY-MM-DDTHH:MM
+  return 'wa_' + id + '_' + pozo + '_' + rec + '_' + ts;
+}
+function _waIsSent(r){
+  if(!r) return false;
+  // Check 1: campo directo en el reporte (más rápido)
+  if(r.whatsappSent === true) return true;
+  // Check 2: registro persistente (fuente de verdad definitiva)
+  var reg = _waRegistryLoad();
+  var key = _waDedupeKey(r);
+  var entry = reg[key];
+  if(entry && entry.status === 'sent'){
+    console.log('[WA_SKIP_SENT]', key, 'sentAt:', entry.sentAt);
+    return true;
+  }
+  return false;
+}
+function _waMarkSending(r){
+  var key = _waDedupeKey(r);
+  var reg = _waRegistryLoad();
+  if(reg[key] && reg[key].status === 'sent') return false; // ya enviado, no proceder
+  reg[key] = {
+    status: 'sending',
+    dedupeKey: key,
+    reportId: r.id,
+    pozo: r.pozo,
+    recorredor: r.recorredor,
+    attempts: (reg[key] ? (reg[key].attempts||0) : 0) + 1,
+    lastAttemptAt: new Date().toISOString()
+  };
+  _waRegistrySave(reg);
+  console.log('[WA_SEND] sending', key, 'attempt='+reg[key].attempts);
+  return true;
+}
+function _waMarkSent(r, ultraMsgId){
+  var key = _waDedupeKey(r);
+  var reg = _waRegistryLoad();
+  reg[key] = reg[key] || {};
+  reg[key].status = 'sent';
+  reg[key].sentAt = new Date().toISOString();
+  reg[key].ultraMsgResponseId = ultraMsgId || null;
+  _waRegistrySave(reg);
+  // También actualizar el campo en el reporte
+  actualizarEstadoReporte(r.id, 'enviado', new Date().toISOString());
+  // Persistir campo whatsappSent en Firebase
+  if(fbDB){ try{ fbDB.ref('reportes/'+r.id).update({whatsappSent:true,whatsappSentAt:reg[key].sentAt,whatsappDedupeKey:key}); }catch(e){} }
+  console.log('[WA_SENT]', key, 'responseId:', ultraMsgId||'none');
+}
+function _waMarkFailed(r, err){
+  var key = _waDedupeKey(r);
+  var reg = _waRegistryLoad();
+  reg[key] = reg[key] || {};
+  reg[key].status = 'failed';
+  reg[key].lastError = String(err||'unknown');
+  reg[key].failedAt = new Date().toISOString();
+  _waRegistrySave(reg);
+  console.log('[WA_FAIL]', key, 'error:', err);
+}
+function _waEnqueue(r){
+  var key = _waDedupeKey(r);
+  console.log('[WA_QUEUE] enqueue', key);
+}
+// ═════════════════════════════════════════════════════════════
 function enviarConUltramsg(id, callback, fotosDirectas){
   var r = getReporte(id);
   if(!r){ if(callback) callback(false); return; }
-  if(r.estado === 'enviado'){ if(callback) callback(true); return; }
-  // Guard interno: si este id ya está siendo enviado ahora mismo
+  // ── Check 1: registro persistente WA (fuente de verdad definitiva) ──
+  if(_waIsSent(r)){
+    console.log('[WA_SKIP_SENT] id:', id, '— ya enviado a WhatsApp');
+    if(r.estado !== 'enviado') actualizarEstadoReporte(id, 'enviado', new Date().toISOString());
+    if(callback) callback(true);
+    return;
+  }
+  // ── Check 2: _inFlight en memoria (doble tap / mismo ciclo) ──
   if(!enviarConUltramsg._inFlight) enviarConUltramsg._inFlight = {};
-  if(enviarConUltramsg._inFlight[id]){ console.log('[ANTI-DUP] enviarConUltramsg bloqueado para id:',id); if(callback) callback(false); return; }
+  if(enviarConUltramsg._inFlight[id]){
+    console.log('[WA_SKIP_SENDING] _inFlight bloqueado id:', id);
+    if(callback) callback(false);
+    return;
+  }
   enviarConUltramsg._inFlight[id] = true;
+  // ── Check 3: marcar 'sending' en registry (persiste si app se cierra) ──
+  if(!_waMarkSending(r)){
+    // _waMarkSending devuelve false si ya está 'sent' en el registry
+    console.log('[WA_SKIP_SENT] registry bloqueó reenvío, id:', id);
+    delete enviarConUltramsg._inFlight[id];
+    if(callback) callback(true);
+    return;
+  }
 
   // Si se pasan fotos directas (modo alarma), usarlas — evita depender de localStorage
   var fotosSnapshot = fotosDirectas ? fotosDirectas.slice() : (r.fotos || []).slice();
@@ -5646,7 +5745,8 @@ function enviarConUltramsg(id, callback, fotosDirectas){
   // 1. Enviar texto del reporte
   umSendText(r.msg, function(okTexto){
     if(!okTexto){
-      actualizarEstadoReporte(id, 'pendiente', new Date().toISOString()); // fallo → volver a pendiente
+      _waMarkFailed(r, 'umSendText failed');
+      actualizarEstadoReporte(id, 'pendiente', new Date().toISOString());
       if(enviarConUltramsg._inFlight) delete enviarConUltramsg._inFlight[id];
       renderHistorial();
       if(callback) callback(false);
@@ -5655,8 +5755,8 @@ function enviarConUltramsg(id, callback, fotosDirectas){
     // Texto enviado OK — 2. Enviar fotos
     var imgs = fotosSnapshot;
     if(!imgs.length){
-      // Sin fotos: marcar enviado y liberar todo ahora
-      actualizarEstadoReporte(id, 'enviado', new Date().toISOString());
+      // Sin fotos: marcar enviado en registry + estado
+      _waMarkSent(r);
       if(enviarConUltramsg._inFlight) delete enviarConUltramsg._inFlight[id];
       actualizarBadgeHistorial();
       renderHistorial();
@@ -5666,8 +5766,8 @@ function enviarConUltramsg(id, callback, fotosDirectas){
     var i = 0;
     function enviarSigFoto(){
       if(i >= imgs.length){
-        // FIX 2: marcar enviado y liberar _inFlight SOLO después de todas las fotos
-        actualizarEstadoReporte(id, 'enviado', new Date().toISOString());
+        // Marcar enviado en registry + estado SOLO después de todas las fotos
+        _waMarkSent(r);
         if(enviarConUltramsg._inFlight) delete enviarConUltramsg._inFlight[id];
         actualizarBadgeHistorial();
         renderHistorial();
