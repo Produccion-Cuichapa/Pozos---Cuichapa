@@ -5290,6 +5290,10 @@ function guardarEnFirebase(reporte){
       ctm:           reporte.ctm           || null,
       // ── Checks de registro ────────────────────────────────
       checks:        reporte.checks        || null,
+      // ── WhatsApp Cloud Function trigger ───────────────────
+      whatsappStatus:    reporte.whatsappStatus    || null,
+      whatsappSent:      reporte.whatsappSent      || false,
+      whatsappDedupeKey: reporte.whatsappDedupeKey || null,
       // ── GPS estructurado ──────────────────────────────────
       gps:           reporte.gps           || null,
       // ── Observaciones ─────────────────────────────────────
