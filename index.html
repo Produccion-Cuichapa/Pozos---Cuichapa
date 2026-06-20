@@ -5492,7 +5492,7 @@ var UM_URL_IMG   = UM_BASE + '/messages/image';
 
 // ── Enviar texto por Ultramsg ─────────────────────
 function umSendText(texto, callback){
-  console.log('[PRODUCCION] Grupo destino:', UM_TO);
+  console.log('[WHATSAPP] Grupo destino:', UM_TO);
   var body = 'token=' + encodeURIComponent(UM_TOKEN)
            + '&to='   + encodeURIComponent(UM_TO)
            + '&body=' + encodeURIComponent(texto);
