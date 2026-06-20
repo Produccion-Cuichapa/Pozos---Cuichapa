@@ -1265,7 +1265,8 @@ function ppToggle(id){
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
           <div style="font-size:12px;font-weight:800;color:var(--txt2);letter-spacing:.5px">🛢 ESTADO FRAC TANKS</div>
           <div style="display:flex;gap:8px">
-            <button onclick="ftEnviarWA()" style="padding:6px 12px;border-radius:10px;border:1.5px solid #25D366;background:transparent;color:#25D366;font-size:11px;font-weight:700;cursor:pointer">📤 WA</button>
+            <button onclick="ftEnviarWA()" style="padding:6px 12px;border-radius:10px;border:1.5px solid #25D366;background:transparent;color:#25D366;font-size:11px;font-weight:700;cursor:pointer">📤 Texto</button>
+            <button onclick="ftEnviarImagen()" id="ftImgBtn" style="padding:6px 12px;border-radius:10px;border:1.5px solid #25D366;background:#25D366;color:#fff;font-size:11px;font-weight:700;cursor:pointer">🖼 Imagen</button>
             <button onclick="ftRender()" style="padding:6px 12px;border-radius:10px;border:1.5px solid var(--border);background:transparent;color:var(--txt2);font-size:11px;font-weight:700;cursor:pointer">↺</button>
           </div>
         </div>
@@ -3342,30 +3343,21 @@ function enviarAlarma(){
     if(navigator.onLine){
       _alarmCcSet('Msg','⏳','Enviando alerta al grupo...');
       _alarmCcSet('Foto','⏳', nFotos>0?'Enviando '+nFotos+' foto'+(nFotos>1?'s':'')+'...':'Sin fotos adjuntas');
-      enviarConUltramsg(alarmaData.id, function(ok){
-        actualizarBadgeHistorial();
-        if(ok){
-          _alarmCcSet('Msg','✅','Enviado correctamente al grupo');
-          var nF2 = nFotos;
-          _alarmCcSet('Foto', nF2>0?'✅':'📷', nF2>0?nF2+' foto'+(nF2>1?'s':'')+' enviada'+(nF2>1?'s':''):' Sin fotos adjuntas');
-          _enviandoAhora = false;
-        } else {
-          _alarmCcSet('Msg','⚠️','Sin respuesta — verifica tu señal');
-          _alarmCcSet('Foto','⚠️','Pendiente de reenvío');
-          showToast('⚠️ Sin señal · Alarma guardada · Se enviará al recuperar señal');
-          _enviandoAhora = false;
-        }
-        limpiarFotosPostAlarma();
-      }, fotosCopy);
-    } else {
-      _alarmCcSet('Msg','💾','Guardado localmente — se enviará al recuperar señal');
-      _alarmCcSet('Foto','💾', nFotos>0?nFotos+' foto'+(nFotos>1?'s':'')+' guardada'+(nFotos>1?'s':''):' Sin fotos adjuntas');
-      showToast('⚠️ Sin señal · Alarma guardada · Se enviará cuando haya señal');
-      limpiarFotosPostAlarma();
-      window.addEventListener('online', function retryOnline(){
-        window.removeEventListener('online', retryOnline); // ← ejecutar solo UNA vez
-        setTimeout(function(){ verificarYEnviar(); }, 1000);
-      });
+      // Alarma → Firebase → Cloud Function → WhatsApp (envío único)
+      alarmaData.whatsappStatus    = 'pending';
+      alarmaData.whatsappSent      = false;
+      alarmaData.whatsappDedupeKey = String(alarmaData.id);
+      alarmaData.whatsappAttempts  = 0;
+      guardarReporte(alarmaData);
+      if(fbDB){
+        fbDB.ref('alarmas/'+alarmaData.id).set(alarmaData);
+        guardarEnFirebase(alarmaData);
+      }
+      _alarmCcSet('Msg','☁️','Enviando vía servidor...');
+      _alarmCcSet('Foto', nFotos>0?'☁️':'📷', nFotos>0?nFotos+' foto en proceso':'Sin fotos');
+      actualizarBadgeHistorial();
+      _enviandoAhora = false;
+      // [WA via CF] directo a Firebase — CF envía
     }
   }
 
@@ -5485,7 +5477,7 @@ var UM_INSTANCE  = 'instance177727';
 var UM_TOKEN     = '0olfbxq3zi0rbsd1';
 
 // ── MODO PRUEBAS ─────────────────────────────────────────────
-var MODO_PRUEBAS  = false;  // PRODUCCIÓN
+var MODO_PRUEBAS  = true;   // PRUEBAS
 var TEST_GROUP_ID = '120363424993135472@g.us';
 var PROD_GROUP_ID = '5217821670258-1586464715@g.us'; // Grupo Pozos
 
@@ -5846,6 +5838,511 @@ function ftEnviarWA(){
     else   { showToast('⚠️ Error al enviar — intenta de nuevo'); }
   });
 }
+
+// ── FT Fase 2: Imagen PNG por Canvas (bajo demanda) ───────────
+
+// Cola offline para FT imagen (sin base64 — solo timestamp+datos mínimos)
+var FT_IMG_QUEUE_KEY = 'ft_img_queue_v1';
+
+function _ftImgQueueSave(entry){
+  try{
+    var q = JSON.parse(localStorage.getItem(FT_IMG_QUEUE_KEY)||'[]');
+    q.push(entry);
+    if(q.length > 5) q = q.slice(-5); // max 5 pendientes
+    localStorage.setItem(FT_IMG_QUEUE_KEY, JSON.stringify(q));
+  }catch(e){}
+}
+function _ftImgQueueFlush(){
+  try{
+    var q = JSON.parse(localStorage.getItem(FT_IMG_QUEUE_KEY)||'[]');
+    if(!q.length) return;
+    localStorage.removeItem(FT_IMG_QUEUE_KEY);
+    console.log('[FT_IMG] flushing queue', q.length, 'items');
+    // Regenerar imagen desde datos actuales (no desde base64 guardado)
+    q.forEach(function(entry){
+      _ftGenerarEnviarCanvas(entry.dedupeKey, null);
+    });
+  }catch(e){}
+}
+
+// ── Hash rápido del resumen (para dedup) ──────────────────────
+function _ftHashResumen(items){
+  return items.map(function(it){
+    return it.cfg.pozo+':'+Math.round(it.ctm);
+  }).join('|');
+}
+
+// ── Dibujar imagen en canvas ──────────────────────────────────
+function _ftDibujarCanvas(canvas, items, fechaStr, horaStr){
+  var dpr = Math.min(window.devicePixelRatio || 1, 2); // max 2x para no saturar RAM
+  var W = 760; var PAD = 24;
+  var ROW_H = 64; var HEADER_H = 90;
+  var H = HEADER_H + items.length * ROW_H + PAD;
+
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  // Fondo
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, W, H);
+
+  // Título
+  ctx.fillStyle = '#0a1f44';
+  ctx.fillRect(0, 0, W, HEADER_H);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 20px Inter, Arial, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('🛢  ESTADO FRAC TANKS — CUICHAPA', PAD, 34);
+  ctx.font = '13px Inter, Arial, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,.75)';
+  ctx.fillText(fechaStr + '  ' + horaStr + '  ·  Campo Cuichapa U-39', PAD, 58);
+  ctx.fillStyle = 'rgba(255,255,255,.4)';
+  ctx.fillText('Lifting de Mexico', PAD, 78);
+
+  // Filas
+  items.forEach(function(it, i){
+    var y = HEADER_H + i * ROW_H;
+    var bg = i % 2 === 0 ? '#F9FAFB' : '#FFFFFF';
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, y, W, ROW_H);
+
+    // Nombre pozo
+    ctx.fillStyle = '#111827';
+    ctx.font = 'bold 15px Inter, Arial, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(it.cfg.nombre, PAD, y + 22);
+
+    // CTM y pct
+    ctx.fillStyle = '#6B7280';
+    ctx.font = '12px Inter, Arial, sans-serif';
+    ctx.fillText(Math.round(it.ctm) + ' cm', PAD, y + 42);
+
+    // Barra horizontal
+    var BAR_X = 170; var BAR_W = 400; var BAR_H = 20; var BAR_Y = y + 22;
+    // Fondo barra
+    ctx.fillStyle = '#E5E7EB';
+    _ftRoundRect(ctx, BAR_X, BAR_Y, BAR_W, BAR_H, 6);
+    ctx.fill();
+    // Fill barra
+    var fillW = Math.max(8, Math.round(BAR_W * it.pct / 100));
+    ctx.fillStyle = it.st.color;
+    _ftRoundRect(ctx, BAR_X, BAR_Y, fillW, BAR_H, 6);
+    ctx.fill();
+
+    // Porcentaje sobre barra
+    ctx.fillStyle = it.pct > 30 ? '#FFFFFF' : it.st.color;
+    ctx.font = 'bold 12px Inter, Arial, sans-serif';
+    ctx.textAlign = 'left';
+    var pctX = BAR_X + Math.min(fillW - 38, BAR_W - 42);
+    if(pctX < BAR_X + 4) pctX = BAR_X + 4;
+    ctx.fillText(Math.round(it.pct) + '%', pctX, BAR_Y + 14);
+
+    // Estado (texto + emoji)
+    ctx.textAlign = 'left';
+    ctx.font = '12px Inter, Arial, sans-serif';
+    ctx.fillStyle = it.st.color;
+    ctx.fillText(it.st.emoji + ' ' + it.st.label, BAR_X + BAR_W + 14, y + 28);
+
+    // Separador
+    ctx.strokeStyle = '#F3F4F6';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, y + ROW_H);
+    ctx.lineTo(W, y + ROW_H);
+    ctx.stroke();
+  });
+
+  // Footer line
+  ctx.fillStyle = '#0a1f44';
+  ctx.fillRect(0, H - 4, W, 4);
+}
+
+// ── Helper: roundRect compatible con todos los Android ────────
+function _ftRoundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// ── Generar canvas y enviar ───────────────────────────────────
+function _ftGenerarEnviarCanvas(dedupeKey, btnEl){
+  // Recopilar datos FT actuales
+  var now = new Date();
+  var fechaStr = now.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'});
+  var horaStr  = now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  var items = [];
+  FT_CONFIG.forEach(function(cfg){
+    var last = _ftGetLast(cfg.pozo);
+    var ctm  = last ? last.ctm : null;
+    var pct  = ctm !== null ? Math.min(100, Math.max(0, (ctm/cfg.capacidadCM)*100)) : null;
+    if(pct === null) return;
+    var st = _ftGetStatus(pct);
+    items.push({cfg:cfg, ctm:ctm, pct:pct, st:st});
+  });
+  items.sort(function(a,b){ return b.pct - a.pct; });
+
+  if(!items.length){
+    showToast('⚠️ Sin datos de nivel para generar imagen');
+    if(btnEl) btnEl.disabled = false;
+    return;
+  }
+
+  // Si no hay dedupeKey, generar uno ahora
+  if(!dedupeKey){
+    var hash = _ftHashResumen(items);
+    var slot = Math.floor(now.getTime() / 300000); // ventana 5 min
+    dedupeKey = 'ft_img_'+now.getFullYear()+('0'+(now.getMonth()+1)).slice(-2)+('0'+now.getDate()).slice(-2)+'_'+slot+'_'+hash.slice(0,12);
+  }
+
+  // Verificar dedup WA registry
+  var reg = _waRegistryLoad();
+  if(reg[dedupeKey] && reg[dedupeKey].status === 'sent'){
+    console.log('[FT_IMG] skipped duplicate', dedupeKey);
+    showToast('ℹ️ Imagen FT ya enviada recientemente');
+    if(btnEl) btnEl.disabled = false;
+    return;
+  }
+
+  // Verificar conectividad
+  if(navigator.onLine === false){
+    console.log('[FT_IMG] offline — queuing', dedupeKey);
+    _ftImgQueueSave({dedupeKey:dedupeKey, ts:now.toISOString()});
+    showToast('💾 Sin señal — se enviará al recuperar conexión');
+    if(btnEl) btnEl.disabled = false;
+    return;
+  }
+
+  // Generar canvas bajo demanda
+  console.log('[FT_IMG] generating', dedupeKey);
+  var canvas = document.createElement('canvas');
+  try{
+    _ftDibujarCanvas(canvas, items, fechaStr, horaStr);
+    var dataUrl = canvas.toDataURL('image/png', 0.85); // calidad 85% — ~100-250KB
+    var sizeKB = Math.round(dataUrl.length * 0.75 / 1024);
+    console.log('[FT_IMG] sizeKB='+sizeKB, 'dedupeKey='+dedupeKey);
+
+    // Marcar sending en registry antes de enviar
+    reg[dedupeKey] = {status:'sending', attempts:(reg[dedupeKey]?reg[dedupeKey].attempts||0:0)+1, lastAttemptAt:now.toISOString()};
+    _waRegistrySave(reg);
+
+    var caption = '🛢 Estado FT — '+fechaStr+' '+horaStr+' · Campo Cuichapa U-39';
+    console.log('[FT_IMG] sending', dedupeKey);
+    showToast('📤 Generando imagen FT... ('+sizeKB+'KB)');
+
+    umSendImage(dataUrl, caption, function(ok){
+      // Liberar memoria INMEDIATAMENTE tras envío
+      dataUrl = null;
+      canvas.width = 0;
+      canvas.height = 0;
+      try{ canvas.remove(); }catch(e){}
+      canvas = null;
+
+      if(ok){
+        reg = _waRegistryLoad();
+        reg[dedupeKey] = {status:'sent', sentAt:now.toISOString(), dedupeKey:dedupeKey};
+        _waRegistrySave(reg);
+        console.log('[FT_IMG] sent', dedupeKey);
+        showToast('✅ Imagen FT enviada al grupo');
+      } else {
+        reg = _waRegistryLoad();
+        reg[dedupeKey] = {status:'failed', failedAt:now.toISOString()};
+        _waRegistrySave(reg);
+        console.log('[FT_IMG] failed', dedupeKey);
+        showToast('⚠️ Error al enviar imagen FT');
+      }
+      if(btnEl) btnEl.disabled = false;
+    });
+  } catch(e){
+    console.error('[FT_IMG] canvas error:', e);
+    // Liberar recursos si hay error
+    try{ canvas.width = 0; canvas.height = 0; canvas.remove(); }catch(e2){}
+    canvas = null;
+    showToast('⚠️ Error generando imagen: '+e.message);
+    if(btnEl) btnEl.disabled = false;
+  }
+}
+
+// ── Botón principal: Enviar imagen FT ─────────────────────────
+function ftEnviarImagen(){
+  var btn = document.getElementById('ftImgBtn');
+  if(btn){
+    if(btn.disabled) return;
+    btn.disabled = true;
+    btn.textContent = '⏳';
+  }
+  _ftGenerarEnviarCanvas(null, btn);
+}
+
+// ── Al recuperar conexión: procesar cola FT imagen ─────────────
+window.addEventListener('online', function(){
+  setTimeout(function(){
+    _ftImgQueueFlush();
+  }, 2000);
+});
+// ─────────────────────────────────────────────────────────────
+
+
+// ── FASE 2: Imagen PNG FT via Canvas ─────────────────────────
+// Canvas creado y destruido bajo demanda — sin referencias globales.
+// No se guarda base64 en localStorage, Firebase ni IndexedDB.
+
+var FT_IMG_QUEUE_KEY = 'ft_img_queue_v1'; // datos ligeros para offline
+
+// ── Helpers de dibujo ─────────────────────────────────────────
+function _ftCtx_roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w, y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r, y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x, y+r); ctx.arcTo(x,y,x+r,y,r);
+  ctx.closePath();
+}
+
+// ── Construir snapshot de datos actuales (ligero, sin base64) ──
+function _ftBuildSnapshot(){
+  var items = [];
+  FT_CONFIG.forEach(function(cfg){
+    var last = _ftGetLast(cfg.pozo);
+    var ctm  = last ? last.ctm : null;
+    var pct  = ctm !== null ? Math.min(100, Math.max(0, (ctm/cfg.capacidadCM)*100)) : null;
+    if(pct === null) return;
+    var st = _ftGetStatus(pct);
+    items.push({nombre:cfg.nombre, ctm:ctm, pct:pct, st:st, capacidad:cfg.capacidadCM});
+  });
+  items.sort(function(a,b){ return b.pct - a.pct; });
+  return items;
+}
+
+// ── Generar canvas PNG desde snapshot ─────────────────────────
+function _ftGenerateCanvas(items, nowStr){
+  var ROW_H   = 64;
+  var PAD     = 18;
+  var W       = 720;
+  var HEADER  = 72;
+  var FOOTER  = 36;
+  var H       = HEADER + items.length * ROW_H + FOOTER + PAD;
+
+  var canvas  = document.createElement('canvas');
+  canvas.width  = W;
+  canvas.height = H;
+  var ctx = canvas.getContext('2d');
+
+  // ── Fondo ────────────────────────────────────────────────────
+  ctx.fillStyle = '#F8FAFC';
+  ctx.fillRect(0, 0, W, H);
+
+  // ── Header ───────────────────────────────────────────────────
+  var grad = ctx.createLinearGradient(0,0,W,0);
+  grad.addColorStop(0,'#1a3a5c'); grad.addColorStop(1,'#2d6a9f');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, HEADER);
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 17px Inter,Arial,sans-serif';
+  ctx.fillText('🛢  ESTADO FRAC TANKS — CUICHAPA', PAD, 28);
+  ctx.font = '12px Inter,Arial,sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,.8)';
+  ctx.fillText(nowStr + '  ·  Campo Cuichapa U-39', PAD, 52);
+
+  // ── Rows ─────────────────────────────────────────────────────
+  items.forEach(function(it, idx){
+    var y = HEADER + idx * ROW_H;
+    // Alternating bg
+    ctx.fillStyle = idx%2===0 ? '#FFFFFF' : '#F1F5F9';
+    ctx.fillRect(0, y, W, ROW_H);
+    // Separator
+    ctx.strokeStyle = '#E2E8F0'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD,y+ROW_H-1); ctx.lineTo(W-PAD,y+ROW_H-1); ctx.stroke();
+
+    // Left accent bar (color status)
+    ctx.fillStyle = it.st.color;
+    ctx.fillRect(0, y, 5, ROW_H);
+
+    // Mini tank bar (vertical fill)
+    var BAR_W=22, BAR_H=44, BAR_X=PAD+8, BAR_Y=y+(ROW_H-BAR_H)/2;
+    // Outline
+    ctx.strokeStyle='#94a3b8'; ctx.lineWidth=1.5;
+    _ftCtx_roundRect(ctx,BAR_X,BAR_Y,BAR_W,BAR_H,3); ctx.stroke();
+    // Fill
+    var fillH = Math.max(2,Math.round(BAR_H*it.pct/100));
+    ctx.fillStyle = it.st.color+'33'; // transparent version
+    _ftCtx_roundRect(ctx,BAR_X,BAR_Y,BAR_W,BAR_H,3); ctx.fill();
+    ctx.fillStyle = it.st.color;
+    ctx.fillRect(BAR_X+1.5, BAR_Y+BAR_H-fillH, BAR_W-3, fillH);
+
+    // Pozo name
+    var TX = BAR_X + BAR_W + 12;
+    ctx.fillStyle = '#1E293B';
+    ctx.font = 'bold 14px Inter,Arial,sans-serif';
+    ctx.fillText(it.nombre, TX, y+20);
+
+    // CTM / Capacidad
+    ctx.fillStyle = '#475569';
+    ctx.font = '12px Inter,Arial,sans-serif';
+    ctx.fillText(Math.round(it.ctm)+' cm  /  '+it.capacidad+' cm', TX, y+36);
+
+    // Status label
+    ctx.fillStyle = it.st.color;
+    ctx.font = 'bold 11px Inter,Arial,sans-serif';
+    ctx.fillText(it.st.emoji+'  '+it.st.label, TX, y+50);
+
+    // Percentage (right, large)
+    var pctTxt = Math.round(it.pct)+'%';
+    ctx.font = 'bold 22px Inter,Arial,sans-serif';
+    ctx.fillStyle = it.st.color;
+    var tw = ctx.measureText(pctTxt).width;
+    ctx.fillText(pctTxt, W-PAD-tw, y+ROW_H/2+8);
+  });
+
+  // ── Footer ───────────────────────────────────────────────────
+  var FY = HEADER + items.length*ROW_H;
+  ctx.fillStyle = '#F1F5F9';
+  ctx.fillRect(0, FY, W, FOOTER+PAD);
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = '10px Inter,Arial,sans-serif';
+  ctx.fillText('Generado por Campo Cuichapa PWA · Lifting de Mexico', PAD, FY+FOOTER/2+4);
+
+  return canvas;
+}
+
+// ── Enviar imagen FT a WhatsApp ────────────────────────────────
+function ftEnviarImagen(){
+  var items = _ftBuildSnapshot();
+  if(!items.length){
+    showToast('⚠️ Sin datos de nivel para generar imagen');
+    return;
+  }
+
+  // Dedup key: fecha+hora (minuto) + hash simple del resumen
+  var now    = new Date();
+  var nowStr = now.toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'})
+             + '  '+now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  var hashStr = items.map(function(it){ return it.nombre+':'+Math.round(it.pct); }).join('|');
+  var hash    = 0;
+  for(var c=0;c<hashStr.length;c++){ hash = ((hash<<5)-hash+hashStr.charCodeAt(c))|0; }
+  var dedupeKey = 'ft_img_'+now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2)+'-'+('0'+now.getDate()).slice(-2)+'_'+('0'+now.getHours()).slice(-2)+':'+('0'+now.getMinutes()).slice(-2)+'_'+Math.abs(hash);
+
+  // Check dedup registry
+  var reg = _waRegistryLoad();
+  if(reg[dedupeKey] && reg[dedupeKey].status === 'sent'){
+    console.log('[FT_IMG] skipped duplicate', dedupeKey);
+    showToast('ℹ️ Imagen ya enviada recientemente');
+    return;
+  }
+
+  // Check connectivity
+  if(navigator.onLine === false){
+    // Offline: encolar datos ligeros (NO el base64)
+    console.log('[FT_IMG] offline — enqueueing data snapshot');
+    try{
+      var q = JSON.parse(localStorage.getItem(FT_IMG_QUEUE_KEY)||'[]');
+      // No duplicar en la cola
+      var already = q.some(function(e){ return e.dedupeKey===dedupeKey; });
+      if(!already) q.push({dedupeKey:dedupeKey, nowStr:nowStr, items:items.map(function(it){
+        return {nombre:it.nombre,ctm:it.ctm,pct:it.pct,stColor:it.st.color,stLabel:it.st.label,stEmoji:it.st.emoji,capacidad:it.capacidad};
+      }), queuedAt:now.toISOString()});
+      localStorage.setItem(FT_IMG_QUEUE_KEY, JSON.stringify(q));
+    }catch(e){}
+    showToast('💾 Sin señal — se enviará al recuperar internet');
+    return;
+  }
+
+  _ftDoSendImage(items, dedupeKey, nowStr);
+}
+
+// ── Generar + enviar ───────────────────────────────────────────
+function _ftDoSendImage(items, dedupeKey, nowStr){
+  var btn = document.getElementById('ftImgBtn');
+  if(btn){ btn.disabled=true; btn.textContent='⏳...'; }
+
+  console.log('[FT_IMG] generating');
+  var canvas, dataUrl;
+  try{
+    canvas = _ftGenerateCanvas(items, nowStr);
+    // JPEG quality 0.88 — visualmente PNG, mucho más ligero
+    dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+    var sizeKB = Math.round(dataUrl.length * 0.75 / 1024);
+    console.log('[FT_IMG] sizeKB='+sizeKB);
+  }catch(e){
+    console.error('[FT_IMG] canvas error:', e);
+    if(btn){ btn.disabled=false; btn.textContent='🖼 Imagen'; }
+    showToast('❌ Error al generar imagen');
+    return;
+  }
+
+  // Marcar sending en registry
+  var reg = _waRegistryLoad();
+  reg[dedupeKey] = {status:'sending', dedupeKey:dedupeKey, attempts:1, lastAttemptAt:new Date().toISOString()};
+  _waRegistrySave(reg);
+  console.log('[FT_IMG] sending', dedupeKey);
+  showToast('🖼 Generando y enviando imagen FT...');
+
+  var caption = '🛢 Estado FT — Cuichapa · '+new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'});
+  var base64 = dataUrl.split(',')[1];
+
+  // ── Liberar memoria del canvas ANTES del fetch ────────────────
+  dataUrl = null;
+  if(canvas){ try{ canvas.width=0; canvas.height=0; canvas.remove(); }catch(e){} }
+  canvas = null;
+
+  umSendImage(base64, caption, function(ok){
+    base64 = null; // liberar referencia
+    var reg2 = _waRegistryLoad();
+    if(ok){
+      reg2[dedupeKey] = {status:'sent', sentAt:new Date().toISOString(), dedupeKey:dedupeKey};
+      _waRegistrySave(reg2);
+      console.log('[FT_IMG] sent', dedupeKey);
+      showToast('✅ Imagen FT enviada al grupo');
+    } else {
+      reg2[dedupeKey] = {status:'failed', failedAt:new Date().toISOString(), dedupeKey:dedupeKey};
+      _waRegistrySave(reg2);
+      console.log('[FT_IMG] failed', dedupeKey);
+      showToast('⚠️ Error al enviar imagen — intenta de nuevo');
+    }
+    if(btn){ btn.disabled=false; btn.textContent='🖼 Imagen'; }
+  });
+}
+
+// ── Procesar cola offline FT al recuperar señal ───────────────
+function _ftProcessOfflineQueue(){
+  var q;
+  try{ q = JSON.parse(localStorage.getItem(FT_IMG_QUEUE_KEY)||'[]'); }catch(e){ return; }
+  if(!q.length) return;
+  // Tomar el primero pendiente
+  var entry = q.shift();
+  try{ localStorage.setItem(FT_IMG_QUEUE_KEY, JSON.stringify(q)); }catch(e){}
+
+  console.log('[FT_IMG] retry offline queue item', entry.dedupeKey);
+  // Regenerar datos frescos (pueden haber llegado nuevos niveles)
+  var freshItems = _ftBuildSnapshot();
+  if(!freshItems.length) freshItems = (entry.items||[]).map(function(it){
+    return {nombre:it.nombre,ctm:it.ctm,pct:it.pct,capacidad:it.capacidad||260,
+            st:{color:it.stColor,label:it.stLabel,emoji:it.stEmoji}};
+  });
+  var nowStr = new Date().toLocaleString('es-MX');
+  _ftDoSendImage(freshItems, entry.dedupeKey, nowStr);
+}
+
+// Conectar cola offline al evento 'online'
+window.addEventListener('online', function(){
+  setTimeout(_ftProcessOfflineQueue, 2000);
+});
+// ── END FASE 2 FT IMG ─────────────────────────────────────────
+
 // ═════════════════════════════════════════════════════════════
 
 // ══ WA_SENT_REGISTRY — Registro persistente de envíos WhatsApp ══
@@ -6030,12 +6527,20 @@ function procesarCola(){
   function enviarSiguiente(){
     if(idx >= pendientes.length){ clearTimeout(_colaTimeout); _colaEnProceso = false; return; }
     var r = pendientes[idx++];
-    // FIX 3: leer estado fresco — confirmarEnvio pudo haberlo enviado ya
+    // Solo sincronizar a Firebase — Cloud Function maneja WhatsApp
     var rFresh = getReporte(r.id);
-    if(rFresh && rFresh.estado === 'enviado'){ enviarSiguiente(); return; }
-    enviarConUltramsg(r.id, function(ok){
-      setTimeout(enviarSiguiente, 2500);
-    });
+    if(rFresh){
+      // Asegurar que tenga whatsappStatus:pending si no fue marcado como sent
+      if(!rFresh.whatsappSent && !rFresh.whatsappStatus){
+        rFresh.whatsappStatus    = 'pending';
+        rFresh.whatsappSent      = false;
+        rFresh.whatsappDedupeKey = String(rFresh.id);
+        rFresh.whatsappAttempts  = 0;
+        guardarReporte(rFresh);
+      }
+      if(fbDB) guardarEnFirebase(rFresh);
+    }
+    setTimeout(enviarSiguiente, 500); // sin delay de red, solo Firebase writes
   }
   enviarSiguiente();
 }
@@ -6211,46 +6716,39 @@ function confirmarEnvio(){
   actualizarBadgeHistorial();
   _ccLastReporteId = reporte.id;
 
-  // ── FLUJO VISITAS (igual que Alarma) ────────────────────────
-  // 1. Capturar fotos ANTES de limpiar
+  // ── NUEVO FLUJO — Firebase → Cloud Function → WhatsApp ─────
+  // El cliente solo escribe en Firebase con whatsappStatus:'pending'.
+  // La Cloud Function es el único proceso que llama UltraMsg.
   var fotosCopy = fotos.map(function(f){ return {data:(f.data||f), nombre:(f.nombre||'')}; });
   var nFotos = fotosCopy.length;
-  console.log('[VISITAS] INICIO FLUJO');
+  console.log('[VISITAS] INICIO FLUJO — vía Cloud Function');
   console.log('[VISITAS] FOTOS:', nFotos);
-  console.log('[VISITAS] GRUPO DESTINO:', UM_TO);
 
-  // 2. Mostrar tarjetas de confirmación PRIMERO (antes de resetear)
+  // Agregar campos WhatsApp al reporte ANTES de guardar
+  reporte.whatsappStatus   = 'pending';
+  reporte.whatsappSent     = false;
+  reporte.whatsappDedupeKey = String(reporte.id);
+  reporte.whatsappAttempts  = 0;
+  reporte.fotos            = fotosCopy; // fotos capturadas antes de limpiar
+  guardarReporte(reporte);   // actualizar con fotos y whatsappStatus
+  if(fbDB) guardarEnFirebase(reporte); // Cloud Function lo detecta y envía
+
+  // Mostrar tarjetas de confirmación
   var cc = document.getElementById('confirmCards');
   if(cc){
     cc.style.display = 'block';
     setTimeout(function(){ cc.scrollIntoView({behavior:'smooth', block:'center'}); }, 150);
   }
 
-  // 3. Mostrar estado "Enviando" inmediatamente
-  _ccSet('msg', '⏳', 'Mensaje WhatsApp', 'Enviando al grupo...');
-  _ccSet('foto', '⏳', 'Evidencia fotográfica', nFotos > 0 ? 'Enviando '+nFotos+' foto'+(nFotos>1?'s':'')+'...' : 'Sin fotos adjuntas');
+  _ccSet('msg',  '☁️', 'Mensaje WhatsApp', 'Enviando vía servidor...');
+  _ccSet('foto', nFotos > 0 ? '☁️' : '📷', 'Evidencia fotográfica',
+         nFotos > 0 ? nFotos+' foto'+(nFotos>1?'s':'')+' en proceso' : 'Sin fotos adjuntas');
 
-  // 4. Enviar con fotos directas (igual que Alarma — no depende de localStorage fotos)
-  enviarConUltramsg(reporte.id, function(ok){
-    console.log('[VISITAS] WHATSAPP RESULTADO:', ok);
-    actualizarBadgeHistorial();
-    clearTimeout(_envioTimeout);
-    _enviandoAhora = false; // liberar cuando llega la respuesta
-    if(ok){
-      _dedupMark(_sendKey); // Fix 1 — solo marcar dedup en éxito real
-      _ccSet('msg', '✅', 'Mensaje WhatsApp', 'Enviado correctamente al grupo');
-      var nF = fotosCopy.length;
-      _ccSet('foto', nF > 0 ? '✅' : '📷', 'Evidencia fotográfica', nF > 0 ? nF+' foto'+(nF>1?'s':'')+' enviada'+(nF>1?'s':'')+' correctamente' : 'Sin fotos adjuntas');
-      console.log('[VISITAS] FIN FLUJO — OK');
-    } else {
-      _ccSet('msg', '⚠️', 'Mensaje WhatsApp', 'Sin respuesta — reintentando automáticamente');
-      _ccSet('foto', '⚠️', 'Evidencia fotográfica', 'Pendiente de reenvío');
-      showToast('⚠️ Sin respuesta · Reintentando');
-      console.log('[VISITAS] FIN FLUJO — FALLO');
-    }
-  }, fotosCopy);
-
-  console.log('[VISITAS] FIREBASE OK — id:', reporte.id);
+  _dedupMark(_sendKey);
+  actualizarBadgeHistorial();
+  clearTimeout(_envioTimeout);
+  _enviandoAhora = false;
+  console.log('[VISITAS] FIN FLUJO — reporte en Firebase, esperando CF');
 
   }catch(e){
     console.error('[VISITAS] ERROR:', e);
@@ -6299,20 +6797,21 @@ function ccVerificar(){
   // Intentar reenvío
   _ccSet('msg',  '⏳', 'Mensaje WhatsApp', 'Verificando y reenviando...');
   _ccSet('foto', '⏳', 'Evidencia fotográfica', 'Verificando...');
-  enviarConUltramsg(_ccLastReporteId, function(ok){
-    actualizarBadgeHistorial();
-    if(ok){
-      var rFresh = getReporte(_ccLastReporteId);
-      var nF2 = rFresh ? (rFresh.fotos||[]).length : 0;
-      _ccSet('msg',  '✅', 'Mensaje WhatsApp', 'Enviado correctamente al grupo');
-      _ccSet('foto', nF2 > 0 ? '✅' : '📷', 'Evidencia fotográfica', nF2 > 0 ? nF2+' foto'+(nF2>1?'s':'')+' enviada'+(nF2>1?'s':'')+' correctamente' : 'Sin fotos adjuntas');
-      showToast('✅ Reporte enviado correctamente');
-    } else {
-      _ccSet('msg',  '⚠️', 'Mensaje WhatsApp', 'Sin respuesta — verifica tu señal');
-      _ccSet('foto', '⚠️', 'Evidencia fotográfica', 'Pendiente de reenvío');
-      showToast('⚠️ Sin conexión — intenta de nuevo cuando tengas señal');
-    }
-  });
+  // CF maneja WhatsApp — solo actualizar Firebase con pending
+  var rRetry = getReporte(_ccLastReporteId);
+  if(rRetry && rRetry.whatsappSent){
+    _ccSet('msg', '✅', 'Mensaje WhatsApp', 'Ya enviado al grupo');
+    return;
+  }
+  if(rRetry && fbDB){
+    rRetry.whatsappStatus    = 'pending';
+    rRetry.whatsappSent      = false;
+    rRetry.whatsappDedupeKey = String(rRetry.id);
+    guardarReporte(rRetry);
+    fbDB.ref('reportes/'+rRetry.id).update({whatsappStatus:'pending',whatsappSent:false});
+    _ccSet('msg', '☁️', 'Mensaje WhatsApp', 'Re-enviado a servidor...');
+    showToast('☁️ Reintento enviado al servidor');
+  }
 }
 
 // ── Renderizar historial ──────────────────────────
