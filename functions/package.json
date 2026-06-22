@@ -1,0 +1,10 @@
+{
+  "name": "cuichapa-whatsapp-sender",
+  "version": "1.0.0",
+  "description": "Cloud Function — envío único WhatsApp para Campo Cuichapa",
+  "main": "index.js",
+  "engines": { "node": "18" },
+  "dependencies": {
+    "firebase-admin": "^11.0.0",
+    "firebase-functions": "^4.0.0"
+  }
