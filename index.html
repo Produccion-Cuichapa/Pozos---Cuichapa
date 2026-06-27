@@ -3237,12 +3237,10 @@ function alarmCcVerificar(){
     showToast('✅ Alarma ya enviada al grupo');
     return;
   }
-  // Asegurar que Firebase tenga el reporte con pending (sin crear duplicado)
-  if(fbDB && r.whatsappStatus !== 'sent'){
-    fbDB.ref('alarmas/'+r.id).update({ whatsappStatus:'pending', whatsappSent:false });
-  }
-  _alarmCcSet('Msg','☁️','Servidor procesando — espera un momento');
-  showToast('☁️ La Cloud Function enviará la alarma en breve');
+  // NO escribir pending de vuelta — la CF maneja los reintentos sola.
+  // Escribir pending de nuevo causaría que la CF disparara otra vez.
+  _alarmCcSet('Msg','☁️','La alarma está siendo procesada por el servidor');
+  showToast('☁️ Alarma en cola — llegará al grupo en segundos');
 }
 
 function enviarAlarma(){
@@ -5341,6 +5339,7 @@ function sincronizarAFirebase(){
   if(!fbDB) return;
   var locales = getHistorial();
   locales.forEach(function(r){
+    if(r.esAlarma) return; // alarmas NO van a /reportes/ — van a /alarmas/ (procesarCola lo hace)
     guardarEnFirebase(r);
   });
 }
@@ -6453,10 +6452,19 @@ function procesarCola(){
   function enviarSiguiente(){
     if(idx >= pendientes.length){ clearTimeout(_colaTimeout); _colaEnProceso = false; return; }
     var r = pendientes[idx++];
-    // Solo sincronizar a Firebase — Cloud Function maneja WhatsApp
     var rFresh = getReporte(r.id);
     if(rFresh){
-      // Asegurar que tenga whatsappStatus:pending si no fue marcado como sent
+      // SKIP alarmas — las alarmas van SOLO a /alarmas/, no a /reportes/
+      // guardarEnFirebase escribe a /reportes/ lo cual puede triggear sendWhatsApp CF
+      if(rFresh.esAlarma){
+        // Para alarmas pendientes offline: escribir a /alarmas/ directamente
+        if(fbDB && rFresh.whatsappStatus === 'pending' && !rFresh.whatsappSent){
+          fbDB.ref('alarmas/'+rFresh.id).set(rFresh).catch(function(){});
+        }
+        setTimeout(enviarSiguiente, 500);
+        return;
+      }
+      // Reportes normales: subir a Firebase via guardarEnFirebase
       if(!rFresh.whatsappSent && !rFresh.whatsappStatus){
         rFresh.whatsappStatus    = 'pending';
         rFresh.whatsappSent      = false;
@@ -6466,7 +6474,7 @@ function procesarCola(){
       }
       if(fbDB) guardarEnFirebase(rFresh);
     }
-    setTimeout(enviarSiguiente, 500); // sin delay de red, solo Firebase writes
+    setTimeout(enviarSiguiente, 500);
   }
   enviarSiguiente();
 }
