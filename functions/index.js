@@ -252,6 +252,22 @@ exports.sendWhatsApp = functions
 // ══════════════════════════════════════════════════════════════
 // TRIGGER: /alarmas/{alarmaId} onWrite (alarms keep same pattern)
 // ══════════════════════════════════════════════════════════════
+// ── Helper: clave de contenido para alarmas ──────────────────
+// Previene duplicados aunque el alarmaId sea diferente.
+// Ventana de 60 segundos + tipo + recorredor + coords redondeadas.
+function _alarmContentKey(data){
+  var tipo  = String(data.tipo  || '').toLowerCase().replace(/[^a-z0-9]/g,'_').slice(0,20);
+  var quien = String(data.quien || '').toLowerCase().replace(/[^a-z0-9]/g,'_').slice(0,15);
+  // Extraer lat,lon del campo lugar y redondear a 4 decimales (~11m)
+  var coords = 'nocoords';
+  if(data.lugar){
+    var m = String(data.lugar).match(/(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/);
+    if(m) coords = parseFloat(m[1]).toFixed(4) + '_' + parseFloat(m[2]).toFixed(4);
+  }
+  var slot = Math.floor(Date.now() / 60000); // ventana 60 segundos
+  return 'alarm_content_' + tipo + '_' + quien + '_' + coords + '_' + slot;
+}
+
 exports.sendAlarmWhatsApp = functions
   .runWith({ timeoutSeconds: 60, memory: '256MB' })
   .database.ref('/alarmas/{alarmaId}')
@@ -262,37 +278,69 @@ exports.sendAlarmWhatsApp = functions
     if(after.whatsappSent   === true)      return null;
 
     var alarmaId = context.params.alarmaId;
-    var lockRef  = DB.ref(REGISTRY_PATH + '/alarm_' + alarmaId);
-    var acquired = false;
+    console.log('[WA_BACKEND] pending detected alarm:', alarmaId);
 
-    var tx = await lockRef.transaction(function(current){
-      if(current !== null) return; // abort
-      acquired = true;
-      return { status:'sending', lockedAt:Date.now(), lockedBy:'cloud-function' };
+    // ── LOCK 1: por ID de alarma (previene reentrada del mismo doc) ───
+    var idLockRef = DB.ref(REGISTRY_PATH + '/alarm_id_' + alarmaId);
+    var idAcquired = false;
+    var idTx = await idLockRef.transaction(function(current){
+      if(current !== null) return; // ya existe → abortar
+      idAcquired = true;
+      return { status:'sending', lockedAt:Date.now() };
     });
-
-    if(!acquired || !tx.committed){
-      console.log('[WA_BACKEND] alarm duplicate skip:', alarmaId);
+    if(!idAcquired || !idTx.committed){
+      console.log('[WA_BACKEND] alarm id-lock skip:', alarmaId);
       return null;
     }
 
-    console.log('[WA_BACKEND] alarm sending:', alarmaId);
+    // ── LOCK 2: por contenido (previene duplicados tipo/recorredor/coords/tiempo) ─
+    var contentKey = _alarmContentKey(after);
+    var contentRef = DB.ref('/alarmDedupeRegistry/' + contentKey);
+    var contentAcquired = false;
+    var contentTx = await contentRef.transaction(function(current){
+      if(current !== null){
+        console.log('[WA_BACKEND] alarm content-dedupe skip:', contentKey, current.status);
+        return; // ya enviado o enviando en ventana 60s → abortar
+      }
+      contentAcquired = true;
+      return { status:'sending', alarmaId:alarmaId, lockedAt:Date.now() };
+    });
+    if(!contentAcquired || !contentTx.committed){
+      // Liberar id-lock ya que no vamos a enviar
+      await idLockRef.set({ status:'content_skip', skippedAt:Date.now() });
+      console.log('[WA_BACKEND] alarm content duplicate skip:', contentKey);
+      // Marcar este alarmaId como sent para que no se reintente
+      await DB.ref('/alarmas/'+alarmaId).update({
+        whatsappStatus:'sent', whatsappSent:true,
+        whatsappSentAt:admin.database.ServerValue.TIMESTAMP,
+        skippedAsDuplicate:true
+      });
+      return null;
+    }
+
+    console.log('[WA_BACKEND] alarm sending:', alarmaId, 'contentKey:', contentKey);
     var msg = after.msg || '';
 
     try{
       var result = await sendText(msg);
-      if(!result.ok) throw new Error('UltraMsg alarm failed');
+      if(!result.ok) throw new Error('UltraMsg alarm failed: ' + JSON.stringify(result.raw));
+
+      // ── Marcar enviado en ambos registros ────────────────────
       await DB.ref('/alarmas/'+alarmaId).update({
         whatsappStatus:'sent', whatsappSent:true,
         whatsappSentAt:admin.database.ServerValue.TIMESTAMP
       });
-      await lockRef.set({ status:'sent', sentAt:Date.now() });
-      console.log('[WA_BACKEND] alarm sent:', alarmaId);
+      await idLockRef.set({ status:'sent', sentAt:Date.now() });
+      await contentRef.set({ status:'sent', alarmaId:alarmaId, sentAt:Date.now() });
+      console.log('[WA_BACKEND] alarm sent OK:', alarmaId);
+
     }catch(err){
+      // Fallo: liberar id-lock (permite reintento), conservar content-key 60s
       await DB.ref('/alarmas/'+alarmaId).update({
         whatsappStatus:'failed', lastWhatsappError:err.message
       });
-      await lockRef.remove();
+      await idLockRef.remove(); // permite que un nuevo trigger lo intente
+      // No remover contentRef para no enviar duplicado en ventana 60s
       console.error('[WA_BACKEND] alarm failed:', alarmaId, err.message);
     }
     return null;
