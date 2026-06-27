@@ -3248,10 +3248,23 @@ function alarmCcVerificar(){
 function enviarAlarma(){
   console.log('[ALARMA] CLICK ENVIAR');
   if(_enviandoAhora){ console.log('[ANTI-DUP] bloqueado: alarma doble clic'); return; }
-  var _alKey = _dedupKey(W||'ALARMA', REC, 'alarma');
-  if(_dedupCheck(_alKey)){ showToast('⚠️ Alarma ya enviada recientemente'); return; }
+  // Dedup de alarma: solo anti-doble-tap (8 segundos), incluye tipo
+  var _alKeyBase = 'alarm_'+tipoCapturado+'_'+(REC||loggedUser||'x');
+  var _alKey = _alKeyBase + '_' + Math.floor(Date.now()/8000); // ventana 8s
+  try{
+    if(localStorage.getItem(_alKey)){
+      showToast('⚠️ Alarma enviada hace un momento — espera un instante');
+      return;
+    }
+    localStorage.setItem(_alKey, '1');
+    setTimeout(function(){ try{localStorage.removeItem(_alKey);}catch(e){} }, 8500);
+  }catch(e){}
   _enviandoAhora = true;
-  _dedupMark(_alKey);
+  // Liberar _enviandoAhora con timeout de seguridad (evita bloqueo permanente)
+  var _alarmEnvioTimeout = setTimeout(function(){
+    _enviandoAhora = false;
+    console.warn('[ALARMA] _enviandoAhora liberado por timeout de seguridad');
+  }, 15000);
   console.log('[ANTI-DUP] sendId:', _alKey);
   console.log('[ALARMA] INICIO FLUJO');
   var _ov = document.getElementById('alarmConfirmOverlay'); if(_ov) _ov.style.display = 'none';
@@ -3280,39 +3293,11 @@ function enviarAlarma(){
       esAlarma: true
     };
 
-    // Guardar local + historial
-    var arr = getAlarmasLocales(); arr.unshift(alarmaData); saveAlarmasLocales(arr);
+    // ── Fotos capturadas antes de limpiar ────────────────────────
     var fotosCopy = fotosAlarma.slice();
-    guardarReporte({
-      id:           alarmaData.id,
-      fecha:        alarmaData.fecha,
-      pozo:         lugar,
-      recorredor:   quien,
-      msg:          '🚨 *ALERTA: '+tipoCapturado+'*\n📍 '+(lugar||'—')+'\n👷 '+quien+'\n🕐 '+horaStr+(nFotos?'\n📸 Evidencia: '+nFotos+' foto'+(nFotos===1?'':'s'):''),
-      fotos:        fotosCopy,
-      estado:       'pendiente',
-      ultimoIntento:null,
-      intentos:     0,
-      esAlarma:     true,
-      tipoAlarma:   tipoCapturado
-    });
-    _alarmLastReporteId = alarmaData.id;
 
-    // Push notification a otros dispositivos (SIN escribir a /alarmas/ todavía)
-    // La escritura a /alarmas/ ocurre solo cuando los datos están completos (más abajo)
-    if(fbDB){ enviarPushATodos(alarmaData); }
-    // Escribir alarma activa en config para que todos los dispositivos la vean
-    if(fbDB){ fbDB.ref('config/alarma_activa').set({
-      id: alarmaData.id,
-      tipo: alarmaData.tipo,
-      quien: alarmaData.quien,
-      lugar: alarmaData.lugar,
-      hora: alarmaData.hora,
-      ts: Date.now(),
-      deviceId: DEVICE_ID
-    }).catch(function(){}); }
-
-    // Construir mensaje WA
+    // ── Construir mensaje COMPLETO PRIMERO (antes de cualquier guardado) ──
+    // Esto evita que guardarReporte escriba a Firebase con el msg corto.
     var msgLines = ['🚨 *ALERTA DE EMERGENCIA*','━━━━━━━━━━━━━━━━━━',
       '⚠️ Tipo: *'+tipoCapturado+'*',
       '👷 Reportado por: '+quien];
@@ -3323,9 +3308,8 @@ function enviarAlarma(){
     msgLines.push('_Campo Cuichapa · Lifting de Mexico_');
     var msg = msgLines.join('\n');
 
-    // Completar alarmaData con msg y fotos SIEMPRE (online u offline)
-    // Esto asegura que localStorage tenga el formato completo para cualquier reintento
-    alarmaData.msg               = msg;
+    // ── Completar alarmaData con TODOS los campos ANTES de cualquier write ──
+    alarmaData.msg               = msg;          // FULL msg — NUNCA el corto
     alarmaData.fotos             = fotosCopy;
     alarmaData.pozo              = lugar;
     alarmaData.recorredor        = quien;
@@ -3333,10 +3317,30 @@ function enviarAlarma(){
     alarmaData.whatsappSent      = false;
     alarmaData.whatsappDedupeKey = String(alarmaData.id);
     alarmaData.whatsappAttempts  = 0;
-    // Sobreescribir la primera guardarReporte con msg completo
-    guardarReporte(alarmaData);
 
-    // Limpiar fotos de alarma y cerrar
+    // ── UNA SOLA guardarReporte con msg completo ──────────────
+    // guardarReporte llama guardarEnFirebase internamente, por eso usamos
+    // saveHistorialLocal para no escribir a /reportes/ (alarmas no deben ir ahí)
+    var _hArr = getHistorial();
+    var _hIdx = -1;
+    for(var _i=0;_i<_hArr.length;_i++){ if(_hArr[_i].id===alarmaData.id){ _hIdx=_i; break; } }
+    if(_hIdx>=0) _hArr[_hIdx]=alarmaData; else _hArr.unshift(alarmaData);
+    if(_hArr.length>500) _hArr=_hArr.slice(0,500);
+    saveHistorial(_hArr);  // guarda en localStorage SIN llamar guardarEnFirebase
+    _alarmLastReporteId = alarmaData.id;
+
+    // ── También guardar en array local de alarmas ─────────────
+    var arr = getAlarmasLocales(); arr.unshift(alarmaData); saveAlarmasLocales(arr);
+
+    // ── Config Firebase: notificar a otros dispositivos ────────
+    if(fbDB){ enviarPushATodos(alarmaData); }
+    if(fbDB){ fbDB.ref('config/alarma_activa').set({
+      id: alarmaData.id, tipo: alarmaData.tipo, quien: alarmaData.quien,
+      lugar: alarmaData.lugar, hora: alarmaData.hora,
+      ts: Date.now(), deviceId: DEVICE_ID
+    }).catch(function(){}); }
+
+    // ── UI: limpiar y mostrar confirmación ────────────────────
     fotosAlarma = [];
     document.getElementById('alarmFotoGrid').innerHTML = '';
     document.getElementById('alarmFotoCountNew').textContent = '';
@@ -3344,11 +3348,8 @@ function enviarAlarma(){
     if(sb){ sb.disabled=true; sb.style.opacity='.45'; sb.style.pointerEvents='none'; }
     document.querySelectorAll('#alarmaOpciones .alarm-opt').forEach(function(b){ b.classList.remove('selected'); });
     alarmTipoSeleccionado = '';
-
-    // Mostrar tarjetas de confirmación
     var cc = document.getElementById('alarmConfirmCards');
-    if(cc){ cc.style.display = 'block'; setTimeout(function(){ cc.scrollIntoView({behavior:'smooth',block:'center'}); },200); }
-
+    if(cc){ cc.style.display='block'; setTimeout(function(){ cc.scrollIntoView({behavior:'smooth',block:'center'}); },200); }
     showToast('🚨 ALARMA ENVIADA: '+tipoCapturado);
     tocarSonidoAlarma();
     if(navigator.vibrate) navigator.vibrate([400,100,400,100,600,100,400]);
@@ -3356,22 +3357,22 @@ function enviarAlarma(){
     if(navigator.onLine){
       _alarmCcSet('Msg','⏳','Enviando alerta al grupo...');
       _alarmCcSet('Foto','⏳', nFotos>0?'Enviando '+nFotos+' foto'+(nFotos>1?'s':'')+'...':'Sin fotos adjuntas');
-      // ÚNICO write a Firebase: solo cuando los datos están completos
+      // ── UN SOLO WRITE A FIREBASE: /alarmas/{id} con datos completos ──
+      // NO se escribe a /reportes/ para evitar que sendWhatsApp CF dispare
       if(fbDB){
-        fbDB.ref('alarmas/'+alarmaData.id).set(alarmaData);  // UN SOLO WRITE — completo
-        guardarEnFirebase(alarmaData);                         // /reportes/ — CF skips esAlarma
+        fbDB.ref('alarmas/'+alarmaData.id).set(alarmaData).catch(function(e){
+          console.error('[ALARMA] Firebase write failed:', e);
+        });
       }
       _alarmCcSet('Msg','☁️','Enviando vía servidor...');
       _alarmCcSet('Foto', nFotos>0?'☁️':'📷', nFotos>0?nFotos+' foto en proceso':'Sin fotos');
-      actualizarBadgeHistorial();
-      _enviandoAhora = false;
     } else {
-      // Offline: guardar con pending para que procesarCola lo suba cuando haya señal
       _alarmCcSet('Msg','💾','Sin señal — guardado. Se enviará al recuperar internet');
       _alarmCcSet('Foto', nFotos>0?'💾':'📷', nFotos>0?nFotos+' foto guardada':'Sin fotos');
-      actualizarBadgeHistorial();
-      _enviandoAhora = false;
     }
+    actualizarBadgeHistorial();
+    clearTimeout(_alarmEnvioTimeout);
+    _enviandoAhora = false;
   }
 
   // Si es recorredor: GPS automático
