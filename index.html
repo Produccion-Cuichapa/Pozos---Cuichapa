@@ -3451,7 +3451,7 @@ function hcCargar(){
 
   if(typeof fbDB !== 'undefined' && fbDB){
     if(statusEl) statusEl.textContent = '🔄 Sincronizando todos los dispositivos...';
-    fbDB.ref('reportes').orderByChild('fecha').limitToLast(300).once('value', function(snap){
+    fbDB.ref('reportes').orderByChild('fecha').limitToLast(120).once('value', function(snap){
       try{
         var localIds={};
         locales.forEach(function(r){ if(r.id) localIds[r.id]=true; });
@@ -5277,8 +5277,9 @@ function guardarEnFirebase(reporte){
       // ── Mensaje completo (mantener siempre) ───────────────
       msg:           reporte.msg,
       // ── Fotos reales para Cloud Function → UltraMsg ───────
-      // Antes solo se guardaba nFotos; ahora el servidor necesita la evidencia.
-      fotos:         reporte.fotos        || [],
+      // FIX 0 Android: solo subir base64 si el reporte está pendiente de envío WA.
+      // Después de enviado, la CF limpia las fotos; el cliente no las vuelve a subir.
+      fotos: (reporte.whatsappSent === true) ? [] : (reporte.fotos || []),
       // ── C.O. — campos estructurados ───────────────────────
       estatus:       reporte.estatus       || null,
       fluye:         reporte.fluye         || null,
@@ -5362,7 +5363,7 @@ function escucharFirebase(){
   try{ fbDB.ref('reportes').off('value'); }catch(e){}
 
   var _fbReportesInit = false;
-  fbDB.ref('reportes').orderByChild('fecha').on('value', function(snapshot){
+  fbDB.ref('reportes').orderByChild('fecha').limitToLast(120).on('value', function(snapshot){
     actualizarSyncBar('conectado');
     if(_fbReportesInit){
       // Find the newest report to show who sent it
@@ -5406,9 +5407,10 @@ function escucharFirebase(){
       });
     }
 
-    // Ordenar por fecha descendente
+    // Ordenar por fecha descendente y recortar a 200 (FIX 0 Android)
     var merged = Object.values(localMap);
     merged.sort(function(a,b){ return new Date(b.fecha)-new Date(a.fecha); });
+    merged = merged.slice(0, 200); // evitar localStorage bloat
     saveHistorial(merged);
     renderHistorial();
     actualizarBadgeHistorial();
@@ -5440,17 +5442,19 @@ function getHistorial(){
   catch(e){ return []; }
 }
 function saveHistorial(arr){
-  try{ localStorage.setItem(HIST_KEY, JSON.stringify(arr)); }
+  // FIX 0 Android: conservar máximo 200 registros, los más recientes primero
+  try{
+    var trimmed = Array.isArray(arr) ? arr.slice(0, 200) : arr;
+    localStorage.setItem(HIST_KEY, JSON.stringify(trimmed));
+  }
   catch(e){ console.warn('localStorage lleno'); }
 }
 function getReporte(id){
   return getHistorial().filter(function(r){ return r.id===id; })[0] || null;
 }
 
-
-// ── Guardar SOLO local (sin escribir a Firebase) ─────────────
-// Uso interno para evitar dobles escrituras cuando se procesa cola/reintentos.
-function guardarReporteLocal(reporte){
+// ── Guardar (SIEMPRE, primero) ────────────────────
+function guardarReporte(reporte){
   var arr = getHistorial();
   var idx = -1;
   for(var i=0;i<arr.length;i++){ if(arr[i].id===reporte.id){ idx=i; break; } }
@@ -5458,49 +5462,6 @@ function guardarReporteLocal(reporte){
   else arr.unshift(reporte);
   if(arr.length > 500) arr = arr.slice(0, 500);
   saveHistorial(arr);
-}
-
-// ── Blindaje: no revivir como pending algo que Firebase ya envió ─────────────
-function _waEstadoRemotoEnviado(r, callback){
-  if(!fbDB || !r || !r.id){ callback(false, null); return; }
-  var id = String(r.id);
-  var path = r.esAlarma ? ('alarmas/' + id) : ('reportes/' + id);
-  var regKey = r.esAlarma ? ('alarm_' + id) : id;
-  Promise.all([
-    fbDB.ref(path).once('value'),
-    fbDB.ref('whatsappSentRegistry/' + regKey).once('value')
-  ]).then(function(res){
-    var remoto = res[0].val() || null;
-    var reg    = res[1].val() || null;
-    var enviado = false;
-    if(remoto && (remoto.whatsappSent === true || remoto.whatsappStatus === 'sent')) enviado = true;
-    if(reg && reg.status === 'sent') enviado = true;
-    callback(enviado, remoto || reg || null);
-  }).catch(function(err){
-    console.warn('[WA_BACKEND] no se pudo verificar estado remoto:', err);
-    callback(false, null); // si no se puede verificar, no bloquear cola
-  });
-}
-
-function _waMarcarLocalEnviadoDesdeRemoto(id, remoto){
-  var arr = getHistorial();
-  for(var i=0;i<arr.length;i++){
-    if(arr[i].id === id){
-      arr[i].estado = 'enviado';
-      arr[i].whatsappStatus = 'sent';
-      arr[i].whatsappSent = true;
-      arr[i].whatsappSentAt = (remoto && (remoto.whatsappSentAt || remoto.sentAt)) || arr[i].whatsappSentAt || new Date().toISOString();
-      arr[i].ultimoIntento = arr[i].ultimoIntento || new Date().toISOString();
-      break;
-    }
-  }
-  saveHistorial(arr);
-  try{ actualizarBadgeHistorial(); }catch(e){}
-}
-
-// ── Guardar (SIEMPRE, primero) ────────────────────
-function guardarReporte(reporte){
-  guardarReporteLocal(reporte);
   // Sincronizar a Firebase si hay señal
   if(fbDB) guardarEnFirebase(reporte);
 }
@@ -6413,64 +6374,49 @@ function enviarConUltramsg(id, callback, fotosDirectas){
 
   // Nuevo flujo: NO enviar desde el celular.
   // Solo dejar el reporte listo en Firebase para que la Cloud Function lo envíe una sola vez.
-  if(r.whatsappSent === true || r.estado === 'enviado' || r.whatsappStatus === 'sent'){
+  if(r.whatsappSent === true || r.estado === 'enviado'){
     if(callback) callback(true);
     return;
   }
 
-  _waEstadoRemotoEnviado(r, function(yaEnviado, remoto){
-    if(yaEnviado){
-      console.log('[WA_BACKEND] reintento bloqueado: ya estaba enviado en Firebase/registry:', id);
-      _waMarcarLocalEnviadoDesdeRemoto(id, remoto);
+  r.whatsappStatus    = 'pending';
+  r.whatsappSent      = false;
+  r.whatsappDedupeKey = String(r.id);
+  r.whatsappAttempts  = r.whatsappAttempts || 0;
+  if(fotosDirectas && fotosDirectas.length) r.fotos = fotosDirectas.slice();
+
+  guardarReporte(r);
+
+  if(fbDB){
+    var path = r.esAlarma ? ('alarmas/' + r.id) : ('reportes/' + r.id);
+    fbDB.ref(path).update({
+      id: r.id,
+      fecha: r.fecha || new Date().toISOString(),
+      hora: r.hora || null,
+      pozo: r.pozo || r.lugar || null,
+      lugar: r.lugar || r.pozo || null,
+      recorredor: r.recorredor || r.quien || null,
+      quien: r.quien || r.recorredor || null,
+      msg: r.msg || '',
+      fotos: r.fotos || [],
+      esAlarma: r.esAlarma || false,
+      tipoAlarma: r.tipoAlarma || r.tipo || null,
+      tipo: r.tipo || r.tipoAlarma || null,
+      estado: 'pendiente',
+      whatsappStatus: 'pending',
+      whatsappSent: false,
+      whatsappDedupeKey: String(r.id),
+      whatsappAttempts: r.whatsappAttempts || 0
+    }).then(function(){
+      console.log('[WA_BACKEND] reintento enviado a Firebase:', path);
       if(callback) callback(true);
-      return;
-    }
-
-    r.whatsappStatus     = 'pending';
-    r.whatsappSent       = false;
-    r.whatsappDedupeKey  = String(r.id);
-    r.whatsappAttempts   = r.whatsappAttempts || 0;
-    r.estado             = r.estado || 'pendiente';
-    if(fotosDirectas && fotosDirectas.length) r.fotos = fotosDirectas.slice();
-
-    guardarReporteLocal(r);
-
-    if(fbDB){
-      if(r.esAlarma){
-        fbDB.ref('alarmas/' + r.id).update({
-          id: r.id,
-          fecha: r.fecha || new Date().toISOString(),
-          hora: r.hora || null,
-          pozo: r.pozo || r.lugar || null,
-          lugar: r.lugar || r.pozo || null,
-          recorredor: r.recorredor || r.quien || null,
-          quien: r.quien || r.recorredor || null,
-          msg: r.msg || '',
-          fotos: r.fotos || [],
-          esAlarma: true,
-          tipoAlarma: r.tipoAlarma || r.tipo || null,
-          tipo: r.tipo || r.tipoAlarma || null,
-          estado: 'pendiente',
-          whatsappStatus: 'pending',
-          whatsappSent: false,
-          whatsappDedupeKey: String(r.id),
-          whatsappAttempts: r.whatsappAttempts || 0
-        }).then(function(){
-          console.log('[WA_BACKEND] alarma/reintento enviado a Firebase:', r.id);
-          if(callback) callback(true);
-        }).catch(function(err){
-          console.error('[WA_BACKEND] error reintentando alarma:', err);
-          if(callback) callback(false);
-        });
-      }else{
-        guardarEnFirebase(r);
-        console.log('[WA_BACKEND] reporte/reintento enviado a Firebase:', r.id);
-        if(callback) callback(true);
-      }
-    }else{
+    }).catch(function(err){
+      console.error('[WA_BACKEND] error reintentando:', err);
       if(callback) callback(false);
-    }
-  });
+    });
+  }else{
+    if(callback) callback(false);
+  }
 }
 
 
@@ -6506,7 +6452,7 @@ function procesarCola(){
         rFresh.whatsappSent      = false;
         rFresh.whatsappDedupeKey = String(rFresh.id);
         rFresh.whatsappAttempts  = 0;
-        guardarReporteLocal(rFresh);
+        guardarReporte(rFresh);
       }
       if(fbDB) guardarEnFirebase(rFresh);
     }
