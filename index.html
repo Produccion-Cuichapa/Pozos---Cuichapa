@@ -3300,7 +3300,7 @@ function enviarAlarma(){
     _alarmLastReporteId = alarmaData.id;
 
     // Firebase push
-    if(fbDB){ fbDB.ref('alarmas/'+alarmaData.id).set(alarmaData).catch(function(){}); enviarPushATodos(alarmaData); }
+    if(fbDB){ fbDB.ref('alarmas/'+alarmaData.id).set(alarmaData).catch(function(){}); /* enviarPushATodos desactivado: Cloud Function envía WhatsApp */ }
     // Escribir alarma activa en config para que todos los dispositivos la vean
     if(fbDB){ fbDB.ref('config/alarma_activa').set({
       id: alarmaData.id,
