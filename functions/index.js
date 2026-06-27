@@ -175,7 +175,14 @@ exports.sendWhatsApp = functions
     });
 
     // ── STEP 3: Send text to UltraMsg ────────────────────────
-    var msg = after.msg || '';
+    var msg = after.msg || [
+      '🚨 *ALARMA DE CAMPO*',
+      'Tipo: ' + (after.tipo || 'Sin tipo'),
+      'Recorredor: ' + (after.quien || after.recorredor || 'Sin nombre'),
+      'Hora: ' + (after.hora || ''),
+      'Lugar: ' + (after.lugar || ''),
+      after.nota ? ('Nota: ' + after.nota) : ''
+    ].filter(Boolean).join('\\n');
     var ultraId = null;
     var textOk  = false;
 
@@ -325,7 +332,14 @@ exports.sendAlarmWhatsApp = functions
     }
 
     console.log('[WA_BACKEND] alarm sending:', alarmaId, 'contentKey:', contentKey);
-    var msg = after.msg || '';
+    var msg = after.msg || [
+      '🚨 *ALARMA DE CAMPO*',
+      'Tipo: ' + (after.tipo || 'Sin tipo'),
+      'Recorredor: ' + (after.quien || after.recorredor || 'Sin nombre'),
+      'Hora: ' + (after.hora || ''),
+      'Lugar: ' + (after.lugar || ''),
+      after.nota ? ('Nota: ' + after.nota) : ''
+    ].filter(Boolean).join('\\n');
 
     try{
       var result = await sendText(msg);
