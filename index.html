@@ -3300,7 +3300,7 @@ function enviarAlarma(){
     _alarmLastReporteId = alarmaData.id;
 
     // Firebase push
-    if(fbDB){ fbDB.ref('alarmas/'+alarmaData.id).set(alarmaData).catch(function(){}); /* enviarPushATodos desactivado: Cloud Function envía WhatsApp */ }
+    /* Escritura inicial de alarma desactivada: se escribe una sola vez abajo con whatsappStatus:'pending' */
     // Escribir alarma activa en config para que todos los dispositivos la vean
     if(fbDB){ fbDB.ref('config/alarma_activa').set({
       id: alarmaData.id,
@@ -3351,7 +3351,6 @@ function enviarAlarma(){
       guardarReporte(alarmaData);
       if(fbDB){
         fbDB.ref('alarmas/'+alarmaData.id).set(alarmaData);
-        guardarEnFirebase(alarmaData);
       }
       _alarmCcSet('Msg','☁️','Enviando vía servidor...');
       _alarmCcSet('Foto', nFotos>0?'☁️':'📷', nFotos>0?nFotos+' foto en proceso':'Sin fotos');
@@ -5234,6 +5233,8 @@ function initFCM(){
 
 // Enviar push a todos los tokens registrados al disparar alarma
 function enviarPushATodos(alarmaData){
+  console.warn('[ALARM_OLD_PUSH_BLOCKED] enviarPushATodos desactivado. Cloud Function envía WhatsApp.');
+  return;
   if(!fbDB) return;
   // Leer todos los tokens y guardar la alarma en un nodo especial para que el SW la procese
   fbDB.ref('fcm_tokens').once('value', function(snap){
