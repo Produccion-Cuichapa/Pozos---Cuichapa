@@ -3226,43 +3226,33 @@ function _alarmCcSet(tipo, icon, sub){
 }
 
 function alarmCcVerificar(){
-  // FIX: La Cloud Function es el único proceso autorizado para enviar alarmas a WhatsApp.
-  // El celular NO debe volver a llamar enviarConUltramsg ni escribir a /alarmas/ de nuevo.
-  // Si la alarma no llegó al grupo, la CF la reintentará en su ciclo de 10 min.
   if(!_alarmLastReporteId){ showToast('No hay alarma pendiente'); return; }
-  var r = getReporte(_alarmLastReporteId);
-  if(!r){ showToast('⚠️ No se encontró la alarma'); return; }
-  if(r.whatsappSent === true){
-    _alarmCcSet('Msg','✅','Enviado correctamente al grupo');
-    showToast('✅ Alarma ya enviada al grupo');
-    return;
-  }
-  // NO escribir pending de vuelta — la CF maneja los reintentos sola.
-  // Escribir pending de nuevo causaría que la CF disparara otra vez.
-  _alarmCcSet('Msg','☁️','La alarma está siendo procesada por el servidor');
-  showToast('☁️ Alarma en cola — llegará al grupo en segundos');
+  if(!navigator.onLine){ showToast('⚠️ Sin señal todavía'); return; }
+  _alarmCcSet('Msg','⏳','Verificando y reenviando...');
+  _alarmCcSet('Foto','⏳','Verificando...');
+  enviarConUltramsg(_alarmLastReporteId, function(ok){
+    actualizarBadgeHistorial();
+    if(ok){
+      var r = getReporte(_alarmLastReporteId);
+      var nF = r ? (r.fotos||[]).length : 0;
+      _alarmCcSet('Msg','✅','Enviado correctamente al grupo');
+      _alarmCcSet('Foto', nF>0?'✅':'📷', nF>0?nF+' foto'+(nF>1?'s':'')+' enviada'+(nF>1?'s':''):' Sin fotos adjuntas');
+      showToast('✅ Alarma enviada correctamente');
+    } else {
+      _alarmCcSet('Msg','⚠️','Sin respuesta — verifica tu señal');
+      _alarmCcSet('Foto','⚠️','Pendiente de reenvío');
+      showToast('⚠️ Sin conexión — intenta de nuevo');
+    }
+  });
 }
 
 function enviarAlarma(){
   console.log('[ALARMA] CLICK ENVIAR');
   if(_enviandoAhora){ console.log('[ANTI-DUP] bloqueado: alarma doble clic'); return; }
-  // Dedup de alarma: solo anti-doble-tap (8 segundos), incluye tipo
-  var _alKeyBase = 'alarm_'+tipoCapturado+'_'+(REC||loggedUser||'x');
-  var _alKey = _alKeyBase + '_' + Math.floor(Date.now()/8000); // ventana 8s
-  try{
-    if(localStorage.getItem(_alKey)){
-      showToast('⚠️ Alarma enviada hace un momento — espera un instante');
-      return;
-    }
-    localStorage.setItem(_alKey, '1');
-    setTimeout(function(){ try{localStorage.removeItem(_alKey);}catch(e){} }, 8500);
-  }catch(e){}
+  var _alKey = _dedupKey(W||'ALARMA', REC, 'alarma');
+  if(_dedupCheck(_alKey)){ showToast('⚠️ Alarma ya enviada recientemente'); return; }
   _enviandoAhora = true;
-  // Liberar _enviandoAhora con timeout de seguridad (evita bloqueo permanente)
-  var _alarmEnvioTimeout = setTimeout(function(){
-    _enviandoAhora = false;
-    console.warn('[ALARMA] _enviandoAhora liberado por timeout de seguridad');
-  }, 15000);
+  _dedupMark(_alKey);
   console.log('[ANTI-DUP] sendId:', _alKey);
   console.log('[ALARMA] INICIO FLUJO');
   var _ov = document.getElementById('alarmConfirmOverlay'); if(_ov) _ov.style.display = 'none';
@@ -3291,11 +3281,38 @@ function enviarAlarma(){
       esAlarma: true
     };
 
-    // ── Fotos capturadas antes de limpiar ────────────────────────
+    // Guardar local + historial
+    var arr = getAlarmasLocales(); arr.unshift(alarmaData); saveAlarmasLocales(arr);
     var fotosCopy = fotosAlarma.slice();
+    guardarReporte({
+      id:           alarmaData.id,
+      fecha:        alarmaData.fecha,
+      pozo:         lugar,
+      recorredor:   quien,
+      msg:          '🚨 *ALERTA: '+tipoCapturado+'*\n📍 '+(lugar||'—')+'\n👷 '+quien+'\n🕐 '+horaStr+(nFotos?'\n📸 Evidencia: '+nFotos+' foto'+(nFotos===1?'':'s'):''),
+      fotos:        fotosCopy,
+      estado:       'pendiente',
+      ultimoIntento:null,
+      intentos:     0,
+      esAlarma:     true,
+      tipoAlarma:   tipoCapturado
+    });
+    _alarmLastReporteId = alarmaData.id;
 
-    // ── Construir mensaje COMPLETO PRIMERO (antes de cualquier guardado) ──
-    // Esto evita que guardarReporte escriba a Firebase con el msg corto.
+    // Firebase push
+    if(fbDB){ fbDB.ref('alarmas/'+alarmaData.id).set(alarmaData).catch(function(){}); enviarPushATodos(alarmaData); }
+    // Escribir alarma activa en config para que todos los dispositivos la vean
+    if(fbDB){ fbDB.ref('config/alarma_activa').set({
+      id: alarmaData.id,
+      tipo: alarmaData.tipo,
+      quien: alarmaData.quien,
+      lugar: alarmaData.lugar,
+      hora: alarmaData.hora,
+      ts: Date.now(),
+      deviceId: DEVICE_ID
+    }).catch(function(){}); }
+
+    // Construir mensaje WA
     var msgLines = ['🚨 *ALERTA DE EMERGENCIA*','━━━━━━━━━━━━━━━━━━',
       '⚠️ Tipo: *'+tipoCapturado+'*',
       '👷 Reportado por: '+quien];
@@ -3306,39 +3323,7 @@ function enviarAlarma(){
     msgLines.push('_Campo Cuichapa · Lifting de Mexico_');
     var msg = msgLines.join('\n');
 
-    // ── Completar alarmaData con TODOS los campos ANTES de cualquier write ──
-    alarmaData.msg               = msg;          // FULL msg — NUNCA el corto
-    alarmaData.fotos             = fotosCopy;
-    alarmaData.pozo              = lugar;
-    alarmaData.recorredor        = quien;
-    alarmaData.whatsappStatus    = 'pending';
-    alarmaData.whatsappSent      = false;
-    alarmaData.whatsappDedupeKey = String(alarmaData.id);
-    alarmaData.whatsappAttempts  = 0;
-
-    // ── UNA SOLA guardarReporte con msg completo ──────────────
-    // guardarReporte llama guardarEnFirebase internamente, por eso usamos
-    // saveHistorialLocal para no escribir a /reportes/ (alarmas no deben ir ahí)
-    var _hArr = getHistorial();
-    var _hIdx = -1;
-    for(var _i=0;_i<_hArr.length;_i++){ if(_hArr[_i].id===alarmaData.id){ _hIdx=_i; break; } }
-    if(_hIdx>=0) _hArr[_hIdx]=alarmaData; else _hArr.unshift(alarmaData);
-    if(_hArr.length>500) _hArr=_hArr.slice(0,500);
-    saveHistorial(_hArr);  // guarda en localStorage SIN llamar guardarEnFirebase
-    _alarmLastReporteId = alarmaData.id;
-
-    // ── También guardar en array local de alarmas ─────────────
-    var arr = getAlarmasLocales(); arr.unshift(alarmaData); saveAlarmasLocales(arr);
-
-    // ── Config Firebase: notificar a otros dispositivos ────────
-    if(fbDB){ enviarPushATodos(alarmaData); }
-    if(fbDB){ fbDB.ref('config/alarma_activa').set({
-      id: alarmaData.id, tipo: alarmaData.tipo, quien: alarmaData.quien,
-      lugar: alarmaData.lugar, hora: alarmaData.hora,
-      ts: Date.now(), deviceId: DEVICE_ID
-    }).catch(function(){}); }
-
-    // ── UI: limpiar y mostrar confirmación ────────────────────
+    // Limpiar fotos de alarma y cerrar
     fotosAlarma = [];
     document.getElementById('alarmFotoGrid').innerHTML = '';
     document.getElementById('alarmFotoCountNew').textContent = '';
@@ -3346,8 +3331,11 @@ function enviarAlarma(){
     if(sb){ sb.disabled=true; sb.style.opacity='.45'; sb.style.pointerEvents='none'; }
     document.querySelectorAll('#alarmaOpciones .alarm-opt').forEach(function(b){ b.classList.remove('selected'); });
     alarmTipoSeleccionado = '';
+
+    // Mostrar tarjetas de confirmación
     var cc = document.getElementById('alarmConfirmCards');
-    if(cc){ cc.style.display='block'; setTimeout(function(){ cc.scrollIntoView({behavior:'smooth',block:'center'}); },200); }
+    if(cc){ cc.style.display = 'block'; setTimeout(function(){ cc.scrollIntoView({behavior:'smooth',block:'center'}); },200); }
+
     showToast('🚨 ALARMA ENVIADA: '+tipoCapturado);
     tocarSonidoAlarma();
     if(navigator.vibrate) navigator.vibrate([400,100,400,100,600,100,400]);
@@ -3355,22 +3343,22 @@ function enviarAlarma(){
     if(navigator.onLine){
       _alarmCcSet('Msg','⏳','Enviando alerta al grupo...');
       _alarmCcSet('Foto','⏳', nFotos>0?'Enviando '+nFotos+' foto'+(nFotos>1?'s':'')+'...':'Sin fotos adjuntas');
-      // ── UN SOLO WRITE A FIREBASE: /alarmas/{id} con datos completos ──
-      // NO se escribe a /reportes/ para evitar que sendWhatsApp CF dispare
+      // Alarma → Firebase → Cloud Function → WhatsApp (envío único)
+      alarmaData.whatsappStatus    = 'pending';
+      alarmaData.whatsappSent      = false;
+      alarmaData.whatsappDedupeKey = String(alarmaData.id);
+      alarmaData.whatsappAttempts  = 0;
+      guardarReporte(alarmaData);
       if(fbDB){
-        fbDB.ref('alarmas/'+alarmaData.id).set(alarmaData).catch(function(e){
-          console.error('[ALARMA] Firebase write failed:', e);
-        });
+        fbDB.ref('alarmas/'+alarmaData.id).set(alarmaData);
+        guardarEnFirebase(alarmaData);
       }
       _alarmCcSet('Msg','☁️','Enviando vía servidor...');
       _alarmCcSet('Foto', nFotos>0?'☁️':'📷', nFotos>0?nFotos+' foto en proceso':'Sin fotos');
-    } else {
-      _alarmCcSet('Msg','💾','Sin señal — guardado. Se enviará al recuperar internet');
-      _alarmCcSet('Foto', nFotos>0?'💾':'📷', nFotos>0?nFotos+' foto guardada':'Sin fotos');
+      actualizarBadgeHistorial();
+      _enviandoAhora = false;
+      // [WA via CF] directo a Firebase — CF envía
     }
-    actualizarBadgeHistorial();
-    clearTimeout(_alarmEnvioTimeout);
-    _enviandoAhora = false;
   }
 
   // Si es recorredor: GPS automático
@@ -3459,7 +3447,7 @@ function hcCargar(){
 
   if(typeof fbDB !== 'undefined' && fbDB){
     if(statusEl) statusEl.textContent = '🔄 Sincronizando todos los dispositivos...';
-    fbDB.ref('reportes').orderByChild('fecha').limitToLast(120).once('value', function(snap){
+    fbDB.ref('reportes').orderByChild('fecha').limitToLast(300).once('value', function(snap){
       try{
         var localIds={};
         locales.forEach(function(r){ if(r.id) localIds[r.id]=true; });
@@ -5284,10 +5272,6 @@ function guardarEnFirebase(reporte){
       tipoAlarma:    reporte.tipoAlarma    || null,
       // ── Mensaje completo (mantener siempre) ───────────────
       msg:           reporte.msg,
-      // ── Fotos reales para Cloud Function → UltraMsg ───────
-      // FIX 0 Android: solo subir base64 si el reporte está pendiente de envío WA.
-      // Después de enviado, la CF limpia las fotos; el cliente no las vuelve a subir.
-      fotos: (reporte.whatsappSent === true) ? [] : (reporte.fotos || []),
       // ── C.O. — campos estructurados ───────────────────────
       estatus:       reporte.estatus       || null,
       fluye:         reporte.fluye         || null,
@@ -5339,7 +5323,6 @@ function sincronizarAFirebase(){
   if(!fbDB) return;
   var locales = getHistorial();
   locales.forEach(function(r){
-    if(r.esAlarma) return; // alarmas NO van a /reportes/ — van a /alarmas/ (procesarCola lo hace)
     guardarEnFirebase(r);
   });
 }
@@ -5372,7 +5355,7 @@ function escucharFirebase(){
   try{ fbDB.ref('reportes').off('value'); }catch(e){}
 
   var _fbReportesInit = false;
-  fbDB.ref('reportes').orderByChild('fecha').limitToLast(120).on('value', function(snapshot){
+  fbDB.ref('reportes').orderByChild('fecha').on('value', function(snapshot){
     actualizarSyncBar('conectado');
     if(_fbReportesInit){
       // Find the newest report to show who sent it
@@ -5416,10 +5399,9 @@ function escucharFirebase(){
       });
     }
 
-    // Ordenar por fecha descendente y recortar a 200 (FIX 0 Android)
+    // Ordenar por fecha descendente
     var merged = Object.values(localMap);
     merged.sort(function(a,b){ return new Date(b.fecha)-new Date(a.fecha); });
-    merged = merged.slice(0, 200); // evitar localStorage bloat
     saveHistorial(merged);
     renderHistorial();
     actualizarBadgeHistorial();
@@ -5451,11 +5433,7 @@ function getHistorial(){
   catch(e){ return []; }
 }
 function saveHistorial(arr){
-  // FIX 0 Android: conservar máximo 200 registros, los más recientes primero
-  try{
-    var trimmed = Array.isArray(arr) ? arr.slice(0, 200) : arr;
-    localStorage.setItem(HIST_KEY, JSON.stringify(trimmed));
-  }
+  try{ localStorage.setItem(HIST_KEY, JSON.stringify(arr)); }
   catch(e){ console.warn('localStorage lleno'); }
 }
 function getReporte(id){
@@ -5499,81 +5477,161 @@ function getPendientes(){
 // ── Enviar a WhatsApp ─────────────────────────────
 // ── Configuración Ultramsg ────────────────────────
 var RADIO_GPS_METROS = 80; // Radio GPS unificado — cambiar aquí para afectar todas las validaciones
-// UltraMsg ya NO se configura en el cliente.
-// Instance/token/grupo viven solo en Cloud Functions.
-// Esto evita duplicados y también evita exponer credenciales en index.html.
-var MODO_PRUEBAS  = true;   // Solo referencia visual/local. El grupo real se define en functions:config.
+var UM_INSTANCE  = 'instance177727';
+var UM_TOKEN     = '0olfbxq3zi0rbsd1';
 
-// ── WhatsApp vía Cloud Function ─────────────────────
-// IMPORTANTE:
-// El celular YA NO llama UltraMsg directamente.
-// Solo escribe en Firebase con whatsappStatus:'pending'.
-// Las Cloud Functions desplegadas son las únicas autorizadas para enviar WhatsApp.
-function _waBackendId(prefix){
-  return String(Date.now()) + '_' + (prefix || 'wa') + '_' + Math.random().toString(36).slice(2,8);
+// ── MODO PRUEBAS ─────────────────────────────────────────────
+var MODO_PRUEBAS  = true;   // PRUEBAS
+var TEST_GROUP_ID = '120363424993135472@g.us';
+var PROD_GROUP_ID = '120363424993135472@g.us'; // BLOQUEADO: antes era Grupo Pozos; temporalmente apunta a TEST
+
+var UM_TO   = MODO_PRUEBAS ? TEST_GROUP_ID : PROD_GROUP_ID;
+var UM_BASE = 'https://api.ultramsg.com/' + UM_INSTANCE;
+var UM_URL       = UM_BASE + '/messages/chat';
+var UM_URL_IMG   = UM_BASE + '/messages/image';
+
+// ── Enviar texto por Ultramsg ─────────────────────
+function umSendText(texto, callback){
+  console.warn('[WA_CLIENT_BLOCKED] umSendText bloqueado. WhatsApp debe salir solo por Cloud Function.');
+  if(callback) callback(false);
+  return;
+  console.log('[WHATSAPP] Grupo destino:', UM_TO);
+  var body = 'token=' + encodeURIComponent(UM_TOKEN)
+           + '&to='   + encodeURIComponent(UM_TO)
+           + '&body=' + encodeURIComponent(texto);
+  // Timeout de 25s para no quedarse esperando indefinidamente
+  var _fetchCtrl = typeof AbortController!=='undefined' ? new AbortController() : null;
+  var _fetchTimeout = setTimeout(function(){ if(_fetchCtrl) _fetchCtrl.abort(); }, 25000);
+  fetch(UM_URL, {
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body: body,
+    signal: _fetchCtrl ? _fetchCtrl.signal : undefined
+  })
+  .then(function(r){ clearTimeout(_fetchTimeout); return r.json(); })
+  .then(function(d){
+    console.log('Ultramsg respuesta:', JSON.stringify(d));
+    var ok = !!(d && (d.sent==='true'||d.sent===true||d.id));
+    if(callback) callback(ok);
+  })
+  .catch(function(err){ clearTimeout(_fetchTimeout); console.error('Ultramsg error:', err); if(callback) callback(false); });
 }
 
-function _waBackendQueue(payload, callback){
-  try{
-    if(!fbDB){
-      console.warn('[WA_BACKEND_QUEUE] fbDB no disponible');
-      if(callback) callback(false);
-      return;
-    }
-    var id = payload.id || _waBackendId(payload.esAlarma ? 'alarm' : 'msg');
-    payload.id = id;
-    payload.fecha = payload.fecha || new Date().toISOString();
-    payload.estado = payload.estado || 'pendiente';
-    payload.whatsappStatus = 'pending';
-    payload.whatsappSent = false;
-    payload.whatsappDedupeKey = String(id);
-    payload.whatsappAttempts = payload.whatsappAttempts || 0;
-    payload.fotos = payload.fotos || [];
+// ── Enviar imagen: Firebase Storage → UltraMsg URL ──────────────────
+var IMGBB_KEY = '32d6bb4e34f5b0dfcac00dac04f3e512';
 
-    var path = payload.esAlarma ? ('alarmas/' + id) : ('reportes/' + id);
-    fbDB.ref(path).set(payload).then(function(){
-      console.log('[WA_BACKEND_QUEUE] queued:', path);
-      if(callback) callback(true);
-    }).catch(function(err){
-      console.error('[WA_BACKEND_QUEUE] error:', err);
-      if(callback) callback(false);
+// ← fotos.js → comprimirFoto
+
+function umSendImage(base64, caption, callback){
+  // Comprimir primero para subida rápida
+  comprimirFoto(base64, function(base64Comp){
+    _umSendImageInner(base64Comp, caption, callback);
+  });
+}
+
+function _umSendImageInner(base64, caption, callback){
+  console.warn('[WA_CLIENT_BLOCKED] umSendImage bloqueado. Fotos deben salir solo por Cloud Function.');
+  if(callback) callback(false);
+  return;
+  try{
+    var imgData = base64.startsWith('data:') ? base64 : 'data:image/jpeg;base64,'+base64;
+    var b64only  = imgData.split(',')[1];
+
+    // ── MÉTODO 1: Enviar base64 directamente a UltraMsg ──
+    // UltraMsg acepta data URI en el campo 'image'
+    var bodyB64 = 'token='   + encodeURIComponent(UM_TOKEN)
+                + '&to='     + encodeURIComponent(UM_TO)
+                + '&image='  + encodeURIComponent(imgData)
+                + '&caption='+ encodeURIComponent(caption||'');
+
+    fetch(UM_URL_IMG, {
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body: bodyB64
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var ok = !!(d && (d.sent==='true'||d.sent===true||d.id));
+      if(ok){
+        if(callback) callback(true);
+        return;
+      }
+      // Base64 no funcionó — intentar subir a ImgBB y enviar URL
+      console.warn('Base64 directo falló, intentando ImgBB:', JSON.stringify(d));
+      subirImgBB(b64only, caption, callback);
+    })
+    .catch(function(){
+      subirImgBB(b64only, caption, callback);
     });
-  }catch(e){
-    console.error('[WA_BACKEND_QUEUE] exception:', e);
+
+  } catch(e){
+    console.error('umSendImage err:', e);
     if(callback) callback(false);
   }
 }
 
-function umSendText(texto, callback){
-  _waBackendQueue({
-    msg: texto || '',
-    pozo: 'SISTEMA',
-    recorredor: (typeof REC !== 'undefined' && REC) ? REC : (loggedUser || 'Sistema'),
-    modo: 'mensaje_sistema',
-    fotos: []
-  }, callback);
+function subirImgBB(b64only, caption, callback){
+  var fd = new FormData();
+  fd.append('key',   IMGBB_KEY);
+  fd.append('image', b64only);
+  fetch('https://api.imgbb.com/1/upload', {method:'POST', body:fd})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d && d.success && d.data && d.data.url){
+        console.log('ImgBB URL:', d.data.url);
+        enviarUrlUltramsg(d.data.url, caption, callback);
+      } else {
+        console.warn('ImgBB falló:', JSON.stringify(d));
+        subirCloudinary(b64only, caption, callback);
+      }
+    })
+    .catch(function(){ subirCloudinary(b64only, caption, callback); });
 }
 
-function umSendImage(base64, caption, callback){
-  _waBackendQueue({
-    msg: caption || '📸 Evidencia fotográfica',
-    pozo: 'SISTEMA',
-    recorredor: (typeof REC !== 'undefined' && REC) ? REC : (loggedUser || 'Sistema'),
-    modo: 'foto_sistema',
-    fotos: [{ data: base64, nombre: 'foto.jpg' }]
-  }, callback);
+function subirCloudinary(b64only, caption, callback){
+  var fd = new FormData();
+  fd.append('upload_preset', 'cuichapa_unsigned');
+  fd.append('folder', 'cuichapa');
+  fd.append('file', 'data:image/jpeg;base64,'+b64only);
+  fetch('https://api.cloudinary.com/v1_1/ddnftojl1/image/upload', {method:'POST', body:fd})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d && d.secure_url){
+        enviarUrlUltramsg(d.secure_url, caption, callback);
+      } else {
+        console.error('Todos los servicios fallaron');
+        showToast('⚠️ No se pudo subir la foto');
+        if(callback) callback(false);
+      }
+    })
+    .catch(function(){
+      showToast('⚠️ Error al subir foto');
+      if(callback) callback(false);
+    });
 }
 
 function enviarUrlUltramsg(imgUrl, caption, callback){
-  // Ya no se envía URL directa a UltraMsg desde el celular.
-  // Se manda como mensaje informativo al backend.
-  _waBackendQueue({
-    msg: (caption || 'Imagen') + '\n' + (imgUrl || ''),
-    pozo: 'SISTEMA',
-    recorredor: (typeof REC !== 'undefined' && REC) ? REC : (loggedUser || 'Sistema'),
-    modo: 'url_imagen_sistema',
-    fotos: []
-  }, callback);
+  var body = 'token='   + encodeURIComponent(UM_TOKEN)
+           + '&to='     + encodeURIComponent(UM_TO)
+           + '&image='  + encodeURIComponent(imgUrl)
+           + '&caption='+ encodeURIComponent(caption||'');
+  fetch(UM_URL_IMG, {
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body: body
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    console.log('UM img resp:', JSON.stringify(d));
+    var ok = !!(d && (d.sent==='true'||d.sent===true||d.id));
+    showToast(ok ? '✅ Foto enviada' : '⚠️ Foto no enviada: '+JSON.stringify(d));
+    if(callback) callback(ok);
+  })
+  .catch(function(err){
+    console.error('UM img err:', err);
+    showToast('⚠️ Error UltraMsg: '+err.message);
+    if(callback) callback(false);
+  });
 }
 
 function sendImageFormData(base64, caption, callback){ umSendImage(base64, caption, callback); }
@@ -6380,54 +6438,81 @@ function _waEnqueue(r){
 function enviarConUltramsg(id, callback, fotosDirectas){
   var r = getReporte(id);
   if(!r){ if(callback) callback(false); return; }
-
-  // Nuevo flujo: NO enviar desde el celular.
-  // Solo dejar el reporte listo en Firebase para que la Cloud Function lo envíe una sola vez.
-  if(r.whatsappSent === true || r.estado === 'enviado'){
+  // ── Check 1: registro persistente WA (fuente de verdad definitiva) ──
+  if(_waIsSent(r)){
+    console.log('[WA_SKIP_SENT] id:', id, '— ya enviado a WhatsApp');
+    if(r.estado !== 'enviado') actualizarEstadoReporte(id, 'enviado', new Date().toISOString());
+    if(callback) callback(true);
+    return;
+  }
+  // ── Check 2: _inFlight en memoria (doble tap / mismo ciclo) ──
+  if(!enviarConUltramsg._inFlight) enviarConUltramsg._inFlight = {};
+  if(enviarConUltramsg._inFlight[id]){
+    console.log('[WA_SKIP_SENDING] _inFlight bloqueado id:', id);
+    if(callback) callback(false);
+    return;
+  }
+  enviarConUltramsg._inFlight[id] = true;
+  // ── Check 3: marcar 'sending' en registry (persiste si app se cierra) ──
+  if(!_waMarkSending(r)){
+    // _waMarkSending devuelve false si ya está 'sent' en el registry
+    console.log('[WA_SKIP_SENT] registry bloqueó reenvío, id:', id);
+    delete enviarConUltramsg._inFlight[id];
     if(callback) callback(true);
     return;
   }
 
-  r.whatsappStatus    = 'pending';
-  r.whatsappSent      = false;
-  r.whatsappDedupeKey = String(r.id);
-  r.whatsappAttempts  = r.whatsappAttempts || 0;
-  if(fotosDirectas && fotosDirectas.length) r.fotos = fotosDirectas.slice();
+  // Si se pasan fotos directas (modo alarma), usarlas — evita depender de localStorage
+  var fotosSnapshot = fotosDirectas ? fotosDirectas.slice() : (r.fotos || []).slice();
+  var esAlarma = r.esAlarma;
+  var tipoAlarma = r.tipoAlarma || r.tipo || '';
+  var recorredor = r.recorredor || '';
+  var pozo = r.pozo || '';
 
-  guardarReporte(r);
-
-  if(fbDB){
-    var path = r.esAlarma ? ('alarmas/' + r.id) : ('reportes/' + r.id);
-    fbDB.ref(path).update({
-      id: r.id,
-      fecha: r.fecha || new Date().toISOString(),
-      hora: r.hora || null,
-      pozo: r.pozo || r.lugar || null,
-      lugar: r.lugar || r.pozo || null,
-      recorredor: r.recorredor || r.quien || null,
-      quien: r.quien || r.recorredor || null,
-      msg: r.msg || '',
-      fotos: r.fotos || [],
-      esAlarma: r.esAlarma || false,
-      tipoAlarma: r.tipoAlarma || r.tipo || null,
-      tipo: r.tipo || r.tipoAlarma || null,
-      estado: 'pendiente',
-      whatsappStatus: 'pending',
-      whatsappSent: false,
-      whatsappDedupeKey: String(r.id),
-      whatsappAttempts: r.whatsappAttempts || 0
-    }).then(function(){
-      console.log('[WA_BACKEND] reintento enviado a Firebase:', path);
-      if(callback) callback(true);
-    }).catch(function(err){
-      console.error('[WA_BACKEND] error reintentando:', err);
+  // 1. Enviar texto del reporte
+  umSendText(r.msg, function(okTexto){
+    if(!okTexto){
+      _waMarkFailed(r, 'umSendText failed');
+      actualizarEstadoReporte(id, 'pendiente', new Date().toISOString());
+      if(enviarConUltramsg._inFlight) delete enviarConUltramsg._inFlight[id];
+      renderHistorial();
       if(callback) callback(false);
-    });
-  }else{
-    if(callback) callback(false);
-  }
+      return;
+    }
+    // Texto enviado OK — 2. Enviar fotos
+    var imgs = fotosSnapshot;
+    if(!imgs.length){
+      // Sin fotos: marcar enviado en registry + estado
+      _waMarkSent(r);
+      if(enviarConUltramsg._inFlight) delete enviarConUltramsg._inFlight[id];
+      actualizarBadgeHistorial();
+      renderHistorial();
+      if(callback) callback(true);
+      return;
+    }
+    var i = 0;
+    function enviarSigFoto(){
+      if(i >= imgs.length){
+        // Marcar enviado en registry + estado SOLO después de todas las fotos
+        _waMarkSent(r);
+        if(enviarConUltramsg._inFlight) delete enviarConUltramsg._inFlight[id];
+        actualizarBadgeHistorial();
+        renderHistorial();
+        if(callback) callback(true);
+        return;
+      }
+      var foto = imgs[i++];
+      var src  = foto.data || foto;
+      var caption = esAlarma
+        ? '📸 Foto '+i+' — 🚨 '+tipoAlarma+' ('+recorredor+')'
+        : '📸 Foto '+i+' — C-'+pozo+' ('+recorredor+')';
+      umSendImage(src, caption, function(){
+        setTimeout(enviarSigFoto, 1500);
+      });
+    }
+    enviarSigFoto();
+  });
 }
-
 
 // ── Intentar enviar un reporte (por ID) ──────────
 function intentarEnviar(id){
@@ -6452,19 +6537,10 @@ function procesarCola(){
   function enviarSiguiente(){
     if(idx >= pendientes.length){ clearTimeout(_colaTimeout); _colaEnProceso = false; return; }
     var r = pendientes[idx++];
+    // Solo sincronizar a Firebase — Cloud Function maneja WhatsApp
     var rFresh = getReporte(r.id);
     if(rFresh){
-      // SKIP alarmas — las alarmas van SOLO a /alarmas/, no a /reportes/
-      // guardarEnFirebase escribe a /reportes/ lo cual puede triggear sendWhatsApp CF
-      if(rFresh.esAlarma){
-        // Para alarmas pendientes offline: escribir a /alarmas/ directamente
-        if(fbDB && rFresh.whatsappStatus === 'pending' && !rFresh.whatsappSent){
-          fbDB.ref('alarmas/'+rFresh.id).set(rFresh).catch(function(){});
-        }
-        setTimeout(enviarSiguiente, 500);
-        return;
-      }
-      // Reportes normales: subir a Firebase via guardarEnFirebase
+      // Asegurar que tenga whatsappStatus:pending si no fue marcado como sent
       if(!rFresh.whatsappSent && !rFresh.whatsappStatus){
         rFresh.whatsappStatus    = 'pending';
         rFresh.whatsappSent      = false;
@@ -6474,7 +6550,7 @@ function procesarCola(){
       }
       if(fbDB) guardarEnFirebase(rFresh);
     }
-    setTimeout(enviarSiguiente, 500);
+    setTimeout(enviarSiguiente, 500); // sin delay de red, solo Firebase writes
   }
   enviarSiguiente();
 }
@@ -6490,10 +6566,27 @@ window.addEventListener('offline', function(){
 
 // Método 2: verificación activa contra servidor
 function verificarConectividad(callback){
-  // No consultar UltraMsg desde el celular. Solo usar estado del navegador.
-  callback(navigator.onLine !== false);
+  // Ping a un endpoint confiable con timeout de 5s
+  var ctrl = null;
+  var timeout = null;
+  try{
+    ctrl = new AbortController();
+    timeout = setTimeout(function(){ ctrl.abort(); }, 5000);
+    fetch('https://api.ultramsg.com/instance177727/instance/status'
+      +'?token=qgzhdd47v5b7xv4e', { method:'GET', signal: ctrl.signal })
+    .then(function(r){
+      clearTimeout(timeout);
+      callback(r.ok || r.status < 500);
+    })
+    .catch(function(){
+      clearTimeout(timeout);
+      callback(false);
+    });
+  }catch(e){
+    if(timeout) clearTimeout(timeout);
+    callback(false);
+  }
 }
-
 
 var _vyv_timer = null;
 function verificarYEnviar(){
