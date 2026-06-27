@@ -221,15 +221,20 @@ exports.sendWhatsApp = functions
       }
     }
 
-    // ── STEP 5: Mark as sent ─────────────────────────────────
+    // ── STEP 5: Mark as sent + limpiar fotos base64 (FIX 0 Android) ─────
+    // Las fotos ya fueron enviadas por UltraMsg.
+    // Limpiarlas de Firebase impide que Android las descargue de nuevo.
     var sentAt = admin.database.ServerValue.TIMESTAMP;
+    var nFotosEnviadas = (after.fotos || []).length;
     await DB.ref(REPORTES_PATH + '/' + reportId).update({
       whatsappStatus:       'sent',
       whatsappSent:          true,
       whatsappSentAt:        sentAt,
       whatsappTextStatus:   'sent',
       whatsappPhotoStatus:   fotosOk ? 'sent' : 'partial',
-      ultraMsgResponseId:    ultraId  || null
+      ultraMsgResponseId:    ultraId  || null,
+      fotos:                 null,          // FIX 0 Android: vaciar base64
+      nFotos:                nFotosEnviadas // conservar solo el conteo
     });
 
     // Update registry to 'sent' (permanent — never retried)
