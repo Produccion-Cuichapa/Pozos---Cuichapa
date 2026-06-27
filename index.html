@@ -3344,6 +3344,10 @@ function enviarAlarma(){
       _alarmCcSet('Msg','⏳','Enviando alerta al grupo...');
       _alarmCcSet('Foto','⏳', nFotos>0?'Enviando '+nFotos+' foto'+(nFotos>1?'s':'')+'...':'Sin fotos adjuntas');
       // Alarma → Firebase → Cloud Function → WhatsApp (envío único)
+      alarmaData.msg               = msg;
+      alarmaData.fotos             = fotosCopy;
+      alarmaData.pozo              = lugar;
+      alarmaData.recorredor        = quien;
       alarmaData.whatsappStatus    = 'pending';
       alarmaData.whatsappSent      = false;
       alarmaData.whatsappDedupeKey = String(alarmaData.id);
@@ -5272,6 +5276,9 @@ function guardarEnFirebase(reporte){
       tipoAlarma:    reporte.tipoAlarma    || null,
       // ── Mensaje completo (mantener siempre) ───────────────
       msg:           reporte.msg,
+      // ── Fotos reales para Cloud Function → UltraMsg ───────
+      // Antes solo se guardaba nFotos; ahora el servidor necesita la evidencia.
+      fotos:         reporte.fotos        || [],
       // ── C.O. — campos estructurados ───────────────────────
       estatus:       reporte.estatus       || null,
       fluye:         reporte.fluye         || null,
@@ -5477,155 +5484,81 @@ function getPendientes(){
 // ── Enviar a WhatsApp ─────────────────────────────
 // ── Configuración Ultramsg ────────────────────────
 var RADIO_GPS_METROS = 80; // Radio GPS unificado — cambiar aquí para afectar todas las validaciones
-var UM_INSTANCE  = 'instance177727';
-var UM_TOKEN     = '0olfbxq3zi0rbsd1';
+// UltraMsg ya NO se configura en el cliente.
+// Instance/token/grupo viven solo en Cloud Functions.
+// Esto evita duplicados y también evita exponer credenciales en index.html.
+var MODO_PRUEBAS  = true;   // Solo referencia visual/local. El grupo real se define en functions:config.
 
-// ── MODO PRUEBAS ─────────────────────────────────────────────
-var MODO_PRUEBAS  = true;   // PRUEBAS
-var TEST_GROUP_ID = '120363424993135472@g.us';
-var PROD_GROUP_ID = '5217821670258-1586464715@g.us'; // Grupo Pozos
-
-var UM_TO   = MODO_PRUEBAS ? TEST_GROUP_ID : PROD_GROUP_ID;
-var UM_BASE = 'https://api.ultramsg.com/' + UM_INSTANCE;
-var UM_URL       = UM_BASE + '/messages/chat';
-var UM_URL_IMG   = UM_BASE + '/messages/image';
-
-// ── Enviar texto por Ultramsg ─────────────────────
-function umSendText(texto, callback){
-  console.log('[WHATSAPP] Grupo destino:', UM_TO);
-  var body = 'token=' + encodeURIComponent(UM_TOKEN)
-           + '&to='   + encodeURIComponent(UM_TO)
-           + '&body=' + encodeURIComponent(texto);
-  // Timeout de 25s para no quedarse esperando indefinidamente
-  var _fetchCtrl = typeof AbortController!=='undefined' ? new AbortController() : null;
-  var _fetchTimeout = setTimeout(function(){ if(_fetchCtrl) _fetchCtrl.abort(); }, 25000);
-  fetch(UM_URL, {
-    method:'POST',
-    headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body: body,
-    signal: _fetchCtrl ? _fetchCtrl.signal : undefined
-  })
-  .then(function(r){ clearTimeout(_fetchTimeout); return r.json(); })
-  .then(function(d){
-    console.log('Ultramsg respuesta:', JSON.stringify(d));
-    var ok = !!(d && (d.sent==='true'||d.sent===true||d.id));
-    if(callback) callback(ok);
-  })
-  .catch(function(err){ clearTimeout(_fetchTimeout); console.error('Ultramsg error:', err); if(callback) callback(false); });
+// ── WhatsApp vía Cloud Function ─────────────────────
+// IMPORTANTE:
+// El celular YA NO llama UltraMsg directamente.
+// Solo escribe en Firebase con whatsappStatus:'pending'.
+// Las Cloud Functions desplegadas son las únicas autorizadas para enviar WhatsApp.
+function _waBackendId(prefix){
+  return String(Date.now()) + '_' + (prefix || 'wa') + '_' + Math.random().toString(36).slice(2,8);
 }
 
-// ── Enviar imagen: Firebase Storage → UltraMsg URL ──────────────────
-var IMGBB_KEY = '32d6bb4e34f5b0dfcac00dac04f3e512';
-
-// ← fotos.js → comprimirFoto
-
-function umSendImage(base64, caption, callback){
-  // Comprimir primero para subida rápida
-  comprimirFoto(base64, function(base64Comp){
-    _umSendImageInner(base64Comp, caption, callback);
-  });
-}
-
-function _umSendImageInner(base64, caption, callback){
+function _waBackendQueue(payload, callback){
   try{
-    var imgData = base64.startsWith('data:') ? base64 : 'data:image/jpeg;base64,'+base64;
-    var b64only  = imgData.split(',')[1];
+    if(!fbDB){
+      console.warn('[WA_BACKEND_QUEUE] fbDB no disponible');
+      if(callback) callback(false);
+      return;
+    }
+    var id = payload.id || _waBackendId(payload.esAlarma ? 'alarm' : 'msg');
+    payload.id = id;
+    payload.fecha = payload.fecha || new Date().toISOString();
+    payload.estado = payload.estado || 'pendiente';
+    payload.whatsappStatus = 'pending';
+    payload.whatsappSent = false;
+    payload.whatsappDedupeKey = String(id);
+    payload.whatsappAttempts = payload.whatsappAttempts || 0;
+    payload.fotos = payload.fotos || [];
 
-    // ── MÉTODO 1: Enviar base64 directamente a UltraMsg ──
-    // UltraMsg acepta data URI en el campo 'image'
-    var bodyB64 = 'token='   + encodeURIComponent(UM_TOKEN)
-                + '&to='     + encodeURIComponent(UM_TO)
-                + '&image='  + encodeURIComponent(imgData)
-                + '&caption='+ encodeURIComponent(caption||'');
-
-    fetch(UM_URL_IMG, {
-      method:'POST',
-      headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body: bodyB64
-    })
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      var ok = !!(d && (d.sent==='true'||d.sent===true||d.id));
-      if(ok){
-        if(callback) callback(true);
-        return;
-      }
-      // Base64 no funcionó — intentar subir a ImgBB y enviar URL
-      console.warn('Base64 directo falló, intentando ImgBB:', JSON.stringify(d));
-      subirImgBB(b64only, caption, callback);
-    })
-    .catch(function(){
-      subirImgBB(b64only, caption, callback);
+    var path = payload.esAlarma ? ('alarmas/' + id) : ('reportes/' + id);
+    fbDB.ref(path).set(payload).then(function(){
+      console.log('[WA_BACKEND_QUEUE] queued:', path);
+      if(callback) callback(true);
+    }).catch(function(err){
+      console.error('[WA_BACKEND_QUEUE] error:', err);
+      if(callback) callback(false);
     });
-
-  } catch(e){
-    console.error('umSendImage err:', e);
+  }catch(e){
+    console.error('[WA_BACKEND_QUEUE] exception:', e);
     if(callback) callback(false);
   }
 }
 
-function subirImgBB(b64only, caption, callback){
-  var fd = new FormData();
-  fd.append('key',   IMGBB_KEY);
-  fd.append('image', b64only);
-  fetch('https://api.imgbb.com/1/upload', {method:'POST', body:fd})
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      if(d && d.success && d.data && d.data.url){
-        console.log('ImgBB URL:', d.data.url);
-        enviarUrlUltramsg(d.data.url, caption, callback);
-      } else {
-        console.warn('ImgBB falló:', JSON.stringify(d));
-        subirCloudinary(b64only, caption, callback);
-      }
-    })
-    .catch(function(){ subirCloudinary(b64only, caption, callback); });
+function umSendText(texto, callback){
+  _waBackendQueue({
+    msg: texto || '',
+    pozo: 'SISTEMA',
+    recorredor: (typeof REC !== 'undefined' && REC) ? REC : (loggedUser || 'Sistema'),
+    modo: 'mensaje_sistema',
+    fotos: []
+  }, callback);
 }
 
-function subirCloudinary(b64only, caption, callback){
-  var fd = new FormData();
-  fd.append('upload_preset', 'cuichapa_unsigned');
-  fd.append('folder', 'cuichapa');
-  fd.append('file', 'data:image/jpeg;base64,'+b64only);
-  fetch('https://api.cloudinary.com/v1_1/ddnftojl1/image/upload', {method:'POST', body:fd})
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      if(d && d.secure_url){
-        enviarUrlUltramsg(d.secure_url, caption, callback);
-      } else {
-        console.error('Todos los servicios fallaron');
-        showToast('⚠️ No se pudo subir la foto');
-        if(callback) callback(false);
-      }
-    })
-    .catch(function(){
-      showToast('⚠️ Error al subir foto');
-      if(callback) callback(false);
-    });
+function umSendImage(base64, caption, callback){
+  _waBackendQueue({
+    msg: caption || '📸 Evidencia fotográfica',
+    pozo: 'SISTEMA',
+    recorredor: (typeof REC !== 'undefined' && REC) ? REC : (loggedUser || 'Sistema'),
+    modo: 'foto_sistema',
+    fotos: [{ data: base64, nombre: 'foto.jpg' }]
+  }, callback);
 }
 
 function enviarUrlUltramsg(imgUrl, caption, callback){
-  var body = 'token='   + encodeURIComponent(UM_TOKEN)
-           + '&to='     + encodeURIComponent(UM_TO)
-           + '&image='  + encodeURIComponent(imgUrl)
-           + '&caption='+ encodeURIComponent(caption||'');
-  fetch(UM_URL_IMG, {
-    method:'POST',
-    headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body: body
-  })
-  .then(function(r){ return r.json(); })
-  .then(function(d){
-    console.log('UM img resp:', JSON.stringify(d));
-    var ok = !!(d && (d.sent==='true'||d.sent===true||d.id));
-    showToast(ok ? '✅ Foto enviada' : '⚠️ Foto no enviada: '+JSON.stringify(d));
-    if(callback) callback(ok);
-  })
-  .catch(function(err){
-    console.error('UM img err:', err);
-    showToast('⚠️ Error UltraMsg: '+err.message);
-    if(callback) callback(false);
-  });
+  // Ya no se envía URL directa a UltraMsg desde el celular.
+  // Se manda como mensaje informativo al backend.
+  _waBackendQueue({
+    msg: (caption || 'Imagen') + '\n' + (imgUrl || ''),
+    pozo: 'SISTEMA',
+    recorredor: (typeof REC !== 'undefined' && REC) ? REC : (loggedUser || 'Sistema'),
+    modo: 'url_imagen_sistema',
+    fotos: []
+  }, callback);
 }
 
 function sendImageFormData(base64, caption, callback){ umSendImage(base64, caption, callback); }
@@ -6432,81 +6365,54 @@ function _waEnqueue(r){
 function enviarConUltramsg(id, callback, fotosDirectas){
   var r = getReporte(id);
   if(!r){ if(callback) callback(false); return; }
-  // ── Check 1: registro persistente WA (fuente de verdad definitiva) ──
-  if(_waIsSent(r)){
-    console.log('[WA_SKIP_SENT] id:', id, '— ya enviado a WhatsApp');
-    if(r.estado !== 'enviado') actualizarEstadoReporte(id, 'enviado', new Date().toISOString());
-    if(callback) callback(true);
-    return;
-  }
-  // ── Check 2: _inFlight en memoria (doble tap / mismo ciclo) ──
-  if(!enviarConUltramsg._inFlight) enviarConUltramsg._inFlight = {};
-  if(enviarConUltramsg._inFlight[id]){
-    console.log('[WA_SKIP_SENDING] _inFlight bloqueado id:', id);
-    if(callback) callback(false);
-    return;
-  }
-  enviarConUltramsg._inFlight[id] = true;
-  // ── Check 3: marcar 'sending' en registry (persiste si app se cierra) ──
-  if(!_waMarkSending(r)){
-    // _waMarkSending devuelve false si ya está 'sent' en el registry
-    console.log('[WA_SKIP_SENT] registry bloqueó reenvío, id:', id);
-    delete enviarConUltramsg._inFlight[id];
+
+  // Nuevo flujo: NO enviar desde el celular.
+  // Solo dejar el reporte listo en Firebase para que la Cloud Function lo envíe una sola vez.
+  if(r.whatsappSent === true || r.estado === 'enviado'){
     if(callback) callback(true);
     return;
   }
 
-  // Si se pasan fotos directas (modo alarma), usarlas — evita depender de localStorage
-  var fotosSnapshot = fotosDirectas ? fotosDirectas.slice() : (r.fotos || []).slice();
-  var esAlarma = r.esAlarma;
-  var tipoAlarma = r.tipoAlarma || r.tipo || '';
-  var recorredor = r.recorredor || '';
-  var pozo = r.pozo || '';
+  r.whatsappStatus    = 'pending';
+  r.whatsappSent      = false;
+  r.whatsappDedupeKey = String(r.id);
+  r.whatsappAttempts  = r.whatsappAttempts || 0;
+  if(fotosDirectas && fotosDirectas.length) r.fotos = fotosDirectas.slice();
 
-  // 1. Enviar texto del reporte
-  umSendText(r.msg, function(okTexto){
-    if(!okTexto){
-      _waMarkFailed(r, 'umSendText failed');
-      actualizarEstadoReporte(id, 'pendiente', new Date().toISOString());
-      if(enviarConUltramsg._inFlight) delete enviarConUltramsg._inFlight[id];
-      renderHistorial();
-      if(callback) callback(false);
-      return;
-    }
-    // Texto enviado OK — 2. Enviar fotos
-    var imgs = fotosSnapshot;
-    if(!imgs.length){
-      // Sin fotos: marcar enviado en registry + estado
-      _waMarkSent(r);
-      if(enviarConUltramsg._inFlight) delete enviarConUltramsg._inFlight[id];
-      actualizarBadgeHistorial();
-      renderHistorial();
+  guardarReporte(r);
+
+  if(fbDB){
+    var path = r.esAlarma ? ('alarmas/' + r.id) : ('reportes/' + r.id);
+    fbDB.ref(path).update({
+      id: r.id,
+      fecha: r.fecha || new Date().toISOString(),
+      hora: r.hora || null,
+      pozo: r.pozo || r.lugar || null,
+      lugar: r.lugar || r.pozo || null,
+      recorredor: r.recorredor || r.quien || null,
+      quien: r.quien || r.recorredor || null,
+      msg: r.msg || '',
+      fotos: r.fotos || [],
+      esAlarma: r.esAlarma || false,
+      tipoAlarma: r.tipoAlarma || r.tipo || null,
+      tipo: r.tipo || r.tipoAlarma || null,
+      estado: 'pendiente',
+      whatsappStatus: 'pending',
+      whatsappSent: false,
+      whatsappDedupeKey: String(r.id),
+      whatsappAttempts: r.whatsappAttempts || 0
+    }).then(function(){
+      console.log('[WA_BACKEND] reintento enviado a Firebase:', path);
       if(callback) callback(true);
-      return;
-    }
-    var i = 0;
-    function enviarSigFoto(){
-      if(i >= imgs.length){
-        // Marcar enviado en registry + estado SOLO después de todas las fotos
-        _waMarkSent(r);
-        if(enviarConUltramsg._inFlight) delete enviarConUltramsg._inFlight[id];
-        actualizarBadgeHistorial();
-        renderHistorial();
-        if(callback) callback(true);
-        return;
-      }
-      var foto = imgs[i++];
-      var src  = foto.data || foto;
-      var caption = esAlarma
-        ? '📸 Foto '+i+' — 🚨 '+tipoAlarma+' ('+recorredor+')'
-        : '📸 Foto '+i+' — C-'+pozo+' ('+recorredor+')';
-      umSendImage(src, caption, function(){
-        setTimeout(enviarSigFoto, 1500);
-      });
-    }
-    enviarSigFoto();
-  });
+    }).catch(function(err){
+      console.error('[WA_BACKEND] error reintentando:', err);
+      if(callback) callback(false);
+    });
+  }else{
+    if(callback) callback(false);
+  }
 }
+
 
 // ── Intentar enviar un reporte (por ID) ──────────
 function intentarEnviar(id){
@@ -6560,27 +6466,10 @@ window.addEventListener('offline', function(){
 
 // Método 2: verificación activa contra servidor
 function verificarConectividad(callback){
-  // Ping a un endpoint confiable con timeout de 5s
-  var ctrl = null;
-  var timeout = null;
-  try{
-    ctrl = new AbortController();
-    timeout = setTimeout(function(){ ctrl.abort(); }, 5000);
-    fetch('https://api.ultramsg.com/instance177727/instance/status'
-      +'?token=qgzhdd47v5b7xv4e', { method:'GET', signal: ctrl.signal })
-    .then(function(r){
-      clearTimeout(timeout);
-      callback(r.ok || r.status < 500);
-    })
-    .catch(function(){
-      clearTimeout(timeout);
-      callback(false);
-    });
-  }catch(e){
-    if(timeout) clearTimeout(timeout);
-    callback(false);
-  }
+  // No consultar UltraMsg desde el celular. Solo usar estado del navegador.
+  callback(navigator.onLine !== false);
 }
+
 
 var _vyv_timer = null;
 function verificarYEnviar(){
