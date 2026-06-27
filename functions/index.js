@@ -258,14 +258,20 @@ exports.sendWhatsApp = functions
 function _alarmContentKey(data){
   var tipo  = String(data.tipo  || '').toLowerCase().replace(/[^a-z0-9]/g,'_').slice(0,20);
   var quien = String(data.quien || '').toLowerCase().replace(/[^a-z0-9]/g,'_').slice(0,15);
-  // Extraer lat,lon del campo lugar y redondear a 4 decimales (~11m)
+  // Coordenadas: puntos -> 'p', signo menos -> 'n', 3 decimales (~111m)
   var coords = 'nocoords';
   if(data.lugar){
     var m = String(data.lugar).match(/(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/);
-    if(m) coords = parseFloat(m[1]).toFixed(4) + '_' + parseFloat(m[2]).toFixed(4);
+    if(m){
+      var lat = parseFloat(m[1]).toFixed(3).replace('-','n').replace('.','p');
+      var lon = parseFloat(m[2]).toFixed(3).replace('-','n').replace('.','p');
+      coords = lat + '_' + lon;
+    }
   }
-  var slot = Math.floor(Date.now() / 60000); // ventana 60 segundos
-  return 'alarm_content_' + tipo + '_' + quien + '_' + coords + '_' + slot;
+  var slot = Math.floor(Date.now() / 60000);
+  var raw = 'alarm_content_' + tipo + '_' + quien + '_' + coords + '_' + slot;
+  // Firebase no permite . # $ [ ] / en paths
+  return raw.replace(/[.#$\[\]\/]/g, '_');
 }
 
 exports.sendAlarmWhatsApp = functions
@@ -335,13 +341,17 @@ exports.sendAlarmWhatsApp = functions
       console.log('[WA_BACKEND] alarm sent OK:', alarmaId);
 
     }catch(err){
-      // Fallo: liberar id-lock (permite reintento), conservar content-key 60s
-      await DB.ref('/alarmas/'+alarmaId).update({
-        whatsappStatus:'failed', lastWhatsappError:err.message
-      });
-      await idLockRef.remove(); // permite que un nuevo trigger lo intente
-      // No remover contentRef para no enviar duplicado en ventana 60s
-      console.error('[WA_BACKEND] alarm failed:', alarmaId, err.message);
+      console.error('[WA_BACKEND] alarm send error:', alarmaId, err.message);
+      try{
+        await idLockRef.remove(); // liberar para reintento
+        await DB.ref('/alarmas/'+alarmaId).update({
+          whatsappStatus:'failed',
+          lastWhatsappError: String(err.message).slice(0,200)
+        });
+        // contentRef se conserva 60s para no duplicar mientras se reintenta
+      }catch(cleanupErr){
+        console.error('[WA_BACKEND] cleanup error:', cleanupErr.message);
+      }
     }
     return null;
   });
