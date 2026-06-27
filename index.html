@@ -3290,7 +3290,8 @@ function enviarAlarma(){
     // Guardar local + historial
     var arr = getAlarmasLocales(); arr.unshift(alarmaData); saveAlarmasLocales(arr);
     var fotosCopy = fotosAlarma.slice();
-    guardarReporte({
+    /* guardarReporte de alarma desactivado: no meter alarmas a cola normal */
+    /* guardarReporte({
       id:           alarmaData.id,
       fecha:        alarmaData.fecha,
       pozo:         lugar,
@@ -3302,7 +3303,7 @@ function enviarAlarma(){
       intentos:     0,
       esAlarma:     true,
       tipoAlarma:   tipoCapturado
-    });
+    }); */
     _alarmLastReporteId = alarmaData.id;
 
     // Firebase push
@@ -6443,6 +6444,9 @@ function _waEnqueue(r){
 }
 // ═════════════════════════════════════════════════════════════
 function enviarConUltramsg(id, callback, fotosDirectas){
+  console.warn('[WA_DIRECT_BLOCKED] enviarConUltramsg bloqueado. WhatsApp solo por Cloud Function.');
+  if(callback) callback(false);
+  return;
   var r = getReporte(id);
   if(!r){ if(callback) callback(false); return; }
   // ── Check 1: registro persistente WA (fuente de verdad definitiva) ──
