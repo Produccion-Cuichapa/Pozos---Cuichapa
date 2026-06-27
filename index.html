@@ -3226,24 +3226,23 @@ function _alarmCcSet(tipo, icon, sub){
 }
 
 function alarmCcVerificar(){
+  // FIX: La Cloud Function es el único proceso autorizado para enviar alarmas a WhatsApp.
+  // El celular NO debe volver a llamar enviarConUltramsg ni escribir a /alarmas/ de nuevo.
+  // Si la alarma no llegó al grupo, la CF la reintentará en su ciclo de 10 min.
   if(!_alarmLastReporteId){ showToast('No hay alarma pendiente'); return; }
-  if(!navigator.onLine){ showToast('⚠️ Sin señal todavía'); return; }
-  _alarmCcSet('Msg','⏳','Verificando y reenviando...');
-  _alarmCcSet('Foto','⏳','Verificando...');
-  enviarConUltramsg(_alarmLastReporteId, function(ok){
-    actualizarBadgeHistorial();
-    if(ok){
-      var r = getReporte(_alarmLastReporteId);
-      var nF = r ? (r.fotos||[]).length : 0;
-      _alarmCcSet('Msg','✅','Enviado correctamente al grupo');
-      _alarmCcSet('Foto', nF>0?'✅':'📷', nF>0?nF+' foto'+(nF>1?'s':'')+' enviada'+(nF>1?'s':''):' Sin fotos adjuntas');
-      showToast('✅ Alarma enviada correctamente');
-    } else {
-      _alarmCcSet('Msg','⚠️','Sin respuesta — verifica tu señal');
-      _alarmCcSet('Foto','⚠️','Pendiente de reenvío');
-      showToast('⚠️ Sin conexión — intenta de nuevo');
-    }
-  });
+  var r = getReporte(_alarmLastReporteId);
+  if(!r){ showToast('⚠️ No se encontró la alarma'); return; }
+  if(r.whatsappSent === true){
+    _alarmCcSet('Msg','✅','Enviado correctamente al grupo');
+    showToast('✅ Alarma ya enviada al grupo');
+    return;
+  }
+  // Asegurar que Firebase tenga el reporte con pending (sin crear duplicado)
+  if(fbDB && r.whatsappStatus !== 'sent'){
+    fbDB.ref('alarmas/'+r.id).update({ whatsappStatus:'pending', whatsappSent:false });
+  }
+  _alarmCcSet('Msg','☁️','Servidor procesando — espera un momento');
+  showToast('☁️ La Cloud Function enviará la alarma en breve');
 }
 
 function enviarAlarma(){
@@ -3299,8 +3298,9 @@ function enviarAlarma(){
     });
     _alarmLastReporteId = alarmaData.id;
 
-    // Firebase push
-    if(fbDB){ fbDB.ref('alarmas/'+alarmaData.id).set(alarmaData).catch(function(){}); enviarPushATodos(alarmaData); }
+    // Push notification a otros dispositivos (SIN escribir a /alarmas/ todavía)
+    // La escritura a /alarmas/ ocurre solo cuando los datos están completos (más abajo)
+    if(fbDB){ enviarPushATodos(alarmaData); }
     // Escribir alarma activa en config para que todos los dispositivos la vean
     if(fbDB){ fbDB.ref('config/alarma_activa').set({
       id: alarmaData.id,
@@ -3323,6 +3323,19 @@ function enviarAlarma(){
     msgLines.push('_Campo Cuichapa · Lifting de Mexico_');
     var msg = msgLines.join('\n');
 
+    // Completar alarmaData con msg y fotos SIEMPRE (online u offline)
+    // Esto asegura que localStorage tenga el formato completo para cualquier reintento
+    alarmaData.msg               = msg;
+    alarmaData.fotos             = fotosCopy;
+    alarmaData.pozo              = lugar;
+    alarmaData.recorredor        = quien;
+    alarmaData.whatsappStatus    = 'pending';
+    alarmaData.whatsappSent      = false;
+    alarmaData.whatsappDedupeKey = String(alarmaData.id);
+    alarmaData.whatsappAttempts  = 0;
+    // Sobreescribir la primera guardarReporte con msg completo
+    guardarReporte(alarmaData);
+
     // Limpiar fotos de alarma y cerrar
     fotosAlarma = [];
     document.getElementById('alarmFotoGrid').innerHTML = '';
@@ -3343,25 +3356,21 @@ function enviarAlarma(){
     if(navigator.onLine){
       _alarmCcSet('Msg','⏳','Enviando alerta al grupo...');
       _alarmCcSet('Foto','⏳', nFotos>0?'Enviando '+nFotos+' foto'+(nFotos>1?'s':'')+'...':'Sin fotos adjuntas');
-      // Alarma → Firebase → Cloud Function → WhatsApp (envío único)
-      alarmaData.msg               = msg;
-      alarmaData.fotos             = fotosCopy;
-      alarmaData.pozo              = lugar;
-      alarmaData.recorredor        = quien;
-      alarmaData.whatsappStatus    = 'pending';
-      alarmaData.whatsappSent      = false;
-      alarmaData.whatsappDedupeKey = String(alarmaData.id);
-      alarmaData.whatsappAttempts  = 0;
-      guardarReporte(alarmaData);
+      // ÚNICO write a Firebase: solo cuando los datos están completos
       if(fbDB){
-        fbDB.ref('alarmas/'+alarmaData.id).set(alarmaData);
-        guardarEnFirebase(alarmaData);
+        fbDB.ref('alarmas/'+alarmaData.id).set(alarmaData);  // UN SOLO WRITE — completo
+        guardarEnFirebase(alarmaData);                         // /reportes/ — CF skips esAlarma
       }
       _alarmCcSet('Msg','☁️','Enviando vía servidor...');
       _alarmCcSet('Foto', nFotos>0?'☁️':'📷', nFotos>0?nFotos+' foto en proceso':'Sin fotos');
       actualizarBadgeHistorial();
       _enviandoAhora = false;
-      // [WA via CF] directo a Firebase — CF envía
+    } else {
+      // Offline: guardar con pending para que procesarCola lo suba cuando haya señal
+      _alarmCcSet('Msg','💾','Sin señal — guardado. Se enviará al recuperar internet');
+      _alarmCcSet('Foto', nFotos>0?'💾':'📷', nFotos>0?nFotos+' foto guardada':'Sin fotos');
+      actualizarBadgeHistorial();
+      _enviandoAhora = false;
     }
   }
 
