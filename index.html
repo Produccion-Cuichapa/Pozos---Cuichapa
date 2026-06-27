@@ -3230,6 +3230,12 @@ function alarmCcVerificar(){
   if(!navigator.onLine){ showToast('⚠️ Sin señal todavía'); return; }
   _alarmCcSet('Msg','⏳','Verificando y reenviando...');
   _alarmCcSet('Foto','⏳','Verificando...');
+  console.warn('[ALARM_RETRY_BLOCKED] alarmCcVerificar ya no usa UltraMsg directo. CF maneja reintentos.');
+  if(fbDB){
+    fbDB.ref('alarmas/'+_alarmLastReporteId).update({whatsappStatus:'pending', whatsappSent:false});
+  }
+  _alarmCcSet('Msg','☁️','Reintento enviado al servidor...');
+  return;
   enviarConUltramsg(_alarmLastReporteId, function(ok){
     actualizarBadgeHistorial();
     if(ok){
