@@ -275,8 +275,7 @@ function _alarmContentKey(data){
       coords = lat + '_' + lon;
     }
   }
-  var slot = Math.floor(Date.now() / 60000);
-  var raw = 'alarm_content_' + tipo + '_' + quien + '_' + coords + '_' + slot;
+  var raw = 'alarm_content_' + tipo + '_' + quien + '_' + coords;
   // Firebase no permite . # $ [ ] / en paths
   return raw.replace(/[.#$\[\]\/]/g, '_');
 }
@@ -345,6 +344,45 @@ exports.sendAlarmWhatsApp = functions
       var result = await sendText(msg);
       if(!result.ok) throw new Error('UltraMsg alarm failed: ' + JSON.stringify(result.raw));
 
+      // Enviar fotos de alarma si vienen desde Firebase.
+      // IMPORTANTE: la foto NO debe bloquear la alarma.
+      var fotos = after.fotos || [];
+      var fotosOk = true;
+      for(var i = 0; i < fotos.length; i++){
+        try{
+          var foto = fotos[i];
+          var src = typeof foto === 'object' ? (foto.data || '') : foto;
+          var base64 = String(src).includes(',') ? String(src).split(',')[1] : String(src);
+
+          // Si la foto viene vacía, saltarla sin romper la alarma.
+          if(!base64 || base64.length < 1000){
+            fotosOk = false;
+            console.log('[WA_BACKEND] alarm photo skipped empty/small:', alarmaId);
+            continue;
+          }
+
+          var caption = '📸 Foto '+(i+1)+' — 🚨 '+(after.tipo || 'ALARMA')+' ('+(after.quien || after.recorredor || '')+')';
+
+          // Timeout local: si UltraMsg se cuelga con la imagen, no mata la alarma.
+          var imgResult = await Promise.race([
+            sendImage(base64, caption),
+            new Promise(function(resolve){
+              setTimeout(function(){ resolve({ok:false, timeout:true}); }, 18000);
+            })
+          ]);
+
+          if(!imgResult || !imgResult.ok){
+            fotosOk = false;
+            console.error('[WA_BACKEND] alarm photo failed/timeout:', alarmaId, JSON.stringify(imgResult||{}));
+          }
+
+          if(i < fotos.length - 1) await new Promise(function(r){ setTimeout(r, 1500); });
+        }catch(photoErr){
+          fotosOk = false;
+          console.error('[WA_BACKEND] alarm photo error:', alarmaId, photoErr.message);
+        }
+      }
+
       // ── Marcar enviado en ambos registros ────────────────────
       await DB.ref('/alarmas/'+alarmaId).update({
         whatsappStatus:'sent', whatsappSent:true,
@@ -402,3 +440,4 @@ exports.retryFailedWhatsApp = functions
     }
     return null;
   });
+  
