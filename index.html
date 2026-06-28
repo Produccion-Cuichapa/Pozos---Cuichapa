@@ -261,14 +261,120 @@ function _fotosCheck(){
   if(fotos.length > MAX_FOTOS_ANDROID){
     fotos.splice(MAX_FOTOS_ANDROID);
     console.warn('[ANDROID] Fotos limitadas a MAX_FOTOS_ANDROID='+MAX_FOTOS_ANDROID);
-    if(typeof showToast==='function') showToast('⚠️ Máximo 4 fotos por reporte');
+    if(typeof showToast==='function') showToast('⚠️ Máximo '+MAX_FOTOS_ANDROID+' fotos por reporte');
     return false;
   }
   return true;
 }
 var fotosAlarma = [];
+var MAX_FOTOS_ANDROID = 7; // máximo 7 fotos por reporte y por alarma
 </script>
 <script src="./fotos.js"></script>
+<script>
+// ══ OVERRIDE: agregarFotos y agregarFotosAlarma ══════════════
+// Reemplaza las funciones de fotos.js para soportar hasta 7 fotos,
+// múltiples archivos, compresión canvas y logs [WA_FRONT].
+
+// ── Comprimir imagen con canvas ───────────────────────────────
+function _comprimirYAgregar(file, callback){
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var img = new Image();
+    img.onload = function(){
+      var MAX_W = 1280, MAX_H = 1280, Q = 0.82;
+      var w = img.width, h = img.height;
+      if(w > MAX_W){ h = Math.round(h * MAX_W / w); w = MAX_W; }
+      if(h > MAX_H){ w = Math.round(w * MAX_H / h); h = MAX_H; }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      var b64 = canvas.toDataURL('image/jpeg', Q);
+      // Liberar canvas
+      canvas.width = 0; canvas.height = 0;
+      callback(b64);
+    };
+    img.onerror = function(){ callback(e.target.result); }; // fallback sin compresión
+    img.src = e.target.result;
+  };
+  reader.onerror = function(){ console.warn('[WA_FRONT] Error leyendo foto:', file.name); };
+  reader.readAsDataURL(file);
+}
+
+// ── Render fotos de alarma ────────────────────────────────────
+function _renderAlarmFotos(){
+  var grid = document.getElementById('alarmFotoGrid');
+  var cnt  = document.getElementById('alarmFotoCountNew');
+  if(!grid) return;
+  grid.innerHTML = '';
+  fotosAlarma.forEach(function(f, i){
+    var div = document.createElement('div');
+    div.style.cssText = 'position:relative;display:inline-block;margin:4px;vertical-align:top';
+    var img = document.createElement('img');
+    img.src = (typeof f === 'object') ? (f.data || f) : f;
+    img.style.cssText = 'width:64px;height:64px;object-fit:cover;border-radius:8px;display:block';
+    var btn = document.createElement('button');
+    btn.textContent = '×';
+    btn.style.cssText = 'position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:13px;line-height:1;padding:0';
+    btn.onclick = (function(idx){ return function(e){ e.stopPropagation(); fotosAlarma.splice(idx,1); _renderAlarmFotos(); }; })(i);
+    div.appendChild(img); div.appendChild(btn);
+    grid.appendChild(div);
+  });
+  if(cnt) cnt.textContent = fotosAlarma.length > 0
+    ? fotosAlarma.length + ' foto' + (fotosAlarma.length > 1 ? 's' : '')
+    : '';
+}
+
+// ── agregarFotos (reportes) — override ───────────────────────
+function agregarFotos(event){
+  var files = event.target.files;
+  if(!files || !files.length){ event.target.value = ''; return; }
+  var remaining = MAX_FOTOS_ANDROID - fotos.length;
+  if(remaining <= 0){
+    showToast('⚠️ Ya tienes ' + MAX_FOTOS_ANDROID + ' fotos (límite alcanzado)');
+    event.target.value = ''; return;
+  }
+  var toProcess = Math.min(files.length, remaining);
+  if(files.length > remaining)
+    showToast('⚠️ Solo se agregarán ' + remaining + ' foto(s) más (máx ' + MAX_FOTOS_ANDROID + ')');
+  console.log('[WA_FRONT] report fotos selected:', files.length, '— processing:', toProcess);
+  for(var i = 0; i < toProcess; i++){
+    (function(file){
+      _comprimirYAgregar(file, function(b64){
+        fotos.push({ data: b64, nombre: file.name || ('foto' + (fotos.length+1) + '.jpg') });
+        if(typeof renderFotos === 'function') renderFotos();
+        var fc = document.getElementById('fotoCount');
+        if(fc) fc.textContent = fotos.length + ' foto' + (fotos.length > 1 ? 's' : '');
+      });
+    })(files[i]);
+  }
+  event.target.value = '';
+}
+
+// ── agregarFotosAlarma — override ────────────────────────────
+function agregarFotosAlarma(event){
+  var files = event.target.files;
+  if(!files || !files.length){ event.target.value = ''; return; }
+  var remaining = MAX_FOTOS_ANDROID - fotosAlarma.length;
+  if(remaining <= 0){
+    showToast('⚠️ Ya tienes ' + MAX_FOTOS_ANDROID + ' fotos de alarma (límite alcanzado)');
+    event.target.value = ''; return;
+  }
+  var toProcess = Math.min(files.length, remaining);
+  if(files.length > remaining)
+    showToast('⚠️ Solo se agregarán ' + remaining + ' foto(s) (máx ' + MAX_FOTOS_ANDROID + ')');
+  console.log('[WA_FRONT] alarm fotos selected:', files.length, '— processing:', toProcess);
+  for(var i = 0; i < toProcess; i++){
+    (function(file){
+      _comprimirYAgregar(file, function(b64){
+        fotosAlarma.push({ data: b64, nombre: file.name || ('foto' + (fotosAlarma.length+1) + '.jpg') });
+        _renderAlarmFotos();
+      });
+    })(files[i]);
+  }
+  event.target.value = '';
+}
+</script>
 <script>
 (function(){
   function t(){var d=new Date(),e=document.getElementById('ppClk');if(e)e.textContent=d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}
@@ -3290,6 +3396,7 @@ function enviarAlarma(){
     // Guardar local + historial
     var arr = getAlarmasLocales(); arr.unshift(alarmaData); saveAlarmasLocales(arr);
     var fotosCopy = fotosAlarma.slice();
+    console.log('[WA_FRONT] alarm saving fotos:', fotosCopy.length);
     /* guardarReporte de alarma desactivado: no meter alarmas a cola normal */
     /* guardarReporte({
       id:           alarmaData.id,
