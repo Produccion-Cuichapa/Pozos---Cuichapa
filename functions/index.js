@@ -80,6 +80,59 @@ function sendText(msg){
 }
 
 // ── Enviar imagen base64 ──────────────────────────────────────
+
+// ── Helper: extraer base64 limpio desde múltiples formatos ──
+// Soporta: string raw, data:image/...;base64,XXX, {data:...}, {base64:...}, {src:...}
+function _extractBase64(foto){
+  if(!foto) return null;
+  var raw = '';
+  if(typeof foto === 'string'){
+    raw = foto;
+  } else if(typeof foto === 'object'){
+    raw = foto.data || foto.base64 || foto.src || foto.content || '';
+  }
+  if(!raw) return null;
+  // Quitar encabezado data:image/...;base64,
+  var idx = raw.indexOf(',');
+  if(idx !== -1) raw = raw.slice(idx + 1);
+  // Descartar si es demasiado pequeño (imagen vacía/corrupta)
+  if(raw.length < 100) return null;
+  return raw;
+}
+
+
+// ── Envío de array de fotos a UltraMsg (best-effort, 1 por 1) ─
+async function _sendPhotos(fotos, label, caption_prefix){
+  if(!fotos || !fotos.length){ console.log('[WA_BACKEND] '+label+' photos count: 0'); return true; }
+  console.log('[WA_BACKEND] '+label+' photos count:', fotos.length);
+  var allOk = true;
+  for(var i = 0; i < fotos.length; i++){
+    var b64 = _extractBase64(fotos[i]);
+    if(!b64){
+      console.log('[WA_BACKEND] '+label+' photo '+(i+1)+' skipped (empty/invalid)');
+      continue;
+    }
+    try{
+      var caption = caption_prefix + ' 📸 '+(i+1)+'/'+fotos.length;
+      var result = await sendImage(b64, caption);
+      if(result.ok){
+        console.log('[WA_BACKEND] '+label+' photo sent:', (i+1), 'id:', result.id||'?');
+      } else {
+        console.warn('[WA_BACKEND] '+label+' photo failed:', (i+1), JSON.stringify(result.raw||{}));
+        allOk = false;
+      }
+    } catch(err){
+      console.error('[WA_BACKEND] '+label+' photo error:', (i+1), err.message);
+      allOk = false;
+    }
+    // Esperar 1.5s entre fotos para no saturar UltraMsg
+    if(i < fotos.length - 1){
+      await new Promise(function(r){ setTimeout(r, 1500); });
+    }
+  }
+  return allOk;
+}
+
 function sendImage(base64, caption){
   var cfg = CFG();
   return ultraMsgPost('/messages/image', {
@@ -107,7 +160,7 @@ async function clearExpiredLock(reportId){
 // TRIGGER: /reportes/{reportId} onWrite
 // ══════════════════════════════════════════════════════════════
 exports.sendWhatsApp = functions
-  .runWith({ timeoutSeconds: 60, memory: '256MB' })
+  .runWith({ timeoutSeconds: 120, memory: '256MB' })
   .database.ref(REPORTES_PATH + '/{reportId}')
   .onWrite(async function(change, context){
 
@@ -175,14 +228,7 @@ exports.sendWhatsApp = functions
     });
 
     // ── STEP 3: Send text to UltraMsg ────────────────────────
-    var msg = after.msg || [
-      '🚨 *ALARMA DE CAMPO*',
-      'Tipo: ' + (after.tipo || 'Sin tipo'),
-      'Recorredor: ' + (after.quien || after.recorredor || 'Sin nombre'),
-      'Hora: ' + (after.hora || ''),
-      'Lugar: ' + (after.lugar || ''),
-      after.nota ? ('Nota: ' + after.nota) : ''
-    ].filter(Boolean).join('\\n');
+    var msg = after.msg || '';
     var ultraId = null;
     var textOk  = false;
 
@@ -206,27 +252,12 @@ exports.sendWhatsApp = functions
     }
 
     // ── STEP 4: Send photos (best-effort, text already sent) ─
-    var fotos       = after.fotos || [];
-    var fotosOk     = true;
-    var recorredor  = after.recorredor || '';
-    var pozo        = after.pozo       || '';
-
-    for(var i = 0; i < fotos.length; i++){
-      try{
-        var foto    = fotos[i];
-        var src     = typeof foto === 'object' ? (foto.data || '') : foto;
-        if(!src) continue;
-        var base64  = src.includes(',') ? src.split(',')[1] : src;
-        var caption = '📸 Foto '+(i+1)+' — C-'+pozo+' ('+recorredor+')';
-        var imgResult = await sendImage(base64, caption);
-        if(!imgResult.ok) fotosOk = false;
-        // Small delay between photos
-        if(i < fotos.length - 1) await new Promise(function(r){ setTimeout(r, 1500); });
-      }catch(imgErr){
-        console.error('[WA_BACKEND] photo failed:', i, imgErr.message);
-        fotosOk = false;
-      }
-    }
+    var fotos      = after.fotos || [];
+    var recorredor = after.recorredor || '';
+    var pozo       = after.pozo       || '';
+    var photoLabel = 'report';
+    var photoCaption = 'C-'+pozo+' ('+recorredor+')';
+    var fotosOk = await _sendPhotos(fotos, photoLabel, photoCaption);
 
     // ── STEP 5: Mark as sent + limpiar fotos base64 (FIX 0 Android) ─────
     // Las fotos ya fueron enviadas por UltraMsg.
@@ -275,13 +306,14 @@ function _alarmContentKey(data){
       coords = lat + '_' + lon;
     }
   }
-  var raw = 'alarm_content_' + tipo + '_' + quien + '_' + coords;
+  var slot = Math.floor(Date.now() / 60000);
+  var raw = 'alarm_content_' + tipo + '_' + quien + '_' + coords + '_' + slot;
   // Firebase no permite . # $ [ ] / en paths
   return raw.replace(/[.#$\[\]\/]/g, '_');
 }
 
 exports.sendAlarmWhatsApp = functions
-  .runWith({ timeoutSeconds: 60, memory: '256MB' })
+  .runWith({ timeoutSeconds: 120, memory: '256MB' })
   .database.ref('/alarmas/{alarmaId}')
   .onWrite(async function(change, context){
     var after = change.after.val();
@@ -331,62 +363,24 @@ exports.sendAlarmWhatsApp = functions
     }
 
     console.log('[WA_BACKEND] alarm sending:', alarmaId, 'contentKey:', contentKey);
-    var msg = after.msg || [
-      '🚨 *ALARMA DE CAMPO*',
-      'Tipo: ' + (after.tipo || 'Sin tipo'),
-      'Recorredor: ' + (after.quien || after.recorredor || 'Sin nombre'),
-      'Hora: ' + (after.hora || ''),
-      'Lugar: ' + (after.lugar || ''),
-      after.nota ? ('Nota: ' + after.nota) : ''
-    ].filter(Boolean).join('\\n');
+    var msg = after.msg || '';
 
     try{
       var result = await sendText(msg);
       if(!result.ok) throw new Error('UltraMsg alarm failed: ' + JSON.stringify(result.raw));
+      console.log('[WA_BACKEND] alarm text sent:', alarmaId);
 
-      // Enviar fotos de alarma si vienen desde Firebase.
-      // IMPORTANTE: la foto NO debe bloquear la alarma.
-      var fotos = after.fotos || [];
-      var fotosOk = true;
-      for(var i = 0; i < fotos.length; i++){
-        try{
-          var foto = fotos[i];
-          var src = typeof foto === 'object' ? (foto.data || '') : foto;
-          var base64 = String(src).includes(',') ? String(src).split(',')[1] : String(src);
-
-          // Si la foto viene vacía, saltarla sin romper la alarma.
-          if(!base64 || base64.length < 1000){
-            fotosOk = false;
-            console.log('[WA_BACKEND] alarm photo skipped empty/small:', alarmaId);
-            continue;
-          }
-
-          var caption = '📸 Foto '+(i+1)+' — 🚨 '+(after.tipo || 'ALARMA')+' ('+(after.quien || after.recorredor || '')+')';
-
-          // Timeout local: si UltraMsg se cuelga con la imagen, no mata la alarma.
-          var imgResult = await Promise.race([
-            sendImage(base64, caption),
-            new Promise(function(resolve){
-              setTimeout(function(){ resolve({ok:false, timeout:true}); }, 18000);
-            })
-          ]);
-
-          if(!imgResult || !imgResult.ok){
-            fotosOk = false;
-            console.error('[WA_BACKEND] alarm photo failed/timeout:', alarmaId, JSON.stringify(imgResult||{}));
-          }
-
-          if(i < fotos.length - 1) await new Promise(function(r){ setTimeout(r, 1500); });
-        }catch(photoErr){
-          fotosOk = false;
-          console.error('[WA_BACKEND] alarm photo error:', alarmaId, photoErr.message);
-        }
-      }
+      // ── Fotos de alarma (best-effort) ─────────────────────────
+      var alarmaFotos   = after.fotos || [];
+      var alarmCaption  = (after.tipo||'ALARMA') + ' (' + (after.recorredor||after.quien||'') + ')';
+      await _sendPhotos(alarmaFotos, 'alarm', alarmCaption);
 
       // ── Marcar enviado en ambos registros ────────────────────
       await DB.ref('/alarmas/'+alarmaId).update({
         whatsappStatus:'sent', whatsappSent:true,
-        whatsappSentAt:admin.database.ServerValue.TIMESTAMP
+        whatsappSentAt:admin.database.ServerValue.TIMESTAMP,
+        fotos: null,                         // FIX 0 Android: limpiar base64
+        nFotos: alarmaFotos.length
       });
       await idLockRef.set({ status:'sent', sentAt:Date.now() });
       await contentRef.set({ status:'sent', alarmaId:alarmaId, sentAt:Date.now() });
@@ -440,4 +434,3 @@ exports.retryFailedWhatsApp = functions
     }
     return null;
   });
-  
