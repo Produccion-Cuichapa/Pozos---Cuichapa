@@ -199,3 +199,4 @@ function comprimirFoto(base64, callback){
   }catch(e){ callback(base64); }
 }
 
+/* alarm-photo-cache-bust Sun Jun 28 05:47:34 AM UTC 2026 */
