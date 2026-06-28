@@ -3355,7 +3355,10 @@ function enviarAlarma(){
       alarmaData.whatsappSent      = false;
       alarmaData.whatsappDedupeKey = String(alarmaData.id);
       alarmaData.whatsappAttempts  = 0;
-      guardarReporte(alarmaData);
+      // ALARMA: solo se escribe en /alarmas.
+      // No usar guardarReporte() aquí para evitar doble envío por /reportes y /alarmas.
+      alarmaData.fotos  = fotosCopy;
+      alarmaData.nFotos = fotosCopy.length;
       if(fbDB){
         fbDB.ref('alarmas/'+alarmaData.id).set(alarmaData);
       }
@@ -5276,6 +5279,7 @@ function guardarEnFirebase(reporte){
       estado:        reporte.estado,
       device:        deviceName,
       nFotos:        (reporte.fotos||[]).length,
+        fotos:         (reporte.fotos||[]).map(function(f){ return {data:(f.data||f), nombre:(f.nombre||'')}; }),
       esAlarma:      reporte.esAlarma      || false,
       tipoAlarma:    reporte.tipoAlarma    || null,
       // ── Mensaje completo (mantener siempre) ───────────────
