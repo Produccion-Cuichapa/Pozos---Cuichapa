@@ -375,7 +375,22 @@ function agregarFotosAlarma(event){
   event.target.value = '';
 }
 </script>
-<script src="./assets/js/ui-helpers.js"></script>
+<script>
+(function(){
+  function t(){var d=new Date(),e=document.getElementById('ppClk');if(e)e.textContent=d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}
+  t();setInterval(t,1000);
+})();
+function ppToggle(id){
+  ['calderon','prod','rec','op','seg','inv'].forEach(function(s){
+    document.getElementById('pp-body-'+s).classList.remove('open');
+    document.getElementById('pp-body-'+s).previousElementSibling.classList.remove('open');
+  });
+  var body=document.getElementById('pp-body-'+id);
+  var row=body.previousElementSibling;
+  body.classList.add('open');
+  if(row)row.classList.add('open');
+}
+</script>
 
 <!-- Status bar permisos -->
 <div id="permsStatusBar" style="display:none;margin:8px 0 4px;background:#0d1525;border-radius:14px;padding:12px 16px;border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(4px)">
