@@ -3466,6 +3466,7 @@ function enviarAlarma(){
       // No usar guardarReporte() aquí para evitar doble envío por /reportes y /alarmas.
       alarmaData.fotos  = fotosCopy;
       alarmaData.nFotos = fotosCopy.length;
+      alarmaData.msg = msg;
       if(fbDB){
         fbDB.ref('alarmas/'+alarmaData.id).set(alarmaData);
       }
