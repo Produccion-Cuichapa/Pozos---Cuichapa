@@ -3585,14 +3585,29 @@ function hcCargar(){
           _hcData = [];
         }
         _hcFbLoaded=true;
-        if(statusEl) statusEl.textContent='✅ '+_hcData.length+' reporte'+(_hcData.length!==1?'s':'')+' · Todos los dispositivos';
+        if(statusEl){
+          var _visTotal = Math.min(_hcData.length, 50);
+          statusEl.textContent = (_hcData.length > 50)
+            ? '✅ '+_visTotal+' visibles de '+_hcData.length+' cargados · Todos los dispositivos'
+            : '✅ '+_hcData.length+' reporte'+(_hcData.length!==1?'s':'')+' · Todos los dispositivos';
+        }
         hcRender();
       }catch(e2){}
     }, function(){
-      if(statusEl) statusEl.textContent='📱 '+locales.length+' reporte'+(locales.length!==1?'s':'')+' · Este dispositivo';
+      if(statusEl){
+        var _visLoc = Math.min(locales.length, 50);
+        statusEl.textContent = (locales.length > 50)
+          ? '📱 '+_visLoc+' visibles de '+locales.length+' cargados · Este dispositivo'
+          : '📱 '+locales.length+' reporte'+(locales.length!==1?'s':'')+' · Este dispositivo';
+      }
     });
   } else {
-    if(statusEl) statusEl.textContent='📱 '+locales.length+' reporte'+(locales.length!==1?'s':'')+' · Este dispositivo (sin conexión Firebase)';
+    if(statusEl){
+      var _visLoc2 = Math.min(locales.length, 50);
+      statusEl.textContent = (locales.length > 50)
+        ? '📱 '+_visLoc2+' visibles de '+locales.length+' cargados · Este dispositivo (sin conexión Firebase)'
+        : '📱 '+locales.length+' reporte'+(locales.length!==1?'s':'')+' · Este dispositivo (sin conexión Firebase)';
+    }
   }
 }
 
