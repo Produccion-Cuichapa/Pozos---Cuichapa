@@ -1920,6 +1920,7 @@ function _lastGpsSave(lat,lon,acc,source){
 var _esperandoGPSEnvio = false; // anti-doble-envío mientras se espera GPS
 var _gpsSourceForReport     = 'none';  // 'fresh' | 'recent' | 'none' — fuente del último fix usado
 var _gpsCapturedAtForReport = null;    // ISO timestamp de cuándo se capturó esa ubicación
+var _gpsSinValidarConfirmado = false;  // true SOLO durante la construcción del mensaje tras "Enviar sin GPS"
 var checks={trabajo:false,drenar:false,aforo:false,intermitente:false};
 var _nivTipo='ft', _medTipo='ft';
 // ← movido a config.js → CICLOS
@@ -2462,7 +2463,11 @@ function _calcDist(wc){
 // ← movido a utils.js → _rangoLabel
 
 function gpsLine(){
-  if(!la||!lo) return 'GPS: No disponible';
+  if(!la||!lo){
+    return _gpsSinValidarConfirmado
+      ? 'GPS: No disponible — enviado sin validación de ubicación'
+      : 'GPS: No disponible';
+  }
   var base='GPS: '+la.toFixed(6)+', '+lo.toFixed(6)+' (±'+ac+'m)\n🗺 maps.google.com/?q='+la+','+lo;
   var wc = W && WELL_COORDS_ALL[W] ? WELL_COORDS_ALL[W] : null;
   if(wc){
@@ -2625,30 +2630,33 @@ function calcDistanciaPozo(){
   return Math.round(_calcDist(WELL_COORDS_ALL[W]));
 }
 
-// FIX QUIRÚRGICO GPS — Android debe comportarse como iPhone: capturar la
-// ubicación REAL del dispositivo (GNSS), aunque no haya señal, esperando
-// el tiempo necesario (hasta 35s en Android). La caché de última ubicación
-// (≤60s) es SOLO el último recurso si la captura activa se agota — nunca
-// el camino principal — y queda marcada como 'recent', no 'fresh'.
+// FIX QUIRÚRGICO GPS — función COMPARTIDA de espera de GPS real.
+// Android debe comportarse como iPhone: capturar la ubicación REAL del
+// dispositivo (GNSS), aunque no haya señal, esperando el tiempo necesario
+// (hasta 35s en Android). La caché de última ubicación (≤60s) es SOLO el
+// último recurso si la captura activa se agota — nunca el camino principal.
+// IMPORTANTE: cb() NO se ejecuta hasta tener la/lo válidos O hasta que el
+// usuario confirme explícitamente "Enviar sin GPS" — ningún caller puede
+// armar mensaje ni abrir preview antes de eso.
 // No toca enviarAlarma() (ya tiene su propio patrón funcional).
-function enviarTodo(soloPreview){
+function _esperarGPSReal(cb){
   // GPS ya disponible ahora mismo (watchPosition continuo ya tiene fix) — fresh.
   if(la !== 0 && lo !== 0){
     _gpsSourceForReport = 'fresh';
     _gpsCapturedAtForReport = new Date().toISOString();
-    _enviarTodoInner(soloPreview);
+    cb();
     return;
   }
 
   // Anti-doble-envío: si ya se está esperando GPS, no iniciar otra espera/captura.
   if(_esperandoGPSEnvio){
     showToast('📍 Obteniendo GPS real del dispositivo… no te muevas del lugar');
-    return;
+    return; // NO se llama cb — el usuario debe esperar a que termine la espera en curso
   }
 
   if(!navigator.geolocation){
     _gpsSourceForReport = 'none';
-    _mostrarAvisoSinGPS(soloPreview);
+    _mostrarAvisoSinGPS(cb);
     return;
   }
 
@@ -2679,10 +2687,10 @@ function enviarTodo(soloPreview){
       if(source === 'recent'){
         showToast('📍 Usando última ubicación reciente (no es un fix nuevo)');
       }
-      _enviarTodoInner(soloPreview);
+      cb();
     } else {
       _gpsSourceForReport = 'none';
-      _mostrarAvisoSinGPS(soloPreview);
+      _mostrarAvisoSinGPS(cb);
     }
   }
 
@@ -2711,9 +2719,17 @@ function enviarTodo(soloPreview){
   );
 }
 
+function enviarTodo(soloPreview){
+  _esperarGPSReal(function(){ _enviarTodoInner(soloPreview); });
+}
+
 // Advertencia explícita antes de enviar sin GPS — reutiliza el overlay
 // existente de aviso GPS (gpsWarnOverlay), sin crear UI nueva.
-function _mostrarAvisoSinGPS(soloPreview){
+// Advertencia explícita antes de enviar sin GPS — reutiliza el overlay
+// existente de aviso GPS (gpsWarnOverlay), sin crear UI nueva.
+// cb genérico: se ejecuta SOLO si el usuario confirma "Enviar de todas
+// formas"; si cancela, no se envía nada.
+function _mostrarAvisoSinGPS(cb){
   var gb = document.getElementById('gpsBar');
   if(gb){ gb.className='gps-bar err'; gb.innerHTML='⚠️ No se pudo obtener GPS real — activa ubicación en tu celular'; }
   var gpsWO = document.getElementById('gpsWarnOverlay');
@@ -2725,10 +2741,19 @@ function _mostrarAvisoSinGPS(soloPreview){
     if(gpsWRadio) gpsWRadio.style.display = 'none';
     if(gpsWNoGps) gpsWNoGps.style.display = 'block';
     gpsWO.style.display = 'flex';
-    window._gpsContinueCallback = function(){ _enviarTodoInner(soloPreview); };
+    window._gpsContinueCallback = function(){
+      // El usuario confirmó explícitamente enviar sin GPS — el mensaje
+      // debe dejarlo claro. La bandera se limpia inmediatamente después
+      // de construir el mensaje (gpsLine corre de forma síncrona dentro de cb).
+      _gpsSinValidarConfirmado = true;
+      cb();
+      _gpsSinValidarConfirmado = false;
+    };
   } else {
     // Fallback si el overlay no existe en el DOM por algún motivo
-    _enviarTodoInner(soloPreview);
+    _gpsSinValidarConfirmado = true;
+    cb();
+    _gpsSinValidarConfirmado = false;
   }
 }
 
@@ -8425,29 +8450,44 @@ function actualizarEnviarBtn(){
 }
 
 // Override mostrarConfirmacion for new modes
+// FIX QUIRÚRGICO: estos 3 modos (cab/estacion/nota) armaban el mensaje
+// de forma SÍNCRONA con (la?gpsLine():'') — si la era 0 (Android sin fix
+// aún), el mensaje se construía y el preview se abría INMEDIATAMENTE,
+// sin pasar nunca por la espera de GPS. Ahora los 3 pasan por
+// _esperarGPSReal() igual que el modo co/guardia — el preview no se
+// arma hasta tener GPS real o confirmación explícita de enviar sin GPS.
 var _origMC = window.mostrarConfirmacion;
 window.mostrarConfirmacion = function(){
   if(!REC){ showToast('⚠️ Selecciona tu nombre'); return; }
   if(modoRegistro==='cab'){
     if(!_cabSel){ showToast('⚠️ Selecciona un cabezal'); return; }
     W = _cabSel;
-    var obs=document.getElementById('cabObsText');
-    var msg='🔧 *REPORTE CABEZAL*\n🛢 '+_cabSel.replace('-',' ')+'\n👷 '+REC+'\n📅 '+now()+'\n══════════════════\n'+(obs&&obs.value.trim()?'📝 '+obs.value.trim()+'\n':'')+(la?'\n'+gpsLine():'');
-    _abrirConfirmOverlay(msg); return;
+    _esperarGPSReal(function(){
+      var obs=document.getElementById('cabObsText');
+      var msg='🔧 *REPORTE CABEZAL*\n🛢 '+_cabSel.replace('-',' ')+'\n👷 '+REC+'\n📅 '+now()+'\n══════════════════\n'+(obs&&obs.value.trim()?'📝 '+obs.value.trim()+'\n':'')+'\n'+gpsLine();
+      _abrirConfirmOverlay(msg);
+    });
+    return;
   }
   if(modoRegistro==='estacion'){
     if(!_estSel){ showToast('⚠️ Selecciona una estación'); return; }
     W = _estSel;
-    var obs2=document.getElementById('estObsText');
-    var msg2='🏭 *REPORTE ESTACIÓN*\n'+_estSel.replace('-',' ')+'\n👷 '+REC+'\n📅 '+now()+'\n══════════════════\n'+(obs2&&obs2.value.trim()?'📝 '+obs2.value.trim()+'\n':'')+(la?'\n'+gpsLine():'');
-    _abrirConfirmOverlay(msg2); return;
+    _esperarGPSReal(function(){
+      var obs2=document.getElementById('estObsText');
+      var msg2='🏭 *REPORTE ESTACIÓN*\n'+_estSel.replace('-',' ')+'\n👷 '+REC+'\n📅 '+now()+'\n══════════════════\n'+(obs2&&obs2.value.trim()?'📝 '+obs2.value.trim()+'\n':'')+'\n'+gpsLine();
+      _abrirConfirmOverlay(msg2);
+    });
+    return;
   }
   if(modoRegistro==='nota'){
     var nt=document.getElementById('notaLibreText');
     if(!nt||!nt.value.trim()){ showToast('⚠️ Escribe una nota'); return; }
     W='NOTA';
-    var msg3='📝 *NOTA DE CAMPO*\n👷 '+REC+'\n📅 '+now()+'\n══════════════════\n'+nt.value.trim()+(la?'\n'+gpsLine():'');
-    _abrirConfirmOverlay(msg3); return;
+    _esperarGPSReal(function(){
+      var msg3='📝 *NOTA DE CAMPO*\n👷 '+REC+'\n📅 '+now()+'\n══════════════════\n'+nt.value.trim()+'\n'+gpsLine();
+      _abrirConfirmOverlay(msg3);
+    });
+    return;
   }
   // co / guardia → original flow with GPS check
   if(!W||W==='???'){ showToast('⚠️ Selecciona un pozo'); return; }
