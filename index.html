@@ -2602,7 +2602,43 @@ function calcDistanciaPozo(){
   return Math.round(_calcDist(WELL_COORDS_ALL[W]));
 }
 
+// FIX QUIRÚRGICO — restaura comportamiento previo a la última semana:
+// enviarTodo() leía la/lo tal cual estuvieran en ese instante, sin esperar.
+// enviarAlarma() SÍ espera activamente el GPS si aún no está listo (con
+// timeout de respaldo); enviarTodo() nunca tuvo esa misma protección.
+// Antes esto quedaba enmascarado porque los scripts CDN bloqueantes daban
+// varios segundos de margen a watchPosition() antes de que la pantalla
+// fuera interactiva. Al eliminar ese bloqueo (defer), el margen desapareció
+// y quedó expuesta la falta de esta espera. Se restaura el mismo patrón
+// que ya existe y funciona en enviarAlarma(), sin tocar nada más.
 function enviarTodo(soloPreview){
+  if(la === 0 && lo === 0 && navigator.geolocation){
+    var _etDone = false;
+    var _etTimeout = setTimeout(function(){
+      if(!_etDone){ _etDone = true; _enviarTodoInner(soloPreview); }
+    }, 4000);
+    navigator.geolocation.getCurrentPosition(
+      function(p){
+        if(_etDone) return;
+        _etDone = true;
+        clearTimeout(_etTimeout);
+        la = p.coords.latitude; lo = p.coords.longitude; ac = Math.round(p.coords.accuracy);
+        _enviarTodoInner(soloPreview);
+      },
+      function(){
+        if(_etDone) return;
+        _etDone = true;
+        clearTimeout(_etTimeout);
+        _enviarTodoInner(soloPreview);
+      },
+      {enableHighAccuracy:true, timeout:4000, maximumAge:0}
+    );
+    return;
+  }
+  _enviarTodoInner(soloPreview);
+}
+
+function _enviarTodoInner(soloPreview){
   if(!REC){showToast('⚠️ Selecciona tu nombre primero');return}
   // Validar que se haya escogido un pozo
   if(!W || W==='???'){showToast('⚠️ Selecciona el pozo antes de enviar');return}
