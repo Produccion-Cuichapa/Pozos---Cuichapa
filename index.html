@@ -1904,7 +1904,7 @@ var la=0,lo=0,ac=0,REC='',nightMode=false;
 // FIX GPS Android: detección de plataforma — Android sin red necesita
 // cold-start GNSS puro (sin AGPS), mucho más lento que iOS.
 var _isAndroidUA = /android/i.test(navigator.userAgent || '');
-var GPS_WAIT_MS  = _isAndroidUA ? 18000 : 5000; // 18s Android, 5s resto (iPhone ya funciona)
+var GPS_WAIT_MS  = _isAndroidUA ? 35000 : 5000; // 35s Android (espera GNSS real sin red), 5s resto (iPhone ya funciona)
 // Última ubicación válida conocida — persistente durante la sesión y en localStorage.
 var _lastGps = { lat:null, lon:null, acc:null, ts:0, source:null };
 (function _lastGpsRestore(){
@@ -1918,6 +1918,8 @@ function _lastGpsSave(lat,lon,acc,source){
   try{ localStorage.setItem('cuichapa_last_gps', JSON.stringify(_lastGps)); }catch(e){}
 }
 var _esperandoGPSEnvio = false; // anti-doble-envío mientras se espera GPS
+var _gpsSourceForReport     = 'none';  // 'fresh' | 'recent' | 'none' — fuente del último fix usado
+var _gpsCapturedAtForReport = null;    // ISO timestamp de cuándo se capturó esa ubicación
 var checks={trabajo:false,drenar:false,aforo:false,intermitente:false};
 var _nivTipo='ft', _medTipo='ft';
 // ← movido a config.js → CICLOS
@@ -2623,74 +2625,89 @@ function calcDistanciaPozo(){
   return Math.round(_calcDist(WELL_COORDS_ALL[W]));
 }
 
-// FIX QUIRÚRGICO GPS — espera realista en Android (cold-start GNSS sin
-// AGPS puede tardar 15-20s+ sin red), reutiliza última ubicación válida
-// conocida, y exige confirmación explícita antes de enviar sin GPS.
+// FIX QUIRÚRGICO GPS — Android debe comportarse como iPhone: capturar la
+// ubicación REAL del dispositivo (GNSS), aunque no haya señal, esperando
+// el tiempo necesario (hasta 35s en Android). La caché de última ubicación
+// (≤60s) es SOLO el último recurso si la captura activa se agota — nunca
+// el camino principal — y queda marcada como 'recent', no 'fresh'.
 // No toca enviarAlarma() (ya tiene su propio patrón funcional).
 function enviarTodo(soloPreview){
-  // Ya hay GPS listo — camino normal, sin demora.
-  if(la !== 0 && lo !== 0){ _enviarTodoInner(soloPreview); return; }
-
-  // Anti-doble-envío: si ya se está esperando GPS, no iniciar otra espera.
-  if(_esperandoGPSEnvio){
-    showToast('📍 Obteniendo GPS… espera unos segundos');
+  // GPS ya disponible ahora mismo (watchPosition continuo ya tiene fix) — fresh.
+  if(la !== 0 && lo !== 0){
+    _gpsSourceForReport = 'fresh';
+    _gpsCapturedAtForReport = new Date().toISOString();
+    _enviarTodoInner(soloPreview);
     return;
   }
 
-  // Reutilizar última ubicación válida conocida si es razonablemente reciente (≤5 min).
-  var _gpsCacheValido = _lastGps.lat && _lastGps.lon && (Date.now() - _lastGps.ts) < 60*1000; // máx 60s para validar presencia real
-  if(_gpsCacheValido){
-    la = _lastGps.lat; lo = _lastGps.lon; ac = _lastGps.acc || 50;
-    _enviarTodoInner(soloPreview);
-    // Refrescar en segundo plano para el próximo envío, sin bloquear este.
-    if(navigator.geolocation){
-      navigator.geolocation.getCurrentPosition(
-        function(p){ la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy); _lastGpsSave(la,lo,ac,'getCurrentPosition'); },
-        function(){}, {enableHighAccuracy:true, timeout:GPS_WAIT_MS, maximumAge:0}
-      );
-    }
+  // Anti-doble-envío: si ya se está esperando GPS, no iniciar otra espera/captura.
+  if(_esperandoGPSEnvio){
+    showToast('📍 Obteniendo GPS real del dispositivo… no te muevas del lugar');
     return;
   }
 
   if(!navigator.geolocation){
+    _gpsSourceForReport = 'none';
     _mostrarAvisoSinGPS(soloPreview);
     return;
   }
 
-  // Sin GPS y sin caché reciente: pedir ubicación activa, esperando lo
-  // necesario según plataforma (Android: 18s; resto: 5s, ya funcional).
   _esperandoGPSEnvio = true;
   var gb = document.getElementById('gpsBar');
-  if(gb){ gb.className='gps-bar'; gb.innerHTML='📡 Obteniendo GPS… espera unos segundos'; }
-  showToast('📍 Obteniendo GPS… espera unos segundos');
+  if(gb){ gb.className='gps-bar'; gb.innerHTML='📡 Obteniendo GPS real del dispositivo… no te muevas del lugar'; }
+  showToast('📍 Obteniendo GPS real del dispositivo… no te muevas del lugar');
 
-  var _etDone = false;
-  var _etTimeout = setTimeout(function(){
-    if(_etDone) return;
+  var _etDone   = false;
+  var _etWatchId = null;
+  var _etTimeout = null;
+
+  function _etCleanup(){
+    if(_etTimeout !== null){ clearTimeout(_etTimeout); _etTimeout = null; }
+    if(_etWatchId !== null){ navigator.geolocation.clearWatch(_etWatchId); _etWatchId = null; }
+  }
+
+  function _etFinish(lat, lon, acc, source){
+    if(_etDone) return; // garantiza UN solo resultado — sin doble envío
     _etDone = true;
     _esperandoGPSEnvio = false;
-    _mostrarAvisoSinGPS(soloPreview);
+    _etCleanup();
+    if(lat !== null){
+      la = lat; lo = lon; ac = acc;
+      _lastGpsSave(la, lo, ac, source === 'recent' ? 'cache' : 'getCurrentPosition');
+      _gpsSourceForReport = source;
+      _gpsCapturedAtForReport = new Date().toISOString();
+      if(source === 'recent'){
+        showToast('📍 Usando última ubicación reciente (no es un fix nuevo)');
+      }
+      _enviarTodoInner(soloPreview);
+    } else {
+      _gpsSourceForReport = 'none';
+      _mostrarAvisoSinGPS(soloPreview);
+    }
+  }
+
+  // Si se agota la espera completa (30-45s), recién ahí se evalúa la caché
+  // como ÚLTIMO recurso — nunca antes, nunca como sustituto principal.
+  _etTimeout = setTimeout(function(){
+    var _cacheOk = _lastGps.lat && _lastGps.lon && (Date.now() - _lastGps.ts) < 60*1000;
+    if(_cacheOk) _etFinish(_lastGps.lat, _lastGps.lon, _lastGps.acc || 50, 'recent');
+    else _etFinish(null, null, null, 'none');
   }, GPS_WAIT_MS);
 
+  // getCurrentPosition + watchPosition EN PARALELO: el que responda primero
+  // gana (vía _etFinish, protegido contra doble ejecución). No usar
+  // maximumAge:0 como única estrategia — watchPosition acepta hasta 5s de
+  // antigüedad del sistema, lo que puede acelerar el primer resultado real
+  // sin sacrificar que sea una ubicación genuina del dispositivo.
   navigator.geolocation.getCurrentPosition(
-    function(p){
-      if(_etDone) return;
-      _etDone = true;
-      _esperandoGPSEnvio = false;
-      clearTimeout(_etTimeout);
-      la = p.coords.latitude; lo = p.coords.longitude; ac = Math.round(p.coords.accuracy);
-      _lastGpsSave(la,lo,ac,'getCurrentPosition');
-      _enviarTodoInner(soloPreview);
-    },
-    function(){
-      // Error real de geolocalización (permiso denegado, GPS apagado, etc.)
-      if(_etDone) return;
-      _etDone = true;
-      _esperandoGPSEnvio = false;
-      clearTimeout(_etTimeout);
-      _mostrarAvisoSinGPS(soloPreview);
-    },
+    function(p){ _etFinish(p.coords.latitude, p.coords.longitude, Math.round(p.coords.accuracy), 'fresh'); },
+    function(){ /* el watch o el timeout deciden */ },
     {enableHighAccuracy:true, timeout:GPS_WAIT_MS, maximumAge:0}
+  );
+  _etWatchId = navigator.geolocation.watchPosition(
+    function(p){ _etFinish(p.coords.latitude, p.coords.longitude, Math.round(p.coords.accuracy), 'fresh'); },
+    function(){ /* ignorar errores intermitentes del watch */ },
+    {enableHighAccuracy:true, timeout:GPS_WAIT_MS, maximumAge:5000}
   );
 }
 
@@ -2698,7 +2715,7 @@ function enviarTodo(soloPreview){
 // existente de aviso GPS (gpsWarnOverlay), sin crear UI nueva.
 function _mostrarAvisoSinGPS(soloPreview){
   var gb = document.getElementById('gpsBar');
-  if(gb){ gb.className='gps-bar err'; gb.innerHTML='⚠️ Sin GPS — activa ubicación en tu celular'; }
+  if(gb){ gb.className='gps-bar err'; gb.innerHTML='⚠️ No se pudo obtener GPS real — activa ubicación en tu celular'; }
   var gpsWO = document.getElementById('gpsWarnOverlay');
   var gpsWT = document.getElementById('gpsWarnTitulo');
   var gpsWRadio = document.getElementById('gpsWarnBodyRadio');
@@ -7103,6 +7120,10 @@ function confirmarEnvio(){
       rango:     (_dist !== null && _dist <= 80) ? 'dentro' : 'fuera'
     };
   }
+  // FIX: trazabilidad de la fuente y momento de captura del GPS, para que
+  // el reporte refleje exactamente cuándo y cómo se obtuvo la ubicación.
+  var _gpsSource     = (la && lo) ? (_gpsSourceForReport || 'fresh') : 'none';
+  var _gpsCapturedAt = (la && lo) ? (_gpsCapturedAtForReport || new Date().toISOString()) : null;
   // Observaciones — prioridad: coObs > regObs > medObs
   var _obs = (document.getElementById('coObs') ||{}).value  ||
              (document.getElementById('regObs')||{}).value  ||
@@ -7151,6 +7172,8 @@ function confirmarEnvio(){
     },
     // GPS estructurado
     gps: _gpsObj,
+    gpsCapturedAt: _gpsCapturedAt,
+    gpsSource:     _gpsSource,
     // Observaciones
     observaciones: _obs,
     obs:           _obs
