@@ -3992,8 +3992,13 @@ function hcRender(){
           h+='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--txt2)">'+device+'</div>';
           if(nFotos>0) h+='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--txt2)">\ud83d\udcf8 '+nFotos+' foto'+(nFotos>1?'s':'')+'</div>';
           else h+='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--txt2)">Sin fotos</div>';
-          if(!r.esAlarma && (r.ptp!==null&&r.ptp!==undefined || r.ptr!==null&&r.ptr!==undefined || r.bls!==null&&r.bls!==undefined)){
-            h+='<button onclick="event.stopPropagation();abrirEditarReporte(\''+(r.id)+'\')" style="margin-left:auto;padding:7px 14px;border-radius:10px;border:1.5px solid #3b82f6;background:transparent;color:#3b82f6;font-size:12px;font-weight:800;cursor:pointer;font-family:Inter,sans-serif">✏️ Editar</button>';
+          // FIX: condición alineada con el sistema de corrección (15 min,
+          // no alarmas) — antes mostraba el botón sin chequear antigüedad.
+          if(!r.esAlarma && r.estado==='enviado' && _minutosDesdeEnvio(r) < 15){
+            // FIX: r.id es NUMBER (Date.now()) — pasarlo entre comillas lo
+            // convertía en string, y getReporte() usa === estricto, así que
+            // SIEMPRE devolvía null y el modal nunca se abría.
+            h+='<button onclick="event.stopPropagation();abrirEditarReporte('+r.id+')" style="margin-left:auto;padding:7px 14px;border-radius:10px;border:1.5px solid #3b82f6;background:transparent;color:#3b82f6;font-size:12px;font-weight:800;cursor:pointer;font-family:Inter,sans-serif">✏️ Editar</button>';
           }
           if(_puedeEliminar()){
             var _rid=String(r.id||r.fbKey||'');
