@@ -5373,9 +5373,15 @@ function enviarPushATodos(alarmaData){
 function guardarEnFirebase(reporte){
   if(!fbDB || !reporte.id) return;
   try{
-    // No subir fotos a Firebase (muy pesadas) — solo metadata
-    var deviceName = typeof hcGetDeviceName === 'function' ? hcGetDeviceName() : '';
-    fbDB.ref('reportes/' + reporte.id).set({
+    var ref = fbDB.ref('reportes/' + reporte.id);
+    // FIX: leer remoto antes de sobrescribir — nunca degradar un reporte ya 'sent'
+    // con una copia local vieja que aún diga 'pending' (evita el loop de procesarCola
+    // pisando el resultado de la Cloud Function).
+    ref.once('value').then(function(snap){
+      var remoto     = snap.val();
+      var yaEnviado  = !!(remoto && (remoto.whatsappStatus === 'sent' || remoto.whatsappSent === true));
+      var deviceName = typeof hcGetDeviceName === 'function' ? hcGetDeviceName() : '';
+    ref.set({
       // ── Identificación ────────────────────────────────────
       id:            reporte.id,
       fecha:         reporte.fecha,
@@ -5384,7 +5390,7 @@ function guardarEnFirebase(reporte){
       recorredor:    reporte.recorredor,
       perfil:        reporte.perfil        || null,
       modo:          reporte.modo          || 'co',
-      estado:        reporte.estado,
+      estado:        yaEnviado ? 'enviado' : reporte.estado,
       device:        deviceName,
       nFotos:        (reporte.fotos||[]).length,
         fotos:         (reporte.fotos||[]).map(function(f){ return {data:(f.data||f), nombre:(f.nombre||'')}; }),
@@ -5411,9 +5417,15 @@ function guardarEnFirebase(reporte){
       // ── Checks de registro ────────────────────────────────
       checks:        reporte.checks        || null,
       // ── WhatsApp Cloud Function trigger ───────────────────
-      whatsappStatus:    reporte.whatsappStatus    || null,
-      whatsappSent:      reporte.whatsappSent      || false,
+      // FIX: si el remoto ya está 'sent', conservar sent — nunca degradar a pending
+      whatsappStatus:    yaEnviado ? 'sent' : (reporte.whatsappStatus    || null),
+      whatsappSent:      yaEnviado ? true   : (reporte.whatsappSent      || false),
       whatsappDedupeKey: reporte.whatsappDedupeKey || null,
+      // Preservar campos que solo la Cloud Function escribe (se perdían en cada .set())
+      whatsappSentAt:        yaEnviado ? (remoto.whatsappSentAt        || null) : null,
+      whatsappTextStatus:    yaEnviado ? (remoto.whatsappTextStatus    || null) : null,
+      whatsappPhotoStatus:   yaEnviado ? (remoto.whatsappPhotoStatus   || null) : null,
+      ultraMsgResponseId:    yaEnviado ? (remoto.ultraMsgResponseId    || null) : null,
       // ── GPS estructurado ──────────────────────────────────
       gps:           reporte.gps           || null,
       // ── Observaciones ─────────────────────────────────────
@@ -5423,6 +5435,11 @@ function guardarEnFirebase(reporte){
       ultimoIntento: reporte.ultimoIntento || null,
       intentos:      reporte.intentos      || 0
     }).catch(function(e){ console.warn('FB write:', e); });
+    }).catch(function(e){
+      // Si falla la lectura del remoto (offline, etc.), no bloquear el guardado local;
+      // hacer el set normal — el peor caso es el comportamiento previo, no uno nuevo.
+      console.warn('FB read-before-write falló, set directo:', e);
+    });
   } catch(e){}
 }
 
@@ -5504,6 +5521,13 @@ function escucharFirebase(){
           // no sobreescriba la actualización del CF con el estado local 'pending'
           if(r.whatsappStatus)        localMap[r.id].whatsappStatus = r.whatsappStatus;
           if(r.whatsappSent === true) localMap[r.id].whatsappSent   = true;
+          // FIX: si el CF ya marcó 'sent', sincronizar también 'estado' local.
+          // Sin esto, getPendientes() sigue devolviendo el reporte para siempre
+          // (filtra por 'estado', no por whatsappStatus) y procesarCola() lo
+          // reenvía a Firebase cada 30s con la copia vieja, revirtiendo a 'pending'.
+          if(r.whatsappStatus === 'sent' || r.whatsappSent === true){
+            localMap[r.id].estado = 'enviado';
+          }
         } else {
           // Reporte de OTRO dispositivo — agregar sin fotos
           localMap[r.id] = {
