@@ -3656,6 +3656,9 @@ function hcRender(){
       else arr=arr.filter(function(r){ return r.recorredor===HC_FILTRO_REC; });
     }
     arr.sort(function(a,b){ return new Date(b.fecha)-new Date(a.fecha); });
+    // FIX rendimiento: nunca pintar más de 100 tarjetas de golpe (hcCargar puede
+    // traer hasta ~100 locales + 300 de Firebase = 400 items potenciales)
+    if(arr.length > 100) arr = arr.slice(0, 100);
     var list=document.getElementById('hcList');
     var countEl=document.getElementById('hcCount');
     if(!list) return;
@@ -5649,7 +5652,24 @@ function getHistorial(){
   catch(e){ return []; }
 }
 function saveHistorial(arr){
-  try{ localStorage.setItem(HIST_KEY, JSON.stringify(arr)); }
+  try{
+    // FIX rendimiento: ordenar por fecha, limitar a 100 más recientes,
+    // y liberar fotos base64 de reportes ya enviados (solo se conserva nFotos).
+    arr = arr.slice().sort(function(a,b){ return new Date(b.fecha) - new Date(a.fecha); });
+    if(arr.length > 100) arr = arr.slice(0, 100);
+    arr = arr.map(function(r){
+      var yaEnviado = (r.estado === 'enviado' || r.whatsappStatus === 'sent' || r.whatsappSent === true);
+      if(yaEnviado && r.fotos && r.fotos.length){
+        var copia = {};
+        for(var k in r){ if(r.hasOwnProperty(k)) copia[k] = r[k]; }
+        copia.nFotos = (typeof r.nFotos === 'number') ? r.nFotos : r.fotos.length;
+        copia.fotos  = []; // liberar base64 — ya no se necesita localmente
+        return copia;
+      }
+      return r;
+    });
+    localStorage.setItem(HIST_KEY, JSON.stringify(arr));
+  }
   catch(e){ console.warn('localStorage lleno'); }
 }
 function getReporte(id){
@@ -5663,7 +5683,7 @@ function guardarReporte(reporte){
   for(var i=0;i<arr.length;i++){ if(arr[i].id===reporte.id){ idx=i; break; } }
   if(idx >= 0) arr[idx] = reporte;
   else arr.unshift(reporte);
-  if(arr.length > 500) arr = arr.slice(0, 500);
+  if(arr.length > 100) arr = arr.slice(0, 100); // alineado con el cap de saveHistorial
   saveHistorial(arr);
   // Sincronizar a Firebase si hay señal
   if(fbDB) guardarEnFirebase(reporte);
@@ -7076,6 +7096,8 @@ function filtrarHist(f, btn){
 
 function renderHistorial(){
   var arr = getHistorial();
+  // FIX rendimiento: nunca pintar más de 100 tarjetas de golpe
+  if(arr.length > 100) arr = arr.slice(0, 100);
   var pendientes = getPendientes();
   if(histFiltro === 'alarmas'){
     arr = arr.filter(function(r){ return r.esAlarma; });
@@ -7995,63 +8017,6 @@ function initMapChips(){ initMapaView(); }
 
 // ── Badge en ícono de historial ───────────────────
 
-
-// Arrancar badge y revisión periódica
-actualizarBadgeHistorial();
-setInterval(actualizarBadgeHistorial, 5000);
-
-// ══ PWA SERVICE WORKER ══
-var APP_VERSION = 'v5'; // Cambiar con cada actualización
-
-if('serviceWorker' in navigator){
-  window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js').then(function(reg){
-
-      // Verificar actualizaciones inmediatamente
-      reg.update();
-
-      // Cuando haya un nuevo SW esperando → forzar activación
-      reg.addEventListener('updatefound', function(){
-        var newWorker = reg.installing;
-        if(!newWorker) return;
-        newWorker.addEventListener('statechange', function(){
-          if(newWorker.state === 'installed' && navigator.serviceWorker.controller){
-            // Hay nueva versión — forzar recarga silenciosa
-            newWorker.postMessage({ type: 'SKIP_WAITING' });
-          }
-        });
-      });
-
-      // Background Sync
-      if('SyncManager' in window){
-        reg.sync.register('enviar-reportes-pendientes').catch(function(){});
-      }
-    }).catch(function(){});
-
-    // Cuando el SW tome control → recargar para usar versión nueva
-    var refreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', function(){
-      if(!refreshing){
-        refreshing = true;
-        window.location.reload();
-      }
-    });
-
-    // Escuchar mensajes del SW
-    navigator.serviceWorker.addEventListener('message', function(e){
-      if(e.data && e.data.type === 'PROCESAR_COLA'){
-        procesarCola();
-      }
-    });
-  });
-
-  // Verificar actualizaciones cada 5 minutos (útil para celulares que dejan la app abierta)
-  setInterval(function(){
-    navigator.serviceWorker.getRegistration().then(function(reg){
-      if(reg) reg.update();
-    });
-  }, 5 * 60 * 1000);
-}
 
 // ══ INSTALL BANNER ══
 var deferredPrompt=null;
