@@ -173,6 +173,8 @@ exports.sendCorreccion = functions
     if(data.estado === 'enviado') return null; // por si se reescribe el nodo
 
     try{
+      var cfg = CFG();
+      console.log('[WA_BACKEND] sendCorreccion → group:', cfg.group || 'NO CONFIGURADO', '| correccionId:', correccionId);
       var result = await sendText(data.msg);
       if(!result.ok) throw new Error('UltraMsg correccion failed: ' + JSON.stringify(result.raw));
       await DB.ref('/correcciones/' + correccionId).update({
