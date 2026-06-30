@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Campo Cuichapa</title>
+  <link rel="stylesheet" href="./admin/admin.css">
+</head>
+<body>
+
+<!-- ── HEADER ────────────────────────────────────────────── -->
+<header class="admin-header">
+  <h1>🛢 <span>Cuichapa</span> Admin</h1>
+  <div class="header-right">
+    <span id="connStatus">● Verificando</span>
+    <span id="userLabel" style="font-size:13px;color:var(--txt2);display:none"></span>
+    <button onclick="doAdminLogout()" id="btnLogout"
+      style="display:none;padding:6px 12px;border-radius:8px;border:1px solid var(--border);
+             background:var(--surface2);color:var(--txt2);font-size:12px;cursor:pointer">
+      Salir
+    </button>
+  </div>
+</header>
+
+<!-- ── LOGIN ─────────────────────────────────────────────── -->
+<div id="loginScreen">
+  <div class="login-card">
+    <h2>Acceso administrativo</h2>
+    <p>Solo para supervisores, superintendentes e ingeniería.</p>
+    <label class="field-label">Usuario</label>
+    <input id="adminUser" class="field-input" type="text" placeholder="Usuario" autocomplete="username">
+    <label class="field-label">Contraseña</label>
+    <input id="adminPass" class="field-input" type="password" placeholder="Contraseña" autocomplete="current-password">
+    <button class="btn-primary" onclick="doAdminLogin()">Entrar</button>
+    <div id="loginErr"></div>
+  </div>
+</div>
+
+<!-- ── APP ───────────────────────────────────────────────── -->
+<div id="adminApp">
+
+  <div class="admin-main">
+
+    <!-- STATS -->
+    <div class="stat-grid">
+      <div class="stat-card accent-blue">
+        <div class="stat-label">Reportes hoy</div>
+        <div class="stat-value" id="statReportesHoy">—</div>
+        <div class="stat-sub" id="statSubR"></div>
+      </div>
+      <div class="stat-card accent-yellow">
+        <div class="stat-label">Pendientes</div>
+        <div class="stat-value" id="statPendientes">—</div>
+        <div class="stat-sub" id="statSubP"></div>
+      </div>
+      <div class="stat-card accent-red">
+        <div class="stat-label">Alarmas hoy</div>
+        <div class="stat-value" id="statAlarmasHoy">—</div>
+        <div class="stat-sub" id="statSubA"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total alarmas</div>
+        <div class="stat-value" id="statAlarmasTotal">—</div>
+        <div class="stat-sub">últimas 100</div>
+      </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filters-bar">
+      <div class="filter-group">
+        <label>Recorredor</label>
+        <select id="filterRec" class="filter-select">
+          <option value="">Todos</option>
+          <option>Manrique</option>
+          <option>Juan Carlos</option>
+          <option>Jose</option>
+          <option>Luis</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Desde</label>
+        <input id="filterDesde" class="filter-input" type="date">
+      </div>
+      <div class="filter-group">
+        <label>Hasta</label>
+        <input id="filterHasta" class="filter-input" type="date">
+      </div>
+      <div class="filter-group">
+        <label>Modo</label>
+        <select id="filterModo" class="filter-select">
+          <option value="">Todos</option>
+          <option value="co">C.O.</option>
+          <option value="guardia">Guardia</option>
+          <option value="cab">Cabezal</option>
+          <option value="estacion">Estación</option>
+          <option value="nota">Nota</option>
+        </select>
+      </div>
+      <div class="filter-group" style="flex:1;min-width:180px">
+        <label>Buscar</label>
+        <input id="filterSearch" class="filter-input" type="text" placeholder="pozo, recorredor, texto…">
+      </div>
+      <div class="filter-actions">
+        <button class="btn-filter primary" onclick="applyFilters()">Filtrar</button>
+        <button class="btn-filter" onclick="clearFilters()">Limpiar</button>
+        <button class="btn-filter" id="btnRefresh" onclick="loadData()">↺ Recargar</button>
+        <button class="btn-excel" onclick="exportarExcel()">⬇ Excel</button>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="section-tabs">
+      <button class="tab-btn active" id="tab-reportes" onclick="switchTab('reportes')">
+        Reportes <span class="tab-count" id="countR">—</span>
+      </button>
+      <button class="tab-btn" id="tab-alarmas" onclick="switchTab('alarmas')">
+        Alarmas <span class="tab-count" id="countA">—</span>
+      </button>
+    </div>
+
+    <!-- SECTION REPORTES -->
+    <div class="data-section active" id="section-reportes">
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Recorredor</th>
+              <th>Pozo</th>
+              <th>Modo</th>
+              <th>Mensaje</th>
+              <th class="hide-mobile">Fotos</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="reportesTbody">
+            <tr class="loading-row">
+              <td colspan="7"><span class="spinner"></span>Iniciando…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="paginationR" class="pagination"></div>
+    </div>
+
+    <!-- SECTION ALARMAS -->
+    <div class="data-section" id="section-alarmas">
+      <div id="alarmasList">
+        <div class="empty-state">
+          <span class="spinner"></span>
+        </div>
+      </div>
+      <div id="paginationA" class="pagination"></div>
+    </div>
+
+  </div><!-- /admin-main -->
+</div><!-- /adminApp -->
+
+<!-- Firebase compat -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<!-- XLSX para exportar -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+// Firebase config — mismo proyecto que index.html
+var firebaseConfig = {
+  apiKey:            "AIzaSyC38U_K7RttexQ0c2y1baOXOtghqY0OBJ8",
+  authDomain:        "pozos-cuichapa.firebaseapp.com",
+  databaseURL:       "https://pozos-cuichapa-default-rtdb.firebaseio.com",
+  projectId:         "pozos-cuichapa",
+  storageBucket:     "pozos-cuichapa.firebasestorage.app",
+  messagingSenderId: "119353457045",
+  appId:             "1:119353457045:web:9b37512f51ae5d764c9e9c"
+};
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+</script>
+
+<script src="./admin/admin.js"></script>
+
+</body>
+</html>
