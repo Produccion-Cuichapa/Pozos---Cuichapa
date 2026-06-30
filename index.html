@@ -3673,7 +3673,7 @@ function hcRender(){
         var meta=HC_META[tipo]||HC_META.co;
         var fecha=new Date(r.fecha);
         var fechaStr=isNaN(fecha.getTime())?'\u2014':fecha.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'})+' '+fecha.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
-        var enviado=r.estado==='enviado';
+        var enviado=(r.estado==='enviado' || r.whatsappStatus==='sent' || r.whatsappSent===true);
         var nFotos=r.nFotos||(r.fotos?r.fotos.length:0);
         var titulo=r.esAlarma?'\ud83d\udea8 '+(r.tipoAlarma||'Alarma'):(r.pozo?'C-'+r.pozo:meta.label);
         var rec=r.recorredor||'\u2014';
@@ -5633,7 +5633,12 @@ function actualizarEstadoReporte(id, estado, ultimoIntento){
 
 // ── Cola: pendientes por enviar ───────────────────
 function getPendientes(){
-  return getHistorial().filter(function(r){ return r.estado==='pendiente'||r.estado==='fallido'; });
+  return getHistorial().filter(function(r){
+    // FIX: excluir reportes ya marcados como enviados por whatsappStatus/whatsappSent,
+    // aunque el campo local 'estado' no se haya sincronizado todavía.
+    var yaEnviado = (r.estado === 'enviado' || r.whatsappStatus === 'sent' || r.whatsappSent === true);
+    return !yaEnviado && (r.estado==='pendiente'||r.estado==='fallido');
+  });
 }
 
 // ── Enviar a WhatsApp ─────────────────────────────
@@ -7053,8 +7058,12 @@ function renderHistorial(){
       ? 'Último intento: '+new Date(r.ultimoIntento).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})
       : 'Sin intentos aún';
     // Estado visual
+    // FIX: derivar 'enviado' también desde whatsappStatus/whatsappSent,
+    // porque el campo 'estado' puede no haberse sincronizado localmente
+    // (p.ej. reportes de otro dispositivo recibidos vía escucharFirebase).
+    var _yaEnviadoUI = (r.estado === 'enviado' || r.whatsappStatus === 'sent' || r.whatsappSent === true);
     var estadoHTML = '';
-    if(r.estado==='enviado'){
+    if(_yaEnviadoUI){
       estadoHTML = '<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;'
         +'border-radius:50%;background:#16a34a;flex-shrink:0" title="Enviado">✓</span>';
     } else {
