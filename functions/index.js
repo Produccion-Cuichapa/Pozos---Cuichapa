@@ -159,6 +159,37 @@ async function clearExpiredLock(reportId){
 // ══════════════════════════════════════════════════════════════
 // TRIGGER: /reportes/{reportId} onWrite
 // ══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// sendCorreccion — trigger INDEPENDIENTE para mensajes de corrección.
+// No toca /reportes ni su dedupe/lock — path propio /correcciones/{id}.
+// ════════════════════════════════════════════════════════════════
+exports.sendCorreccion = functions
+  .runWith({ timeoutSeconds: 60, memory: '256MB' })
+  .database.ref('/correcciones/{correccionId}')
+  .onCreate(async (snap, context) => {
+    var correccionId = context.params.correccionId;
+    var data = snap.val();
+    if(!data || !data.msg) return null;
+    if(data.estado === 'enviado') return null; // por si se reescribe el nodo
+
+    try{
+      var result = await sendText(data.msg);
+      if(!result.ok) throw new Error('UltraMsg correccion failed: ' + JSON.stringify(result.raw));
+      await DB.ref('/correcciones/' + correccionId).update({
+        estado: 'enviado',
+        enviadoAt: admin.database.ServerValue.TIMESTAMP
+      });
+      console.log('[WA_BACKEND] correccion enviada OK:', correccionId);
+    }catch(err){
+      console.error('[WA_BACKEND] correccion error:', correccionId, err.message);
+      await DB.ref('/correcciones/' + correccionId).update({
+        estado: 'failed',
+        error: err.message
+      });
+    }
+    return null;
+  });
+
 exports.sendWhatsApp = functions
   .runWith({ timeoutSeconds: 120, memory: '256MB' })
   .database.ref(REPORTES_PATH + '/{reportId}')
