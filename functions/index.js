@@ -263,7 +263,12 @@ exports.sendWhatsApp = functions
     // Las fotos ya fueron enviadas por UltraMsg.
     // Limpiarlas de Firebase impide que Android las descargue de nuevo.
     var sentAt = admin.database.ServerValue.TIMESTAMP;
-    var nFotosEnviadas = (after.fotos || []).length;
+    // FIX: Firebase Admin SDK puede devolver objeto {0:...,1:...} en lugar de array
+    // Array.isArray garantiza el conteo correcto en ambos casos
+    var _fRaw = after.fotos;
+    var nFotosEnviadas = Array.isArray(_fRaw) ? _fRaw.length
+                       : (_fRaw && typeof _fRaw === 'object') ? Object.keys(_fRaw).length
+                       : 0;
     await DB.ref(REPORTES_PATH + '/' + reportId).update({
       whatsappStatus:       'sent',
       whatsappSent:          true,
