@@ -38,14 +38,14 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.min.css"/>
 <link rel="stylesheet" href="./styles.css"/>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 // ══ DIAGNÓSTICO GLOBAL DE ERRORES ════════════════════════════
 window.onerror = function(msg, src, line, col, err){
@@ -3197,6 +3197,7 @@ var FB_CONFIG = {
 var FCM_VAPID = 'BPDP_k_ctkFgMwXdpdahv5I2pNU8s7Us45ARF2AfpXcRJr9za_jFKPrHoX8sTjfubhA6Sb_Txz4nugU44AbIgmI';
 var fbApp = null;
 var fbDB  = null;
+var fbConnected = false; // estado REAL de conexión RTDB (no solo SDK cargado)
 
 // ══ MODO ALARMA ══════════════════════════════════
 var alarmTipoSeleccionado = '';
@@ -5292,6 +5293,11 @@ function initFirebase(){
     if(fbApp){ escucharFirebase(); return; }
     fbApp = firebase.initializeApp(FB_CONFIG);
     fbDB  = firebase.database(fbApp);
+    // Detectar conexión REAL a RTDB (no solo que el SDK haya cargado)
+    fbDB.ref('.info/connected').on('value', function(snap){
+      fbConnected = snap.val() === true;
+      if(fbConnected) actualizarSyncBar('conectado');
+    });
     sincronizarAFirebase();
     escucharFirebase();
     escucharAlarmas();
@@ -5656,6 +5662,15 @@ function escucharFirebase(){
 // Inicializar Firebase cuando cargue la app
 window.addEventListener('load', function(){
   setTimeout(initFirebase, 1000);
+  // FIX offline-first: si tras ~4.5s de iniciar Firebase no hay conexión
+  // real (fbDB sin datos confirmados), avisar y seguir en modo local.
+  // No bloquea nada — solo informa; la app ya funciona local de por sí.
+  setTimeout(function(){
+    if(!fbDB || !fbConnected){
+      actualizarSyncBar('local');
+      if(typeof showToast === 'function') showToast('📡 Señal inestable, trabajando en modo local');
+    }
+  }, 4500);
 });
 // Re-intentar conexión Firebase cuando vuelva señal
 window.addEventListener('unload', function(){ try{ var m=document.getElementById('pwa-manifest'); if(m&&m.href&&m.href.startsWith('blob:'))URL.revokeObjectURL(m.href); }catch(e){} });
