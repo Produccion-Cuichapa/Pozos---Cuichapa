@@ -277,7 +277,8 @@ exports.sendWhatsApp = functions
       whatsappPhotoStatus:   fotosOk ? 'sent' : 'partial',
       ultraMsgResponseId:    ultraId  || null,
       fotos:                 null,          // FIX 0 Android: vaciar base64
-      nFotos:                nFotosEnviadas // conservar solo el conteo
+      nFotos:                nFotosEnviadas, // conservar solo el conteo
+      estado:                'enviado'       // FIX: frontend/admin decide visualmente con este campo
     });
 
     // Update registry to 'sent' (permanent — never retried)
