@@ -1901,6 +1901,23 @@ if(typeof WELL_COORDS_ALL!=='undefined' && !WELL_COORDS_ALL['131']){
   WELL_COORDS_ALL['131']={lat:17.942964,lon:-94.287442};
 }
 var la=0,lo=0,ac=0,REC='',nightMode=false;
+// FIX GPS Android: detección de plataforma — Android sin red necesita
+// cold-start GNSS puro (sin AGPS), mucho más lento que iOS.
+var _isAndroidUA = /android/i.test(navigator.userAgent || '');
+var GPS_WAIT_MS  = _isAndroidUA ? 18000 : 5000; // 18s Android, 5s resto (iPhone ya funciona)
+// Última ubicación válida conocida — persistente durante la sesión y en localStorage.
+var _lastGps = { lat:null, lon:null, acc:null, ts:0, source:null };
+(function _lastGpsRestore(){
+  try{
+    var saved = JSON.parse(localStorage.getItem('cuichapa_last_gps')||'null');
+    if(saved && saved.lat && saved.lon) _lastGps = saved;
+  }catch(e){}
+})();
+function _lastGpsSave(lat,lon,acc,source){
+  _lastGps = { lat:lat, lon:lon, acc:acc, ts:Date.now(), source:source };
+  try{ localStorage.setItem('cuichapa_last_gps', JSON.stringify(_lastGps)); }catch(e){}
+}
+var _esperandoGPSEnvio = false; // anti-doble-envío mientras se espera GPS
 var checks={trabajo:false,drenar:false,aforo:false,intermitente:false};
 var _nivTipo='ft', _medTipo='ft';
 // ← movido a config.js → CICLOS
@@ -1925,6 +1942,7 @@ try{if(localStorage.getItem('cuichapa_mode')==='night'){nightMode=true;document.
 
 function gpsOk(p){
   la=p.coords.latitude;lo=p.coords.longitude;ac=Math.round(p.coords.accuracy);
+  _lastGpsSave(la,lo,ac,'getCurrentPosition');
   var gb=document.getElementById('gpsBar');if(gb)gb.className='gps-bar ok';
   document.getElementById('gpsBar').innerHTML='✅ GPS listo · ±'+ac+' metros';
   document.getElementById('gpsCoords').style.display='block';
@@ -1942,7 +1960,7 @@ if(navigator.geolocation){
   navigator.geolocation.getCurrentPosition(gpsOk,gpsErr,{enableHighAccuracy:true,timeout:15000,maximumAge:0});
   // Actualización continua
   navigator.geolocation.watchPosition(
-    function(p){ la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy); },
+    function(p){ la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy); _lastGpsSave(la,lo,ac,'watchPosition'); },
     function(){},
     {enableHighAccuracy:true, maximumAge:10000, timeout:15000}
   );
@@ -2036,8 +2054,11 @@ function verificarPermisos(){
           if(gpsValIcon) gpsValIcon.textContent = '⚠️';
           if(gpsValTxt)  gpsValTxt.style.color = '#facc15';
           if(gpsValTxt)  gpsValTxt.textContent = 'Buscando...';
+          // FIX GPS Android: 8s era insuficiente para cold-start GNSS sin red.
+          // Usa el mismo timeout calibrado por plataforma que enviarTodo().
           navigator.geolocation.getCurrentPosition(
             function(p){ la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy);
+              _lastGpsSave(la,lo,ac,'getCurrentPosition');
               if(gpsValIcon) gpsValIcon.textContent='✅';
               if(gpsValTxt){ gpsValTxt.style.color='#4ade80'; gpsValTxt.textContent='±'+ac+'m'; }
             },
@@ -2045,7 +2066,7 @@ function verificarPermisos(){
               if(gpsValIcon) gpsValIcon.textContent='❌';
               if(gpsValTxt){ gpsValTxt.style.color='#f87171'; gpsValTxt.textContent='Sin señal'; }
             },
-            {enableHighAccuracy:true,timeout:8000,maximumAge:0}
+            {enableHighAccuracy:true,timeout:GPS_WAIT_MS,maximumAge:0}
           );
         }
       } else {
@@ -2602,40 +2623,96 @@ function calcDistanciaPozo(){
   return Math.round(_calcDist(WELL_COORDS_ALL[W]));
 }
 
-// FIX QUIRÚRGICO — restaura comportamiento previo a la última semana:
-// enviarTodo() leía la/lo tal cual estuvieran en ese instante, sin esperar.
-// enviarAlarma() SÍ espera activamente el GPS si aún no está listo (con
-// timeout de respaldo); enviarTodo() nunca tuvo esa misma protección.
-// Antes esto quedaba enmascarado porque los scripts CDN bloqueantes daban
-// varios segundos de margen a watchPosition() antes de que la pantalla
-// fuera interactiva. Al eliminar ese bloqueo (defer), el margen desapareció
-// y quedó expuesta la falta de esta espera. Se restaura el mismo patrón
-// que ya existe y funciona en enviarAlarma(), sin tocar nada más.
+// FIX QUIRÚRGICO GPS — espera realista en Android (cold-start GNSS sin
+// AGPS puede tardar 15-20s+ sin red), reutiliza última ubicación válida
+// conocida, y exige confirmación explícita antes de enviar sin GPS.
+// No toca enviarAlarma() (ya tiene su propio patrón funcional).
 function enviarTodo(soloPreview){
-  if(la === 0 && lo === 0 && navigator.geolocation){
-    var _etDone = false;
-    var _etTimeout = setTimeout(function(){
-      if(!_etDone){ _etDone = true; _enviarTodoInner(soloPreview); }
-    }, 4000);
-    navigator.geolocation.getCurrentPosition(
-      function(p){
-        if(_etDone) return;
-        _etDone = true;
-        clearTimeout(_etTimeout);
-        la = p.coords.latitude; lo = p.coords.longitude; ac = Math.round(p.coords.accuracy);
-        _enviarTodoInner(soloPreview);
-      },
-      function(){
-        if(_etDone) return;
-        _etDone = true;
-        clearTimeout(_etTimeout);
-        _enviarTodoInner(soloPreview);
-      },
-      {enableHighAccuracy:true, timeout:4000, maximumAge:0}
-    );
+  // Ya hay GPS listo — camino normal, sin demora.
+  if(la !== 0 && lo !== 0){ _enviarTodoInner(soloPreview); return; }
+
+  // Anti-doble-envío: si ya se está esperando GPS, no iniciar otra espera.
+  if(_esperandoGPSEnvio){
+    showToast('📍 Obteniendo GPS… espera unos segundos');
     return;
   }
-  _enviarTodoInner(soloPreview);
+
+  // Reutilizar última ubicación válida conocida si es razonablemente reciente (≤5 min).
+  var _gpsCacheValido = _lastGps.lat && _lastGps.lon && (Date.now() - _lastGps.ts) < 60*1000; // máx 60s para validar presencia real
+  if(_gpsCacheValido){
+    la = _lastGps.lat; lo = _lastGps.lon; ac = _lastGps.acc || 50;
+    _enviarTodoInner(soloPreview);
+    // Refrescar en segundo plano para el próximo envío, sin bloquear este.
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(
+        function(p){ la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy); _lastGpsSave(la,lo,ac,'getCurrentPosition'); },
+        function(){}, {enableHighAccuracy:true, timeout:GPS_WAIT_MS, maximumAge:0}
+      );
+    }
+    return;
+  }
+
+  if(!navigator.geolocation){
+    _mostrarAvisoSinGPS(soloPreview);
+    return;
+  }
+
+  // Sin GPS y sin caché reciente: pedir ubicación activa, esperando lo
+  // necesario según plataforma (Android: 18s; resto: 5s, ya funcional).
+  _esperandoGPSEnvio = true;
+  var gb = document.getElementById('gpsBar');
+  if(gb){ gb.className='gps-bar'; gb.innerHTML='📡 Obteniendo GPS… espera unos segundos'; }
+  showToast('📍 Obteniendo GPS… espera unos segundos');
+
+  var _etDone = false;
+  var _etTimeout = setTimeout(function(){
+    if(_etDone) return;
+    _etDone = true;
+    _esperandoGPSEnvio = false;
+    _mostrarAvisoSinGPS(soloPreview);
+  }, GPS_WAIT_MS);
+
+  navigator.geolocation.getCurrentPosition(
+    function(p){
+      if(_etDone) return;
+      _etDone = true;
+      _esperandoGPSEnvio = false;
+      clearTimeout(_etTimeout);
+      la = p.coords.latitude; lo = p.coords.longitude; ac = Math.round(p.coords.accuracy);
+      _lastGpsSave(la,lo,ac,'getCurrentPosition');
+      _enviarTodoInner(soloPreview);
+    },
+    function(){
+      // Error real de geolocalización (permiso denegado, GPS apagado, etc.)
+      if(_etDone) return;
+      _etDone = true;
+      _esperandoGPSEnvio = false;
+      clearTimeout(_etTimeout);
+      _mostrarAvisoSinGPS(soloPreview);
+    },
+    {enableHighAccuracy:true, timeout:GPS_WAIT_MS, maximumAge:0}
+  );
+}
+
+// Advertencia explícita antes de enviar sin GPS — reutiliza el overlay
+// existente de aviso GPS (gpsWarnOverlay), sin crear UI nueva.
+function _mostrarAvisoSinGPS(soloPreview){
+  var gb = document.getElementById('gpsBar');
+  if(gb){ gb.className='gps-bar err'; gb.innerHTML='⚠️ Sin GPS — activa ubicación en tu celular'; }
+  var gpsWO = document.getElementById('gpsWarnOverlay');
+  var gpsWT = document.getElementById('gpsWarnTitulo');
+  var gpsWRadio = document.getElementById('gpsWarnBodyRadio');
+  var gpsWNoGps = document.getElementById('gpsWarnBodyNoGps');
+  if(gpsWO){
+    if(gpsWT) gpsWT.textContent = 'Sin ubicación GPS';
+    if(gpsWRadio) gpsWRadio.style.display = 'none';
+    if(gpsWNoGps) gpsWNoGps.style.display = 'block';
+    gpsWO.style.display = 'flex';
+    window._gpsContinueCallback = function(){ _enviarTodoInner(soloPreview); };
+  } else {
+    // Fallback si el overlay no existe en el DOM por algún motivo
+    _enviarTodoInner(soloPreview);
+  }
 }
 
 function _enviarTodoInner(soloPreview){
@@ -2681,6 +2758,11 @@ function _enviarTodoInner(soloPreview){
     if(gpsWD) gpsWD.textContent = distTxt2 || '?';
     if(gpsWP) gpsWP.textContent = nombreStr;
     if(gpsWO){
+      var _gwR = document.getElementById('gpsWarnBodyRadio');
+      var _gwN = document.getElementById('gpsWarnBodyNoGps');
+      if(_gwR) _gwR.style.display = 'block';
+      if(_gwN) _gwN.style.display = 'none';
+      if(gpsWT) gpsWT.textContent = 'Fuera del rango del pozo';
       gpsWO.style.display = 'flex';
       window._gpsContinueCallback = function(){ _continuarEnvio(); };
     }
@@ -8242,8 +8324,13 @@ document.addEventListener('click',      function() { if(typeof initAlarmAudio ==
   <div style="background:#fff;border-radius:20px 20px 0 0;padding:28px 20px 36px;width:100%;max-width:480px">
     <div style="font-size:36px;text-align:center;margin-bottom:10px">📍</div>
     <div style="font-size:17px;font-weight:700;color:#1e2761;text-align:center;margin-bottom:8px" id="gpsWarnTitulo">Fuera del rango del pozo</div>
-    <div style="font-size:13px;color:#6b7280;text-align:center;margin-bottom:6px">Estás a <strong id="gpsWarnDist">—</strong> de <strong id="gpsWarnPozo"></strong>.</div>
-    <div style="font-size:13px;color:#6b7280;text-align:center;margin-bottom:24px">Radio permitido: <strong>80 metros</strong>. ¿Enviar de todas formas?</div>
+    <div id="gpsWarnBodyRadio">
+      <div style="font-size:13px;color:#6b7280;text-align:center;margin-bottom:6px">Estás a <strong id="gpsWarnDist">—</strong> de <strong id="gpsWarnPozo"></strong>.</div>
+      <div style="font-size:13px;color:#6b7280;text-align:center;margin-bottom:24px">Radio permitido: <strong>80 metros</strong>. ¿Enviar de todas formas?</div>
+    </div>
+    <div id="gpsWarnBodyNoGps" style="display:none">
+      <div style="font-size:13px;color:#6b7280;text-align:center;margin-bottom:24px">No se pudo obtener GPS.<br>Este reporte saldrá <strong>sin validación de ubicación</strong>.</div>
+    </div>
     <div style="display:flex;gap:10px">
       <button onclick="document.getElementById('gpsWarnOverlay').style.display='none'" style="flex:1;padding:14px;border-radius:12px;border:1.5px solid #e5e7eb;background:#fff;color:#374151;font-size:14px;font-weight:600;cursor:pointer">✕ Cancelar</button>
       <button onclick="document.getElementById('gpsWarnOverlay').style.display='none';if(window._gpsContinueCallback){var cb=window._gpsContinueCallback;window._gpsContinueCallback=null;cb();}else{_continuarEnvio();}" style="flex:1;padding:14px;border-radius:12px;border:none;background:#1e40af;color:#fff;font-size:14px;font-weight:700;cursor:pointer">Enviar de todas formas</button>
