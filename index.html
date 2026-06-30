@@ -762,6 +762,10 @@ function ppToggle(id){
 <!-- GPS compacto -->
 <div class="gps-bar" id="gpsBar">📡 Obteniendo ubicación GPS...</div>
 <div class="gps-coords" id="gpsCoords"></div>
+<div style="text-align:right;margin:2px 0 4px">
+  <button onclick="document.getElementById('gpsDiagPanel').style.display=document.getElementById('gpsDiagPanel').style.display==='none'?'block':'none'" style="background:none;border:none;color:#9ca3af;font-size:10px;text-decoration:underline;cursor:pointer;padding:2px">🔧 Diagnóstico GPS</button>
+</div>
+<div id="gpsDiagPanel" style="display:none;background:#0d1525;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:11px;color:#cbd5e1;line-height:1.7;font-family:monospace"></div>
 
 <!-- Contador de visitas (oculto, mantiene funcionalidad) -->
 <div id="cnt-panel" class="cnt-panel" style="margin-bottom:10px;display:none!important">
@@ -846,53 +850,8 @@ function ppToggle(id){
     </div>
     <div id="editReporteSub" style="font-size:12px;color:var(--txt2);margin-bottom:16px;font-family:Inter,sans-serif"></div>
 
-    <!-- PTP -->
-    <div style="background:var(--surface2);border-radius:14px;padding:14px 16px;margin-bottom:10px">
-      <div style="font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.08em;margin-bottom:8px">TUBERÍA DE PRODUCCIÓN (PTP)</div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="flex:1;text-align:center">
-          <div style="font-size:10px;color:var(--txt2);margin-bottom:4px">Valor actual</div>
-          <div id="editPtpOld" style="font-size:18px;font-weight:700;color:var(--txt);text-decoration:line-through;opacity:.5">—</div>
-        </div>
-        <div style="font-size:20px;color:var(--txt2)">→</div>
-        <div style="flex:1;text-align:center">
-          <div style="font-size:10px;color:var(--txt2);margin-bottom:4px">Nuevo valor</div>
-          <input id="editPtpNew" type="number" step="0.1" placeholder="kg/cm²" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--txt);font-size:16px;font-weight:700;text-align:center;font-family:Inter,sans-serif">
-        </div>
-      </div>
-    </div>
-
-    <!-- PTR -->
-    <div style="background:var(--surface2);border-radius:14px;padding:14px 16px;margin-bottom:10px">
-      <div style="font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.08em;margin-bottom:8px">TUBERÍA DE REVESTIMIENTO (PTR)</div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="flex:1;text-align:center">
-          <div style="font-size:10px;color:var(--txt2);margin-bottom:4px">Valor actual</div>
-          <div id="editPtrOld" style="font-size:18px;font-weight:700;color:var(--txt);text-decoration:line-through;opacity:.5">—</div>
-        </div>
-        <div style="font-size:20px;color:var(--txt2)">→</div>
-        <div style="flex:1;text-align:center">
-          <div style="font-size:10px;color:var(--txt2);margin-bottom:4px">Nuevo valor</div>
-          <input id="editPtrNew" type="number" step="0.1" placeholder="kg/cm²" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--txt);font-size:16px;font-weight:700;text-align:center;font-family:Inter,sans-serif">
-        </div>
-      </div>
-    </div>
-
-    <!-- BLS -->
-    <div style="background:var(--surface2);border-radius:14px;padding:14px 16px;margin-bottom:10px">
-      <div style="font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.08em;margin-bottom:8px">PRODUCCIÓN (BLS)</div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="flex:1;text-align:center">
-          <div style="font-size:10px;color:var(--txt2);margin-bottom:4px">Valor actual</div>
-          <div id="editBlsOld" style="font-size:18px;font-weight:700;color:var(--txt);text-decoration:line-through;opacity:.5">—</div>
-        </div>
-        <div style="font-size:20px;color:var(--txt2)">→</div>
-        <div style="flex:1;text-align:center">
-          <div style="font-size:10px;color:var(--txt2);margin-bottom:4px">Nuevo valor</div>
-          <input id="editBlsNew" type="number" step="0.5" placeholder="bls" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--txt);font-size:16px;font-weight:700;text-align:center;font-family:Inter,sans-serif">
-        </div>
-      </div>
-    </div>
+    <!-- Campos correctables — generados dinámicamente por JS (abrirEditarReporte) -->
+    <div id="editFieldsContainer"></div>
 
     <!-- Nota -->
     <div style="margin-bottom:16px">
@@ -1921,6 +1880,38 @@ var _esperandoGPSEnvio = false; // anti-doble-envío mientras se espera GPS
 var _gpsSourceForReport     = 'none';  // 'fresh' | 'recent' | 'none' — fuente del último fix usado
 var _gpsCapturedAtForReport = null;    // ISO timestamp de cuándo se capturó esa ubicación
 var _gpsSinValidarConfirmado = false;  // true SOLO durante la construcción del mensaje tras "Enviar sin GPS"
+// ── Diagnóstico GPS visible en pantalla ──────────────────────────
+var _gpsLastError = null; // 'PERMISSION_DENIED' | 'POSITION_UNAVAILABLE' | 'TIMEOUT' | null
+var GPS_SUPERVISOR_PIN = '4477'; // clave para habilitar "enviar sin GPS" en operación normal
+function _actualizarDiagnosticoGPS(){
+  var panel = document.getElementById('gpsDiagPanel');
+  if(!panel) return;
+  var edadTxt = '—';
+  if(_lastGps.ts){
+    var edadS = Math.round((Date.now() - _lastGps.ts)/1000);
+    edadTxt = edadS + 's';
+  }
+  var permTxt = '—';
+  if(navigator.permissions && navigator.permissions.query){
+    navigator.permissions.query({name:'geolocation'}).then(function(r){
+      var pEl = document.getElementById('gpsDiagPerm');
+      if(pEl) pEl.textContent = r.state;
+    }).catch(function(){});
+  }
+  var posibleAvion = navigator.onLine === false;
+  panel.innerHTML =
+    'Permiso: <span id="gpsDiagPerm">' + permTxt + '</span><br>' +
+    'lat: ' + (la || '—') + '<br>' +
+    'lon: ' + (lo || '—') + '<br>' +
+    'precisión: ' + (ac ? '±'+ac+'m' : '—') + '<br>' +
+    'edad última ubicación: ' + edadTxt + '<br>' +
+    'fuente: ' + (_gpsSourceForReport || 'none') + '<br>' +
+    'último error: ' + (_gpsLastError || '—') + '<br>' +
+    'posible modo avión / sin red: ' + (posibleAvion ? 'SÍ' : 'no') + '<br>' +
+    'HTTPS: ' + (location.protocol === 'https:' ? 'sí' : 'NO ⚠️') + '<br>' +
+    'navigator.geolocation: ' + (navigator.geolocation ? 'disponible' : 'NO DISPONIBLE ⚠️') + '<br>' +
+    'plataforma: ' + (_isAndroidUA ? 'Android' : 'otro');
+}
 var checks={trabajo:false,drenar:false,aforo:false,intermitente:false};
 var _nivTipo='ft', _medTipo='ft';
 // ← movido a config.js → CICLOS
@@ -2678,31 +2669,54 @@ function calcDistanciaPozo(){
 // usuario confirme explícitamente "Enviar sin GPS" — ningún caller puede
 // armar mensaje ni abrir preview antes de eso.
 // No toca enviarAlarma() (ya tiene su propio patrón funcional).
-function _esperarGPSReal(cb){
+// ════════════════════════════════════════════════════════════════
+// requireGpsBeforeReport(callback, options) — GATE ÚNICO Y OBLIGATORIO
+// Ningún reporte (CO, Nivel, Guardia, Cabezal, Estación, Nota) puede
+// armar mensaje ni abrir preview sin pasar por aquí. Espera hasta 90s
+// en Android (cold-start GNSS real, sin red). Sin "enviar sin GPS"
+// automático — solo con clave de supervisor.
+// options.allowSkip (interno, no usar desde fuera): true únicamente
+// tras validar el PIN de supervisor.
+// ════════════════════════════════════════════════════════════════
+var GPS_WAIT_MS_ANDROID = 90000; // 90s — espera real GNSS sin red en Android
+function requireGpsBeforeReport(cb, options){
+  options = options || {};
+  var waitMs = _isAndroidUA ? GPS_WAIT_MS_ANDROID : GPS_WAIT_MS;
+
   // GPS ya disponible ahora mismo (watchPosition continuo ya tiene fix) — fresh.
   if(la !== 0 && lo !== 0){
     _gpsSourceForReport = 'fresh';
     _gpsCapturedAtForReport = new Date().toISOString();
+    _actualizarDiagnosticoGPS();
     cb();
     return;
   }
 
   // Anti-doble-envío: si ya se está esperando GPS, no iniciar otra espera/captura.
   if(_esperandoGPSEnvio){
-    showToast('📍 Obteniendo GPS real del dispositivo… no te muevas del lugar');
+    showToast('📍 Buscando GPS real… espera, ya está en proceso');
     return; // NO se llama cb — el usuario debe esperar a que termine la espera en curso
   }
 
   if(!navigator.geolocation){
+    _gpsLastError = 'POSITION_UNAVAILABLE';
     _gpsSourceForReport = 'none';
+    _actualizarDiagnosticoGPS();
     _mostrarAvisoSinGPS(cb);
     return;
   }
 
   _esperandoGPSEnvio = true;
+  _gpsLastError = null;
+  var _etStart = Date.now();
   var gb = document.getElementById('gpsBar');
-  if(gb){ gb.className='gps-bar'; gb.innerHTML='📡 Obteniendo GPS real del dispositivo… no te muevas del lugar'; }
-  showToast('📍 Obteniendo GPS real del dispositivo… no te muevas del lugar');
+  if(gb){ gb.className='gps-bar'; gb.innerHTML='📡 Buscando GPS real del dispositivo… sal al exterior y no te muevas (0s)'; }
+
+  // Contador de tiempo transcurrido visible mientras se espera.
+  var _etTickInterval = setInterval(function(){
+    var secs = Math.round((Date.now() - _etStart)/1000);
+    if(gb) gb.innerHTML = '📡 Buscando GPS real del dispositivo… sal al exterior y no te muevas (' + secs + 's)';
+  }, 1000);
 
   var _etDone   = false;
   var _etWatchId = null;
@@ -2711,6 +2725,7 @@ function _esperarGPSReal(cb){
   function _etCleanup(){
     if(_etTimeout !== null){ clearTimeout(_etTimeout); _etTimeout = null; }
     if(_etWatchId !== null){ navigator.geolocation.clearWatch(_etWatchId); _etWatchId = null; }
+    if(_etTickInterval !== null){ clearInterval(_etTickInterval); _etTickInterval = null; }
   }
 
   function _etFinish(lat, lon, acc, source){
@@ -2724,23 +2739,46 @@ function _esperarGPSReal(cb){
       _gpsSourceForReport = source;
       _gpsCapturedAtForReport = new Date().toISOString();
       _actualizarMapsLink(la, lo);
+      _actualizarDiagnosticoGPS();
       if(source === 'recent'){
         showToast('📍 Usando última ubicación reciente (no es un fix nuevo)');
       }
       cb();
     } else {
       _gpsSourceForReport = 'none';
+      _actualizarDiagnosticoGPS();
+      var gb2 = document.getElementById('gpsBar');
+      if(gb2){ gb2.className='gps-bar err'; gb2.innerHTML='⚠️ Android no entregó ubicación GPS'; }
+      if(_isAndroidUA){
+        alert('Android no entregó ubicación GPS. Abre Google Maps hasta que aparezca el punto azul, vuelve a la app e intenta de nuevo.');
+      }
       _mostrarAvisoSinGPS(cb);
     }
   }
 
-  // Si se agota la espera completa (30-45s), recién ahí se evalúa la caché
-  // como ÚLTIMO recurso — nunca antes, nunca como sustituto principal.
+  // Se agota la espera completa (90s Android / 5s resto). Recién ahí se
+  // evalúa la caché (≤60s) como ÚLTIMO recurso — nunca antes.
   _etTimeout = setTimeout(function(){
+    _gpsLastError = 'TIMEOUT';
     var _cacheOk = _lastGps.lat && _lastGps.lon && (Date.now() - _lastGps.ts) < 60*1000;
     if(_cacheOk) _etFinish(_lastGps.lat, _lastGps.lon, _lastGps.acc || 50, 'recent');
     else _etFinish(null, null, null, 'none');
-  }, GPS_WAIT_MS);
+  }, waitMs);
+
+  function _etError(err){
+    if(err && err.code === 1) _gpsLastError = 'PERMISSION_DENIED';
+    else if(err && err.code === 2) _gpsLastError = 'POSITION_UNAVAILABLE';
+    else if(err && err.code === 3) _gpsLastError = 'TIMEOUT';
+    _actualizarDiagnosticoGPS();
+    // Permiso denegado: no tiene sentido seguir esperando, terminar ya.
+    if(err && err.code === 1){
+      var _cacheOk2 = _lastGps.lat && _lastGps.lon && (Date.now() - _lastGps.ts) < 60*1000;
+      if(_cacheOk2) _etFinish(_lastGps.lat, _lastGps.lon, _lastGps.acc || 50, 'recent');
+      else _etFinish(null, null, null, 'none');
+    }
+    // POSITION_UNAVAILABLE/TIMEOUT del watch o de getCurrentPosition: dejar
+    // que el otro método o el timeout general decidan, no terminar aún.
+  }
 
   // getCurrentPosition + watchPosition EN PARALELO: el que responda primero
   // gana (vía _etFinish, protegido contra doble ejecución). No usar
@@ -2749,18 +2787,47 @@ function _esperarGPSReal(cb){
   // sin sacrificar que sea una ubicación genuina del dispositivo.
   navigator.geolocation.getCurrentPosition(
     function(p){ _etFinish(p.coords.latitude, p.coords.longitude, Math.round(p.coords.accuracy), 'fresh'); },
-    function(){ /* el watch o el timeout deciden */ },
-    {enableHighAccuracy:true, timeout:GPS_WAIT_MS, maximumAge:0}
+    _etError,
+    {enableHighAccuracy:true, timeout:waitMs, maximumAge:0}
   );
   _etWatchId = navigator.geolocation.watchPosition(
     function(p){ _etFinish(p.coords.latitude, p.coords.longitude, Math.round(p.coords.accuracy), 'fresh'); },
-    function(){ /* ignorar errores intermitentes del watch */ },
-    {enableHighAccuracy:true, timeout:GPS_WAIT_MS, maximumAge:5000}
+    _etError,
+    {enableHighAccuracy:true, timeout:waitMs, maximumAge:5000}
   );
 }
 
+// Alias de compatibilidad — todo el código existente que ya llama
+// _esperarGPSReal() automáticamente queda cubierto por el gate único.
+function _esperarGPSReal(cb){ requireGpsBeforeReport(cb); }
+
 function enviarTodo(soloPreview){
   _esperarGPSReal(function(){ _enviarTodoInner(soloPreview); });
+}
+
+// Botón único del overlay GPS: decide si requiere PIN de supervisor
+// (caso "sin GPS") o no (caso "fuera de radio", GPS válido, decisión normal
+// del recorredor).
+function _gpsWarnConfirmar(){
+  var gpsWNoGps = document.getElementById('gpsWarnBodyNoGps');
+  var esCasoSinGPS = gpsWNoGps && gpsWNoGps.style.display !== 'none';
+
+  if(esCasoSinGPS){
+    var pin = prompt('Para enviar un reporte SIN GPS se requiere clave de supervisor:');
+    if(pin !== GPS_SUPERVISOR_PIN){
+      if(pin !== null) showToast('❌ Clave incorrecta — reporte no enviado');
+      return; // cancela: no se llama el callback, no hay envío
+    }
+  }
+
+  document.getElementById('gpsWarnOverlay').style.display = 'none';
+  if(window._gpsContinueCallback){
+    var cb = window._gpsContinueCallback;
+    window._gpsContinueCallback = null;
+    cb();
+  } else {
+    _continuarEnvio();
+  }
 }
 
 // Advertencia explícita antes de enviar sin GPS — reutiliza el overlay
@@ -4971,109 +5038,215 @@ function escucharConfigFirebase(){
 
 // ══ EDITAR / CORREGIR REPORTE ══════════════════════════
 var _editReporteId = null;
+var _editOriginalReporte = null; // copia COMPLETA leída de Firebase, antes de cualquier cambio
+var EDIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutos
+
+// Campos correctables — etiqueta + si es numérico. GPS/distancia/radio/
+// usuario/fecha/hora original quedan deliberadamente fuera de esta lista.
+var CORRECCION_FIELDS = [
+  { key:'estatus',       label:'Estatus' },
+  { key:'fluye',         label:'Fluye' },
+  { key:'sap',           label:'SAP' },
+  { key:'estrang',       label:'Estrangulador' },
+  { key:'ptp',           label:'PTP',  unit:'kg/cm²', numeric:true },
+  { key:'ldd',           label:'LDD',  numeric:true },
+  { key:'ptr',           label:'PTR',  unit:'kg/cm²', numeric:true },
+  { key:'epm',           label:'EPM',  numeric:true },
+  { key:'carrera',       label:'Carrera', numeric:true },
+  { key:'bls',           label:'Nivel (bls)', numeric:true },
+  { key:'observaciones', label:'Observaciones', text:true }
+];
+
+function _minutosDesdeEnvio(r){
+  return (Date.now() - new Date(r.fecha).getTime()) / 60000;
+}
 
 function abrirEditarReporte(id){
-  var r = getReporte(id);
-  if(!r){ showToast('❌ Reporte no encontrado'); return; }
-  _editReporteId = id;
+  var rLocal = getReporte(id);
+  if(!rLocal){ showToast('❌ Reporte no encontrado'); return; }
 
-  var modal = document.getElementById('editReporteModal');
-  if(!modal) return;
-  modal.style.display = 'flex';
+  if(rLocal.esAlarma){ showToast('⚠️ Las alarmas no se corrigen desde aquí'); return; }
 
-  // Subtitle
-  var sub = document.getElementById('editReporteSub');
-  if(sub) sub.textContent = 'C-'+r.pozo+' · '+r.recorredor;
+  if(_minutosDesdeEnvio(rLocal) >= 15){
+    showToast('⏱️ Este reporte ya no puede modificarse.');
+    return;
+  }
 
-  // Show current values
-  var ptpOld = document.getElementById('editPtpOld');
-  var ptrOld = document.getElementById('editPtrOld');
-  var blsOld = document.getElementById('editBlsOld');
-  if(ptpOld) ptpOld.textContent = r.ptp !== null && r.ptp !== undefined ? r.ptp+' kg/cm²' : '—';
-  if(ptrOld) ptrOld.textContent = r.ptr !== null && r.ptr !== undefined ? r.ptr+' kg/cm²' : '—';
-  if(blsOld) blsOld.textContent = r.bls !== null && r.bls !== undefined ? r.bls+' bls' : '—';
+  // FIX: leer SIEMPRE desde Firebase, no de la copia local — saveHistorial()
+  // ya recorta campos no esenciales en reportes enviados (rendimiento), así
+  // que la copia local puede no tener estatus/fluye/sap/etc. Firebase
+  // siempre conserva el reporte completo.
+  function _continuarConDatos(r){
+    _editReporteId = id;
+    _editOriginalReporte = r;
 
-  // Pre-fill new values with current
-  var ptpNew = document.getElementById('editPtpNew');
-  var ptrNew = document.getElementById('editPtrNew');
-  var blsNew = document.getElementById('editBlsNew');
-  if(ptpNew) ptpNew.value = r.ptp !== null && r.ptp !== undefined ? r.ptp : '';
-  if(ptrNew) ptrNew.value = r.ptr !== null && r.ptr !== undefined ? r.ptr : '';
-  if(blsNew) blsNew.value = r.bls !== null && r.bls !== undefined ? r.bls : '';
+    var modal = document.getElementById('editReporteModal');
+    if(!modal) return;
+    modal.style.display = 'flex';
 
-  var notaEl = document.getElementById('editNota');
-  if(notaEl) notaEl.value = '';
+    var sub = document.getElementById('editReporteSub');
+    if(sub) sub.textContent = 'C-'+r.pozo+' · '+r.recorredor;
+
+    var cont = document.getElementById('editFieldsContainer');
+    if(!cont) return;
+    cont.innerHTML = CORRECCION_FIELDS.map(function(f){
+      var actual = r[f.key];
+      var actualTxt = (actual===null||actual===undefined||actual==='') ? '—' : actual + (f.unit?(' '+f.unit):'');
+      var inputHtml = f.text
+        ? '<textarea id="editField_'+f.key+'" rows="2" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--txt);font-size:13px;font-family:Inter,sans-serif;resize:none;box-sizing:border-box">'+(actual||'').replace(/</g,'&lt;')+'</textarea>'
+        : '<input id="editField_'+f.key+'" type="'+(f.numeric?'number':'text')+'" '+(f.numeric?'step="0.1"':'')+' value="'+(actual!==null&&actual!==undefined?actual:'')+'" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--txt);font-size:15px;font-weight:700;text-align:center;font-family:Inter,sans-serif">';
+      return '<div style="background:var(--surface2);border-radius:14px;padding:12px 14px;margin-bottom:8px">'
+        + '<div style="font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.06em;margin-bottom:6px">' + f.label.toUpperCase() + '</div>'
+        + '<div style="font-size:11px;color:var(--txt2);margin-bottom:6px">Actual: <span style="text-decoration:line-through;opacity:.6">' + actualTxt + '</span></div>'
+        + inputHtml
+        + '</div>';
+    }).join('');
+
+    var notaEl = document.getElementById('editNota');
+    if(notaEl) notaEl.value = '';
+  }
+
+  if(fbDB){
+    fbDB.ref('reportes/'+id).once('value').then(function(snap){
+      var rRemoto = snap.val();
+      _continuarConDatos(rRemoto || rLocal);
+    }).catch(function(){ _continuarConDatos(rLocal); });
+  } else {
+    _continuarConDatos(rLocal);
+  }
 }
 
 function cerrarEditarReporte(){
   var modal = document.getElementById('editReporteModal');
   if(modal) modal.style.display = 'none';
   _editReporteId = null;
+  _editOriginalReporte = null;
 }
 
 function guardarCorreccionReporte(){
-  if(!_editReporteId){ cerrarEditarReporte(); return; }
-  var r = getReporte(_editReporteId);
-  if(!r){ cerrarEditarReporte(); return; }
+  if(!_editReporteId || !_editOriginalReporte){ cerrarEditarReporte(); return; }
+  var r = _editOriginalReporte;
 
-  var ptpNew = parseFloat(document.getElementById('editPtpNew').value);
-  var ptrNew = parseFloat(document.getElementById('editPtrNew').value);
-  var blsNew = parseFloat(document.getElementById('editBlsNew').value);
-  var nota   = (document.getElementById('editNota').value||'').trim();
+  // Revalidar ventana de 15 minutos al momento de guardar (no solo al abrir).
+  if(_minutosDesdeEnvio(r) >= 15){
+    showToast('⏱️ Este reporte ya no puede modificarse.');
+    cerrarEditarReporte();
+    return;
+  }
 
-  // Build correction WhatsApp message
-  var cambios = [];
-  var ptpOld = r.ptp; var ptrOld = r.ptr; var blsOld = r.bls;
+  var nota = (document.getElementById('editNota').value||'').trim();
+  var ahora = new Date().toISOString();
+  var usuario = (typeof REC !== 'undefined' && REC) ? REC : (loggedUser || 'Supervisor');
 
-  if(!isNaN(ptpNew) && ptpNew !== ptpOld) cambios.push('PTP: '+ptpOld+' → *'+ptpNew+'* kg/cm²');
-  if(!isNaN(ptrNew) && ptrNew !== ptrOld) cambios.push('PTR: '+ptrOld+' → *'+ptrNew+'* kg/cm²');
-  if(!isNaN(blsNew) && blsNew !== blsOld) cambios.push('BLS: '+blsOld+' → *'+blsNew+'* bls');
+  var cambios = [];     // para el mensaje de WhatsApp
+  var editHistoryNuevo = []; // para Firebase
+  var updates = {};     // campos a escribir en Firebase (.update, no .set)
+
+  CORRECCION_FIELDS.forEach(function(f){
+    var el = document.getElementById('editField_'+f.key);
+    if(!el) return;
+    var valorNuevo = f.numeric ? parseFloat(el.value) : (el.value||'').trim();
+    var valorViejo = r[f.key];
+    if(f.numeric && isNaN(valorNuevo)) valorNuevo = null;
+
+    var cambio = f.numeric
+      ? (valorNuevo !== null && valorNuevo !== valorViejo)
+      : (valorNuevo !== '' && valorNuevo !== (valorViejo||''));
+    if(!cambio) return;
+
+    updates[f.key] = valorNuevo;
+    cambios.push({ label: f.label, antes: valorViejo, despues: valorNuevo, unit: f.unit||'' });
+    editHistoryNuevo.push({
+      campo: f.key,
+      antes: (valorViejo===null||valorViejo===undefined) ? '' : valorViejo,
+      despues: valorNuevo,
+      usuario: usuario,
+      fecha: ahora
+    });
+  });
 
   if(!cambios.length){ showToast('ℹ️ No hubo cambios'); cerrarEditarReporte(); return; }
 
-  var horaOrig = (function(d){var h=d.getHours(),m=d.getMinutes();return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;})(new Date(r.fecha));
-  var corrMsg = ['\uD83D\uDD04 *CORRECCI\u00D3N \u00B7 C-'+r.pozo+'*',
-    '\uD83D\uDD50 Reporte original: '+horaOrig,
-    '\uD83D\uDC77 '+r.recorredor,
-    '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550',
-    cambios.join('\n'),
-    (nota ? '\uD83D\uDCDD '+nota : '\uD83D\uDCDD Error de captura. Dato actualizado en sistema.')
-  ].join('\n');
-  // Update report
-  var ahora = new Date().toISOString();
-  r.ptp = !isNaN(ptpNew) ? ptpNew : r.ptp;
-  r.ptr = !isNaN(ptrNew) ? ptrNew : r.ptr;
-  r.bls = !isNaN(blsNew) ? blsNew : r.bls;
-  r.editadoEn  = ahora;
-  r.editadoPor = typeof REC !== 'undefined' ? REC : 'Supervisor';
+  // ── Construir mensaje de WhatsApp — SOLO la corrección, no el reporte completo ──
+  var corrMsg;
+  if(cambios.length === 1){
+    var c = cambios[0];
+    corrMsg = [
+      '✏️ *CORRECCIÓN DE REPORTE*',
+      '',
+      'Pozo: ' + r.pozo,
+      '',
+      'Campo corregido:',
+      c.label,
+      '',
+      'Antes:',
+      (c.antes===''||c.antes===null||c.antes===undefined?'—':c.antes) + (c.unit?' '+c.unit:''),
+      '',
+      'Ahora:',
+      c.despues + (c.unit?' '+c.unit:''),
+      '',
+      'Corregido por:',
+      usuario,
+      '',
+      'Hora:',
+      (function(d){var h=d.getHours(),m=d.getMinutes();return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;})(new Date())
+    ].join('\n');
+  } else {
+    var lineas = ['✏️ *CORRECCIÓN DE REPORTE*', '', 'Pozo: ' + r.pozo, '', 'Campos modificados:', ''];
+    cambios.forEach(function(c){ lineas.push('• ' + c.label); });
+    lineas.push('');
+    cambios.forEach(function(c){
+      lineas.push(c.label + ': ' + (c.antes===''||c.antes===null||c.antes===undefined?'—':c.antes) + (c.unit?' '+c.unit:'') + ' → ' + c.despues + (c.unit?' '+c.unit:''));
+    });
+    lineas.push('', 'Corregido por:', usuario, '', 'Hora:',
+      (function(d){var h=d.getHours(),m=d.getMinutes();return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;})(new Date()));
+    corrMsg = lineas.join('\n');
+  }
+  if(nota) corrMsg += '\n\n📝 ' + nota;
 
-  // Save locally
+  // ── Firebase: SOLO los campos que cambiaron + metadata de edición ──
+  // Nunca toca: usuario, fecha, hora, gps, gpsCapturedAt, gpsSource.
+  var editHistoryCompleto = (r.editHistory || []).concat(editHistoryNuevo);
+  updates.edited       = true;
+  updates.editedAt     = ahora;
+  updates.editedBy     = usuario;
+  updates.editHistory  = editHistoryCompleto;
+  // Compatibilidad con campos previos ya usados en el historial local
+  updates.editadoEn    = ahora;
+  updates.editadoPor   = usuario;
+
+  if(fbDB){
+    fbDB.ref('reportes/'+r.id).update(updates).catch(function(e){
+      console.warn('[CORRECCION] Firebase update falló:', e);
+    });
+    // Trigger independiente — NO reescribe /reportes, no afecta dedupe del envío original.
+    fbDB.ref('correcciones/'+Date.now()).set({
+      reporteId: r.id,
+      msg: corrMsg,
+      usuario: usuario,
+      fecha: ahora,
+      estado: 'pendiente'
+    }).then(function(){
+      showToast('✅ Corrección guardada — enviando al grupo…');
+    }).catch(function(){
+      showToast('⚠️ Corrección guardada localmente — sin conexión para enviar al grupo');
+    });
+  } else {
+    showToast('⚠️ Sin conexión — la corrección se sincronizará cuando vuelva la señal');
+  }
+
+  // ── Actualizar copia local (historial) — refleja el cambio DE INMEDIATO ──
   var hist = getHistorial();
-  var idx = hist.findIndex(function(x){ return x.id === r.id; });
-  if(idx !== -1) hist[idx] = r;
+  var idxH = hist.findIndex(function(x){ return x.id === r.id; });
+  var rActualizado = Object.assign({}, r, updates);
+  if(idxH !== -1) hist[idxH] = rActualizado;
+  else hist.unshift(rActualizado);
   saveHistorial(hist);
-  console.warn('[WA_WRITE_TRACE] guardarCorreccionReporte() va a hacer .update() — reportId:', r.id,
-    '| whatsappStatus (no incluido en este update, solo referencia):', r.whatsappStatus,
-    '| whatsappSent (no incluido en este update, solo referencia):', r.whatsappSent,
-    '| stack:', (new Error()).stack);
-
-  // Sync to Firebase
-  if(fbDB) fbDB.ref('reportes/'+r.id).update({
-    ptp: r.ptp, ptr: r.ptr, bls: r.bls,
-    editadoEn: ahora, editadoPor: r.editadoPor
-  }).catch(function(){});
-
-  // Send correction message to WhatsApp
-  umSendText(corrMsg, function(ok){
-    if(ok) showToast('✅ Corrección enviada al grupo');
-    else   showToast('⚠️ No se pudo enviar al grupo — reporte corregido localmente');
-  });
 
   cerrarEditarReporte();
   renderHistorial();
   actualizarBadgeHistorial();
 
-  // Update charts if open
   var infoPanel = document.getElementById('supInfoPanel');
   if(infoPanel && infoPanel.style.display === 'block') supRenderGraficas();
 }
@@ -5896,7 +6069,11 @@ var HIST_KEEP_FIELDS_SENT = [
   'estado','whatsappStatus','whatsappSent','nFotos',
   'msg','esAlarma','tipoAlarma','lugar',
   'ptp','ptr','bls','device','editadoEn','editadoPor',
-  'intentos','ultimoIntento','otroDisp','fbKey'
+  'intentos','ultimoIntento','otroDisp','fbKey',
+  // FIX correcciones: campos correctables + metadata de edición — sin
+  // esto, saveHistorial() los borraba al recortar reportes ya enviados.
+  'estatus','fluye','sap','estrang','ldd','epm','carrera','observaciones',
+  'edited','editedAt','editedBy','editHistory'
 ];
 
 function saveHistorial(arr){
@@ -7430,6 +7607,9 @@ function renderHistorial(){
       +(r.otroDisp
         ? '<span style="font-size:10px;background:#dbeafe;color:#1d4ed8;border-radius:10px;padding:2px 8px;font-weight:700;margin-left:6px">📱 Otro dispositivo</span>'
         : '')
+      +(r.edited
+        ? '<span style="font-size:10px;background:#3b82f6;color:#fff;border-radius:10px;padding:2px 8px;font-weight:700;margin-left:6px" title="Editado por '+escapeHTML(r.editedBy||'')+' — '+escapeHTML(r.editedAt||'')+'">✏️ Corregido</span>'
+        : '')
       +'</span>'
       +'<span class="hist-card-date">'+fechaStr+'</span>'
       +(r.esAlarma && r.msg
@@ -7441,10 +7621,21 @@ function renderHistorial(){
       +'</div>'
       +'<div class="hist-card-body">'
       +'<pre class="hist-msg">'+msgSafe+'</pre>'
+      +(r.editHistory && r.editHistory.length
+        ? '<div style="background:var(--surface2);border-radius:10px;padding:8px 10px;margin-bottom:8px;font-size:11px;color:var(--txt2)">'
+          + '<div style="font-weight:800;margin-bottom:4px">✏️ Historial de corrección:</div>'
+          + r.editHistory.map(function(eh){
+              return '• '+escapeHTML(eh.campo)+': '+escapeHTML(String(eh.antes!==undefined&&eh.antes!==''?eh.antes:'—'))+' → '+escapeHTML(String(eh.despues))+' ('+escapeHTML(eh.usuario||'')+')';
+            }).join('<br>')
+          + '</div>'
+        : '')
       +'<div class="hist-actions">'
       +(r.estado!=='enviado'
         ?'<button class="hist-resend" onclick="intentarEnviar('+r.id+')">📤 Enviar ahora</button>'
         :'<button class="hist-resend" onclick="intentarEnviar('+r.id+')" style="background:#1e5caa">📤 Reenviar</button>')
+      +((!r.esAlarma && r.estado==='enviado' && _minutosDesdeEnvio(r) < 15)
+        ?'<button class="hist-resend" onclick="event.stopPropagation();abrirEditarReporte('+r.id+')" style="background:#3b82f6">✏️ Corregir reporte</button>'
+        :'')
       +((_puedeEliminar())?'<button class="hist-delete" onclick="event.stopPropagation();borrarReporte('+r.id+')" title="Borrar reporte">🗑</button>':'')
       +'</div></div></div>';
   }).join('');
@@ -8421,7 +8612,7 @@ document.addEventListener('click',      function() { if(typeof initAlarmAudio ==
     </div>
     <div style="display:flex;gap:10px">
       <button onclick="document.getElementById('gpsWarnOverlay').style.display='none'" style="flex:1;padding:14px;border-radius:12px;border:1.5px solid #e5e7eb;background:#fff;color:#374151;font-size:14px;font-weight:600;cursor:pointer">✕ Cancelar</button>
-      <button onclick="document.getElementById('gpsWarnOverlay').style.display='none';if(window._gpsContinueCallback){var cb=window._gpsContinueCallback;window._gpsContinueCallback=null;cb();}else{_continuarEnvio();}" style="flex:1;padding:14px;border-radius:12px;border:none;background:#1e40af;color:#fff;font-size:14px;font-weight:700;cursor:pointer">Enviar de todas formas</button>
+      <button onclick="_gpsWarnConfirmar()" id="gpsWarnConfirmBtn" style="flex:1;padding:14px;border-radius:12px;border:none;background:#1e40af;color:#fff;font-size:14px;font-weight:700;cursor:pointer">Enviar de todas formas</button>
     </div>
   </div>
 </div>
@@ -8547,6 +8738,13 @@ function _abrirConfirmOverlay(msg){
       if(wt) wt.textContent='Fuera del rango del '+(esCab?'cabezal':'estación');
       if(wd) wd.textContent=dt;
       if(wp) wp.textContent=W.replace('-',' ').replace('Estacion','Estación');
+      // FIX: este es el caso "fuera de radio" (GPS válido) — asegurar que
+      // se muestre ese cuerpo y NO el de "sin GPS" (que exige PIN), por si
+      // quedó visible de una interacción anterior en la misma sesión.
+      var _wgR = document.getElementById('gpsWarnBodyRadio');
+      var _wgN = document.getElementById('gpsWarnBodyNoGps');
+      if(_wgR) _wgR.style.display = 'block';
+      if(_wgN) _wgN.style.display = 'none';
       if(wo){
         wo.style.display='flex';
         window._gpsContinueCallback=function(){ _doAbrirConfirmOverlay(msg); };
