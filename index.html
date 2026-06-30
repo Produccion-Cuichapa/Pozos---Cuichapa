@@ -5498,8 +5498,12 @@ function escucharFirebase(){
         if(!r || !r.id) return;
         if(localMap[r.id]){
           // Actualizar estado desde Firebase
-          if(r.estado === 'enviado') localMap[r.id].estado = 'enviado';
-          if(r.ultimoIntento) localMap[r.id].ultimoIntento = r.ultimoIntento;
+          if(r.estado === 'enviado')  localMap[r.id].estado = 'enviado';
+          if(r.ultimoIntento)         localMap[r.id].ultimoIntento = r.ultimoIntento;
+          // FIX BUG3: sincronizar estado WhatsApp para que sincronizarAFirebase
+          // no sobreescriba la actualización del CF con el estado local 'pending'
+          if(r.whatsappStatus)        localMap[r.id].whatsappStatus = r.whatsappStatus;
+          if(r.whatsappSent === true) localMap[r.id].whatsappSent   = true;
         } else {
           // Reporte de OTRO dispositivo — agregar sin fotos
           localMap[r.id] = {
@@ -8002,8 +8006,8 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-document.addEventListener('touchstart', function() { initAlarmAudio(); }, { once: true });
-document.addEventListener('click', function() { initAlarmAudio(); }, { once: true });
+document.addEventListener('touchstart', function() { if(typeof initAlarmAudio === 'function') initAlarmAudio(); }, { once: true });
+document.addEventListener('click',      function() { if(typeof initAlarmAudio === 'function') initAlarmAudio(); }, { once: true });
 
 // ══ MONITOR DE INACTIVIDAD (2 horas) ══════════════════
 (function(){
