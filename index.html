@@ -4000,6 +4000,25 @@ function hcRender(){
             // SIEMPRE devolvía null y el modal nunca se abría.
             h+='<button onclick="event.stopPropagation();abrirEditarReporte('+r.id+')" style="margin-left:auto;padding:7px 14px;border-radius:10px;border:1.5px solid #3b82f6;background:transparent;color:#3b82f6;font-size:12px;font-weight:800;cursor:pointer;font-family:Inter,sans-serif">✏️ Editar</button>';
           }
+          // FIX: Historial Central no mostraba qué cambió — solo el badge
+          // "Corregido". Se agrega el detalle de editHistory[], igual que
+          // ya se muestra en el historial inline (renderHistorial).
+          if(r.editHistory && r.editHistory.length){
+            h+='<div style="background:var(--surface2);border-radius:10px;padding:10px 12px;margin-top:8px;font-size:11px;color:var(--txt2);width:100%">';
+            h+='<div style="font-weight:800;margin-bottom:6px;color:var(--txt)">✏️ Correcciones realizadas</div>';
+            h+=r.editHistory.map(function(eh){
+              var etiqueta = eh.label  || eh.campo;
+              var unidad   = eh.unidad ? (' ' + eh.unidad) : '';
+              var antesTxt = (eh.antes===''||eh.antes===null||eh.antes===undefined) ? '—' : String(eh.antes);
+              var despuesTxt = (eh.despues===null||eh.despues===undefined) ? '—' : String(eh.despues);
+              return '<div style="margin-bottom:4px">• <strong>'+escapeHTML(String(etiqueta))+'</strong>: '
+                +'<span style="text-decoration:line-through;opacity:.6">'+escapeHTML(antesTxt)+unidad+'</span>'
+                +' → <span style="color:#4ade80;font-weight:700">'+escapeHTML(despuesTxt)+unidad+'</span>'
+                +(eh.usuario ? ' <span style="opacity:.5;font-size:10px">('+escapeHTML(String(eh.usuario))+')</span>' : '')
+                +'</div>';
+            }).join('');
+            h+='</div>';
+          }
           if(_puedeEliminar()){
             var _rid=String(r.id||r.fbKey||'');
             h+='<button onclick="event.stopPropagation();hcBorrarReporte(this)" data-rid="'+_rid+'" style="padding:7px 12px;border-radius:10px;border:1.5px solid #dc2626;background:transparent;color:#dc2626;font-size:13px;cursor:pointer" title="Borrar reporte">🗑</button>';
@@ -5048,7 +5067,9 @@ var EDIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutos
 
 // Campos correctables — etiqueta + si es numérico. GPS/distancia/radio/
 // usuario/fecha/hora original quedan deliberadamente fuera de esta lista.
-var CORRECCION_FIELDS = [
+// FIX: campos correctables específicos por TIPO de reporte — antes era
+// una lista única para todos los modos (mostraba EPM en reportes de Nivel).
+var CORRECCION_FIELDS_CO = [
   { key:'estatus',       label:'Estatus' },
   { key:'fluye',         label:'Fluye' },
   { key:'sap',           label:'SAP' },
@@ -5058,9 +5079,52 @@ var CORRECCION_FIELDS = [
   { key:'ptr',           label:'PTR',  unit:'kg/cm²', numeric:true },
   { key:'epm',           label:'EPM',  numeric:true },
   { key:'carrera',       label:'Carrera', numeric:true },
-  { key:'bls',           label:'Nivel (bls)', numeric:true },
   { key:'observaciones', label:'Observaciones', text:true }
 ];
+var CORRECCION_FIELDS_NIVEL = [
+  { key:'bls',           label:'Barriles (BLS)', numeric:true },
+  { key:'ctm',           label:'Centímetros (CTM)', numeric:true },
+  { key:'nivelHora',     label:'Hora de nivel', text:true, nested:'nivel.hora' },
+  { key:'observaciones', label:'Observaciones', text:true }
+];
+var CORRECCION_FIELDS_SIMPLE = [
+  { key:'observaciones', label:'Observaciones', text:true }
+];
+
+// Detecta el set de campos correcto según el modo y el contenido real del
+// reporte (un reporte de Nivel puede venir guardado con modo:'co' si solo
+// se tomó lectura — se detecta por ausencia de campos propios de C.O.).
+// Mapa de modo → etiqueta legible (para el mensaje de WhatsApp de corrección)
+var _MODO_LABEL = {
+  'co':       'Cabeza de Pozo (C.O.)',
+  'guardia':  'Guardia / Nocturno',
+  'cab':      'Cabezal',
+  'estacion': 'Estación',
+  'nota':     'Nota de campo'
+};
+
+function _camposParaModo(r){
+  var modo = r.modo || 'co';
+  // Modos con campos propios conocidos → lista exacta, sin heurísticas.
+  if(modo === 'cab')      return CORRECCION_FIELDS_SIMPLE;
+  if(modo === 'estacion') return CORRECCION_FIELDS_SIMPLE;
+  if(modo === 'nota')     return CORRECCION_FIELDS_SIMPLE;
+  if(modo === 'guardia')  return CORRECCION_FIELDS_NIVEL;
+  // modo 'co': usar campos CO por defecto.
+  // Excepción: si el reporte tiene bls/ctm pero NO estatus/fluye/sap/ptp/ptr
+  // reales (no solo distintos de null — sino con valor real), es un Nivel.
+  // Solo cuentan strings no-vacíos y números no-cero como valor CO real
+  var _noVacio = function(v){ return v!=null && v!=='' && v!==0; };
+  var tieneCOReal = !!(_noVacio(r.estatus) || _noVacio(r.fluye) || _noVacio(r.sap) ||
+                       _noVacio(r.estrang) || _noVacio(r.ptp) || _noVacio(r.ptr));
+  var tieneNivelReal = !!(
+    (r.bls != null && r.bls !== 0) ||
+    (r.ctm != null && r.ctm !== 0) ||
+    (r.nivel && ((r.nivel.bls != null && r.nivel.bls !== 0) || (r.nivel.ctm != null && r.nivel.ctm !== 0)))
+  );
+  if(tieneNivelReal && !tieneCOReal) return CORRECCION_FIELDS_NIVEL;
+  return CORRECCION_FIELDS_CO;
+}
 
 function _minutosDesdeEnvio(r){
   return (Date.now() - new Date(r.fecha).getTime()) / 60000;
@@ -5094,8 +5158,12 @@ function abrirEditarReporte(id){
 
     var cont = document.getElementById('editFieldsContainer');
     if(!cont) return;
-    cont.innerHTML = CORRECCION_FIELDS.map(function(f){
-      var actual = r[f.key];
+    var camposActivos = _camposParaModo(r);
+    cont.innerHTML = camposActivos.map(function(f){
+      // Soporta campos anidados (ej. nivel.hora) además de top-level.
+      var actual = f.nested
+        ? (f.nested.split('.').reduce(function(o,k){ return o&&o[k]!=null ? o[k] : undefined; }, r))
+        : r[f.key];
       var actualTxt = (actual===null||actual===undefined||actual==='') ? '—' : actual + (f.unit?(' '+f.unit):'');
       var inputHtml = f.text
         ? '<textarea id="editField_'+f.key+'" rows="2" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--txt);font-size:13px;font-family:Inter,sans-serif;resize:none;box-sizing:border-box">'+(actual||'').replace(/</g,'&lt;')+'</textarea>'
@@ -5147,11 +5215,14 @@ function guardarCorreccionReporte(){
   var editHistoryNuevo = []; // para Firebase
   var updates = {};     // campos a escribir en Firebase (.update, no .set)
 
-  CORRECCION_FIELDS.forEach(function(f){
+  var camposActivos = _camposParaModo(r);
+  camposActivos.forEach(function(f){
     var el = document.getElementById('editField_'+f.key);
     if(!el) return;
     var valorNuevo = f.numeric ? parseFloat(el.value) : (el.value||'').trim();
-    var valorViejo = r[f.key];
+    var valorViejo = f.nested
+      ? (f.nested.split('.').reduce(function(o,k){ return o&&o[k]!=null ? o[k] : undefined; }, r))
+      : r[f.key];
     if(f.numeric && isNaN(valorNuevo)) valorNuevo = null;
 
     var cambio = f.numeric
@@ -5159,12 +5230,21 @@ function guardarCorreccionReporte(){
       : (valorNuevo !== '' && valorNuevo !== (valorViejo||''));
     if(!cambio) return;
 
-    updates[f.key] = valorNuevo;
+    if(f.nested){
+      // Escribir en el sub-objeto (ej. nivel.hora) sin perder el resto de 'nivel'.
+      var partes = f.nested.split('.');
+      updates[partes[0]] = Object.assign({}, r[partes[0]]||{});
+      updates[partes[0]][partes[1]] = valorNuevo;
+    } else {
+      updates[f.key] = valorNuevo;
+    }
     cambios.push({ label: f.label, antes: valorViejo, despues: valorNuevo, unit: f.unit||'' });
     editHistoryNuevo.push({
-      campo: f.key,
-      antes: (valorViejo===null||valorViejo===undefined) ? '' : valorViejo,
+      campo:  f.key,          // clave interna para programático
+      label:  f.label,        // etiqueta legible para UI y WhatsApp
+      antes:  (valorViejo===null||valorViejo===undefined) ? '' : valorViejo,
       despues: valorNuevo,
+      unidad: f.unit || '',
       usuario: usuario,
       fecha: ahora
     });
@@ -5173,38 +5253,40 @@ function guardarCorreccionReporte(){
   if(!cambios.length){ showToast('ℹ️ No hubo cambios'); cerrarEditarReporte(); return; }
 
   // ── Construir mensaje de WhatsApp — SOLO la corrección, no el reporte completo ──
+  var TIPO_LABELS = { co:'C.O.', guardia:'Nivel / Guardia', cab:'Cabezal', estacion:'Estación', nota:'Nota' };
+  var tipoLabel = TIPO_LABELS[r.modo] || 'Reporte';
+  var horaCorr = (function(d){
+    var h=d.getHours(),m=d.getMinutes(),ap=h>=12?'p.m.':'a.m.',h12=h%12||12;
+    return (h12<10?'0':'')+h12+':'+(m<10?'0':'')+m+' '+ap;
+  })(new Date());
+
   var corrMsg;
   if(cambios.length === 1){
     var c = cambios[0];
     corrMsg = [
       '✏️ *CORRECCIÓN DE REPORTE*',
       '',
-      'Pozo: ' + r.pozo,
+      'Tipo: ' + tipoLabel,
+      'Pozo: C-' + r.pozo,
+      'Recorredor: ' + r.recorredor,
       '',
-      'Campo corregido:',
-      c.label,
+      'Cambios:',
+      '• ' + c.label + ':',
+      'Antes: ' + (c.antes===''||c.antes===null||c.antes===undefined?'—':c.antes) + (c.unit?' '+c.unit:''),
+      'Ahora: ' + c.despues + (c.unit?' '+c.unit:''),
       '',
-      'Antes:',
-      (c.antes===''||c.antes===null||c.antes===undefined?'—':c.antes) + (c.unit?' '+c.unit:''),
-      '',
-      'Ahora:',
-      c.despues + (c.unit?' '+c.unit:''),
-      '',
-      'Corregido por:',
-      usuario,
-      '',
-      'Hora:',
-      (function(d){var h=d.getHours(),m=d.getMinutes();return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;})(new Date())
+      'Corregido por: ' + usuario,
+      'Hora corrección: ' + horaCorr
     ].join('\n');
   } else {
-    var lineas = ['✏️ *CORRECCIÓN DE REPORTE*', '', 'Pozo: ' + r.pozo, '', 'Campos modificados:', ''];
-    cambios.forEach(function(c){ lineas.push('• ' + c.label); });
-    lineas.push('');
+    var lineas = ['✏️ *CORRECCIÓN DE REPORTE*', '', 'Tipo: ' + tipoLabel, 'Pozo: C-' + r.pozo, 'Recorredor: ' + r.recorredor, '', 'Cambios:'];
     cambios.forEach(function(c){
-      lineas.push(c.label + ': ' + (c.antes===''||c.antes===null||c.antes===undefined?'—':c.antes) + (c.unit?' '+c.unit:'') + ' → ' + c.despues + (c.unit?' '+c.unit:''));
+      lineas.push('• ' + c.label + ':');
+      lineas.push('Antes: ' + (c.antes===''||c.antes===null||c.antes===undefined?'—':c.antes) + (c.unit?' '+c.unit:''));
+      lineas.push('Ahora: ' + c.despues + (c.unit?' '+c.unit:''));
+      lineas.push('');
     });
-    lineas.push('', 'Corregido por:', usuario, '', 'Hora:',
-      (function(d){var h=d.getHours(),m=d.getMinutes();return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;})(new Date()));
+    lineas.push('Corregido por: ' + usuario, 'Hora corrección: ' + horaCorr);
     corrMsg = lineas.join('\n');
   }
   if(nota) corrMsg += '\n\n📝 ' + nota;
@@ -7628,10 +7710,20 @@ function renderHistorial(){
       +'<pre class="hist-msg">'+msgSafe+'</pre>'
       +(r.editHistory && r.editHistory.length
         ? '<div style="background:var(--surface2);border-radius:10px;padding:8px 10px;margin-bottom:8px;font-size:11px;color:var(--txt2)">'
-          + '<div style="font-weight:800;margin-bottom:4px">✏️ Historial de corrección:</div>'
+          + '<div style="font-weight:800;margin-bottom:4px;color:var(--txt)">✏️ Correcciones realizadas:</div>'
           + r.editHistory.map(function(eh){
-              return '• '+escapeHTML(eh.campo)+': '+escapeHTML(String(eh.antes!==undefined&&eh.antes!==''?eh.antes:'—'))+' → '+escapeHTML(String(eh.despues))+' ('+escapeHTML(eh.usuario||'')+')';
-            }).join('<br>')
+              var etiqueta = eh.label || eh.campo;
+              var unidad   = eh.unidad ? ' ' + eh.unidad : '';
+              var antes    = (eh.antes===undefined||eh.antes===null||eh.antes==='') ? '—' : String(eh.antes);
+              var despues  = (eh.despues===undefined||eh.despues===null) ? '—' : String(eh.despues);
+              var por      = eh.usuario ? ' · ' + escapeHTML(eh.usuario) : '';
+              return '<div style="margin:3px 0;padding:4px 6px;background:rgba(255,255,255,.05);border-radius:6px">'
+                + '<strong>' + escapeHTML(etiqueta) + '</strong>: '
+                + '<span style="text-decoration:line-through;opacity:.6">' + escapeHTML(antes) + unidad + '</span>'
+                + ' → <span style="color:#4ade80;font-weight:700">' + escapeHTML(despues) + unidad + '</span>'
+                + por
+                + '</div>';
+            }).join('')
           + '</div>'
         : '')
       +'<div class="hist-actions">'
