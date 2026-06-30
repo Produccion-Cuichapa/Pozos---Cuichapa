@@ -5383,7 +5383,7 @@ function guardarEnFirebase(reporte){
     // pisando el resultado de la Cloud Function).
     ref.once('value').then(function(snap){
       var remoto     = snap.val();
-      var yaEnviado  = !!(remoto && (remoto.whatsappStatus === 'sent' || remoto.whatsappSent === true));
+      var yaEnviado  = !!(remoto && (remoto.whatsappStatus === 'sent' || remoto.whatsappSent === true || remoto.estado === 'enviado'));
       var deviceName = typeof hcGetDeviceName === 'function' ? hcGetDeviceName() : '';
       console.warn('[WA_WRITE_TRACE] guardarEnFirebase() va a hacer .set() — reportId:', reporte.id,
         '| whatsappStatus LOCAL (reporte):', reporte.whatsappStatus,
@@ -5446,6 +5446,27 @@ function guardarEnFirebase(reporte){
       ultimoIntento: reporte.ultimoIntento || null,
       intentos:      reporte.intentos      || 0
     }).catch(function(e){ console.warn('FB write:', e); });
+      // FIX DEFENSIVO: autosanar la copia LOCAL si el remoto ya estaba enviado.
+      // Esto evita que un celular con caché/localStorage viejo siga insistiendo
+      // en degradar Firebase en cada sincronización posterior.
+      if(yaEnviado){
+        try{
+          var arr = getHistorial();
+          var changed = false;
+          for(var i=0;i<arr.length;i++){
+            if(arr[i].id === reporte.id){
+              if(arr[i].estado !== 'enviado' || arr[i].whatsappStatus !== 'sent' || arr[i].whatsappSent !== true){
+                arr[i].estado         = 'enviado';
+                arr[i].whatsappStatus = 'sent';
+                arr[i].whatsappSent   = true;
+                changed = true;
+              }
+              break;
+            }
+          }
+          if(changed) saveHistorial(arr);
+        }catch(e3){}
+      }
     }).catch(function(e){
       // Si falla la lectura del remoto (offline, etc.), no bloquear el guardado local;
       // hacer el set normal — el peor caso es el comportamiento previo, no uno nuevo.
@@ -5458,13 +5479,41 @@ function guardarEnFirebase(reporte){
 function actualizarEstadoFirebase(id, estado, ultimoIntento){
   if(!fbDB) return;
   try{
-    console.warn('[WA_WRITE_TRACE] actualizarEstadoFirebase() va a hacer .update() — reportId:', id,
-      '| estado nuevo:', estado,
-      '| stack:', (new Error()).stack);
-    fbDB.ref('reportes/' + id).update({
-      estado: estado,
-      ultimoIntento: ultimoIntento || new Date().toISOString(),
-      intentos: (getReporte(id) || {}).intentos || 0
+    var ref = fbDB.ref('reportes/' + id);
+    // FIX DEFENSIVO: nunca degradar un reporte remoto sent/enviado con un
+    // estado 'pendiente'/'fallido' proveniente de un cliente con caché vieja.
+    ref.once('value').then(function(snap){
+      var remoto = snap.val();
+      var yaEnviado = !!(remoto && (remoto.whatsappStatus === 'sent' || remoto.whatsappSent === true || remoto.estado === 'enviado'));
+      if(yaEnviado && estado !== 'enviado'){
+        console.warn('[WA_GUARD] actualizarEstadoFirebase bloqueado — remoto ya enviado, reportId:', id, '| intento de degradar a:', estado);
+        // Auto-corregir la copia local para que deje de pelear contra Firebase
+        try{
+          var arr = getHistorial();
+          for(var i=0;i<arr.length;i++){
+            if(arr[i].id === id){
+              arr[i].estado = 'enviado';
+              arr[i].whatsappStatus = remoto.whatsappStatus || 'sent';
+              arr[i].whatsappSent   = true;
+              break;
+            }
+          }
+          saveHistorial(arr);
+        }catch(e2){}
+        return;
+      }
+      ref.update({
+        estado: estado,
+        ultimoIntento: ultimoIntento || new Date().toISOString(),
+        intentos: (getReporte(id) || {}).intentos || 0
+      });
+    }).catch(function(e){
+      // Si falla la lectura (offline), no bloquear — comportamiento previo como fallback
+      ref.update({
+        estado: estado,
+        ultimoIntento: ultimoIntento || new Date().toISOString(),
+        intentos: (getReporte(id) || {}).intentos || 0
+      });
     });
   } catch(e){}
 }
@@ -5544,6 +5593,9 @@ function escucharFirebase(){
           }
         } else {
           // Reporte de OTRO dispositivo — agregar sin fotos
+          // FIX: condición derivada por si el campo remoto 'estado' quedó
+          // desfasado en registros viejos (creados antes del fix del CF).
+          var _remotoEnviado = (r.estado === 'enviado' || r.whatsappStatus === 'sent' || r.whatsappSent === true);
           localMap[r.id] = {
             id:            r.id,
             fecha:         r.fecha,
@@ -5552,7 +5604,9 @@ function escucharFirebase(){
             msg:           r.msg,
             nFotos:        r.nFotos || 0,
             fotos:         [],  // fotos no se sincronizan (muy pesadas)
-            estado:        r.estado,
+            estado:        _remotoEnviado ? 'enviado' : r.estado,
+            whatsappStatus: r.whatsappStatus || null,
+            whatsappSent:   r.whatsappSent   || false,
             ultimoIntento: r.ultimoIntento || null,
             intentos:      r.intentos || 0,
             otroDisp:      true  // marca que viene de otro dispositivo
@@ -6688,7 +6742,9 @@ function enviarConUltramsg(id, callback, fotosDirectas){
 function intentarEnviar(id){
   var r = getReporte(id);
   if(!r) return;
-  if(r.estado === 'enviado') return;
+  // FIX: condición derivada — un cliente con caché vieja puede tener
+  // r.estado='pendiente' localmente aunque Firebase ya diga sent/enviado.
+  if(r.estado === 'enviado' || r.whatsappStatus === 'sent' || r.whatsappSent === true) return;
   actualizarEstadoReporte(id, 'pendiente', new Date().toISOString());
   renderHistorial();
   enviarConUltramsg(id, null);
