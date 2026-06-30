@@ -6678,6 +6678,12 @@ function intentarEnviar(id){
 // ── Procesar cola completa — silencioso ──────────
 var _colaEnProceso = false;
 function procesarCola(){
+  // DESACTIVADO: el envío a WhatsApp ahora lo hace exclusivamente la
+  // Cloud Function (Firebase -> sendWhatsApp -> UltraMsg). El frontend
+  // ya no debe reenviar reportes ni reescribir su estado — solo crea el
+  // reporte en 'pending' y refleja lo que diga Firebase (escucharFirebase).
+  // Se conserva el código original abajo, inalcanzable, por trazabilidad.
+  return;
   if(_colaEnProceso) return;
   var pendientes = getPendientes();
   if(!pendientes.length) return;
@@ -6741,6 +6747,12 @@ function verificarConectividad(callback){
 
 var _vyv_timer = null;
 function verificarYEnviar(){
+  // DESACTIVADO: ver nota en procesarCola(). El frontend ya no reintenta
+  // el envío de reportes pendientes; la Cloud Function es la única
+  // responsable. Esto neutraliza también el setInterval de 30s, el
+  // listener 'online', 'visibilitychange' y el chequeo al cargar la app,
+  // ya que todos invocan esta misma función.
+  return;
   // Debounce: múltiples triggers en <2s se colapsan en uno solo
   if(_vyv_timer) clearTimeout(_vyv_timer);
   _vyv_timer = setTimeout(function(){
