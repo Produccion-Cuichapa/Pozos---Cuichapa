@@ -859,7 +859,16 @@ function ppToggle(id){
       <textarea id="editNota" rows="2" placeholder="Ej: Error de captura, presión real fue..." style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface2);color:var(--txt);font-size:13px;font-family:Inter,sans-serif;resize:none;box-sizing:border-box"></textarea>
     </div>
 
-    <button onclick="guardarCorreccionReporte()" style="width:100%;padding:15px;border-radius:14px;border:none;background:#3b82f6;color:#fff;font-size:16px;font-weight:800;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1.5px">GUARDAR CORRECCIÓN</button>
+    <!-- Resumen de confirmación — oculto hasta que el usuario pulse Vista previa -->
+    <div id="editConfirmPanel" style="display:none;background:rgba(59,130,246,.12);border:1.5px solid #3b82f6;border-radius:14px;padding:14px 16px;margin-bottom:12px;font-size:13px;color:var(--txt)">
+      <div style="font-weight:800;margin-bottom:8px;color:#60a5fa">Se modificarán:</div>
+      <div id="editConfirmChanges"></div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button onclick="document.getElementById('editConfirmPanel').style.display='none'" style="flex:1;padding:12px;border-radius:12px;border:none;background:var(--surface2);color:var(--txt2);font-size:14px;font-weight:700;cursor:pointer">Cancelar</button>
+        <button onclick="_editConfirmarGuardar()" style="flex:1;padding:12px;border-radius:12px;border:none;background:#3b82f6;color:#fff;font-size:14px;font-weight:800;cursor:pointer">✅ Guardar corrección</button>
+      </div>
+    </div>
+    <button onclick="guardarCorreccionReporte()" id="editPreviewBtn" style="width:100%;padding:15px;border-radius:14px;border:none;background:#3b82f6;color:#fff;font-size:16px;font-weight:800;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1.5px">VER CAMBIOS Y CONFIRMAR</button>
   </div>
 </div>
 
@@ -5194,28 +5203,33 @@ function cerrarEditarReporte(){
   if(modal) modal.style.display = 'none';
   _editReporteId = null;
   _editOriginalReporte = null;
+  // Reset confirmation panel for next open
+  var panel = document.getElementById('editConfirmPanel');
+  if(panel) panel.style.display = 'none';
+  var previewBtn = document.getElementById('editPreviewBtn');
+  if(previewBtn) previewBtn.style.display = 'block';
+  _editPendingUpdates = _editPendingCambios = _editPendingHistNuevo = _editPendingAhora = _editPendingUsuario = null;
 }
 
+// guardarCorreccionReporte — ahora es el PASO 1: calcular cambios y mostrar
+// resumen de confirmación. Solo escribe cuando el usuario pulsa "Guardar".
 function guardarCorreccionReporte(){
   if(!_editReporteId || !_editOriginalReporte){ cerrarEditarReporte(); return; }
   var r = _editOriginalReporte;
 
-  // Revalidar ventana de 15 minutos al momento de guardar (no solo al abrir).
   if(_minutosDesdeEnvio(r) >= 15){
     showToast('⏱️ Este reporte ya no puede modificarse.');
     cerrarEditarReporte();
     return;
   }
 
-  var nota = (document.getElementById('editNota').value||'').trim();
-  var ahora = new Date().toISOString();
-  var usuario = (typeof REC !== 'undefined' && REC) ? REC : (loggedUser || 'Supervisor');
-
-  var cambios = [];     // para el mensaje de WhatsApp
-  var editHistoryNuevo = []; // para Firebase
-  var updates = {};     // campos a escribir en Firebase (.update, no .set)
-
   var camposActivos = _camposParaModo(r);
+  var cambios = [];
+  var editHistoryNuevo = [];
+  var updates = {};
+  var usuario = (typeof REC !== 'undefined' && REC) ? REC : (loggedUser || 'Supervisor');
+  var ahora = new Date().toISOString();
+
   camposActivos.forEach(function(f){
     var el = document.getElementById('editField_'+f.key);
     if(!el) return;
@@ -5227,86 +5241,128 @@ function guardarCorreccionReporte(){
 
     var cambio = f.numeric
       ? (valorNuevo !== null && valorNuevo !== valorViejo)
-      : (valorNuevo !== '' && valorNuevo !== (valorViejo||''));
+      : (valorNuevo !== '' && valorNuevo !== (valorViejo===null||valorViejo===undefined?'':String(valorViejo)));
     if(!cambio) return;
 
-    if(f.nested){
-      // Escribir en el sub-objeto (ej. nivel.hora) sin perder el resto de 'nivel'.
-      var partes = f.nested.split('.');
-      updates[partes[0]] = Object.assign({}, r[partes[0]]||{});
-      updates[partes[0]][partes[1]] = valorNuevo;
-    } else {
-      updates[f.key] = valorNuevo;
-    }
-    cambios.push({ label: f.label, antes: valorViejo, despues: valorNuevo, unit: f.unit||'' });
+    updates[f.key]      = valorNuevo;
+    cambios.push({ label:f.label, antes:valorViejo, despues:valorNuevo, unit:f.unit||'' });
     editHistoryNuevo.push({
-      campo:  f.key,          // clave interna para programático
-      label:  f.label,        // etiqueta legible para UI y WhatsApp
-      antes:  (valorViejo===null||valorViejo===undefined) ? '' : valorViejo,
+      campo:   f.key,
+      label:   f.label,
+      antes:   (valorViejo===null||valorViejo===undefined) ? '' : valorViejo,
       despues: valorNuevo,
-      unidad: f.unit || '',
+      unidad:  f.unit || '',
       usuario: usuario,
-      fecha: ahora
+      fecha:   ahora
     });
   });
 
-  if(!cambios.length){ showToast('ℹ️ No hubo cambios'); cerrarEditarReporte(); return; }
+  if(!cambios.length){ showToast('ℹ️ No hubo cambios'); return; }
 
-  // ── Construir mensaje de WhatsApp — SOLO la corrección, no el reporte completo ──
+  // Guardar para que _editConfirmarGuardar los use sin recalcular.
+  _editPendingUpdates      = updates;
+  _editPendingCambios      = cambios;
+  _editPendingHistNuevo    = editHistoryNuevo;
+  _editPendingAhora        = ahora;
+  _editPendingUsuario      = usuario;
+
+  // ── Mostrar resumen de confirmación ──────────────────────
   var TIPO_LABELS = { co:'C.O.', guardia:'Nivel / Guardia', cab:'Cabezal', estacion:'Estación', nota:'Nota' };
-  var tipoLabel = TIPO_LABELS[r.modo] || 'Reporte';
-  var horaCorr = (function(d){
+  var tipoLabel = TIPO_LABELS[r.modo] || (r.modo || 'Reporte');
+  var fechaEnv  = r.fecha ? (function(d){
+    return (d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear()
+      +' '+(d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes());
+  })(new Date(r.fecha)) : '—';
+
+  var panel = document.getElementById('editConfirmPanel');
+  var cont  = document.getElementById('editConfirmChanges');
+  if(!panel || !cont) return;
+
+  cont.innerHTML = '<div style="font-size:11px;color:var(--txt2);margin-bottom:10px">'
+    + '🛢 <strong>Pozo:</strong> C-' + (r.pozo||'?') + ' &nbsp;|&nbsp; '
+    + '📋 <strong>Tipo:</strong> ' + tipoLabel + ' &nbsp;|&nbsp; '
+    + '🕒 <strong>Enviado:</strong> ' + fechaEnv + ' &nbsp;|&nbsp; '
+    + '👷 <strong>Recorredor:</strong> ' + (r.recorredor||'?')
+    + '</div>'
+    + cambios.map(function(c){
+        var antesTxt   = (c.antes===null||c.antes===undefined||c.antes==='') ? '—' : String(c.antes);
+        var despuesTxt = String(c.despues);
+        var unidad     = c.unit ? ' ' + c.unit : '';
+        return '<div style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.08)">'
+          + '<strong>' + c.label + '</strong>: '
+          + '<span style="text-decoration:line-through;opacity:.5">' + antesTxt + unidad + '</span>'
+          + ' → <span style="color:#4ade80;font-weight:800">' + despuesTxt + unidad + '</span>'
+          + '</div>';
+      }).join('')
+    + '<div style="font-size:11px;color:var(--txt2);margin-top:8px">¿Deseas guardar esta corrección?</div>';
+
+  panel.style.display = 'block';
+  // Ocultar el botón principal mientras el panel de confirmación está visible
+  var previewBtn = document.getElementById('editPreviewBtn');
+  if(previewBtn) previewBtn.style.display = 'none';
+}
+
+// Variables de estado para el paso de confirmación
+var _editPendingUpdates   = null;
+var _editPendingCambios   = null;
+var _editPendingHistNuevo = null;
+var _editPendingAhora     = null;
+var _editPendingUsuario   = null;
+
+// PASO 2: usuario confirmó — ejecutar todos los efectos secundarios
+function _editConfirmarGuardar(){
+  if(!_editReporteId || !_editOriginalReporte || !_editPendingCambios){ cerrarEditarReporte(); return; }
+  var r       = _editOriginalReporte;
+  var updates = _editPendingUpdates;
+  var cambios = _editPendingCambios;
+  var editHistoryNuevo = _editPendingHistNuevo;
+  var ahora   = _editPendingAhora;
+  var usuario = _editPendingUsuario;
+
+  // Limpiar estado pendiente
+  _editPendingUpdates = _editPendingCambios = _editPendingHistNuevo = _editPendingAhora = _editPendingUsuario = null;
+
+  // ── Construir mensaje de WhatsApp ────────────────────────
+  var TIPO_LABELS = { co:'C.O.', guardia:'Nivel / Guardia', cab:'Cabezal', estacion:'Estación', nota:'Nota' };
+  var tipoLabel = TIPO_LABELS[r.modo] || (r.modo || 'Reporte');
+  var horaCorr  = (function(d){
     var h=d.getHours(),m=d.getMinutes(),ap=h>=12?'p.m.':'a.m.',h12=h%12||12;
     return (h12<10?'0':'')+h12+':'+(m<10?'0':'')+m+' '+ap;
   })(new Date());
 
-  var corrMsg;
-  if(cambios.length === 1){
-    var c = cambios[0];
-    corrMsg = [
-      '✏️ *CORRECCIÓN DE REPORTE*',
-      '',
-      'Tipo: ' + tipoLabel,
-      'Pozo: C-' + r.pozo,
-      'Recorredor: ' + r.recorredor,
-      '',
-      'Cambios:',
-      '• ' + c.label + ':',
-      'Antes: ' + (c.antes===''||c.antes===null||c.antes===undefined?'—':c.antes) + (c.unit?' '+c.unit:''),
-      'Ahora: ' + c.despues + (c.unit?' '+c.unit:''),
-      '',
-      'Corregido por: ' + usuario,
-      'Hora corrección: ' + horaCorr
-    ].join('\n');
-  } else {
-    var lineas = ['✏️ *CORRECCIÓN DE REPORTE*', '', 'Tipo: ' + tipoLabel, 'Pozo: C-' + r.pozo, 'Recorredor: ' + r.recorredor, '', 'Cambios:'];
-    cambios.forEach(function(c){
-      lineas.push('• ' + c.label + ':');
-      lineas.push('Antes: ' + (c.antes===''||c.antes===null||c.antes===undefined?'—':c.antes) + (c.unit?' '+c.unit:''));
-      lineas.push('Ahora: ' + c.despues + (c.unit?' '+c.unit:''));
-      lineas.push('');
-    });
-    lineas.push('Corregido por: ' + usuario, 'Hora corrección: ' + horaCorr);
-    corrMsg = lineas.join('\n');
-  }
-  if(nota) corrMsg += '\n\n📝 ' + nota;
+  var lineas = [
+    '✏️ *CORRECCIÓN DE REPORTE*', '',
+    'Tipo: ' + tipoLabel,
+    'Pozo: C-' + r.pozo,
+    'Recorredor: ' + r.recorredor,
+    '', 'Cambios:'
+  ];
+  cambios.forEach(function(c){
+    var antesTxt   = (c.antes===null||c.antes===undefined||c.antes==='') ? '—' : String(c.antes);
+    var despuesTxt = String(c.despues);
+    var unidad     = c.unit ? ' ' + c.unit : '';
+    lineas.push('• ' + c.label + ':');
+    lineas.push('Antes: ' + antesTxt + unidad);
+    lineas.push('Ahora: ' + despuesTxt + unidad);
+    lineas.push('');
+  });
+  lineas.push('Corregido por: ' + usuario, 'Hora corrección: ' + horaCorr);
+  var nota = (document.getElementById('editNota') ? document.getElementById('editNota').value : '').trim();
+  var corrMsg = lineas.join('\n') + (nota ? '\n\n📝 ' + nota : '');
 
-  // ── Firebase: SOLO los campos que cambiaron + metadata de edición ──
-  // Nunca toca: usuario, fecha, hora, gps, gpsCapturedAt, gpsSource.
+  // ── Firebase: actualizar reporte + nodo de corrección ───
   var editHistoryCompleto = (r.editHistory || []).concat(editHistoryNuevo);
-  updates.edited       = true;
-  updates.editedAt     = ahora;
-  updates.editedBy     = usuario;
-  updates.editHistory  = editHistoryCompleto;
-  // Compatibilidad con campos previos ya usados en el historial local
-  updates.editadoEn    = ahora;
-  updates.editadoPor   = usuario;
+  updates.edited      = true;
+  updates.editedAt    = ahora;
+  updates.editedBy    = usuario;
+  updates.editHistory = editHistoryCompleto;
+  updates.editadoEn   = ahora;
+  updates.editadoPor  = usuario;
 
   if(fbDB){
     fbDB.ref('reportes/'+r.id).update(updates).catch(function(e){
       console.warn('[CORRECCION] Firebase update falló:', e);
     });
-    // Trigger independiente — NO reescribe /reportes, no afecta dedupe del envío original.
     fbDB.ref('correcciones/'+Date.now()).set({
       reporteId: r.id,
       msg: corrMsg,
@@ -5316,16 +5372,16 @@ function guardarCorreccionReporte(){
     }).then(function(){
       showToast('✅ Corrección guardada — enviando al grupo…');
     }).catch(function(){
-      showToast('⚠️ Corrección guardada localmente — sin conexión para enviar al grupo');
+      showToast('⚠️ Corrección guardada — sin conexión para WhatsApp');
     });
   } else {
-    showToast('⚠️ Sin conexión — la corrección se sincronizará cuando vuelva la señal');
+    showToast('⚠️ Sin conexión — la corrección se guardará cuando vuelva la señal');
   }
 
-  // ── Actualizar copia local (historial) — refleja el cambio DE INMEDIATO ──
+  // ── Actualizar historial local e interfaz de inmediato ──
+  var rActualizado = Object.assign({}, r, updates);
   var hist = getHistorial();
   var idxH = hist.findIndex(function(x){ return x.id === r.id; });
-  var rActualizado = Object.assign({}, r, updates);
   if(idxH !== -1) hist[idxH] = rActualizado;
   else hist.unshift(rActualizado);
   saveHistorial(hist);
@@ -5337,6 +5393,7 @@ function guardarCorreccionReporte(){
   var infoPanel = document.getElementById('supInfoPanel');
   if(infoPanel && infoPanel.style.display === 'block') supRenderGraficas();
 }
+
 // ══════════════════════════════════════════════════════════
 
 // ← excel.js
