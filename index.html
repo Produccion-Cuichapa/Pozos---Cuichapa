@@ -3560,7 +3560,11 @@ function hcCargar(){
   var locales = [];
   try{ locales = getHistorial(); }catch(e){}
   _hcData = locales.slice();
-  hcRender();
+  // FIX rendimiento (FASE 4): diferir el render pesado un tick para que el
+  // navegador pinte "Cargando reportes..." antes de construir las tarjetas;
+  // sin esto, ambas escrituras al DOM ocurren en el mismo frame y el texto
+  // de carga nunca llega a mostrarse — se siente como un congelamiento.
+  setTimeout(function(){ hcRender(); }, 0);
 
   if(typeof fbDB !== 'undefined' && fbDB){
     if(statusEl) statusEl.textContent = '🔄 Sincronizando todos los dispositivos...';
@@ -3656,9 +3660,9 @@ function hcRender(){
       else arr=arr.filter(function(r){ return r.recorredor===HC_FILTRO_REC; });
     }
     arr.sort(function(a,b){ return new Date(b.fecha)-new Date(a.fecha); });
-    // FIX rendimiento: nunca pintar más de 100 tarjetas de golpe (hcCargar puede
-    // traer hasta ~100 locales + 300 de Firebase = 400 items potenciales)
-    if(arr.length > 100) arr = arr.slice(0, 100);
+    // FIX rendimiento: nunca pintar más de 50 tarjetas de golpe (FASE 2) —
+    // hcCargar puede traer hasta ~50 locales + 300 de Firebase = 350 items potenciales
+    if(arr.length > 50) arr = arr.slice(0, 50);
     var list=document.getElementById('hcList');
     var countEl=document.getElementById('hcCount');
     if(!list) return;
@@ -5651,27 +5655,54 @@ function getHistorial(){
   try{ return JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); }
   catch(e){ return []; }
 }
+// Campos que SÍ se conservan para un reporte ya enviado.
+// Lista mínima pedida + campos que el render (renderHistorial/hcRender)
+// y la corrección post-envío (guardarCorreccionReporte) necesitan para
+// no romperse: msg (texto de la tarjeta), ptp/ptr/bls (diff de corrección),
+// esAlarma/tipoAlarma/lugar (tarjetas de alarma), device/editadoEn/editadoPor
+// (atribución), intentos/ultimoIntento/otroDisp/fbKey (estado de envío/origen).
+var HIST_KEEP_FIELDS_SENT = [
+  'id','pozo','fecha','hora','modo','recorredor',
+  'estado','whatsappStatus','whatsappSent','nFotos',
+  'msg','esAlarma','tipoAlarma','lugar',
+  'ptp','ptr','bls','device','editadoEn','editadoPor',
+  'intentos','ultimoIntento','otroDisp','fbKey'
+];
+
 function saveHistorial(arr){
   try{
-    // FIX rendimiento: ordenar por fecha, limitar a 100 más recientes,
-    // y liberar fotos base64 de reportes ya enviados (solo se conserva nFotos).
+    // FIX rendimiento: ordenar por fecha, limitar a 50 más recientes,
+    // y reducir reportes ya enviados a solo los campos necesarios
+    // (elimina fotos/base64/gps/checks pesados que ya no se usan).
     arr = arr.slice().sort(function(a,b){ return new Date(b.fecha) - new Date(a.fecha); });
-    if(arr.length > 100) arr = arr.slice(0, 100);
+    if(arr.length > 50) arr = arr.slice(0, 50);
     arr = arr.map(function(r){
       var yaEnviado = (r.estado === 'enviado' || r.whatsappStatus === 'sent' || r.whatsappSent === true);
-      if(yaEnviado && r.fotos && r.fotos.length){
-        var copia = {};
-        for(var k in r){ if(r.hasOwnProperty(k)) copia[k] = r[k]; }
-        copia.nFotos = (typeof r.nFotos === 'number') ? r.nFotos : r.fotos.length;
-        copia.fotos  = []; // liberar base64 — ya no se necesita localmente
-        return copia;
+      if(!yaEnviado) return r; // sin enviar: conservar completo (aún puede necesitarse)
+      var copia = {};
+      for(var i=0;i<HIST_KEEP_FIELDS_SENT.length;i++){
+        var k = HIST_KEEP_FIELDS_SENT[i];
+        if(r[k] !== undefined) copia[k] = r[k];
       }
-      return r;
+      if(typeof copia.nFotos !== 'number'){
+        copia.nFotos = (r.fotos && r.fotos.length) ? r.fotos.length : 0;
+      }
+      return copia;
     });
     localStorage.setItem(HIST_KEY, JSON.stringify(arr));
   }
   catch(e){ console.warn('localStorage lleno'); }
 }
+
+// FIX rendimiento (FASE 6): si el historial local ya excede 50 reportes al
+// cargar la app, recortarlo de inmediato — no esperar al próximo guardado.
+// No toca Firebase, solo localStorage.
+(function _hist_startup_trim(){
+  try{
+    var raw = getHistorial();
+    if(raw.length > 50) saveHistorial(raw); // saveHistorial ya aplica el cap+strip
+  }catch(e){}
+})();
 function getReporte(id){
   return getHistorial().filter(function(r){ return r.id===id; })[0] || null;
 }
@@ -5683,7 +5714,7 @@ function guardarReporte(reporte){
   for(var i=0;i<arr.length;i++){ if(arr[i].id===reporte.id){ idx=i; break; } }
   if(idx >= 0) arr[idx] = reporte;
   else arr.unshift(reporte);
-  if(arr.length > 100) arr = arr.slice(0, 100); // alineado con el cap de saveHistorial
+  if(arr.length > 50) arr = arr.slice(0, 50); // alineado con el cap de saveHistorial (FASE 1)
   saveHistorial(arr);
   // Sincronizar a Firebase si hay señal
   if(fbDB) guardarEnFirebase(reporte);
@@ -7096,8 +7127,8 @@ function filtrarHist(f, btn){
 
 function renderHistorial(){
   var arr = getHistorial();
-  // FIX rendimiento: nunca pintar más de 100 tarjetas de golpe
-  if(arr.length > 100) arr = arr.slice(0, 100);
+  // FIX rendimiento: nunca pintar más de 50 tarjetas de golpe (FASE 2)
+  if(arr.length > 50) arr = arr.slice(0, 50);
   var pendientes = getPendientes();
   if(histFiltro === 'alarmas'){
     arr = arr.filter(function(r){ return r.esAlarma; });
