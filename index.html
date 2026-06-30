@@ -1943,6 +1943,42 @@ function toggleMode(){
 }
 try{if(localStorage.getItem('cuichapa_mode')==='night'){nightMode=true;document.body.classList.add('night');document.getElementById('modeBtn').textContent='☀️ Día';}}catch(e){}
 
+// FIX — botón "Ver en Maps": geo: nativo en Android (igual que Google Maps,
+// no requiere internet, abre la app de mapas con el GPS ya capturado) con
+// fallback automático a maps.google.com si no hay app que maneje geo:.
+// No reemplaza la captura de GPS — solo permite verificar visualmente.
+function _actualizarMapsLink(lat, lon){
+  var link = document.getElementById('mapsLink');
+  if(!link) return;
+  if(!lat || !lon){
+    link.textContent = '📍 Obteniendo GPS…';
+    link.href = '#';
+    link.onclick = function(e){ e.preventDefault(); showToast('📍 Obteniendo GPS… espera unos segundos'); };
+    return;
+  }
+  link.textContent = '📍 Ver mi ubicación en Google Maps';
+  var webUrl = 'https://maps.google.com/?q=' + lat + ',' + lon;
+  if(_isAndroidUA){
+    var geoUrl = 'geo:' + lat + ',' + lon + '?q=' + lat + ',' + lon;
+    link.href = geoUrl;
+    link.onclick = function(e){
+      e.preventDefault();
+      var _hiddenAt = Date.now();
+      window.location.href = geoUrl;
+      // Si tras 800ms seguimos en la pestaña (ninguna app de mapas tomó el
+      // intent geo:), caer al enlace web — mismo patrón que usa Maps/WhatsApp.
+      setTimeout(function(){
+        if(!document.hidden && (Date.now() - _hiddenAt) >= 750){
+          window.open(webUrl, '_blank');
+        }
+      }, 800);
+    };
+  } else {
+    link.href = webUrl;
+    link.onclick = null; // comportamiento normal de enlace (ya funciona en iPhone)
+  }
+}
+
 function gpsOk(p){
   la=p.coords.latitude;lo=p.coords.longitude;ac=Math.round(p.coords.accuracy);
   _lastGpsSave(la,lo,ac,'getCurrentPosition');
@@ -1951,7 +1987,7 @@ function gpsOk(p){
   document.getElementById('gpsCoords').style.display='block';
   document.getElementById('gpsCoords').textContent='📍 '+la.toFixed(6)+', '+lo.toFixed(6);
   document.getElementById('mapsLink').style.display='block';
-  document.getElementById('mapsLink').href='https://maps.google.com/?q='+la+','+lo;
+  _actualizarMapsLink(la, lo);
 }
 function gpsErr(){
   var gb2=document.getElementById('gpsBar');if(gb2)gb2.className='gps-bar err';
@@ -1963,10 +1999,13 @@ if(navigator.geolocation){
   navigator.geolocation.getCurrentPosition(gpsOk,gpsErr,{enableHighAccuracy:true,timeout:15000,maximumAge:0});
   // Actualización continua
   navigator.geolocation.watchPosition(
-    function(p){ la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy); _lastGpsSave(la,lo,ac,'watchPosition'); },
+    function(p){ la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy); _lastGpsSave(la,lo,ac,'watchPosition'); _actualizarMapsLink(la,lo); },
     function(){},
     {enableHighAccuracy:true, maximumAge:10000, timeout:15000}
   );
+  // Botón "Ver en Maps" visible desde el inicio, en estado de espera.
+  var _mlInit = document.getElementById('mapsLink');
+  if(_mlInit){ _mlInit.style.display='block'; _actualizarMapsLink(0,0); }
 } else { gpsErr(); }
 
 function showTab(id,btn){
@@ -2684,6 +2723,7 @@ function _esperarGPSReal(cb){
       _lastGpsSave(la, lo, ac, source === 'recent' ? 'cache' : 'getCurrentPosition');
       _gpsSourceForReport = source;
       _gpsCapturedAtForReport = new Date().toISOString();
+      _actualizarMapsLink(la, lo);
       if(source === 'recent'){
         showToast('📍 Usando última ubicación reciente (no es un fix nuevo)');
       }
