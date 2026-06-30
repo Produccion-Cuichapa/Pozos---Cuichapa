@@ -4829,6 +4829,10 @@ function guardarCorreccionReporte(){
   var idx = hist.findIndex(function(x){ return x.id === r.id; });
   if(idx !== -1) hist[idx] = r;
   saveHistorial(hist);
+  console.warn('[WA_WRITE_TRACE] guardarCorreccionReporte() va a hacer .update() — reportId:', r.id,
+    '| whatsappStatus (no incluido en este update, solo referencia):', r.whatsappStatus,
+    '| whatsappSent (no incluido en este update, solo referencia):', r.whatsappSent,
+    '| stack:', (new Error()).stack);
 
   // Sync to Firebase
   if(fbDB) fbDB.ref('reportes/'+r.id).update({
@@ -5381,6 +5385,13 @@ function guardarEnFirebase(reporte){
       var remoto     = snap.val();
       var yaEnviado  = !!(remoto && (remoto.whatsappStatus === 'sent' || remoto.whatsappSent === true));
       var deviceName = typeof hcGetDeviceName === 'function' ? hcGetDeviceName() : '';
+      console.warn('[WA_WRITE_TRACE] guardarEnFirebase() va a hacer .set() — reportId:', reporte.id,
+        '| whatsappStatus LOCAL (reporte):', reporte.whatsappStatus,
+        '| whatsappSent LOCAL (reporte):', reporte.whatsappSent,
+        '| whatsappStatus REMOTO (antes de escribir):', remoto && remoto.whatsappStatus,
+        '| whatsappSent REMOTO (antes de escribir):', remoto && remoto.whatsappSent,
+        '| yaEnviado (protección activa):', yaEnviado,
+        '| stack:', (new Error()).stack);
     ref.set({
       // ── Identificación ────────────────────────────────────
       id:            reporte.id,
@@ -5447,6 +5458,9 @@ function guardarEnFirebase(reporte){
 function actualizarEstadoFirebase(id, estado, ultimoIntento){
   if(!fbDB) return;
   try{
+    console.warn('[WA_WRITE_TRACE] actualizarEstadoFirebase() va a hacer .update() — reportId:', id,
+      '| estado nuevo:', estado,
+      '| stack:', (new Error()).stack);
     fbDB.ref('reportes/' + id).update({
       estado: estado,
       ultimoIntento: ultimoIntento || new Date().toISOString(),
@@ -6977,6 +6991,10 @@ function ccVerificar(){
     return;
   }
   if(rRetry && fbDB){
+    console.warn('[WA_WRITE_TRACE] ccVerificar() va a forzar pending — reportId:', rRetry.id,
+      '| whatsappStatus ANTES (local):', rRetry.whatsappStatus,
+      '| whatsappSent ANTES (local):', rRetry.whatsappSent,
+      '| stack:', (new Error()).stack);
     rRetry.whatsappStatus    = 'pending';
     rRetry.whatsappSent      = false;
     rRetry.whatsappDedupeKey = String(rRetry.id);
