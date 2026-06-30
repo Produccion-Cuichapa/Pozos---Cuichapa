@@ -239,7 +239,12 @@ function renderStats() {
   var hoyTs = hoy.getTime();
   var rHoy = allReportes.filter(function (r) { return new Date(r.fecha).getTime() >= hoyTs; }).length;
   var aHoy = allAlarmas.filter(function (a)  { return new Date(a.fecha).getTime() >= hoyTs; }).length;
-  var rPend = allReportes.filter(function (r) { return r.estado === 'pendiente'; }).length;
+  // FIX: excluir reportes ya enviados según whatsappStatus/whatsappSent,
+  // aunque el campo 'estado' remoto no haya sido actualizado.
+  var rPend = allReportes.filter(function (r) {
+    var yaEnviado = (r.estado === 'enviado' || r.whatsappStatus === 'sent' || r.whatsappSent === true);
+    return !yaEnviado && r.estado === 'pendiente';
+  }).length;
   var aTotal = allAlarmas.length;
 
   setText('statReportesHoy', rHoy);
@@ -290,7 +295,9 @@ function renderReportes() {
 
   tbody.innerHTML = page.map(function (r) {
     var fecha = fmtFecha(r.fecha);
-    var estado = r.estado === 'enviado'
+    // FIX: derivar 'enviado' también desde whatsappStatus/whatsappSent
+    var _yaEnviado = (r.estado === 'enviado' || r.whatsappStatus === 'sent' || r.whatsappSent === true);
+    var estado = _yaEnviado
       ? '<span class="badge badge-green">✓ Enviado</span>'
       : '<span class="badge badge-yellow">⏳ Pendiente</span>';
     var modo = '<span class="modo-tag">' + (MODOS[r.modo] || r.modo || '—') + '</span>';
