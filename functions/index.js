@@ -160,8 +160,9 @@ async function clearExpiredLock(reportId){
 // TRIGGER: /reportes/{reportId} onWrite
 // ══════════════════════════════════════════════════════════════
 // ════════════════════════════════════════════════════════════════
-// sendCorreccion — trigger INDEPENDIENTE para mensajes de corrección.
-// No toca /reportes ni su dedupe/lock — path propio /correcciones/{id}.
+// sendCorreccion — trigger exclusivo para correcciones de reportes.
+// Path propio: /correcciones/{correccionId} (nunca toca /reportes).
+// Para desplegar: firebase deploy --only functions:sendCorreccion
 // ════════════════════════════════════════════════════════════════
 exports.sendCorreccion = functions
   .runWith({ timeoutSeconds: 60, memory: '256MB' })
@@ -169,25 +170,59 @@ exports.sendCorreccion = functions
   .onCreate(async (snap, context) => {
     var correccionId = context.params.correccionId;
     var data = snap.val();
-    if(!data || !data.msg) return null;
-    if(data.estado === 'enviado') return null; // por si se reescribe el nodo
+
+    // Guards de seguridad — loguear siempre para diagnóstico
+    if(!data){
+      console.error('[sendCorreccion] snapshot vacío, correccionId:', correccionId);
+      return null;
+    }
+    if(!data.msg){
+      console.error('[sendCorreccion] campo msg ausente. Keys recibidos:', Object.keys(data).join(','));
+      return null;
+    }
+    if(data.estado === 'enviado'){
+      console.log('[sendCorreccion] ya enviado, skip. correccionId:', correccionId);
+      return null;
+    }
+
+    // Verificar config de UltraMsg
+    var cfg;
+    try{ cfg = CFG(); } catch(cfgErr){
+      console.error('[sendCorreccion] CFG() falló:', cfgErr.message);
+      await DB.ref('/correcciones/' + correccionId).update({ estado:'failed', error:'CFG: '+cfgErr.message });
+      return null;
+    }
+    console.log('[sendCorreccion] iniciando | group:', cfg.group || 'NO_CONFIGURADO',
+                '| instance:', cfg.instance || 'NO_CONFIGURADO',
+                '| correccionId:', correccionId,
+                '| reporteId:', data.reporteId || '—');
+
+    if(!cfg.group || !cfg.instance || !cfg.token){
+      var missing = [!cfg.group&&'group', !cfg.instance&&'instance', !cfg.token&&'token'].filter(Boolean).join(',');
+      console.error('[sendCorreccion] UltraMsg config incompleta — faltan:', missing);
+      await DB.ref('/correcciones/' + correccionId).update({ estado:'failed', error:'config incompleta: '+missing });
+      return null;
+    }
 
     try{
-      var cfg = CFG();
-      console.log('[WA_BACKEND] sendCorreccion → group:', cfg.group || 'NO CONFIGURADO', '| correccionId:', correccionId);
       var result = await sendText(data.msg);
-      if(!result.ok) throw new Error('UltraMsg correccion failed: ' + JSON.stringify(result.raw));
+      if(!result.ok){
+        var rawStr = JSON.stringify(result.raw || {});
+        console.error('[sendCorreccion] UltraMsg devolvió error:', rawStr);
+        throw new Error('UltraMsg no confirmó envío: ' + rawStr);
+      }
       await DB.ref('/correcciones/' + correccionId).update({
-        estado: 'enviado',
-        enviadoAt: admin.database.ServerValue.TIMESTAMP
+        estado:    'enviado',
+        enviadoAt: admin.database.ServerValue.TIMESTAMP,
+        ultraId:   result.id || null
       });
-      console.log('[WA_BACKEND] correccion enviada OK:', correccionId);
-    }catch(err){
-      console.error('[WA_BACKEND] correccion error:', correccionId, err.message);
+      console.log('[sendCorreccion] ✅ enviado OK | correccionId:', correccionId, '| ultraId:', result.id);
+    } catch(err){
+      console.error('[sendCorreccion] ❌ error final:', err.message, '| correccionId:', correccionId);
       await DB.ref('/correcciones/' + correccionId).update({
         estado: 'failed',
-        error: err.message
-      });
+        error:  err.message
+      }).catch(function(e){ console.error('[sendCorreccion] no se pudo guardar error en DB:', e.message); });
     }
     return null;
   });
