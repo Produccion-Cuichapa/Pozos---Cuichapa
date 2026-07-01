@@ -860,14 +860,15 @@ function ppToggle(id){
     </div>
 
     <!-- Resumen de confirmación — oculto hasta que el usuario pulse Vista previa -->
-    <div id="editConfirmPanel" style="display:none;background:rgba(59,130,246,.12);border:1.5px solid #3b82f6;border-radius:14px;padding:14px 16px;margin-bottom:12px;font-size:13px;color:var(--txt)">
+    <div id="editConfirmPanel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:10001;align-items:center;justify-content:center;padding:16px">
+      <div style="background:var(--surface);border-radius:20px;padding:20px 18px;width:100%;max-width:420px;max-height:80vh;overflow-y:auto">
+      <div id="editConfirmPanelInner" style="font-size:13px;color:var(--txt)">
       <div style="font-weight:800;margin-bottom:8px;color:#60a5fa">Se modificarán:</div>
       <div id="editConfirmChanges"></div>
       <div style="display:flex;gap:10px;margin-top:14px">
         <button onclick="document.getElementById('editConfirmPanel').style.display='none'" style="flex:1;padding:12px;border-radius:12px;border:none;background:var(--surface2);color:var(--txt2);font-size:14px;font-weight:700;cursor:pointer">Cancelar</button>
         <button onclick="_editConfirmarGuardar()" style="flex:1;padding:12px;border-radius:12px;border:none;background:#3b82f6;color:#fff;font-size:14px;font-weight:800;cursor:pointer">✅ Guardar corrección</button>
-      </div>
-    </div>
+      </div></div></div>
     <button onclick="guardarCorreccionReporte()" id="editPreviewBtn" style="width:100%;padding:15px;border-radius:14px;border:none;background:#3b82f6;color:#fff;font-size:16px;font-weight:800;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1.5px">VER CAMBIOS Y CONFIRMAR</button>
   </div>
 </div>
@@ -5091,9 +5092,10 @@ var CORRECCION_FIELDS_CO = [
   { key:'observaciones', label:'Observaciones', text:true }
 ];
 var CORRECCION_FIELDS_NIVEL = [
-  { key:'bls',           label:'Barriles (BLS)', numeric:true },
-  { key:'ctm',           label:'Centímetros (CTM)', numeric:true },
+  { key:'bls',           label:'Barriles',      unit:'bls',    numeric:true },
+  { key:'ctm',           label:'Centímetros',   unit:'cm',     numeric:true },
   { key:'nivelHora',     label:'Hora de nivel', text:true, nested:'nivel.hora' },
+  { key:'motivo',        label:'Motivo',        text:true },
   { key:'observaciones', label:'Observaciones', text:true }
 ];
 var CORRECCION_FIELDS_SIMPLE = [
@@ -5275,8 +5277,9 @@ function guardarCorreccionReporte(){
   })(new Date(r.fecha)) : '—';
 
   var panel = document.getElementById('editConfirmPanel');
-  var cont  = document.getElementById('editConfirmChanges');
-  if(!panel || !cont) return;
+  var cont  = document.getElementById('editConfirmChanges') || document.getElementById('editConfirmPanelInner');
+  if(!panel) return;
+  if(!cont){ cont = document.getElementById('editConfirmPanelInner'); }
 
   cont.innerHTML = '<div style="font-size:11px;color:var(--txt2);margin-bottom:10px">'
     + '🛢 <strong>Pozo:</strong> C-' + (r.pozo||'?') + ' &nbsp;|&nbsp; '
@@ -5296,7 +5299,7 @@ function guardarCorreccionReporte(){
       }).join('')
     + '<div style="font-size:11px;color:var(--txt2);margin-top:8px">¿Deseas guardar esta corrección?</div>';
 
-  panel.style.display = 'block';
+  panel.style.display = 'flex';
   // Ocultar el botón principal mientras el panel de confirmación está visible
   var previewBtn = document.getElementById('editPreviewBtn');
   if(previewBtn) previewBtn.style.display = 'none';
@@ -5363,12 +5366,14 @@ function _editConfirmarGuardar(){
     fbDB.ref('reportes/'+r.id).update(updates).catch(function(e){
       console.warn('[CORRECCION] Firebase update falló:', e);
     });
-    fbDB.ref('correcciones/'+Date.now()).set({
+    // Escribir en /correcciones — path independiente de /reportes.
+    // La CF sendCorreccion escucha este path y envía corrMsg al grupo.
+    fbDB.ref('correcciones/' + Date.now()).set({
       reporteId: r.id,
-      msg: corrMsg,
-      usuario: usuario,
-      fecha: ahora,
-      estado: 'pendiente'
+      msg:       corrMsg,
+      usuario:   usuario,
+      fecha:     ahora,
+      estado:    'pendiente'
     }).then(function(){
       showToast('✅ Corrección guardada — enviando al grupo…');
     }).catch(function(){
@@ -7352,6 +7357,66 @@ function intentarEnviar(id){
   enviarConUltramsg(id, null);
 }
 
+// Reintentar envío a WhatsApp de un reporte que quedó pendiente.
+// No duplica si ya fue enviado — la CF tiene su propio lock en /whatsappSentRegistry.
+// Mecanismo: limpiar el lock antiguo + resetear whatsappStatus:'pending' en Firebase.
+// La CF sendWhatsApp ya desplegada lo procesará como si fuera nuevo, con deduplicación.
+function reintentarEnvioPendiente(id){
+  if(!fbDB){ showToast('⚠️ Sin conexión Firebase'); return; }
+  var r = getReporte(id);
+  if(!r){ showToast('❌ Reporte no encontrado'); return; }
+
+  // Verificar SIEMPRE el remoto antes de reintentar — podría haberse enviado
+  // desde otro dispositivo o en segundo plano sin que el local se actualizara.
+  fbDB.ref('reportes/' + id).once('value').then(function(snap){
+    var remoto = snap.val();
+    if(remoto && (remoto.whatsappStatus === 'sent' || remoto.whatsappSent === true)){
+      showToast('✅ Este reporte ya fue enviado al grupo');
+      // Actualizar local para que refleje el estado real
+      var hist = getHistorial();
+      var idx = hist.findIndex(function(x){ return x.id == id; });
+      if(idx !== -1){
+        hist[idx].whatsappStatus = 'sent';
+        hist[idx].whatsappSent = true;
+        hist[idx].estado = 'enviado';
+        saveHistorial(hist);
+        renderHistorial();
+      }
+      return;
+    }
+
+    // Limpiar el lock para que el CF no lo rechace por duplicado
+    fbDB.ref('whatsappSentRegistry/' + id).remove().then(function(){
+      // Resetear status a 'pending' — dispara la CF sendWhatsApp
+      return fbDB.ref('reportes/' + id).update({
+        whatsappStatus: 'pending',
+        whatsappSent:   false,
+        whatsappAttempts: 0
+      });
+    }).then(function(){
+      showToast('🔄 Reintentando envío… el CF procesará en unos segundos');
+      // Escuchar el cambio de status hasta 30s para actualizar la UI
+      var done = false;
+      var timeout = setTimeout(function(){
+        if(!done){ done = true; showToast('⏱️ Tiempo de espera agotado — revisa el historial'); }
+      }, 30000);
+      fbDB.ref('reportes/' + id + '/whatsappStatus').on('value', function(s){
+        if(s.val() === 'sent' && !done){
+          done = true;
+          clearTimeout(timeout);
+          fbDB.ref('reportes/' + id + '/whatsappStatus').off('value');
+          showToast('✅ Reporte enviado correctamente al grupo');
+          renderHistorial();
+        }
+      });
+    }).catch(function(e){
+      showToast('❌ Error al reintentar: ' + e.message);
+    });
+  }).catch(function(e){
+    showToast('❌ No se pudo verificar estado en Firebase: ' + e.message);
+  });
+}
+
 // ── Procesar cola completa — silencioso ──────────
 var _colaEnProceso = false;
 function procesarCola(){
@@ -7784,8 +7849,9 @@ function renderHistorial(){
           + '</div>'
         : '')
       +'<div class="hist-actions">'
-      +(r.estado!=='enviado'
+      +(r.estado!=='enviado' && !r.whatsappSent && r.whatsappStatus!=='sent'
         ?'<button class="hist-resend" onclick="intentarEnviar('+r.id+')">📤 Enviar ahora</button>'
+          +(fbDB?'<button class="hist-resend" onclick="event.stopPropagation();reintentarEnvioPendiente('+r.id+')" style="background:#d97706;font-size:11px">🔄 Reintentar CF</button>':'')
         :'<button class="hist-resend" onclick="intentarEnviar('+r.id+')" style="background:#1e5caa">📤 Reenviar</button>')
       +((!r.esAlarma && r.estado==='enviado' && _minutosDesdeEnvio(r) < 15)
         ?'<button class="hist-resend" onclick="event.stopPropagation();abrirEditarReporte('+r.id+')" style="background:#3b82f6">✏️ Corregir reporte</button>'
