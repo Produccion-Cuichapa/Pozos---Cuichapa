@@ -5200,7 +5200,13 @@ function _camposParaModo(r){
 }
 
 function _minutosDesdeEnvio(r){
-  return (Date.now() - new Date(r.fecha).getTime()) / 60000;
+  // FIX: para reportes creados offline, r.fecha es el momento de CAPTURA,
+  // no el de envío real. whatsappSentAt es el timestamp confirmado por el CF
+  // (siempre posterior o igual a fecha). Usar whatsappSentAt cuando exista
+  // para que la ventana de 15 min cuente desde que el grupo recibió el mensaje,
+  // no desde que el recorredor tecleó.
+  var base = r.whatsappSentAt || r.fecha;
+  return (Date.now() - new Date(base).getTime()) / 60000;
 }
 
 function abrirEditarReporte(id){
