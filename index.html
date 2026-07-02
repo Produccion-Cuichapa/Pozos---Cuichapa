@@ -5708,6 +5708,85 @@ var _editPendingHistNuevo = null;
 var _editPendingAhora     = null;
 var _editPendingUsuario   = null;
 
+// ── Cola offline de correcciones pendientes ─────────────────────────────────
+var CORR_QUEUE_KEY = 'cuichapa_correcciones_pendientes';
+function _corrQueueGet(){
+  try{ return JSON.parse(localStorage.getItem(CORR_QUEUE_KEY)||'[]'); }catch(e){ return []; }
+}
+function _corrQueueSave(q){
+  try{ localStorage.setItem(CORR_QUEUE_KEY, JSON.stringify(q)); }catch(e){}
+}
+function _corrQueueAdd(item){ // item: {corrId,reporteId,updates,corrMsg,editHistNuevo,ahora,usuario}
+  var q = _corrQueueGet();
+  if(q.some(function(x){ return x.corrId === item.corrId; })) return; // anti-duplicado
+  q.push(item);
+  _corrQueueSave(q);
+}
+function _corrQueueRemove(corrId){
+  var q = _corrQueueGet().filter(function(x){ return x.corrId !== corrId; });
+  _corrQueueSave(q);
+}
+
+// Sincronizar correcciones pendientes cuando vuelve la señal.
+// Regla: primero verifica que el reporte original YA existe en Firebase.
+// Si no existe todavía (fue enviado offline y aún no sincronizó), espera.
+function sincronizarCorrencionesPendientes(){
+  if(!fbDB || !fbConnected) return;
+  var q = _corrQueueGet();
+  if(!q.length) return;
+  console.log('[CORRECCION] sincronizando', q.length, 'corrección(es) pendiente(s)');
+
+  q.forEach(function(item){
+    fbDB.ref('reportes/' + item.reporteId).once('value').then(function(snap){
+      var remoto = snap.val();
+      if(!remoto){
+        // Reporte original todavía no existe en Firebase — dejar en cola.
+        console.log('[CORRECCION] reporte', item.reporteId, 'aún no sincronizado — corrección en espera');
+        return;
+      }
+      // El reporte original existe → aplicar corrección
+      var editHistCompleto = (remoto.editHistory || []).concat(item.editHistNuevo);
+      var updates = Object.assign({}, item.updates, {
+        edited:      true,
+        editedAt:    item.ahora,
+        editedBy:    item.usuario,
+        editHistory: editHistCompleto,
+        editadoEn:   item.ahora,
+        editadoPor:  item.usuario
+      });
+      // 1. Actualizar el reporte en Firebase
+      fbDB.ref('reportes/' + item.reporteId).update(updates).then(function(){
+        // 2. Escribir en /correcciones para que la CF mande WhatsApp
+        return fbDB.ref('correcciones/' + Date.now()).set({
+          reporteId: item.reporteId,
+          msg:       item.corrMsg,
+          usuario:   item.usuario,
+          fecha:     item.ahora,
+          estado:    'pendiente'
+        });
+      }).then(function(){
+        // 3. Quitar de la cola y marcar local como sincronizado
+        _corrQueueRemove(item.corrId);
+        var hist = getHistorial();
+        var idx = hist.findIndex(function(x){ return String(x.id) === String(item.reporteId); });
+        if(idx !== -1){
+          Object.assign(hist[idx], updates);
+          delete hist[idx].correccionPendiente; // ya no es pendiente
+          saveHistorial(hist);
+          renderHistorial();
+        }
+        console.log('[CORRECCION] sincronizada OK:', item.corrId);
+        showToast('✅ Corrección sincronizada con Firebase y enviada al grupo');
+      }).catch(function(e){
+        console.warn('[CORRECCION] sync falló:', item.corrId, e.message);
+      });
+    }).catch(function(e){
+      console.warn('[CORRECCION] no se pudo leer reporte remoto:', item.reporteId, e.message);
+    });
+  });
+}
+
+
 // PASO 2: usuario confirmó — ejecutar todos los efectos secundarios
 function _editConfirmarGuardar(){
   if(!_editReporteId || !_editOriginalReporte || !_editPendingCambios){ cerrarEditarReporte(); return; }
@@ -5777,47 +5856,82 @@ function _editConfirmarGuardar(){
   lineas.push('⚠️ GPS, fecha, hora original y recorredor no fueron modificados.');
   var corrMsg = lineas.join('\n');
 
-  // ── Firebase: actualizar reporte + nodo de corrección ───
-  var editHistoryCompleto = (r.editHistory || []).concat(editHistoryNuevo);
+  // ── Firebase: actualizar reporte + nodo de corrección ───────────────────
+  // Regla: PRIMERO verificar que el reporte original ya existe en Firebase.
+  // Si no existe (fue creado offline), encolar la corrección y marcarla como
+  // pendiente localmente — no aplicarla hasta que el original sincronice.
+  var _editHistCompleto = (r.editHistory || []).concat(editHistoryNuevo);
   updates.edited      = true;
   updates.editedAt    = ahora;
   updates.editedBy    = usuario;
-  updates.editHistory = editHistoryCompleto;
+  updates.editHistory = _editHistCompleto;
   updates.editadoEn   = ahora;
   updates.editadoPor  = usuario;
 
-  if(fbDB){
-    fbDB.ref('reportes/'+r.id).update(updates).catch(function(e){
-      console.warn('[CORRECCION] Firebase update falló:', e);
-    });
-    // Escribir en /correcciones — path independiente de /reportes.
-    // La CF sendCorreccion escucha este path y envía corrMsg al grupo.
-    fbDB.ref('correcciones/' + Date.now()).set({
-      reporteId: r.id,
-      msg:       corrMsg,
-      usuario:   usuario,
-      fecha:     ahora,
-      estado:    'pendiente'
-    }).then(function(){
-      showToast('✅ Corrección guardada — enviando al grupo…');
-    }).catch(function(){
-      showToast('⚠️ Corrección guardada — sin conexión para WhatsApp');
-    });
-  } else {
-    showToast('⚠️ Sin conexión — la corrección se guardará cuando vuelva la señal');
+  var _corrId = 'corr_' + String(r.id) + '_' + Date.now();
+  var _queueItem = {
+    corrId:        _corrId,
+    reporteId:     r.id,
+    updates:       updates,
+    corrMsg:       corrMsg,
+    editHistNuevo: editHistoryNuevo,
+    ahora:         ahora,
+    usuario:       usuario
+  };
+
+  function _aplicarLocal(esSincronizada){
+    var localUpdates = Object.assign({}, updates);
+    if(!esSincronizada){
+      localUpdates.edited            = false;
+      localUpdates.correccionPendiente = _corrId;
+      delete localUpdates.editHistory; // no sobreescribir el historial local hasta que Firebase confirme
+    }
+    var rAct = Object.assign({}, r, localUpdates);
+    var hist = getHistorial();
+    var idxH = hist.findIndex(function(x){ return String(x.id) === String(r.id); });
+    if(idxH !== -1) hist[idxH] = rAct; else hist.unshift(rAct);
+    saveHistorial(hist);
+    renderHistorial();
+    actualizarBadgeHistorial();
   }
 
-  // ── Actualizar historial local e interfaz de inmediato ──
-  var rActualizado = Object.assign({}, r, updates);
-  var hist = getHistorial();
-  var idxH = hist.findIndex(function(x){ return x.id === r.id; });
-  if(idxH !== -1) hist[idxH] = rActualizado;
-  else hist.unshift(rActualizado);
-  saveHistorial(hist);
+  if(fbDB && fbConnected){
+    // Verificar que el reporte original ya existe en Firebase
+    fbDB.ref('reportes/' + r.id).once('value').then(function(snap){
+      if(!snap.val()){
+        // Original no existe aún → encolar y marcar pendiente
+        _corrQueueAdd(_queueItem);
+        _aplicarLocal(false);
+        showToast('⏳ Reporte original no sincronizado aún — corrección en cola');
+        return;
+      }
+      // Original existe → aplicar
+      fbDB.ref('reportes/' + r.id).update(updates).then(function(){
+        return fbDB.ref('correcciones/' + Date.now()).set({
+          reporteId: r.id, msg: corrMsg, usuario: usuario, fecha: ahora, estado: 'pendiente'
+        });
+      }).then(function(){
+        _aplicarLocal(true);
+        showToast('✅ Corrección guardada — enviando al grupo…');
+      }).catch(function(e){
+        console.warn('[CORRECCION] Firebase falló, encolando:', e.message);
+        _corrQueueAdd(_queueItem);
+        _aplicarLocal(false);
+        showToast('⚠️ Sin conexión estable — corrección en cola');
+      });
+    }).catch(function(){
+      _corrQueueAdd(_queueItem);
+      _aplicarLocal(false);
+      showToast('⚠️ Señal inestable — corrección en cola, se enviará al reconectar');
+    });
+  } else {
+    _corrQueueAdd(_queueItem);
+    _aplicarLocal(false);
+    showToast('⏳ Sin señal — corrección guardada localmente, se sincronizará al reconectar');
+  }
 
+  // cerrar el modal de inmediato (local actualizado dentro de _aplicarLocal, async)
   cerrarEditarReporte();
-  renderHistorial();
-  actualizarBadgeHistorial();
 
   var infoPanel = document.getElementById('supInfoPanel');
   if(infoPanel && infoPanel.style.display === 'block') supRenderGraficas();
@@ -6242,7 +6356,11 @@ function initFirebase(){
     // Detectar conexión REAL a RTDB (no solo que el SDK haya cargado)
     fbDB.ref('.info/connected').on('value', function(snap){
       fbConnected = snap.val() === true;
-      if(fbConnected) actualizarSyncBar('conectado');
+      if(fbConnected){
+        actualizarSyncBar('conectado');
+        // Al recuperar señal: intentar sincronizar correcciones que quedaron pendientes offline
+        setTimeout(sincronizarCorrencionesPendientes, 2000); // 2s de margen para que el reporte original sincronice primero
+      }
     });
     sincronizarAFirebase();
     escucharFirebase();
@@ -8240,9 +8358,11 @@ function renderHistorial(){
       +(r.otroDisp
         ? '<span style="font-size:10px;background:#dbeafe;color:#1d4ed8;border-radius:10px;padding:2px 8px;font-weight:700;margin-left:6px">📱 Otro dispositivo</span>'
         : '')
-      +(r.edited
-        ? '<span style="font-size:10px;background:#3b82f6;color:#fff;border-radius:10px;padding:2px 8px;font-weight:700;margin-left:6px" title="Editado por '+escapeHTML(r.editedBy||'')+' — '+escapeHTML(r.editedAt||'')+'">✏️ Corregido</span>'
-        : '')
+      +(r.correccionPendiente
+        ? '<span style="font-size:10px;background:#d97706;color:#fff;border-radius:10px;padding:2px 8px;font-weight:700;margin-left:6px" title="Corrección sin sincronizar">⏳ Corrección pendiente</span>'
+        : r.edited
+          ? '<span style="font-size:10px;background:#3b82f6;color:#fff;border-radius:10px;padding:2px 8px;font-weight:700;margin-left:6px" title="Editado por '+escapeHTML(r.editedBy||'')+' — '+escapeHTML(r.editedAt||'')+'">✏️ Corregido</span>'
+          : '')
       +'</span>'
       +'<span class="hist-card-date">'+fechaStr+'</span>'
       +(r.esAlarma && r.msg
