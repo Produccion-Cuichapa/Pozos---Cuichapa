@@ -5292,6 +5292,115 @@ function abrirEditarReporte(id){
     }
     // ── FIN PILOTO Guardia ───────────────────────────────────────────────────
 
+    // ── FIN PILOTO Guardia ───────────────────────────────────────────────────
+
+    // == CO / Reporte Diario =====================================================
+    if(modo === 'co' && !esModoGuardia){
+      var _sap  = r.sap || '';
+      var _esBM = _sap === 'BM';
+      var _co   = '';
+      _co += '<div class="step-card" style="margin-bottom:10px">';
+      _co += '<div class="step-label">Control Operativo &middot; C-'+r.pozo+'</div>';
+      // Estatus
+      _co += '<div class="big-field-label">Estado del pozo</div>';
+      _co += '<div style="display:flex;gap:10px;margin-bottom:14px">';
+      [['Abierto','green','🟢'],['Cerrado','red','🔴'],['Intermitente','amber','🟡']].forEach(function(v){
+        _co += '<button class="big-status-btn '+v[1]+(r.estatus===v[0]?' active':'')+'" onclick="selBigStatus(this,\'ec_coEstatus\',\''+v[0]+'\')">'+v[2]+'<br>'+v[0]+'</button>';
+      });
+      _co += '</div><input type="hidden" id="ec_coEstatus" value="'+(r.estatus||'')+'">';
+      // Fluye
+      _co += '<div class="big-field-label">Fluye</div>';
+      _co += '<div style="display:flex;gap:10px;margin-bottom:14px">';
+      ['FT','BSC','Sí','No'].forEach(function(v){
+        _co += '<button class="big-status-btn blue'+(r.fluye===v?' active':'')+'" onclick="selBigStatus(this,\'ec_coFlujo\',\''+v+'\')">'+v+'</button>';
+      });
+      _co += '</div><input type="hidden" id="ec_coFlujo" value="'+(r.fluye||'')+'">';
+      // SAP
+      _co += '<div class="big-field-label">SAP</div>';
+      _co += '<div style="display:flex;gap:10px;margin-bottom:14px">';
+      ['BN','BM','FY'].forEach(function(v){
+        _co += '<button class="big-status-btn slate'+(_sap===v?' active':'')+'" onclick="selBigStatus(this,\'ec_coSistema\',\''+v+'\')">'+v+'</button>';
+      });
+      _co += '</div><input type="hidden" id="ec_coSistema" value="'+(r.sap||'')+'">';
+      // Estrangulador
+      _co += '<div class="big-field-label">Estrangulador (/64 pulg)</div>';
+      _co += '<input class="big-input" type="text" id="ec_coEstrang" value="'+(r.estrang||'')+'" placeholder="ej: 24" style="margin-bottom:14px">';
+      // Presiones según SAP original
+      if(_esBM){
+        _co += '<div style="display:flex;gap:10px;margin-bottom:10px">';
+        _co += '<div style="flex:1"><div class="big-field-label">PTP kg/cm²</div><input class="big-input" type="text" id="ec_coPTP" value="'+(r.ptp||'')+'" inputmode="decimal"></div>';
+        _co += '<div style="flex:1"><div class="big-field-label">PTR kg/cm²</div><input class="big-input" type="text" id="ec_coPTR" value="'+(r.ptr||'')+'" inputmode="decimal"></div>';
+        _co += '</div><div style="display:flex;gap:10px;margin-bottom:14px">';
+        _co += '<div style="flex:1"><div class="big-field-label">Velocidad EPM</div><input class="big-input" type="number" id="ec_coEPM" value="'+(r.epm||'')+'" step="1"></div>';
+        _co += '<div style="flex:1"><div class="big-field-label">Carrera (pulg)</div><input class="big-input" type="number" id="ec_coCarrera" value="'+(r.carrera||'')+'" step="1"></div>';
+        _co += '</div>';
+      } else {
+        _co += '<div style="display:flex;gap:10px;margin-bottom:10px">';
+        _co += '<div style="flex:1"><div class="big-field-label">PTP kg/cm²</div><input class="big-input" type="text" id="ec_coPTP" value="'+(r.ptp||'')+'" inputmode="decimal"></div>';
+        _co += '<div style="flex:1"><div class="big-field-label">LDD kg/cm²</div><input class="big-input" type="text" id="ec_coLDD" value="'+(r.ldd||'')+'" inputmode="decimal"></div>';
+        _co += '</div><div style="display:flex;gap:10px;margin-bottom:14px">';
+        _co += '<div style="flex:1"><div class="big-field-label">PTR kg/cm²</div><input class="big-input" type="text" id="ec_coPTR" value="'+(r.ptr||'')+'" inputmode="decimal"></div>';
+        _co += '<div style="flex:1"><div class="big-field-label">LBN kg/cm²</div><input class="big-input" type="text" id="ec_coLBN" value="'+(r.lbn||'')+'" inputmode="decimal"></div>';
+        _co += '</div>';
+      }
+      // Actividades
+      _co += '<div class="big-field-label" style="margin-top:4px">Actividades</div>';
+      var _chks = r.checks || {};
+      [['trabajo','🔨 Trabajo'],['drenar','💧 Drenar'],['aforo','📏 Aforo / Proyección'],['intermitente','🔄 Intermitente']].forEach(function(c){
+        _co += '<label style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer">';
+        _co += '<input type="checkbox" id="ec_chk_'+c[0]+'" '+(_chks[c[0]]?'checked':'')+' style="width:22px;height:22px;accent-color:#3b82f6;cursor:pointer;flex-shrink:0">';
+        _co += '<span style="font-size:14px;font-weight:600;color:var(--txt)">'+c[1]+'</span></label>';
+      });
+      // Observaciones
+      _co += '<div class="big-field-label" style="margin-top:14px">Observaciones</div>';
+      _co += '<textarea id="ec_coObs" rows="3" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--surface2);color:var(--txt);resize:none;font-family:Inter,sans-serif;box-sizing:border-box">'+((r.observaciones||r.obs||'').replace(/</g,'&lt;'))+'</textarea>';
+      _co += '</div>';
+      cont.innerHTML = _co;
+      var notaEl5=document.getElementById('editNota'); if(notaEl5) notaEl5.value='';
+      return;
+    }
+    // == CABEZAL ==============================================================
+    if(modo === 'cab'){
+      var _cabObs = r.observaciones||r.obs||'';
+      var _cab = '<div class="step-card" style="border:2.5px solid #0f766e;margin-bottom:10px">';
+      _cab += '<div class="step-label" style="color:#0f766e">🔧 Corrección de Cabezal</div>';
+      _cab += '<div style="background:rgba(15,118,110,.12);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:var(--txt)"><strong>Cabezal:</strong> '+(r.pozo||'—')+'</div>';
+      _cab += '<div style="font-size:12px;font-weight:700;color:#0f766e;margin-bottom:6px">📝 Observaciones</div>';
+      _cab += '<textarea id="ec_cabObs" rows="4" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #0f766e;background:var(--surface2);color:var(--txt);font-size:13px;font-family:inherit;resize:none;box-sizing:border-box">'+(_cabObs.replace(/</g,'&lt;'))+'</textarea>';
+      _cab += '</div>';
+      cont.innerHTML = _cab;
+      var notaEl6=document.getElementById('editNota'); if(notaEl6) notaEl6.value='';
+      return;
+    }
+    // == ESTACION =============================================================
+    if(modo === 'estacion'){
+      var _estObs = r.observaciones||r.obs||'';
+      var _est = '<div class="step-card" style="border:2.5px solid #1d4ed8;margin-bottom:10px">';
+      _est += '<div class="step-label" style="color:#1d4ed8">🏭 Corrección de Estación</div>';
+      _est += '<div style="background:rgba(29,78,216,.12);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:var(--txt)"><strong>Estación:</strong> '+(r.pozo||'—')+'</div>';
+      _est += '<div style="font-size:12px;font-weight:700;color:#1d4ed8;margin-bottom:6px">📝 Observaciones</div>';
+      _est += '<textarea id="ec_estObs" rows="4" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #1d4ed8;background:var(--surface2);color:var(--txt);font-size:13px;font-family:inherit;resize:none;box-sizing:border-box">'+(_estObs.replace(/</g,'&lt;'))+'</textarea>';
+      _est += '</div>';
+      cont.innerHTML = _est;
+      var notaEl7=document.getElementById('editNota'); if(notaEl7) notaEl7.value='';
+      return;
+    }
+    // == NOTA DE CAMPO ========================================================
+    if(modo === 'nota'){
+      var _notaObs = r.observaciones||r.obs||'';
+      var _not = '<div class="step-card" style="border:2.5px solid #7c3aed;margin-bottom:10px">';
+      _not += '<div class="step-label" style="color:#7c3aed">📝 Nota de Campo</div>';
+      _not += '<p style="font-size:12px;color:var(--txt2);margin:6px 0 10px">Corrige el texto de la nota.</p>';
+      _not += '<textarea id="ec_notaText" rows="5" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid #7c3aed;background:var(--surface2);color:var(--txt);font-size:14px;font-family:inherit;resize:none;box-sizing:border-box">'+(_notaObs.replace(/</g,'&lt;'))+'</textarea>';
+      _not += '</div>';
+      cont.innerHTML = _not;
+      var notaEl8=document.getElementById('editNota'); if(notaEl8) notaEl8.value='';
+      return;
+    }
+
+    // Fallback: formulario genérico (modos futuros)
+    var camposActivos = _camposParaModo(r);
+
     // Resto de modos: formulario genérico (se reemplazará en iteraciones siguientes)
     var camposActivos = _camposParaModo(r);
     // Lee valores de rutas anidadas: checks.trabajo, nivel.hora, etc.
@@ -5442,48 +5551,97 @@ function guardarCorreccionReporte(){
     _editPendingAhora     = ahora;
     _editPendingUsuario   = usuario;
     // Mostrar panel de confirmación (código compartido con el path genérico)
+  } else if(modoR === 'co'){
+  // == CO diff reader =========================================================
+    var _getDom = function(id){ return document.getElementById(id); };
+    var _addCambio = function(campo, label, antes, despues, unit){
+      cambios.push({ label:label, antes:antes, despues:despues, unit:unit||'' });
+      editHistoryNuevo.push({ campo:campo, label:label, antes:(antes===null||antes===undefined)?'':antes, despues:despues, unidad:unit||'', usuario:usuario, fecha:ahora });
+      updates[campo] = despues;
+    };
+    var _diff = function(campo, label, elId, unit, numeric){
+      var el = _getDom(elId); if(!el) return;
+      var nv = numeric ? parseFloat(el.value) : el.value.trim();
+      var ov = r[campo];
+      if(numeric){ if(isNaN(nv)||nv===ov) return; }
+      else { if(!nv||nv===String(ov||'')) return; }
+      _addCambio(campo, label, ov, nv, unit);
+    };
+    var _diffHidden = function(campo, label, elId){
+      var el=_getDom(elId); if(!el||!el.value||el.value===String(r[campo]||'')) return;
+      _addCambio(campo, label, r[campo], el.value, '');
+    };
+    _diffHidden('estatus', 'Estatus', 'ec_coEstatus');
+    _diffHidden('fluye',   'Fluye',   'ec_coFlujo');
+    _diffHidden('sap',     'SAP',     'ec_coSistema');
+    _diff('estrang', 'Estrangulador', 'ec_coEstrang', '/64 pulg', false);
+    _diff('ptp', 'PTP', 'ec_coPTP', 'kg/cm²', false);
+    _diff('ldd', 'LDD', 'ec_coLDD', 'kg/cm²', false);
+    _diff('ptr', 'PTR', 'ec_coPTR', 'kg/cm²', false);
+    _diff('lbn', 'LBN', 'ec_coLBN', 'kg/cm²', false);
+    _diff('epm', 'EPM', 'ec_coEPM', '', true);
+    _diff('carrera', 'Carrera', 'ec_coCarrera', 'pulg', true);
+    // Actividades (checkboxes)
+    var _chkOld = r.checks || {};
+    [['trabajo','Trabajo'],['drenar','Drenar'],['aforo','Aforo'],['intermitente','Intermitente']].forEach(function(c){
+      var el=_getDom('ec_chk_'+c[0]); if(!el) return;
+      var nv=el.checked, ov=!!_chkOld[c[0]];
+      if(nv===ov) return;
+      cambios.push({ label:c[1], antes:ov, despues:nv, unit:'' });
+      editHistoryNuevo.push({ campo:'checks.'+c[0], label:c[1], antes:ov, despues:nv, unidad:'', usuario:usuario, fecha:ahora });
+      updates['checks/'+c[0]] = nv;
+    });
+    // Observaciones
+    var ecObsCO = _getDom('ec_coObs');
+    if(ecObsCO){
+      var novCO=ecObsCO.value.trim(), ovCO=r.observaciones||r.obs||'';
+      if(novCO!==ovCO){ _addCambio('observaciones','Observaciones',ovCO,novCO,''); updates['obs']=novCO; }
+    }
+
+  } else if(modoR === 'cab'){
+  // == Cabezal diff reader ====================================================
+    var ecObsCab=document.getElementById('ec_cabObs');
+    if(ecObsCab){
+      var nvC=ecObsCab.value.trim(), ovC=r.observaciones||r.obs||'';
+      if(nvC!==ovC){
+        cambios.push({ label:'Observaciones', antes:ovC, despues:nvC, unit:'' });
+        editHistoryNuevo.push({ campo:'observaciones', label:'Observaciones', antes:ovC||'', despues:nvC, unidad:'', usuario:usuario, fecha:ahora });
+        updates['observaciones']=nvC; updates['obs']=nvC;
+      }
+    }
+
+  } else if(modoR === 'estacion'){
+  // == Estación diff reader ===================================================
+    var ecObsEst=document.getElementById('ec_estObs');
+    if(ecObsEst){
+      var nvE=ecObsEst.value.trim(), ovE=r.observaciones||r.obs||'';
+      if(nvE!==ovE){
+        cambios.push({ label:'Observaciones', antes:ovE, despues:nvE, unit:'' });
+        editHistoryNuevo.push({ campo:'observaciones', label:'Observaciones', antes:ovE||'', despues:nvE, unidad:'', usuario:usuario, fecha:ahora });
+        updates['observaciones']=nvE; updates['obs']=nvE;
+      }
+    }
+
+  } else if(modoR === 'nota'){
+  // == Nota de Campo diff reader ==============================================
+    var ecNotaTxt=document.getElementById('ec_notaText');
+    if(ecNotaTxt){
+      var nvN=ecNotaTxt.value.trim(), ovN=r.observaciones||r.obs||'';
+      if(nvN!==ovN){
+        cambios.push({ label:'Texto de la nota', antes:ovN, despues:nvN, unit:'' });
+        editHistoryNuevo.push({ campo:'observaciones', label:'Texto de la nota', antes:ovN||'', despues:nvN, unidad:'', usuario:usuario, fecha:ahora });
+        updates['observaciones']=nvN; updates['obs']=nvN;
+      }
+    }
+
   } else {
   // ── FIN PILOTO Guardia — path genérico para otros modos ──────────────────
 
   camposActivos.forEach(function(f){
     var el = document.getElementById(_eidGuardar(f.key));
-    if(!el) return;
+  }); // forEach no-op generic placeholder
 
-    var valorNuevo, valorViejo = _leerViejoG(f);
-
-    if(f.checkbox){
-      valorNuevo = el.checked;
-      if(!!valorNuevo === !!valorViejo) return; // sin cambio
-    } else if(f.options){
-      valorNuevo = el.value; // empty string = sin cambio
-      if(!valorNuevo || valorNuevo === valorViejo) return;
-    } else if(f.numeric){
-      valorNuevo = parseFloat(el.value);
-      if(isNaN(valorNuevo) || valorNuevo === valorViejo) return;
-    } else {
-      valorNuevo = (el.value||'').trim();
-      if(!valorNuevo || valorNuevo === (valorViejo===null||valorViejo===undefined?'':String(valorViejo))) return;
-    }
-
-    // Para campos anidados (checks.trabajo) escribir en la ruta correcta
-    // El update de Firebase aplana la ruta: checks/trabajo no checks.trabajo
-    var firebasePath = f.key.replace(/\./g,'/');
-    updates[firebasePath] = valorNuevo;
-    cambios.push({ label:f.label, antes:valorViejo, despues:valorNuevo, unit:f.unit||'' });
-    editHistoryNuevo.push({
-      campo:   f.key,
-      label:   f.label,
-      antes:   (valorViejo===null||valorViejo===undefined) ? '' : valorViejo,
-      despues: valorNuevo,
-      unidad:  f.unit || '',
-      usuario: usuario,
-      fecha:   ahora
-    });
-  });
-
-  if(!cambios.length){ showToast('ℹ️ No hubo cambios'); return; }
-
-  } // ← cierra else (modo genérico)
+  } // closes else (generic fallback)
 
   if(!cambios.length){ showToast('ℹ️ No hubo cambios'); return; }
 
