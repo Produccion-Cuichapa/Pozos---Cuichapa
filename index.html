@@ -5085,27 +5085,43 @@ var EDIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutos
 // usuario/fecha/hora original quedan deliberadamente fuera de esta lista.
 // FIX: campos correctables específicos por TIPO de reporte — antes era
 // una lista única para todos los modos (mostraba EPM en reportes de Nivel).
+// Campos correctables por tipo de reporte.
+// Se usan en: formulario de corrección, diff, mensaje de WA.
+// select: lista de opciones predefinidas. checkbox: verdadero/falso. numeric/text: libre.
 var CORRECCION_FIELDS_CO = [
-  { key:'estatus',       label:'Estatus' },
-  { key:'fluye',         label:'Fluye' },
-  { key:'sap',           label:'SAP' },
-  { key:'estrang',       label:'Estrangulador' },
-  { key:'ptp',           label:'PTP',  unit:'kg/cm²', numeric:true },
-  { key:'ldd',           label:'LDD',  numeric:true },
-  { key:'ptr',           label:'PTR',  unit:'kg/cm²', numeric:true },
-  { key:'epm',           label:'EPM',  numeric:true },
-  { key:'carrera',       label:'Carrera', numeric:true },
+  { key:'estatus',       label:'Estatus',
+    options:['Abierto','Cerrado','Intermitente','Fuera de operación'] },
+  { key:'fluye',         label:'Fluye',
+    options:['Sí','No','Intermitente'] },
+  { key:'sap',           label:'SAP (sistema)',
+    options:['BN','BM','FY','GAS','OTRO'] },
+  { key:'estrang',       label:'Estrangulador', text:true },
+  { key:'ptp',           label:'PTP',     unit:'kg/cm²', numeric:true },
+  { key:'ldd',           label:'LDD',     unit:'kg/cm²', text:true },
+  { key:'ptr',           label:'PTR',     unit:'kg/cm²', numeric:true },
+  { key:'lbn',           label:'LBN',     unit:'kg/cm²', numeric:true },
+  { key:'epm',           label:'EPM / Velocidad', numeric:true },
+  { key:'carrera',       label:'Carrera', unit:'pulg', numeric:true },
+  { key:'checks.trabajo',      label:'Trabajo',      checkbox:true },
+  { key:'checks.drenar',       label:'Drenar',       checkbox:true },
+  { key:'checks.aforo',        label:'Aforo/Proyección', checkbox:true },
+  { key:'checks.intermitente', label:'Intermitente', checkbox:true },
   { key:'observaciones', label:'Observaciones', text:true }
 ];
 var CORRECCION_FIELDS_NIVEL = [
-  { key:'bls',           label:'Barriles',      unit:'bls',    numeric:true },
-  { key:'ctm',           label:'Centímetros',   unit:'cm',     numeric:true },
-  { key:'nivelHora',     label:'Hora de nivel', text:true, nested:'nivel.hora' },
-  { key:'motivo',        label:'Motivo',        text:true },
+  { key:'bls',       label:'Barriles',       unit:'bls', numeric:true },
+  { key:'ctm',       label:'Centímetros',    unit:'cm',  numeric:true },
+  { key:'nivelHora', label:'Hora de nivel',  text:true,  nested:'nivel.hora' },
   { key:'observaciones', label:'Observaciones', text:true }
 ];
-var CORRECCION_FIELDS_SIMPLE = [
-  { key:'observaciones', label:'Observaciones', text:true }
+var CORRECCION_FIELDS_CAB = [
+  { key:'observaciones', label:'Observaciones / Reporte de cabezal', text:true }
+];
+var CORRECCION_FIELDS_EST = [
+  { key:'observaciones', label:'Observaciones / Reporte de estación', text:true }
+];
+var CORRECCION_FIELDS_NOTA = [
+  { key:'observaciones', label:'Texto de la nota', text:true }
 ];
 
 // Detecta el set de campos correcto según el modo y el contenido real del
@@ -5123,9 +5139,9 @@ var _MODO_LABEL = {
 function _camposParaModo(r){
   var modo = r.modo || 'co';
   // Modos con campos propios conocidos → lista exacta, sin heurísticas.
-  if(modo === 'cab')      return CORRECCION_FIELDS_SIMPLE;
-  if(modo === 'estacion') return CORRECCION_FIELDS_SIMPLE;
-  if(modo === 'nota')     return CORRECCION_FIELDS_SIMPLE;
+  if(modo === 'cab')      return CORRECCION_FIELDS_CAB;
+  if(modo === 'estacion') return CORRECCION_FIELDS_EST;
+  if(modo === 'nota')     return CORRECCION_FIELDS_NOTA;
   if(modo === 'guardia')  return CORRECCION_FIELDS_NIVEL;
   // modo 'co': usar campos CO por defecto.
   // Excepción: si el reporte tiene bls/ctm pero NO estatus/fluye/sap/ptp/ptr
@@ -5176,18 +5192,40 @@ function abrirEditarReporte(id){
     var cont = document.getElementById('editFieldsContainer');
     if(!cont) return;
     var camposActivos = _camposParaModo(r);
+    // Lee valores de rutas anidadas: checks.trabajo, nivel.hora, etc.
+    function _leerValorEditar(obj, f){
+      var ruta = (f.nested || f.key).split('.');
+      return ruta.reduce(function(o,k){ return (o&&o[k]!=null) ? o[k] : undefined; }, obj);
+    }
+    var _eid = function(k){ return 'editField_'+k.replace(/\./g,'__'); };
     cont.innerHTML = camposActivos.map(function(f){
-      // Soporta campos anidados (ej. nivel.hora) además de top-level.
-      var actual = f.nested
-        ? (f.nested.split('.').reduce(function(o,k){ return o&&o[k]!=null ? o[k] : undefined; }, r))
-        : r[f.key];
-      var actualTxt = (actual===null||actual===undefined||actual==='') ? '—' : actual + (f.unit?(' '+f.unit):'');
-      var inputHtml = f.text
-        ? '<textarea id="editField_'+f.key+'" rows="2" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--txt);font-size:13px;font-family:Inter,sans-serif;resize:none;box-sizing:border-box">'+(actual||'').replace(/</g,'&lt;')+'</textarea>'
-        : '<input id="editField_'+f.key+'" type="'+(f.numeric?'number':'text')+'" '+(f.numeric?'step="0.1"':'')+' value="'+(actual!==null&&actual!==undefined?actual:'')+'" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--txt);font-size:15px;font-weight:700;text-align:center;font-family:Inter,sans-serif">';
+      var actual = _leerValorEditar(r, f);
+      var usfx   = f.unit ? ' '+f.unit : '';
+      var actualTxt = (actual===null||actual===undefined||actual==='') ? '—'
+                    : (f.checkbox ? (actual ? 'Sí' : 'No') : String(actual)+usfx);
+      var inputHtml;
+      if(f.checkbox){
+        inputHtml = '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:6px 0">'
+          + '<input type="checkbox" id="'+_eid(f.key)+'" '+(actual?'checked':'')+' style="width:22px;height:22px;accent-color:#3b82f6;cursor:pointer">'
+          + '<span style="font-size:14px;color:var(--txt)">'+f.label+'</span>'
+          + '</label>';
+      } else if(f.options){
+        inputHtml = '<select id="'+_eid(f.key)+'" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--txt);font-size:14px;font-weight:700;font-family:Inter,sans-serif">'
+          + '<option value="">— sin cambio —</option>'
+          + f.options.map(function(op){
+              return '<option value="'+op+'"'+(actual===op?' selected':'')+'>'+op+'</option>';
+            }).join('')
+          + '</select>';
+      } else if(f.text){
+        inputHtml = '<textarea id="'+_eid(f.key)+'" rows="2" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--txt);font-size:13px;font-family:Inter,sans-serif;resize:none;box-sizing:border-box">'+(actual||'').replace(/</g,'&lt;')+'</textarea>';
+      } else {
+        inputHtml = '<input id="'+_eid(f.key)+'" type="'+(f.numeric?'number':'text')+'" '+(f.numeric?'step="0.1"':'')+' value="'+(actual!=null?actual:'')+'" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--txt);font-size:15px;font-weight:700;text-align:center;font-family:Inter,sans-serif">';
+      }
+      var actualBadge = f.checkbox ? ''
+        : '<div style="font-size:11px;color:var(--txt2);margin-bottom:5px">Actual: <span style="text-decoration:line-through;opacity:.55">'+actualTxt+'</span></div>';
       return '<div style="background:var(--surface2);border-radius:14px;padding:12px 14px;margin-bottom:8px">'
-        + '<div style="font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.06em;margin-bottom:6px">' + f.label.toUpperCase() + '</div>'
-        + '<div style="font-size:11px;color:var(--txt2);margin-bottom:6px">Actual: <span style="text-decoration:line-through;opacity:.6">' + actualTxt + '</span></div>'
+        + '<div style="font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.06em;margin-bottom:4px">' + f.label.toUpperCase() + (f.unit?' ('+f.unit+')':'') + '</div>'
+        + actualBadge
         + inputHtml
         + '</div>';
     }).join('');
@@ -5238,21 +5276,36 @@ function guardarCorreccionReporte(){
   var usuario = (typeof REC !== 'undefined' && REC) ? REC : (loggedUser || 'Supervisor');
   var ahora = new Date().toISOString();
 
+  var _eidGuardar = function(k){ return 'editField_'+k.replace(/\./g,'__'); };
+  var _leerViejoG = function(f){
+    var ruta = (f.nested || f.key).split('.');
+    return ruta.reduce(function(o,k){ return (o&&o[k]!=null) ? o[k] : undefined; }, r);
+  };
+
   camposActivos.forEach(function(f){
-    var el = document.getElementById('editField_'+f.key);
+    var el = document.getElementById(_eidGuardar(f.key));
     if(!el) return;
-    var valorNuevo = f.numeric ? parseFloat(el.value) : (el.value||'').trim();
-    var valorViejo = f.nested
-      ? (f.nested.split('.').reduce(function(o,k){ return o&&o[k]!=null ? o[k] : undefined; }, r))
-      : r[f.key];
-    if(f.numeric && isNaN(valorNuevo)) valorNuevo = null;
 
-    var cambio = f.numeric
-      ? (valorNuevo !== null && valorNuevo !== valorViejo)
-      : (valorNuevo !== '' && valorNuevo !== (valorViejo===null||valorViejo===undefined?'':String(valorViejo)));
-    if(!cambio) return;
+    var valorNuevo, valorViejo = _leerViejoG(f);
 
-    updates[f.key]      = valorNuevo;
+    if(f.checkbox){
+      valorNuevo = el.checked;
+      if(!!valorNuevo === !!valorViejo) return; // sin cambio
+    } else if(f.options){
+      valorNuevo = el.value; // empty string = sin cambio
+      if(!valorNuevo || valorNuevo === valorViejo) return;
+    } else if(f.numeric){
+      valorNuevo = parseFloat(el.value);
+      if(isNaN(valorNuevo) || valorNuevo === valorViejo) return;
+    } else {
+      valorNuevo = (el.value||'').trim();
+      if(!valorNuevo || valorNuevo === (valorViejo===null||valorViejo===undefined?'':String(valorViejo))) return;
+    }
+
+    // Para campos anidados (checks.trabajo) escribir en la ruta correcta
+    // El update de Firebase aplana la ruta: checks/trabajo no checks.trabajo
+    var firebasePath = f.key.replace(/\./g,'/');
+    updates[firebasePath] = valorNuevo;
     cambios.push({ label:f.label, antes:valorViejo, despues:valorNuevo, unit:f.unit||'' });
     editHistoryNuevo.push({
       campo:   f.key,
@@ -5275,7 +5328,7 @@ function guardarCorreccionReporte(){
   _editPendingUsuario      = usuario;
 
   // ── Mostrar resumen de confirmación ──────────────────────
-  var TIPO_LABELS = { co:'C.O.', guardia:'Nivel / Guardia', cab:'Cabezal', estacion:'Estación', nota:'Nota' };
+  var TIPO_LABELS = { co:'Reporte Diario / C.O.', guardia:'Nivel de Guardia', cab:'Cabezal', estacion:'Estación', nota:'Nota de Campo' };
   var tipoLabel = TIPO_LABELS[r.modo] || (r.modo || 'Reporte');
   var fechaEnv  = r.fecha ? (function(d){
     return (d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear()
@@ -5344,7 +5397,7 @@ function _editConfirmarGuardar(){
   _editPendingUpdates = _editPendingCambios = _editPendingHistNuevo = _editPendingAhora = _editPendingUsuario = null;
 
   // ── Construir mensaje de WhatsApp ────────────────────────
-  var TIPO_LABELS = { co:'C.O.', guardia:'Nivel / Guardia', cab:'Cabezal', estacion:'Estación', nota:'Nota' };
+  var TIPO_LABELS = { co:'Reporte Diario / C.O.', guardia:'Nivel de Guardia', cab:'Cabezal', estacion:'Estación', nota:'Nota de Campo' };
   var tipoLabel = TIPO_LABELS[r.modo] || (r.modo || 'Reporte');
   var horaCorr  = (function(d){
     var h=d.getHours(),m=d.getMinutes(),ap=h>=12?'p.m.':'a.m.',h12=h%12||12;
@@ -5361,22 +5414,35 @@ function _editConfirmarGuardar(){
              +(h12<10?'0':'')+h12+':'+(m<10?'0':'')+m+' '+ap;
     }catch(e){ return '—'; }
   })();
+  // Título específico por tipo (no genérico "CORRECCIÓN DE REPORTE")
+  var WA_TITULO = {
+    'co':       '🚨✏️ *CORRECCIÓN DE REPORTE DIARIO*',
+    'guardia':  '🚨✏️ *CORRECCIÓN DE NIVEL DE GUARDIA*',
+    'cab':      '🚨✏️ *CORRECCIÓN DE CABEZAL*',
+    'estacion': '🚨✏️ *CORRECCIÓN DE ESTACIÓN*',
+    'nota':     '🚨✏️ *CORRECCIÓN DE NOTA DE CAMPO*'
+  };
+  var tituloWA = WA_TITULO[r.modo] || '🚨✏️ *CORRECCIÓN DE REPORTE*';
+
   var lineas = [
-    '✏️ *CORRECCIÓN DE REPORTE*',
+    tituloWA,
     '📋 Tipo: *' + tipoLabel + '*',
     '🛢 Pozo: *C-' + r.pozo + '*',
     '👷 Recorredor: *' + r.recorredor + '*',
     '🕒 Reporte original: *' + _fechaOrig + '*',
     '🕘 Corrección: *' + horaCorr + '*',
     '━━━━━━━━━━━━━━',
-    '🔁 *Cambios realizados*'
+    '📌 *ANTES*'
   ];
   cambios.forEach(function(c){
-    var antesTxt   = (c.antes===null||c.antes===undefined||c.antes==='') ? '—' : String(c.antes);
-    var unidad     = c.unit ? ' ' + c.unit : '';
-    lineas.push('• ' + c.label + (unidad ? ' (' + c.unit + ')' : ''));
-    lineas.push('  Antes: ' + antesTxt + unidad);
-    lineas.push('  Ahora: ' + String(c.despues) + unidad);
+    var antesTxt = (c.antes===null||c.antes===undefined||c.antes==='') ? '—' : String(c.antes);
+    var unidad   = c.unit ? ' '+c.unit : '';
+    lineas.push(c.label+': '+antesTxt+unidad);
+  });
+  lineas.push('━━━━━━━━━━━━━━', '✅ *DESPUÉS*');
+  cambios.forEach(function(c){
+    var unidad = c.unit ? ' '+c.unit : '';
+    lineas.push(c.label+': '+String(c.despues)+unidad);
   });
   lineas.push('━━━━━━━━━━━━━━');
   if(nota){
