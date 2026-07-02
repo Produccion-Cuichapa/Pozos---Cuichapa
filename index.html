@@ -2409,6 +2409,46 @@ function selTipoNivel(tipo, btn){
   var ctm=document.getElementById('nivCTM');
   if(ctm&&ctm.value) cmABls(ctm.value,'nivBLS');
 }
+// ── Edición de Guardia: variables y funciones escoped (prefijo ec_) ──────
+var _ecMedTipo = 'ft'; // tipo del tanque en el modal de corrección de Guardia
+function cmABlsEc(cm){
+  // Misma lógica que cmABls pero lee _ecMedTipo y escribe en ec_medBarriles
+  var blsEl = document.getElementById('ec_medBarriles');
+  if(!blsEl) return;
+  var cmVal = parseFloat(cm);
+  if(isNaN(cmVal) || cmVal <= 0){ blsEl.value = ''; return; }
+  if(W === '376'){ blsEl.value = (cmVal * 1.6).toFixed(1); return; }
+  var esPresa = _ecMedTipo === 'pm';
+  if(esPresa){
+    blsEl.value = (cmVal * 0.67).toFixed(1);
+  } else {
+    var cmInt = Math.round(cmVal);
+    if(CM_BLS_TABLE[cmInt] !== undefined){
+      blsEl.value = CM_BLS_TABLE[cmInt];
+    } else if(cmInt > 255){
+      blsEl.value = (CM_BLS_TABLE[255] + (cmInt - 255) * 1.9).toFixed(1);
+    } else {
+      var lo = Math.floor(cmVal), hi = Math.ceil(cmVal);
+      var blo = CM_BLS_TABLE[lo]||0, bhi = CM_BLS_TABLE[hi]||blo;
+      blsEl.value = (blo + (bhi-blo)*(cmVal-lo)).toFixed(1);
+    }
+  }
+}
+function selTipoGuardiaEdit(tipo, btn){
+  _ecMedTipo = tipo;
+  ['ec_btn-med-ft','ec_btn-med-pm'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(!el) return;
+    var isFt = id.indexOf('-ft') !== -1;
+    var activo = (tipo === 'ft') === isFt;
+    el.style.background  = activo ? 'var(--accent2)' : 'var(--surface2)';
+    el.style.color       = activo ? '#fff' : 'var(--txt)';
+    el.style.borderColor = activo ? 'var(--accent2)' : 'var(--border)';
+  });
+  var ctmEl = document.getElementById('ec_medCentimetros');
+  if(ctmEl && ctmEl.value) cmABlsEc(ctmEl.value);
+}
+
 function selTipoGuardia(tipo, btn){
   _medTipo = tipo;
   var ft=document.getElementById('btn-med-ft'), pm=document.getElementById('btn-med-pm');
@@ -5191,6 +5231,68 @@ function abrirEditarReporte(id){
 
     var cont = document.getElementById('editFieldsContainer');
     if(!cont) return;
+
+    // ── PILOTO: Nivel de Guardia — diseño visual original ───────────────────
+    var modo = r.modo || 'co';
+    var esModoGuardia = (modo === 'guardia') ||
+      (!['cab','estacion','nota'].includes(modo) &&
+       !!(r.bls||r.ctm||(r.nivel&&(r.nivel.bls||r.nivel.ctm))) &&
+       !(r.estatus||r.fluye||r.sap||r.estrang||r.ptp||r.ptr));
+
+    if(esModoGuardia){
+      // Leer valores del reporte (bls/ctm pueden estar en top-level o en nivel.*)
+      var _ecCtm  = r.ctm  || (r.nivel && r.nivel.ctm)  || '';
+      var _ecBls  = r.bls  || (r.nivel && r.nivel.bls)  || '';
+      var _ecObs  = r.observaciones || r.obs || '';
+      var _ecHora = (r.nivel && r.nivel.hora) || '';
+      // Tipo de tanque guardado en el reporte (si existe)
+      var _ecTipo = (r.nivel && r.nivel.tipo) || 'ft';
+      _ecMedTipo  = _ecTipo; // sincronizar la variable global escoped
+
+      // Estilos de los botones ft/pm (calculados antes para evitar quoting anidado)
+      var ecFtBg  = _ecTipo === 'ft' ? 'var(--accent2)' : 'var(--surface)';
+      var ecFtBrd = _ecTipo === 'ft' ? 'var(--accent2)' : 'var(--border)';
+      var ecFtClr = _ecTipo === 'ft' ? '#fff' : 'var(--txt)';
+      var ecPmBg  = _ecTipo === 'pm' ? 'var(--accent2)' : 'var(--surface)';
+      var ecPmBrd = _ecTipo === 'pm' ? 'var(--accent2)' : 'var(--border)';
+      var ecPmClr = _ecTipo === 'pm' ? '#fff' : 'var(--txt)';
+      var btnStyle= 'flex:1;padding:8px 4px;border-radius:10px;border:2px solid ';
+      var btnBase = ';font-size:12px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif';
+      var _ecHtmlParts = [];
+      _ecHtmlParts.push('<div style="border:2.5px solid var(--accent2);border-radius:16px;padding:14px 14px 10px;background:var(--surface2)">');
+      _ecHtmlParts.push('<div class="step-label" style="color:var(--accent2);margin-bottom:10px">Niveles de Guardia</div>');
+      _ecHtmlParts.push('<div style="display:flex;gap:8px;margin-bottom:12px">');
+      var _ecBtnFt = document.createElement('button');
+      _ecBtnFt.id = 'ec_btn-med-ft';
+      _ecBtnFt.setAttribute('onclick',"selTipoGuardiaEdit('ft',this)");
+      _ecBtnFt.setAttribute('style', btnStyle+ecFtBrd+';background:'+ecFtBg+';color:'+ecFtClr+btnBase);
+      _ecBtnFt.textContent = '🪣 Frac Tank';
+      var _ecBtnPm = document.createElement('button');
+      _ecBtnPm.id = 'ec_btn-med-pm';
+      _ecBtnPm.setAttribute('onclick',"selTipoGuardiaEdit('pm',this)");
+      _ecBtnPm.setAttribute('style', btnStyle+ecPmBrd+';background:'+ecPmBg+';color:'+ecPmClr+btnBase);
+      _ecBtnPm.textContent = '🔩 Presa Metálica';
+      _ecHtmlParts.push(_ecBtnFt.outerHTML);
+      _ecHtmlParts.push(_ecBtnPm.outerHTML);
+      _ecHtmlParts.push('</div>');
+      _ecHtmlParts.push('<div style="display:flex;gap:12px;margin-bottom:12px">');
+      _ecHtmlParts.push('<div style="flex:1"><div class="big-field-label">Centímetros</div><input class="big-input" type="number" id="ec_medCentimetros" value="'+(_ecCtm||'')+'" placeholder="" step="0.1" oninput="cmABlsEc(this.value)"></div>');
+      _ecHtmlParts.push('<div style="flex:1"><div class="big-field-label">Barriles</div><input class="big-input" type="number" id="ec_medBarriles" value="'+(_ecBls||'')+'" placeholder="" step="0.1" readonly style="opacity:.7"></div>');
+      _ecHtmlParts.push('</div>');
+      _ecHtmlParts.push('<textarea id="ec_medObs" placeholder="Observaciones..." style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--surface);color:var(--txt);resize:none;height:64px;font-family:Inter,sans-serif;box-sizing:border-box">'+(_ecObs||'').replace(/</g,'&lt;')+'</textarea>');
+      _ecHtmlParts.push('</div>');
+      cont.innerHTML = _ecHtmlParts.join('');
+
+      // Recalcular barriles con el valor actual de CTM (para que la conversión sea correcta desde el inicio)
+      if(_ecCtm){ setTimeout(function(){ cmABlsEc(_ecCtm); }, 0); }
+
+      var notaEl = document.getElementById('editNota');
+      if(notaEl) notaEl.value = '';
+      return; // ← salir de _continuarConDatos, no ejecutar el formulario genérico
+    }
+    // ── FIN PILOTO Guardia ───────────────────────────────────────────────────
+
+    // Resto de modos: formulario genérico (se reemplazará en iteraciones siguientes)
     var camposActivos = _camposParaModo(r);
     // Lee valores de rutas anidadas: checks.trabajo, nivel.hora, etc.
     function _leerValorEditar(obj, f){
@@ -5282,6 +5384,67 @@ function guardarCorreccionReporte(){
     return ruta.reduce(function(o,k){ return (o&&o[k]!=null) ? o[k] : undefined; }, r);
   };
 
+  // ── PILOTO Guardia: leer desde los IDs ec_ del diseño visual ─────────────
+  var modoR = r.modo || 'co';
+  var esGuardiaEdit = (modoR === 'guardia') ||
+    (!['cab','estacion','nota'].includes(modoR) &&
+     !!(r.bls||r.ctm||(r.nivel&&(r.nivel.bls||r.nivel.ctm))) &&
+     !(r.estatus||r.fluye||r.sap||r.estrang||r.ptp||r.ptr));
+
+  if(esGuardiaEdit){
+    var ecCtmEl  = document.getElementById('ec_medCentimetros');
+    var ecBlsEl  = document.getElementById('ec_medBarriles');
+    var ecObsEl  = document.getElementById('ec_medObs');
+    if(!ecCtmEl){ showToast('❌ No se encontró el formulario de corrección'); return; }
+
+    var viejoCtm  = r.ctm  || (r.nivel && r.nivel.ctm)  || null;
+    var viejoBls  = r.bls  || (r.nivel && r.nivel.bls)  || null;
+    var viejoObs  = r.observaciones || r.obs || '';
+
+    var nuevoCtm  = parseFloat(ecCtmEl.value);
+    var nuevoBls  = parseFloat(ecBlsEl.value);
+    var nuevoObs  = ecObsEl ? ecObsEl.value.trim() : '';
+
+    var tieneCambios = false;
+    if(!isNaN(nuevoCtm) && nuevoCtm !== viejoCtm){
+      cambios.push({ label:'Centímetros', antes:viejoCtm, despues:nuevoCtm, unit:'cm' });
+      editHistoryNuevo.push({ campo:'ctm', label:'Centímetros', antes:viejoCtm||'', despues:nuevoCtm, unidad:'cm', usuario:usuario, fecha:ahora });
+      updates['ctm'] = nuevoCtm;
+      updates['bls'] = !isNaN(nuevoBls) ? nuevoBls : null;
+      if(!isNaN(nuevoBls) && nuevoBls !== viejoBls){
+        cambios.push({ label:'Barriles', antes:viejoBls, despues:nuevoBls, unit:'bls' });
+        editHistoryNuevo.push({ campo:'bls', label:'Barriles', antes:viejoBls||'', despues:nuevoBls, unidad:'bls', usuario:usuario, fecha:ahora });
+      }
+      tieneCambios = true;
+    } else if(!isNaN(nuevoBls) && nuevoBls !== viejoBls){
+      cambios.push({ label:'Barriles', antes:viejoBls, despues:nuevoBls, unit:'bls' });
+      editHistoryNuevo.push({ campo:'bls', label:'Barriles', antes:viejoBls||'', despues:nuevoBls, unidad:'bls', usuario:usuario, fecha:ahora });
+      updates['bls'] = nuevoBls;
+      tieneCambios = true;
+    }
+    if(nuevoObs !== viejoObs){
+      cambios.push({ label:'Observaciones', antes:viejoObs, despues:nuevoObs, unit:'' });
+      editHistoryNuevo.push({ campo:'observaciones', label:'Observaciones', antes:viejoObs||'', despues:nuevoObs, unidad:'', usuario:usuario, fecha:ahora });
+      updates['observaciones'] = nuevoObs;
+      updates['obs'] = nuevoObs;
+      tieneCambios = true;
+    }
+    // Guardar también el tipo de tanque si cambió
+    var viejoTipo = (r.nivel && r.nivel.tipo) || 'ft';
+    if(_ecMedTipo !== viejoTipo){
+      updates['nivel'] = Object.assign({}, r.nivel || {}, { tipo:_ecMedTipo, ctm:nuevoCtm||viejoCtm, bls:nuevoBls||viejoBls });
+    }
+
+    if(!cambios.length){ showToast('ℹ️ No hubo cambios'); return; }
+    _editPendingUpdates   = updates;
+    _editPendingCambios   = cambios;
+    _editPendingHistNuevo = editHistoryNuevo;
+    _editPendingAhora     = ahora;
+    _editPendingUsuario   = usuario;
+    // Mostrar panel de confirmación (código compartido con el path genérico)
+  } else {
+  // ── FIN PILOTO Guardia — path genérico para otros modos ──────────────────
+
   camposActivos.forEach(function(f){
     var el = document.getElementById(_eidGuardar(f.key));
     if(!el) return;
@@ -5317,6 +5480,10 @@ function guardarCorreccionReporte(){
       fecha:   ahora
     });
   });
+
+  if(!cambios.length){ showToast('ℹ️ No hubo cambios'); return; }
+
+  } // ← cierra else (modo genérico)
 
   if(!cambios.length){ showToast('ℹ️ No hubo cambios'); return; }
 
