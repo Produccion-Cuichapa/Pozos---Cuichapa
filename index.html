@@ -5287,23 +5287,35 @@ function guardarCorreccionReporte(){
   if(!panel) return;
   if(!cont){ cont = document.getElementById('editConfirmPanelInner'); }
 
-  cont.innerHTML = '<div style="font-size:11px;color:var(--txt2);margin-bottom:10px">'
-    + '🛢 <strong>Pozo:</strong> C-' + (r.pozo||'?') + ' &nbsp;|&nbsp; '
-    + '📋 <strong>Tipo:</strong> ' + tipoLabel + ' &nbsp;|&nbsp; '
-    + '🕒 <strong>Enviado:</strong> ' + fechaEnv + ' &nbsp;|&nbsp; '
-    + '👷 <strong>Recorredor:</strong> ' + (r.recorredor||'?')
+  var _notaPreview = (document.getElementById('editNota') ? document.getElementById('editNota').value : '').trim();
+  cont.innerHTML = ''
+    // Encabezado
+    + '<div style="font-size:15px;font-weight:800;color:var(--txt);margin-bottom:10px">✅ Confirmar corrección</div>'
+    // Reporte info
+    + '<div style="background:rgba(255,255,255,.06);border-radius:10px;padding:9px 11px;margin-bottom:10px;font-size:12px;line-height:1.7;color:var(--txt2)">'
+    +   '<div style="font-weight:700;color:var(--txt);margin-bottom:2px">Reporte:</div>'
+    +   '<div>' + tipoLabel + ' · C-' + (r.pozo||'?') + '</div>'
+    +   '<div>' + (r.recorredor||'?') + ' · ' + fechaEnv + '</div>'
     + '</div>'
+    // Cambios
+    + '<div style="font-weight:700;color:var(--txt2);font-size:11px;margin-bottom:4px">Cambios:</div>'
     + cambios.map(function(c){
-        var antesTxt   = (c.antes===null||c.antes===undefined||c.antes==='') ? '—' : String(c.antes);
-        var despuesTxt = String(c.despues);
-        var unidad     = c.unit ? ' ' + c.unit : '';
-        return '<div style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.08)">'
-          + '<strong>' + c.label + '</strong>: '
-          + '<span style="text-decoration:line-through;opacity:.5">' + antesTxt + unidad + '</span>'
-          + ' → <span style="color:#4ade80;font-weight:800">' + despuesTxt + unidad + '</span>'
+        var antesTxt = (c.antes===null||c.antes===undefined||c.antes==='') ? '—' : String(c.antes);
+        var unidad   = c.unit ? ' ' + c.unit : '';
+        return '<div style="display:flex;align-items:baseline;gap:6px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:13px">'
+          + '<span style="min-width:0;flex:1;color:var(--txt2)">' + c.label + '</span>'
+          + '<span style="text-decoration:line-through;opacity:.45;white-space:nowrap">' + antesTxt + unidad + '</span>'
+          + '<span style="opacity:.5">→</span>'
+          + '<span style="color:#4ade80;font-weight:800;white-space:nowrap">' + String(c.despues) + unidad + '</span>'
           + '</div>';
       }).join('')
-    + '<div style="font-size:11px;color:var(--txt2);margin-top:8px">¿Deseas guardar esta corrección?</div>';
+    // Motivo (si lo escribió)
+    + (_notaPreview
+        ? '<div style="margin-top:8px;padding:7px 10px;background:rgba(255,255,255,.05);border-radius:8px;font-size:12px;color:var(--txt2)">'
+          + '📝 <em>' + _notaPreview + '</em></div>'
+        : '')
+    // Footer aviso
+    + '<div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:10px">GPS, fecha y recorredor no se modificarán.</div>';
 
   panel.style.display = 'flex';
   // Ocultar el botón principal mientras el panel de confirmación está visible
@@ -5339,25 +5351,40 @@ function _editConfirmarGuardar(){
     return (h12<10?'0':'')+h12+':'+(m<10?'0':'')+m+' '+ap;
   })(new Date());
 
+  var nota = (document.getElementById('editNota') ? document.getElementById('editNota').value : '').trim();
+  // Fecha del reporte original formateada
+  var _fechaOrig = (function(){
+    try{
+      var d = new Date(r.fecha);
+      var h = d.getHours(), m = d.getMinutes(), ap = h>=12?'p.m.':'a.m.', h12=h%12||12;
+      return (d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear())+' '
+             +(h12<10?'0':'')+h12+':'+(m<10?'0':'')+m+' '+ap;
+    }catch(e){ return '—'; }
+  })();
   var lineas = [
-    '✏️ *CORRECCIÓN DE REPORTE*', '',
-    'Tipo: ' + tipoLabel,
-    'Pozo: C-' + r.pozo,
-    'Recorredor: ' + r.recorredor,
-    '', 'Cambios:'
+    '✏️ *CORRECCIÓN DE REPORTE*',
+    '📋 Tipo: *' + tipoLabel + '*',
+    '🛢 Pozo: *C-' + r.pozo + '*',
+    '👷 Recorredor: *' + r.recorredor + '*',
+    '🕒 Reporte original: *' + _fechaOrig + '*',
+    '🕘 Corrección: *' + horaCorr + '*',
+    '━━━━━━━━━━━━━━',
+    '🔁 *Cambios realizados*'
   ];
   cambios.forEach(function(c){
     var antesTxt   = (c.antes===null||c.antes===undefined||c.antes==='') ? '—' : String(c.antes);
-    var despuesTxt = String(c.despues);
     var unidad     = c.unit ? ' ' + c.unit : '';
-    lineas.push('• ' + c.label + ':');
-    lineas.push('Antes: ' + antesTxt + unidad);
-    lineas.push('Ahora: ' + despuesTxt + unidad);
-    lineas.push('');
+    lineas.push('• ' + c.label + (unidad ? ' (' + c.unit + ')' : ''));
+    lineas.push('  Antes: ' + antesTxt + unidad);
+    lineas.push('  Ahora: ' + String(c.despues) + unidad);
   });
-  lineas.push('Corregido por: ' + usuario, 'Hora corrección: ' + horaCorr);
-  var nota = (document.getElementById('editNota') ? document.getElementById('editNota').value : '').trim();
-  var corrMsg = lineas.join('\n') + (nota ? '\n\n📝 ' + nota : '');
+  lineas.push('━━━━━━━━━━━━━━');
+  if(nota){
+    lineas.push('📝 Motivo:');
+    lineas.push(nota);
+  }
+  lineas.push('⚠️ GPS, fecha, hora original y recorredor no fueron modificados.');
+  var corrMsg = lineas.join('\n');
 
   // ── Firebase: actualizar reporte + nodo de corrección ───
   var editHistoryCompleto = (r.editHistory || []).concat(editHistoryNuevo);
@@ -7837,22 +7864,50 @@ function renderHistorial(){
       +'<div class="hist-card-body">'
       +'<pre class="hist-msg">'+msgSafe+'</pre>'
       +(r.editHistory && r.editHistory.length
-        ? '<div style="background:var(--surface2);border-radius:10px;padding:8px 10px;margin-bottom:8px;font-size:11px;color:var(--txt2)">'
-          + '<div style="font-weight:800;margin-bottom:4px;color:var(--txt)">✏️ Correcciones realizadas:</div>'
-          + r.editHistory.map(function(eh){
-              var etiqueta = eh.label || eh.campo;
-              var unidad   = eh.unidad ? ' ' + eh.unidad : '';
-              var antes    = (eh.antes===undefined||eh.antes===null||eh.antes==='') ? '—' : String(eh.antes);
-              var despues  = (eh.despues===undefined||eh.despues===null) ? '—' : String(eh.despues);
-              var por      = eh.usuario ? ' · ' + escapeHTML(eh.usuario) : '';
-              return '<div style="margin:3px 0;padding:4px 6px;background:rgba(255,255,255,.05);border-radius:6px">'
-                + '<strong>' + escapeHTML(etiqueta) + '</strong>: '
-                + '<span style="text-decoration:line-through;opacity:.6">' + escapeHTML(antes) + unidad + '</span>'
-                + ' → <span style="color:#4ade80;font-weight:700">' + escapeHTML(despues) + unidad + '</span>'
-                + por
-                + '</div>';
-            }).join('')
-          + '</div>'
+        ? (function(){
+            // Agrupar entradas por sesión de corrección (mismo usuario + misma fecha ~minuto)
+            // y mostrar cada sesión como un bloque separado
+            var bloques = [];
+            r.editHistory.forEach(function(eh){
+              var key = (eh.usuario||'?') + '|' + (eh.fecha||'').slice(0,16);
+              var found = false;
+              for(var b=0; b<bloques.length; b++){
+                if(bloques[b].key === key){ bloques[b].items.push(eh); found=true; break; }
+              }
+              if(!found) bloques.push({ key:key, usuario:eh.usuario||'?', fecha:eh.fecha||'', items:[eh] });
+            });
+            return bloques.map(function(bl){
+              var horaCorr = (function(){
+                try{
+                  var d=new Date(bl.fecha),h=d.getHours(),m=d.getMinutes(),ap=h>=12?'p.m.':'a.m.',h12=h%12||12;
+                  return (h12<10?'0':'')+h12+':'+(m<10?'0':'')+m+' '+ap;
+                }catch(e){ return bl.fecha.slice(11,16)||''; }
+              })();
+              var motivo = bl.items.find(function(i){ return i.campo==='motivo'; });
+              var cambioItems = bl.items.filter(function(i){ return i.campo!=='motivo'; });
+              var html2 = '<div style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:9px 11px;margin-bottom:8px;font-size:11px">';
+              html2 += '<div style="font-weight:800;color:#60a5fa;margin-bottom:4px">✏️ Corrección registrada</div>';
+              html2 += '<div style="color:var(--txt2);margin-bottom:6px">Corregido por <strong style=\"color:var(--txt)\">' + escapeHTML(bl.usuario) + '</strong> · ' + horaCorr + '</div>';
+              if(cambioItems.length){
+                html2 += '<div style="font-weight:700;color:var(--txt2);margin-bottom:3px">Cambios:</div>';
+                html2 += cambioItems.map(function(eh){
+                  var etiqueta = eh.label || eh.campo;
+                  var unidad   = eh.unidad ? ' ' + eh.unidad : '';
+                  var antes    = (eh.antes===undefined||eh.antes===null||eh.antes==='') ? '—' : String(eh.antes);
+                  var despues  = (eh.despues===undefined||eh.despues===null) ? '—' : String(eh.despues);
+                  return '<div style="padding:2px 0">• <strong>' + escapeHTML(etiqueta) + '</strong>: '
+                    + '<span style="text-decoration:line-through;opacity:.5">' + escapeHTML(antes) + unidad + '</span>'
+                    + ' → <span style="color:#4ade80;font-weight:800">' + escapeHTML(despues) + unidad + '</span>'
+                    + '</div>';
+                }).join('');
+              }
+              if(motivo && motivo.despues){
+                html2 += '<div style="margin-top:5px;color:var(--txt2)">📝 <em>' + escapeHTML(String(motivo.despues)) + '</em></div>';
+              }
+              html2 += '</div>';
+              return html2;
+            }).join('');
+          })()
         : '')
       +'<div class="hist-actions">'
       +(r.estado!=='enviado' && !r.whatsappSent && r.whatsappStatus!=='sent'
