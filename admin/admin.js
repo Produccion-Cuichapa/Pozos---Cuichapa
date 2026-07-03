@@ -1,465 +1,368 @@
-// admin.js — Panel Administrativo Campo Cuichapa
-// Lee de Firebase RTDB /reportes y /alarmas. Solo lectura.
+/* Admin Pozos Cuichapa
+   1) Pega aquí tu firebaseConfig.
+   2) Sube admin.html y carpeta admin/ a Firebase Hosting.
+   3) Cambia usuarios/contraseñas si quieres.
+*/
 
-'use strict';
-
-// ── Config ────────────────────────────────────────────────
-var ADMIN_USERS = {
-  'AntonioS':    { p: 'Mexico',       role: 'super',       nombre: 'Antonio S.' },
-  'JaimeG':      { p: 'Venezuela',    role: 'jefe',        nombre: 'Jaime G.' },
-  'IngDuctos':   { p: 'Ductos2024',   role: 'ingenieria',  nombre: 'Ing. Ductos' },
-  'Almacenista': { p: 'Bodega2024',   role: 'operacion',   nombre: 'Almacenista' },
-  'JorgeGill':   { p: 'Gill2024',     role: 'supervision', nombre: 'Jorge Gill' },
+const firebaseConfig = {
+  // PEGA AQUÍ TU CONFIG REAL DE FIREBASE WEB APP
+  // apiKey: "xxxx",
+  // authDomain: "pozos-cuichapa.firebaseapp.com",
+  // databaseURL: "https://pozos-cuichapa-default-rtdb.firebaseio.com",
+  // projectId: "pozos-cuichapa",
+  // storageBucket: "pozos-cuichapa.appspot.com",
+  // messagingSenderId: "xxxx",
+  // appId: "xxxx"
 };
 
-var MODOS = {
-  co: 'C.O.',
-  guardia: 'Guardia',
-  cab: 'Cabezal',
-  estacion: 'Estación',
-  nota: 'Nota',
+const AUTH_USERS = {
+  AntonioS: "1234",
+  JaimeG: "1234",
+  IngDuctos: "1234",
+  Almacenista: "1234",
+  JorgeGill: "1234",
+  Supervisor: "1234",
+  Admin: "1234"
 };
 
-// ── State ─────────────────────────────────────────────────
-var db = null;
-var currentUser = null;
-var allReportes = [];
-var allAlarmas  = [];
-var filteredReportes = [];
-var filteredAlarmas  = [];
-var PAGE_SIZE = 50;
-var currentPageR = 0;
-var currentPageA = 0;
-var activeTab = 'reportes';
-var isLoading = false;
+let DB = null;
+let reportes = [];
+let alarmas = [];
+let currentSection = "dashboard";
 
-// ── Init ──────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', function () {
-  // Restore session
-  try {
-    var saved = sessionStorage.getItem('admin_user');
-    if (saved) {
-      currentUser = JSON.parse(saved);
-      showApp();
-    }
-  } catch (e) {}
-  updateConn();
-  window.addEventListener('online',  updateConn);
-  window.addEventListener('offline', updateConn);
+document.addEventListener("DOMContentLoaded", () => {
+  bindLogin();
+  bindNav();
+  bindFilters();
+  bindDialog();
+
+  const saved = sessionStorage.getItem("adminUser");
+  if (saved) startApp(saved);
 });
 
-function updateConn() {
-  var el = document.getElementById('connStatus');
-  if (!el) return;
-  if (navigator.onLine) {
-    el.textContent = '● En línea';
-    el.className = 'online';
-  } else {
-    el.textContent = '● Sin señal';
-    el.className = 'offline';
-  }
+function bindLogin(){
+  const btn = document.getElementById("loginBtn");
+  btn.addEventListener("click", doLogin);
+  document.getElementById("loginPass").addEventListener("keydown", e => {
+    if(e.key === "Enter") doLogin();
+  });
 }
 
-// ── LOGIN ─────────────────────────────────────────────────
-function doAdminLogin() {
-  var user = document.getElementById('adminUser').value.trim();
-  var pass = document.getElementById('adminPass').value;
-  var err  = document.getElementById('loginErr');
-  err.style.display = 'none';
+function doLogin(){
+  const user = document.getElementById("loginUser").value.trim();
+  const pass = document.getElementById("loginPass").value;
+  const err = document.getElementById("loginError");
 
-  var found = ADMIN_USERS[user];
-  if (!found || pass !== found.p) {
-    err.textContent = 'Usuario o contraseña incorrectos';
-    err.style.display = 'block';
-    document.getElementById('adminPass').value = '';
+  if(!AUTH_USERS[user] || AUTH_USERS[user] !== pass){
+    err.textContent = "Usuario o contraseña incorrectos.";
     return;
   }
 
-  currentUser = { user: user, nombre: found.nombre, role: found.role };
-  try { sessionStorage.setItem('admin_user', JSON.stringify(currentUser)); } catch (e) {}
-  showApp();
+  sessionStorage.setItem("adminUser", user);
+  startApp(user);
 }
 
-function doAdminLogout() {
-  currentUser = null;
-  allReportes = []; allAlarmas = [];
-  try { sessionStorage.removeItem('admin_user'); } catch (e) {}
-  document.getElementById('adminApp').style.display    = 'none';
-  document.getElementById('loginScreen').style.display  = 'flex';
-  document.getElementById('userLabel').style.display    = 'none';
-  document.getElementById('btnLogout').style.display    = 'none';
-  document.getElementById('adminUser').value = '';
-  document.getElementById('adminPass').value = '';
-  // Detach Firebase listeners
-  if (db) {
-    db.ref('reportes').off();
-    db.ref('alarmas').off();
-  }
-}
+function startApp(user){
+  document.getElementById("loginView").classList.add("hidden");
+  document.getElementById("appView").classList.remove("hidden");
+  document.getElementById("currentUser").textContent = user;
 
-function showApp() {
-  document.getElementById('loginScreen').style.display  = 'none';
-  document.getElementById('adminApp').style.display     = 'block';
-  document.getElementById('userLabel').textContent      = currentUser.nombre;
-  document.getElementById('userLabel').style.display    = 'inline';
-  document.getElementById('btnLogout').style.display    = 'block';
-  initFirebaseAdmin();
-}
-
-// ── FIREBASE ──────────────────────────────────────────────
-function initFirebaseAdmin() {
-  if (!firebase || !firebase.apps || !firebase.apps.length) {
-    setTimeout(initFirebaseAdmin, 300);
-    return;
-  }
-  db = firebase.database();
-  loadData();
-}
-
-function loadData() {
-  if (isLoading) return;  // prevent double-trigger
-  isLoading = true;
-  setLoadingState(true);
-
-  // Load last 300 reportes ordered by fecha
-  db.ref('reportes').orderByChild('fecha').limitToLast(500)
-    .once('value', function (snap) {
-      allReportes = [];
-      snap.forEach(function (child) {
-        var r = child.val();
-        if (r && !r.esAlarma) allReportes.push(r);
-      });
-      // Sort newest first
-      allReportes.sort(function (a, b) {
-        return new Date(b.fecha) - new Date(a.fecha);
-      });
-      loadAlarmas();
-    }, function (err) {
-      console.error('Error loading reportes:', err);
-      isLoading = false;
-      setLoadingState(false);
-    });
-}
-
-function loadAlarmas() {
-  db.ref('alarmas').orderByChild('fecha').limitToLast(100)
-    .once('value', function (snap) {
-      allAlarmas = [];
-      snap.forEach(function (child) {
-        var a = child.val();
-        if (a) allAlarmas.push(a);
-      });
-      allAlarmas.sort(function (a, b) {
-        return new Date(b.fecha) - new Date(a.fecha);
-      });
-      isLoading = false;
-      setLoadingState(false);
-      applyFilters();
-      renderStats();
-    }, function (err) {
-      console.error('Error loading alarmas:', err);
-      isLoading = false;
-      setLoadingState(false);
-    });
-}
-
-function setLoadingState(loading) {
-  var btn = document.getElementById('btnRefresh');
-  if (btn) btn.disabled = loading;
-  if (loading) {
-    showLoadingRows();
-  }
-}
-
-function showLoadingRows() {
-  // Only overwrite the active tab — avoid flicker on the hidden one
-  if (activeTab === 'reportes') {
-    var tbody = document.getElementById('reportesTbody');
-    if (tbody) tbody.innerHTML = '<tr class="loading-row"><td colspan="7"><span class="spinner"></span>Cargando...</td></tr>';
-  } else {
-    var adiv = document.getElementById('alarmasList');
-    if (adiv) adiv.innerHTML = '<div class="empty-state"><p><span class="spinner"></span>Cargando alarmas...</p></div>';
-  }
-}
-
-// ── FILTROS ───────────────────────────────────────────────
-function applyFilters() {
-  var rec    = document.getElementById('filterRec').value;
-  var desde  = document.getElementById('filterDesde').value;
-  var hasta  = document.getElementById('filterHasta').value;
-  var modo   = document.getElementById('filterModo').value;
-  var search = (document.getElementById('filterSearch').value || '').toLowerCase().trim();
-
-  var desdeTs = desde ? new Date(desde).getTime() : 0;
-  var hastaTs = hasta ? new Date(hasta + 'T23:59:59').getTime() : Infinity;
-
-  filteredReportes = allReportes.filter(function (r) {
-    if (rec && r.recorredor !== rec) return false;
-    var t = new Date(r.fecha).getTime();
-    if (t < desdeTs || t > hastaTs) return false;
-    if (modo && r.modo !== modo) return false;
-    if (search) {
-      var hay = (r.pozo || '') + ' ' + (r.recorredor || '') + ' ' + (r.msg || '') + ' ' + (r.modo || '');
-      if (hay.toLowerCase().indexOf(search) === -1) return false;
+  if(!firebase.apps.length){
+    if(!firebaseConfig.databaseURL){
+      alert("Falta pegar firebaseConfig en admin/admin.js");
+      return;
     }
+    firebase.initializeApp(firebaseConfig);
+  }
+  DB = firebase.database();
+
+  listenData();
+}
+
+function bindNav(){
+  document.querySelectorAll(".nav").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".nav").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      showSection(btn.dataset.section);
+    });
+  });
+
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    sessionStorage.removeItem("adminUser");
+    location.reload();
+  });
+}
+
+function showSection(section){
+  currentSection = section;
+  document.getElementById("dashboardSection").classList.toggle("hidden", section !== "dashboard");
+  document.getElementById("reportesSection").classList.toggle("hidden", section !== "reportes");
+  document.getElementById("alarmasSection").classList.toggle("hidden", section !== "alarmas");
+
+  const titles = {
+    dashboard: ["Dashboard", "Resumen operativo de reportes y alarmas."],
+    reportes: ["Reportes", "Consulta, filtra y exporta los reportes de campo."],
+    alarmas: ["Alarmas", "Consulta, filtra y exporta eventos de alarma."]
+  };
+  document.getElementById("sectionTitle").textContent = titles[section][0];
+  document.getElementById("sectionSubtitle").textContent = titles[section][1];
+}
+
+function listenData(){
+  DB.ref("/reportes").limitToLast(1500).on("value", snap => {
+    reportes = objToList(snap.val());
+    renderAll();
+  });
+
+  DB.ref("/alarmas").limitToLast(1000).on("value", snap => {
+    alarmas = objToList(snap.val());
+    renderAll();
+  });
+}
+
+function objToList(obj){
+  if(!obj) return [];
+  return Object.entries(obj).map(([id, v]) => ({ id, ...(v || {}) }))
+    .sort((a,b) => getTime(b) - getTime(a));
+}
+
+function getTime(r){
+  const raw = r.timestamp || r.createdAt || r.fechaHora || r.fecha || r.sentAt || 0;
+  if(typeof raw === "number") return raw;
+  const t = Date.parse(raw);
+  return Number.isFinite(t) ? t : 0;
+}
+
+function ymd(d){
+  const dt = d instanceof Date ? d : new Date(d);
+  if(isNaN(dt)) return "";
+  return dt.toISOString().slice(0,10);
+}
+
+function localDate(r){
+  const t = getTime(r);
+  if(t) return new Date(t);
+  if(r.fecha && r.hora) return new Date(`${r.fecha}T${r.hora}`);
+  if(r.fecha) return new Date(r.fecha);
+  return null;
+}
+
+function fmtDate(r){
+  const d = localDate(r);
+  return d ? d.toLocaleDateString("es-MX") : (r.fecha || "");
+}
+
+function fmtTime(r){
+  const d = localDate(r);
+  if(d) return d.toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"});
+  return r.hora || r.horaNivel || "";
+}
+
+function todayYMD(){
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
+
+function sameToday(r){
+  const d = localDate(r);
+  return d && ymd(d) === todayYMD();
+}
+
+function renderAll(){
+  renderDashboard();
+  renderReportes();
+  renderAlarmas();
+}
+
+function renderDashboard(){
+  const reportesHoy = reportes.filter(sameToday).length;
+  const alarmasHoy = alarmas.filter(sameToday).length;
+  const pendientes = reportes.filter(r => (r.whatsappStatus || r.estado || "").toLowerCase().includes("pending")).length;
+
+  document.getElementById("statReportesHoy").textContent = reportesHoy;
+  document.getElementById("statAlarmasHoy").textContent = alarmasHoy;
+  document.getElementById("statPendientes").textContent = pendientes;
+  document.getElementById("statTotal").textContent = reportes.length + alarmas.length;
+
+  const merged = [
+    ...reportes.slice(0,8).map(r => ({tipo:"Reporte", ...r})),
+    ...alarmas.slice(0,8).map(r => ({tipo:"Alarma", ...r}))
+  ].sort((a,b)=>getTime(b)-getTime(a)).slice(0,10);
+
+  const box = document.getElementById("recentList");
+  box.innerHTML = merged.map(r => `
+    <div class="recent-item">
+      <b>${escapeHtml(r.tipo)} · ${escapeHtml(r.pozo || r.lugar || r.nombrePozo || "Sin pozo")}</b>
+      <span>${escapeHtml(fmtDate(r))} ${escapeHtml(fmtTime(r))} · ${escapeHtml(r.recorredor || r.usuario || r.user || "Sin usuario")}</span>
+    </div>
+  `).join("") || `<div class="recent-item"><span>Sin movimientos cargados.</span></div>`;
+}
+
+function bindFilters(){
+  ["fFechaDesde","fFechaHasta","fRecorredor","fPozo","fModo"].forEach(id => {
+    document.getElementById(id).addEventListener("input", renderReportes);
+  });
+  ["aFechaDesde","aFechaHasta","aBuscar"].forEach(id => {
+    document.getElementById(id).addEventListener("input", renderAlarmas);
+  });
+
+  document.getElementById("clearFilters").addEventListener("click", () => {
+    ["fFechaDesde","fFechaHasta","fRecorredor","fPozo","fModo"].forEach(id => document.getElementById(id).value = "");
+    renderReportes();
+  });
+
+  document.getElementById("clearAlarmFilters").addEventListener("click", () => {
+    ["aFechaDesde","aFechaHasta","aBuscar"].forEach(id => document.getElementById(id).value = "");
+    renderAlarmas();
+  });
+
+  document.getElementById("exportReportes").addEventListener("click", () => {
+    downloadCSV("reportes.csv", filteredReportes());
+  });
+  document.getElementById("exportAlarmas").addEventListener("click", () => {
+    downloadCSV("alarmas.csv", filteredAlarmas());
+  });
+}
+
+function filteredReportes(){
+  const desde = document.getElementById("fFechaDesde").value;
+  const hasta = document.getElementById("fFechaHasta").value;
+  const recorredor = document.getElementById("fRecorredor").value.trim().toLowerCase();
+  const pozo = document.getElementById("fPozo").value.trim().toLowerCase();
+  const modo = document.getElementById("fModo").value;
+
+  return reportes.filter(r => {
+    const d = localDate(r);
+    const date = d ? ymd(d) : (r.fecha || "");
+    if(desde && date < desde) return false;
+    if(hasta && date > hasta) return false;
+    if(recorredor && !String(r.recorredor || r.usuario || "").toLowerCase().includes(recorredor)) return false;
+    if(pozo && !String(r.pozo || r.nombrePozo || "").toLowerCase().includes(pozo)) return false;
+    if(modo && String(r.modo || "").toLowerCase() !== modo) return false;
     return true;
   });
+}
 
-  filteredAlarmas = allAlarmas.filter(function (a) {
-    if (rec && (a.quien || a.recorredor) !== rec) return false;
-    var t = new Date(a.fecha).getTime();
-    if (t < desdeTs || t > hastaTs) return false;
-    if (search) {
-      var hay = (a.tipo || '') + ' ' + (a.quien || '') + ' ' + (a.lugar || '');
-      if (hay.toLowerCase().indexOf(search) === -1) return false;
-    }
+function renderReportes(){
+  const rows = filteredReportes();
+  const body = document.getElementById("reportesBody");
+
+  body.innerHTML = rows.map(r => {
+    const gps = r.gps || {};
+    const hasGps = gps.lat || gps.latitude || r.lat || r.lon;
+    return `<tr>
+      <td>${escapeHtml(fmtDate(r))}</td>
+      <td>${escapeHtml(fmtTime(r))}</td>
+      <td>${escapeHtml(r.recorredor || r.usuario || "")}</td>
+      <td><span class="badge">${escapeHtml(r.modo || "")}</span></td>
+      <td>${escapeHtml(r.pozo || r.nombrePozo || "")}</td>
+      <td>${escapeHtml((r.co && r.co.estatus) || r.estatus || "")}</td>
+      <td>${statusBadge(r.whatsappStatus || r.estado || "")}</td>
+      <td>${hasGps ? '<span class="badge ok">GPS</span>' : '<span class="badge warn">Sin GPS</span>'}</td>
+      <td>${escapeHtml(cut(r.observaciones || r.obs || r.msg || "", 90))}</td>
+      <td><button class="rowbtn" onclick="showDetail('reportes','${r.id}')">Ver</button></td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="10">Sin reportes con esos filtros.</td></tr>`;
+}
+
+function filteredAlarmas(){
+  const desde = document.getElementById("aFechaDesde").value;
+  const hasta = document.getElementById("aFechaHasta").value;
+  const buscar = document.getElementById("aBuscar").value.trim().toLowerCase();
+
+  return alarmas.filter(r => {
+    const d = localDate(r);
+    const date = d ? ymd(d) : (r.fecha || "");
+    if(desde && date < desde) return false;
+    if(hasta && date > hasta) return false;
+    if(buscar && !JSON.stringify(r).toLowerCase().includes(buscar)) return false;
     return true;
   });
-
-  currentPageR = 0;
-  currentPageA = 0;
-  renderTabs();
-  if (activeTab === 'reportes') renderReportes();
-  else renderAlarmas();
 }
 
-function clearFilters() {
-  document.getElementById('filterRec').value    = '';
-  document.getElementById('filterDesde').value  = '';
-  document.getElementById('filterHasta').value  = '';
-  document.getElementById('filterModo').value   = '';
-  document.getElementById('filterSearch').value = '';
-  applyFilters();
+function renderAlarmas(){
+  const rows = filteredAlarmas();
+  const body = document.getElementById("alarmasBody");
+
+  body.innerHTML = rows.map(r => `<tr>
+    <td>${escapeHtml(fmtDate(r))}</td>
+    <td>${escapeHtml(fmtTime(r))}</td>
+    <td>${escapeHtml(r.usuario || r.recorredor || r.user || "")}</td>
+    <td>${escapeHtml(r.pozo || r.lugar || r.nombrePozo || "")}</td>
+    <td><span class="badge danger">${escapeHtml(r.tipo || r.modo || "alarma")}</span></td>
+    <td>${statusBadge(r.whatsappStatus || r.estado || "")}</td>
+    <td>${escapeHtml(cut(r.mensaje || r.msg || r.descripcion || "", 120))}</td>
+    <td><button class="rowbtn" onclick="showDetail('alarmas','${r.id}')">Ver</button></td>
+  </tr>`).join("") || `<tr><td colspan="8">Sin alarmas con esos filtros.</td></tr>`;
 }
 
-// ── STATS ─────────────────────────────────────────────────
-function renderStats() {
-  // Total reportes hoy
-  var hoy = new Date(); hoy.setHours(0,0,0,0);
-  var hoyTs = hoy.getTime();
-  var rHoy = allReportes.filter(function (r) { return new Date(r.fecha).getTime() >= hoyTs; }).length;
-  var aHoy = allAlarmas.filter(function (a)  { return new Date(a.fecha).getTime() >= hoyTs; }).length;
-  // FIX: excluir reportes ya enviados según whatsappStatus/whatsappSent,
-  // aunque el campo 'estado' remoto no haya sido actualizado.
-  var rPend = allReportes.filter(function (r) {
-    var yaEnviado = (r.estado === 'enviado' || r.whatsappStatus === 'sent' || r.whatsappSent === true);
-    return !yaEnviado && r.estado === 'pendiente';
-  }).length;
-  var aTotal = allAlarmas.length;
-
-  setText('statReportesHoy', rHoy);
-  setText('statAlarmasHoy',  aHoy);
-  setText('statPendientes',  rPend);
-  setText('statAlarmasTotal',aTotal);
-  setText('statSubR', 'de ' + allReportes.length + ' total');
-  setText('statSubA', 'de ' + allAlarmas.length  + ' total');
-  setText('statSubP', rPend === 0 ? 'todo enviado ✅' : 'por enviar');
+function statusBadge(st){
+  const s = String(st || "").toLowerCase();
+  if(s.includes("sent") || s.includes("enviado")) return `<span class="badge ok">${escapeHtml(st || "sent")}</span>`;
+  if(s.includes("pending") || s.includes("pendiente")) return `<span class="badge warn">${escapeHtml(st || "pending")}</span>`;
+  if(s.includes("error") || s.includes("fail")) return `<span class="badge danger">${escapeHtml(st)}</span>`;
+  return `<span class="badge">${escapeHtml(st || "-")}</span>`;
 }
 
-function setText(id, val) {
-  var el = document.getElementById(id);
-  if (el) el.textContent = val;
+function showDetail(type,id){
+  const arr = type === "reportes" ? reportes : alarmas;
+  const item = arr.find(x => x.id === id);
+  document.getElementById("detailJson").textContent = JSON.stringify(item || {}, null, 2);
+  document.getElementById("detailDialog").showModal();
 }
+window.showDetail = showDetail;
 
-// ── TABS ──────────────────────────────────────────────────
-function switchTab(tab) {
-  activeTab = tab;
-  document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
-  document.querySelectorAll('.data-section').forEach(function (s) { s.classList.remove('active'); });
-  document.getElementById('tab-' + tab).classList.add('active');
-  document.getElementById('section-' + tab).classList.add('active');
-  if (tab === 'reportes') renderReportes();
-  else renderAlarmas();
-}
-
-function renderTabs() {
-  var cr = document.getElementById('countR');
-  var ca = document.getElementById('countA');
-  if (cr) cr.textContent = filteredReportes.length;
-  if (ca) ca.textContent = filteredAlarmas.length;
-}
-
-// ── RENDER REPORTES ───────────────────────────────────────
-function renderReportes() {
-  var tbody = document.getElementById('reportesTbody');
-  if (!tbody) return;
-
-  if (!filteredReportes.length) {
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📋</div><p>Sin reportes con los filtros actuales</p></div></td></tr>';
-    document.getElementById('paginationR').innerHTML = '';
-    return;
-  }
-
-  var start = currentPageR * PAGE_SIZE;
-  var page  = filteredReportes.slice(start, start + PAGE_SIZE);
-
-  tbody.innerHTML = page.map(function (r) {
-    var fecha = fmtFecha(r.fecha);
-    // FIX: derivar 'enviado' también desde whatsappStatus/whatsappSent
-    var _yaEnviado = (r.estado === 'enviado' || r.whatsappStatus === 'sent' || r.whatsappSent === true);
-    var estado = _yaEnviado
-      ? '<span class="badge badge-green">✓ Enviado</span>'
-      : '<span class="badge badge-yellow">⏳ Pendiente</span>';
-    var modo = '<span class="modo-tag">' + (MODOS[r.modo] || r.modo || '—') + '</span>';
-    var pozo = r.pozo ? 'C-' + r.pozo : '—';
-    var nFotos = r.nFotos ? '<span class="badge badge-blue">📸 ' + r.nFotos + '</span>' : '';
-    var msg = r.msg ? ('<div class="msg-preview">' + escHtml(r.msg.split('\n')[0].replace(/\*/g,'')) + '</div>') : '';
-    return '<tr>'
-      + '<td>' + fecha + '</td>'
-      + '<td><strong>' + escHtml(r.recorredor || '—') + '</strong></td>'
-      + '<td>' + pozo + '</td>'
-      + '<td>' + modo + '</td>'
-      + '<td>' + msg + '</td>'
-      + '<td class="hide-mobile">' + (nFotos || '—') + '</td>'
-      + '<td>' + estado + '</td>'
-      + '</tr>';
-  }).join('');
-
-  renderPagination('paginationR', filteredReportes.length, currentPageR, '_goPageR');
-}
-
-// ── RENDER ALARMAS ────────────────────────────────────────
-function renderAlarmas() {
-  var list = document.getElementById('alarmasList');
-  if (!list) return;
-
-  if (!filteredAlarmas.length) {
-    list.innerHTML = '<div class="empty-state"><div class="empty-icon">🚨</div><p>Sin alarmas con los filtros actuales</p></div>';
-    document.getElementById('paginationA').innerHTML = '';
-    return;
-  }
-
-  var start = currentPageA * PAGE_SIZE;
-  var page  = filteredAlarmas.slice(start, start + PAGE_SIZE);
-
-  list.innerHTML = page.map(function (a) {
-    var ws = a.whatsappStatus || 'unknown';
-    var wsBadge = ws === 'sent'
-      ? '<span class="badge badge-green">✓ WA enviado</span>'
-      : ws === 'pending'
-      ? '<span class="badge badge-yellow">⏳ Pendiente</span>'
-      : ws === 'failed'
-      ? '<span class="badge badge-red">✗ Falló</span>'
-      : '<span class="badge badge-gray">' + ws + '</span>';
-
-    var statusClass = ws === 'sent' ? 'alarm-sent' : ws === 'pending' ? 'alarm-pending' : 'alarm-failed';
-    var tipo = (a.tipo || 'ALARMA').toUpperCase();
-    var icon = tipo.includes('DERRAME') ? '🛢' : tipo.includes('PARO') ? '🛑' : tipo.includes('INCENDIO') ? '🔥' : '🚨';
-    var fecha = fmtFecha(a.fecha);
-    var quien = a.quien || a.recorredor || '—';
-    var lugar = a.lugar ? '<br><span style="font-size:11px;color:var(--txt2)">' + escHtml(a.lugar.split('\n')[0]) + '</span>' : '';
-
-    return '<div class="alarm-card ' + statusClass + '">'
-      + '<div class="alarm-icon">' + icon + '</div>'
-      + '<div>'
-      +   '<div class="alarm-tipo">' + escHtml(tipo) + '</div>'
-      +   '<div class="alarm-quien">' + escHtml(quien) + lugar + '</div>'
-      +   '<div class="alarm-meta">' + fecha + (a.nFotos ? ' · 📸 ' + a.nFotos + ' foto' + (a.nFotos > 1 ? 's' : '') : '') + '</div>'
-      + '</div>'
-      + '<div class="alarm-status">' + wsBadge + '</div>'
-      + '</div>';
-  }).join('');
-
-  renderPagination('paginationA', filteredAlarmas.length, currentPageA, '_goPageA');
-}
-
-// ── PAGINATION ────────────────────────────────────────────
-// Named handlers avoid Function.toString() serialization in innerHTML
-function _goPageR(p) { currentPageR = p; renderReportes(); }
-function _goPageA(p) { currentPageA = p; renderAlarmas();  }
-
-function renderPagination(containerId, total, currentPage, handlerName) {
-  var container = document.getElementById(containerId);
-  if (!container) return;
-  var totalPages = Math.ceil(total / PAGE_SIZE);
-  if (totalPages <= 1) { container.innerHTML = ''; return; }
-
-  var start = currentPage * PAGE_SIZE + 1;
-  var end   = Math.min((currentPage + 1) * PAGE_SIZE, total);
-
-  container.innerHTML =
-    '<button class="page-btn"'
-    + (currentPage === 0 ? ' disabled' : ' onclick="' + handlerName + '(' + (currentPage - 1) + ')"')
-    + '>← Anterior</button>'
-    + '<span>' + start + '–' + end + ' de ' + total + '</span>'
-    + '<button class="page-btn"'
-    + (currentPage >= totalPages - 1 ? ' disabled' : ' onclick="' + handlerName + '(' + (currentPage + 1) + ')"')
-    + '>Siguiente →</button>';
-}
-
-// ── EXCEL EXPORT ──────────────────────────────────────────
-function exportarExcel() {
-  if (typeof XLSX === 'undefined') {
-    alert('La librería Excel no está cargada.');
-    return;
-  }
-
-  var data = filteredReportes.map(function (r) {
-    return {
-      'Fecha':       fmtFechaExcel(r.fecha),
-      'Recorredor':  r.recorredor || '',
-      'Pozo':        r.pozo ? 'C-' + r.pozo : '',
-      'Modo':        MODOS[r.modo] || r.modo || '',
-      'Estado':      r.estado || '',
-      'N° Fotos':    r.nFotos || 0,
-      'WA Status':   r.whatsappStatus || '',
-      'Mensaje':     (r.msg || '').replace(/\*/g, '').replace(/\n/g, ' ').slice(0, 200),
-    };
+function bindDialog(){
+  document.getElementById("closeDialog").addEventListener("click", () => {
+    document.getElementById("detailDialog").close();
   });
+}
 
-  var ws = XLSX.utils.json_to_sheet(data);
-  var wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Reportes');
+function downloadCSV(filename, rows){
+  const flat = rows.map(flattenObject);
+  const headers = Array.from(new Set(flat.flatMap(o => Object.keys(o))));
+  const csv = [
+    headers.join(","),
+    ...flat.map(o => headers.map(h => csvCell(o[h])).join(","))
+  ].join("\n");
 
-  // Alarmas sheet
-  var dataA = filteredAlarmas.map(function (a) {
-    return {
-      'Fecha':    fmtFechaExcel(a.fecha),
-      'Hora':     a.hora || '',
-      'Tipo':     a.tipo || '',
-      'Quien':    a.quien || '',
-      'Lugar':    (a.lugar || '').split('\n')[0],
-      'WA Status':a.whatsappStatus || '',
-      'N° Fotos': a.nFotos || 0,
-    };
+  const blob = new Blob(["\ufeff" + csv], {type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function flattenObject(obj, prefix="", out={}){
+  Object.entries(obj || {}).forEach(([k,v]) => {
+    const key = prefix ? `${prefix}.${k}` : k;
+    if(v && typeof v === "object" && !Array.isArray(v)){
+      flattenObject(v, key, out);
+    }else{
+      out[key] = Array.isArray(v) ? JSON.stringify(v) : v;
+    }
   });
-  var wsA = XLSX.utils.json_to_sheet(dataA);
-  XLSX.utils.book_append_sheet(wb, wsA, 'Alarmas');
-
-  var fecha = new Date().toISOString().slice(0,10);
-  XLSX.writeFile(wb, 'Cuichapa_Admin_' + fecha + '.xlsx');
+  return out;
 }
 
-// ── HELPERS ───────────────────────────────────────────────
-function fmtFecha(iso) {
-  if (!iso) return '—';
-  try {
-    var d = new Date(iso);
-    return d.toLocaleDateString('es-MX', { day:'2-digit', month:'2-digit', year:'numeric' })
-      + ' ' + d.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
-  } catch (e) { return iso.slice(0,16).replace('T',' '); }
+function csvCell(v){
+  const s = String(v ?? "");
+  return `"${s.replace(/"/g,'""')}"`;
 }
 
-function fmtFechaExcel(iso) {
-  if (!iso) return '';
-  try {
-    var d = new Date(iso);
-    return d.toLocaleDateString('es-MX', { day:'2-digit', month:'2-digit', year:'numeric' });
-  } catch (e) { return iso.slice(0,10); }
+function escapeHtml(v){
+  return String(v ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
 }
 
-function escHtml(s) {
-  if (!s) return '';
-  return String(s)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;');
+function cut(s,n){
+  s = String(s ?? "");
+  return s.length > n ? s.slice(0,n-1) + "…" : s;
 }
-
-// ── KEY ENTER en login ────────────────────────────────────
-document.addEventListener('keydown', function (e) {
-  if (e.key === 'Enter' && document.getElementById('loginScreen').style.display !== 'none') {
-    doAdminLogin();
-  }
-});
