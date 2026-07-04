@@ -8649,37 +8649,82 @@ function cerrarBanner(){
 }
 
 // ══ WELL PICKER — selección de pozo ══
-function setWellFromPicker(num){
+// ══ WELL PICKER OPTIMIZADO — FASE 1 ══
+// Objetivo: evitar congelamiento en Android.
+// La lista ya NO se renderiza al cargar la app; se arma solo cuando el usuario abre el selector.
+var _wpRendered = false;
+var _wpSelectedEl = null;
+
+function _wpGetWells(){
+  try{
+    if(typeof WELLS_ALL !== 'undefined' && Array.isArray(WELLS_ALL) && WELLS_ALL.length){
+      return WELLS_ALL.slice();
+    }
+  }catch(e){}
+  return ['19','106D','119','128','139','167','172','179','187','191','197','201','213','224',
+          '324','326','327','342','346','350','352','356','359','363','364','367','373','376',
+          '385','500','502','504','505','601','602','603'];
+}
+
+function _wpRenderOnce(){
+  var sugg = document.getElementById('wpSuggestions');
+  if(!sugg || _wpRendered) return;
+
+  var wells = _wpGetWells();
+  var frag = document.createDocumentFragment();
+
+  wells.forEach(function(w){
+    var d = document.createElement('div');
+    d.className = 'wp-item';
+    d.setAttribute('data-well', String(w));
+    d.innerHTML = '<span class="wp-item-icon">🛢</span><span class="wp-item-num">C-' + w + '</span>';
+    d.addEventListener('click', function(){ setWellFromPicker(w, d); }, {passive:true});
+    frag.appendChild(d);
+  });
+
+  sugg.textContent = '';
+  sugg.appendChild(frag);
+  _wpRendered = true;
+}
+
+function setWellFromPicker(num, el){
   W = num;
-  // Update title
+
   var wt = document.getElementById('wellTitle');
   if(wt) wt.textContent = 'C-' + num;
-  // Close the picker list
+
   var list = document.getElementById('wpSuggestions');
   if(list) list.classList.remove('open');
+
   var arrow = document.getElementById('wpArrow');
   if(arrow) arrow.classList.remove('open');
-  // Mark selected item
-  document.querySelectorAll('#wpSuggestions .wp-item').forEach(function(el){
-    var active = el.textContent.trim() === 'C-'+num;
-    el.style.background = active ? 'var(--accent2)' : '';
-    el.style.color = active ? '#fff' : '';
-    el.style.fontWeight = active ? '800' : '';
-  });
-  // Update GPS button visibility
+
+  // En vez de recorrer todos los pozos cada vez, solo limpia el anterior y marca el nuevo.
+  if(_wpSelectedEl){
+    _wpSelectedEl.style.background = '';
+    _wpSelectedEl.style.color = '';
+    _wpSelectedEl.style.fontWeight = '';
+  }
+
+  if(!el && list){
+    el = list.querySelector('[data-well="' + String(num).replace(/"/g,'\\"') + '"]');
+  }
+
+  if(el){
+    el.style.background = 'var(--accent2)';
+    el.style.color = '#fff';
+    el.style.fontWeight = '800';
+    _wpSelectedEl = el;
+  }
+
   actualizarEnviarBtn();
 }
 
 (function initPicker(){
-  if(W!=='???') return;
-  var picker=document.getElementById('wellPicker');
+  if(W !== '???') return;
+  var picker = document.getElementById('wellPicker');
   if(picker) picker.classList.add('show');
-  var sugg=document.getElementById('wpSuggestions');
-  if(!sugg) return;
-    var TODOS=WELLS_ALL.slice();
-  sugg.innerHTML=TODOS.map(function(w){
-    return '<div class="wp-item" onclick="setWellFromPicker(\'' + w + '\')">'      + '<span class="wp-item-icon">🛢</span>'      + '<span class="wp-item-num">C-' + w + '</span>'      + '</div>';
-  }).join('');
+  // No renderizar aquí. Se renderiza al abrir el selector.
 })();
 
 
@@ -8727,6 +8772,10 @@ function toggleWellList(){
   var list  = document.getElementById('wpSuggestions');
   var arrow = document.getElementById('wpArrow');
   if(!list) return;
+
+  // Render diferido: solo construye la lista cuando realmente se abre.
+  _wpRenderOnce();
+
   var isOpen = list.classList.toggle('open');
   if(arrow) arrow.classList.toggle('open', isOpen);
 }
@@ -10002,6 +10051,339 @@ function ubiFiltrar(){ /* replaced by filter buttons */ }
 </div>
 
 <script src="./assets/js/android-fix.js"></script>
+
+<script>
+(function(){
+  if(window.PC_ADMIN_HASH_INSTALLED) return;
+  window.PC_ADMIN_HASH_INSTALLED = true;
+
+  function isAdminRoute(){
+    return location.hash === "#admin";
+  }
+
+  function adminLogin(){
+    var u = document.getElementById("pcAdminUser").value.trim();
+    var p = document.getElementById("pcAdminPass").value;
+    if(u === "Admin" && p === "1234"){
+      sessionStorage.setItem("pc_admin_ok","1");
+      renderAdmin();
+    }else{
+      document.getElementById("pcAdminErr").textContent = "Usuario o contraseña incorrectos";
+    }
+  }
+
+  function rowText(r){
+    return JSON.stringify(r || {}).replace(/[<>&]/g, function(c){
+      return {"<":"&lt;",">":"&gt;","&":"&amp;"}[c];
+    });
+  }
+
+  function renderAdmin(){
+    document.body.innerHTML = `
+      <style>
+        body{margin:0;background:#07111f;color:#eef6ff;font-family:Segoe UI,Arial,sans-serif}
+        .pc-admin{padding:24px}
+        .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+        .card{background:#0d1b2d;border:1px solid #203a5a;border-radius:16px;padding:18px;margin-bottom:16px}
+        .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+        .kpi strong{font-size:34px;display:block}
+        .muted{color:#8ca3bd}
+        input,button{padding:11px;border-radius:10px;border:1px solid #203a5a}
+        input{background:#09182a;color:white}
+        button{background:#2f81f7;color:white;font-weight:700;cursor:pointer}
+        table{width:100%;border-collapse:collapse;background:#0d1b2d}
+        th,td{padding:10px;border-bottom:1px solid #203a5a;text-align:left;font-size:13px;vertical-align:top}
+        th{color:#8ca3bd}
+        pre{white-space:pre-wrap;font-size:12px}
+      </style>
+
+      <div class="pc-admin">
+        <div class="top">
+          <div>
+            <h1>Plataforma Pozos Cuichapa</h1>
+            <div class="muted">Admin integrado en la ruta principal</div>
+          </div>
+          <button onclick="location.href='/'">Volver a la app</button>
+        </div>
+
+        <div class="grid">
+          <div class="card kpi"><span class="muted">Reportes</span><strong id="admRep">0</strong></div>
+          <div class="card kpi"><span class="muted">Alarmas</span><strong id="admAlm">0</strong></div>
+          <div class="card kpi"><span class="muted">Pendientes WA</span><strong id="admPen">0</strong></div>
+          <div class="card kpi"><span class="muted">Total</span><strong id="admTot">0</strong></div>
+        </div>
+
+        <div class="card">
+          <h2>Reportes recientes</h2>
+          <table>
+            <thead><tr><th>Fecha</th><th>Usuario</th><th>Pozo</th><th>Modo</th><th>WhatsApp</th><th>Detalle</th></tr></thead>
+            <tbody id="admReportes"><tr><td colspan="6">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <h2>Alarmas recientes</h2>
+          <table>
+            <thead><tr><th>Fecha</th><th>Usuario</th><th>Pozo/Lugar</th><th>Tipo</th><th>Mensaje</th></tr></thead>
+            <tbody id="admAlarmas"><tr><td colspan="5">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
+    setTimeout(loadAdminData, 800);
+  }
+
+  function renderLogin(){
+    document.body.innerHTML = `
+      <style>
+        body{margin:0;background:#07111f;color:#eef6ff;font-family:Segoe UI,Arial,sans-serif;display:grid;place-items:center;min-height:100vh}
+        .login{width:min(420px,90%);background:#0d1b2d;border:1px solid #203a5a;border-radius:20px;padding:26px}
+        input,button{width:100%;box-sizing:border-box;padding:12px;margin-top:10px;border-radius:10px;border:1px solid #203a5a}
+        input{background:#09182a;color:white}
+        button{background:#2f81f7;color:white;font-weight:800;cursor:pointer}
+        .err{color:#ff5c5c;margin-top:10px}
+      </style>
+      <div class="login">
+        <h1>Admin Pozos Cuichapa</h1>
+        <input id="pcAdminUser" placeholder="Usuario" value="Admin">
+        <input id="pcAdminPass" type="password" placeholder="Contraseña">
+        <button id="pcAdminBtn">Entrar</button>
+        <div id="pcAdminErr" class="err"></div>
+      </div>
+    `;
+    document.getElementById("pcAdminBtn").onclick = adminLogin;
+  }
+
+  function loadAdminData(){
+    var db = window.fbDB || (window.firebase && firebase.database ? firebase.database() : null);
+    if(!db){
+      alert("Firebase todavía no está listo. Recarga la página.");
+      return;
+    }
+
+    db.ref("/reportes").limitToLast(100).on("value", function(snap){
+      var arr = [];
+      snap.forEach(function(ch){ arr.push(Object.assign({id:ch.key}, ch.val() || {})); });
+      arr.reverse();
+
+      document.getElementById("admRep").textContent = arr.length;
+      document.getElementById("admPen").textContent = arr.filter(function(r){
+        return String(r.whatsappStatus || r.estado || "").toLowerCase().includes("pending");
+      }).length;
+
+      document.getElementById("admReportes").innerHTML = arr.slice(0,50).map(function(r){
+        return `<tr>
+          <td>${r.fecha || r.fechaHora || r.createdAt || ""}</td>
+          <td>${r.recorredor || r.usuario || ""}</td>
+          <td>${r.pozo || r.nombrePozo || r.lugar || ""}</td>
+          <td>${r.modo || ""}</td>
+          <td>${r.whatsappStatus || r.estado || ""}</td>
+          <td><pre>${rowText(r)}</pre></td>
+        </tr>`;
+      }).join("") || "<tr><td colspan='6'>Sin reportes</td></tr>";
+
+      var alm = Number(document.getElementById("admAlm").textContent || 0);
+      document.getElementById("admTot").textContent = arr.length + alm;
+    });
+
+    db.ref("/alarmas").limitToLast(50).on("value", function(snap){
+      var arr = [];
+      snap.forEach(function(ch){ arr.push(Object.assign({id:ch.key}, ch.val() || {})); });
+      arr.reverse();
+
+      document.getElementById("admAlm").textContent = arr.length;
+      document.getElementById("admAlarmas").innerHTML = arr.map(function(r){
+        return `<tr>
+          <td>${r.fecha || r.fechaHora || r.createdAt || ""}</td>
+          <td>${r.usuario || r.recorredor || ""}</td>
+          <td>${r.pozo || r.lugar || r.nombrePozo || ""}</td>
+          <td>${r.tipo || r.modo || "alarma"}</td>
+          <td>${r.mensaje || r.msg || r.descripcion || ""}</td>
+        </tr>`;
+      }).join("") || "<tr><td colspan='5'>Sin alarmas</td></tr>";
+
+      var rep = Number(document.getElementById("admRep").textContent || 0);
+      document.getElementById("admTot").textContent = rep + arr.length;
+    });
+  }
+
+  if(isAdminRoute()){
+    if(sessionStorage.getItem("pc_admin_ok") === "1") renderAdmin();
+    else renderLogin();
+  }
+})();
+</script>
+
+
+<script>
+(function(){
+  if(!new URLSearchParams(location.search).has("panel")) return;
+  if(new URLSearchParams(location.search).get("panel") !== "admin") return;
+
+  function waitFirebase(cb){
+    var tries = 0;
+    var timer = setInterval(function(){
+      tries++;
+      if(window.firebase && firebase.database){
+        clearInterval(timer);
+        cb(firebase.database());
+      }
+      if(tries > 80){
+        clearInterval(timer);
+        document.body.innerHTML = "<h2 style='font-family:Arial'>Firebase no cargó. Recarga la página.</h2>";
+      }
+    }, 250);
+  }
+
+  function esc(v){
+    return String(v ?? "").replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c];
+    });
+  }
+
+  function login(){
+    var u = document.getElementById("admUser").value.trim();
+    var p = document.getElementById("admPass").value;
+    if(u === "Admin" && p === "1234"){
+      sessionStorage.setItem("pc_admin_panel","1");
+      renderPanel();
+    }else{
+      document.getElementById("admErr").textContent = "Usuario o contraseña incorrectos";
+    }
+  }
+
+  function renderLogin(){
+    document.body.innerHTML = `
+      <style>
+        body{margin:0;background:#07111f;color:#eef6ff;font-family:Segoe UI,Arial,sans-serif;display:grid;place-items:center;min-height:100vh}
+        .box{width:min(420px,92%);background:#0d1b2d;border:1px solid #203a5a;border-radius:22px;padding:28px}
+        input,button{width:100%;box-sizing:border-box;margin-top:12px;padding:12px;border-radius:12px;border:1px solid #203a5a}
+        input{background:#09182a;color:white}
+        button{background:#2f81f7;color:white;font-weight:800;cursor:pointer}
+        .err{color:#ff5c5c;margin-top:12px}
+      </style>
+      <div class="box">
+        <h1>Plataforma Pozos Cuichapa</h1>
+        <input id="admUser" value="Admin" placeholder="Usuario">
+        <input id="admPass" type="password" placeholder="Contraseña">
+        <button id="admBtn">Entrar</button>
+        <div id="admErr" class="err"></div>
+      </div>
+    `;
+    document.getElementById("admBtn").onclick = login;
+  }
+
+  function renderPanel(){
+    document.body.innerHTML = `
+      <style>
+        body{margin:0;background:#07111f;color:#eef6ff;font-family:Segoe UI,Arial,sans-serif}
+        .wrap{padding:24px}
+        .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+        .card{background:#0d1b2d;border:1px solid #203a5a;border-radius:16px;padding:18px;margin-bottom:16px}
+        .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+        .kpi strong{font-size:34px;display:block}
+        .muted{color:#8ca3bd}
+        button{background:#2f81f7;color:white;border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer}
+        table{width:100%;border-collapse:collapse}
+        th,td{border-bottom:1px solid #203a5a;padding:10px;text-align:left;font-size:13px;vertical-align:top}
+        th{color:#8ca3bd}
+        pre{white-space:pre-wrap;max-height:120px;overflow:auto;font-size:11px}
+      </style>
+      <div class="wrap">
+        <div class="top">
+          <div>
+            <h1>Plataforma Pozos Cuichapa</h1>
+            <div class="muted">Panel administrativo integrado</div>
+          </div>
+          <button onclick="location.href='/'">Volver a la app</button>
+        </div>
+
+        <div class="grid">
+          <div class="card kpi"><span class="muted">Reportes</span><strong id="rCount">0</strong></div>
+          <div class="card kpi"><span class="muted">Alarmas</span><strong id="aCount">0</strong></div>
+          <div class="card kpi"><span class="muted">Pendientes WA</span><strong id="pCount">0</strong></div>
+          <div class="card kpi"><span class="muted">Total</span><strong id="tCount">0</strong></div>
+        </div>
+
+        <div class="card">
+          <h2>Reportes recientes</h2>
+          <table>
+            <thead><tr><th>Fecha</th><th>Recorredor</th><th>Pozo</th><th>Modo</th><th>WhatsApp</th><th>Detalle</th></tr></thead>
+            <tbody id="repBody"><tr><td colspan="6">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <h2>Alarmas recientes</h2>
+          <table>
+            <thead><tr><th>Fecha</th><th>Usuario</th><th>Pozo/Lugar</th><th>Tipo</th><th>Mensaje</th></tr></thead>
+            <tbody id="almBody"><tr><td colspan="5">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
+    waitFirebase(function(db){
+      db.ref("/reportes").limitToLast(100).on("value", function(snap){
+        var arr = [];
+        snap.forEach(function(ch){ arr.push(Object.assign({id:ch.key}, ch.val() || {})); });
+        arr.reverse();
+
+        document.getElementById("rCount").textContent = arr.length;
+        document.getElementById("pCount").textContent = arr.filter(function(x){
+          return String(x.whatsappStatus || x.estado || "").toLowerCase().includes("pending");
+        }).length;
+
+        document.getElementById("repBody").innerHTML = arr.map(function(r){
+          return `<tr>
+            <td>${esc(r.fecha || r.fechaHora || r.createdAt || "")}</td>
+            <td>${esc(r.recorredor || r.usuario || "")}</td>
+            <td>${esc(r.pozo || r.nombrePozo || r.lugar || "")}</td>
+            <td>${esc(r.modo || "")}</td>
+            <td>${esc(r.whatsappStatus || r.estado || "")}</td>
+            <td><pre>${esc(JSON.stringify(r,null,2))}</pre></td>
+          </tr>`;
+        }).join("") || "<tr><td colspan='6'>Sin reportes</td></tr>";
+
+        updateTotal();
+      });
+
+      db.ref("/alarmas").limitToLast(50).on("value", function(snap){
+        var arr = [];
+        snap.forEach(function(ch){ arr.push(Object.assign({id:ch.key}, ch.val() || {})); });
+        arr.reverse();
+
+        document.getElementById("aCount").textContent = arr.length;
+        document.getElementById("almBody").innerHTML = arr.map(function(r){
+          return `<tr>
+            <td>${esc(r.fecha || r.fechaHora || r.createdAt || "")}</td>
+            <td>${esc(r.usuario || r.recorredor || "")}</td>
+            <td>${esc(r.pozo || r.lugar || r.nombrePozo || "")}</td>
+            <td>${esc(r.tipo || r.modo || "alarma")}</td>
+            <td>${esc(r.mensaje || r.msg || r.descripcion || "")}</td>
+          </tr>`;
+        }).join("") || "<tr><td colspan='5'>Sin alarmas</td></tr>";
+
+        updateTotal();
+      });
+    });
+  }
+
+  function updateTotal(){
+    var r = Number(document.getElementById("rCount")?.textContent || 0);
+    var a = Number(document.getElementById("aCount")?.textContent || 0);
+    var t = document.getElementById("tCount");
+    if(t) t.textContent = r + a;
+  }
+
+  setTimeout(function(){
+    if(sessionStorage.getItem("pc_admin_panel") === "1") renderPanel();
+    else renderLogin();
+  }, 500);
+})();
+</script>
+
 </body>
 </html>
 <!-- index-cache-bust -->
