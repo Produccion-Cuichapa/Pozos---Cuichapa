@@ -556,7 +556,7 @@ window.AdminExportaciones = {
         // Fechas reales de Excel: junio 2026 = seriales 46174 al 46203.
         // Las movemos al mes seleccionado, conservando el día.
         function excelSerial(y, m, d){
-          return Math.floor(Date.UTC(y, m - 1, d) / 86400000) + 25569;
+          return Math.floor(Date.UTC(y, m - 1, d) / 86400000) + 25570;
         }
 
         for(let dia = 1; dia <= 31; dia++){
