@@ -523,91 +523,33 @@ window.AdminExportaciones = {
 
   async generarSoporte(){
     const box = document.getElementById('soporteStatus');
-    if(box) box.textContent = 'Generando soporte desde plantilla oficial...';
+    if(box) box.textContent = 'Descargando soporte desde plantilla oficial...';
 
     try{
-      const card = box ? box.closest('.card, .panel, section, div') : document;
-      const inputs = Array.from((card || document).querySelectorAll('input'));
-      const desde = inputs[0]?.value || '';
-      const hasta = inputs[1]?.value || '';
+      const res = await fetch('../templates/tpl_soporte.xlsx?v=' + Date.now());
+      if(!res.ok) throw new Error('No se pudo cargar templates/tpl_soporte.xlsx');
 
-      const wb = await this.loadTemplate('../templates/tpl_soporte.xlsx');
-      const ws = wb.worksheets[0];
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
 
-      const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Soporte_Mensual.xlsx';
+      a.style.display = 'none';
 
-      function parseDate(v){
-        if(!v) return null;
-        const p = String(v).split('-');
-        if(p.length === 3) return new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
-        return null;
-      }
+      document.body.appendChild(a);
+      a.click();
 
-      function fmt(d){
-        return String(d.getDate()).padStart(2,'0') + '-' + meses[d.getMonth()];
-      }
-
-      const d0 = parseDate(desde);
-      const d1 = parseDate(hasta);
-
-      const headersConteo = new Set([
-        'SUPER','NIVEL','TRABAJO','DRENAR','MEDICION BS2','MEDICIÓN BS2',
-        'AFORO FT','A. INTERMITENTE'
-      ]);
-
-      ws.eachRow((row) => {
-        row.eachCell((cell) => {
-          const txt = String(cell.value ?? '').trim().toUpperCase();
-
-          if(headersConteo.has(txt)){
-            const col = cell.col;
-            for(let r = cell.row + 1; r <= ws.rowCount; r++){
-              ws.getCell(r, col).value = null;
-            }
-          }
-        });
-      });
-
-      if(d0 && d1){
-        let currentDayIndex = 0;
-        const fechaCols = [];
-
-        ws.eachRow((row) => {
-          row.eachCell((cell) => {
-            const txt = String(cell.value ?? '').trim().toLowerCase();
-            if(/^\d{2}[-/]\w{3}/.test(txt)){
-              if(!fechaCols.includes(cell.col)) fechaCols.push(cell.col);
-            }
-          });
-        });
-
-        fechaCols.sort((a,b) => a-b);
-
-        for(const col of fechaCols){
-          const d = new Date(d0);
-          d.setDate(d0.getDate() + currentDayIndex);
-          if(d > d1) break;
-
-          for(let r = 3; r <= ws.rowCount; r++){
-            const cell = ws.getCell(r, col);
-            const txt = String(cell.value ?? '').trim().toLowerCase();
-            if(/^\d{2}[-/]\w{3}/.test(txt)){
-              cell.value = fmt(d);
-            }
-          }
-
-          currentDayIndex++;
-        }
-      }
-
-      const file = `Soporte_Mensual_${desde || 'inicio'}_a_${hasta || 'fin'}.xlsx`;
-      await this.downloadWorkbook(wb, file);
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+        a.remove();
+      }, 1000);
 
       if(box) box.textContent = 'Soporte mensual descargado desde plantilla oficial.';
     }catch(err){
       console.error('ERROR SOPORTE:', err);
-      if(box) box.textContent = 'Error al generar soporte: ' + err.message;
-      alert('Error al generar soporte: ' + err.message);
+      if(box) box.textContent = 'Error al descargar soporte: ' + err.message;
+      alert('Error al descargar soporte: ' + err.message);
     }
   },
 
