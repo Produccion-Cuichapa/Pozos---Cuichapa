@@ -325,7 +325,19 @@ window.AdminExportaciones = {
 
     const allRows = (AdminFirebase.reportes || []).filter(r => {
       const ymd = this.ymdFromRow(r);
-      return AdminUtils.personText(r) === rec && ymd >= desde && ymd <= hasta;
+      const persona = String(AdminUtils.personText(r) || '').trim().toLowerCase();
+      const elegido = String(rec || '').trim().toLowerCase();
+
+      const matchRec =
+        persona === elegido ||
+        persona.includes(elegido) ||
+        elegido.includes(persona) ||
+        (elegido.includes('luis') && persona.includes('luis')) ||
+        (elegido.includes('juan') && persona.includes('juan')) ||
+        (elegido.includes('manrique') && persona.includes('manrique')) ||
+        (elegido.includes('cirilo') && persona.includes('cirilo'));
+
+      return matchRec && ymd >= desde && ymd <= hasta;
     }).sort((a,b) => new Date(a.fecha || a.timestamp || 0) - new Date(b.fecha || b.timestamp || 0));
 
     if(!allRows.length){
@@ -343,33 +355,12 @@ window.AdminExportaciones = {
     const dias = Object.keys(porDia).sort();
 
     const wb = await this.loadTemplate('../templates/Book.xlsx');
-
     const templateWs = wb.worksheets[0];
 
-    for(const [idx, dia] of dias.entries()){
-      let ws;
+    const partes = [];
 
-      if(idx === 0){
-        ws = templateWs;
-        ws.name = this.safeSheetName(dia);
-      }else{
-        ws = this.clonarHojaFormato(templateWs, wb, this.safeSheetName(dia));
-      }
-
-      ws.name = this.safeSheetName(dia);
-      ws.getCell('D3').value = rec;
-      ws.getCell('P3').value = dia;
-
-      const rows = porDia[dia];
-      ws.getCell('D3').value = (
-        rows[0]?.recorredorNombre ||
-        rows[0]?.recorredorCompleto ||
-        rows[0]?.nombreRecorredor ||
-        rows[0]?.recorredor ||
-        rec
-      );
-      ws.getCell('D3').font = Object.assign({}, ws.getCell('D3').font || {}, { size: 13, bold: true });
-      ws.getCell('D3').alignment = { horizontal:'center', vertical:'middle' };
+    dias.forEach(dia => {
+      const rows = porDia[dia] || [];
 
       const coRows = rows.filter(r => {
         const tipo = this.tipoReporte(r);
@@ -381,51 +372,117 @@ window.AdminExportaciones = {
         return tipo === 'NIVEL_GUARDIA' || (tipo === 'VISITA' && this.isFT(r));
       });
 
-      coRows.slice(0,21).forEach((r, i) => {
+      const grupos = {1:[],2:[],3:[]};
+
+      nivelRows.forEach(r => {
+        const tipo = this.tipoReporte(r);
+        let turno = 1;
+        if(tipo === 'NIVEL_GUARDIA') turno = 2;
+        grupos[turno].push(r);
+      });
+
+      const totalPartes = Math.max(
+        1,
+        Math.ceil(coRows.length / 21),
+        Math.ceil(grupos[1].length / 15),
+        Math.ceil(grupos[2].length / 15),
+        Math.ceil(grupos[3].length / 15)
+      );
+
+      for(let parte = 0; parte < totalPartes; parte++){
+        partes.push({
+          dia,
+          parte,
+          rows,
+          coRows: coRows.slice(parte * 21, parte * 21 + 21),
+          grupos: {
+            1: grupos[1].slice(parte * 15, parte * 15 + 15),
+            2: grupos[2].slice(parte * 15, parte * 15 + 15),
+            3: grupos[3].slice(parte * 15, parte * 15 + 15)
+          }
+        });
+      }
+    });
+
+    const hojas = partes.map((item, idx) => {
+      const nombre = item.parte === 0
+        ? this.safeSheetName(item.dia)
+        : this.safeSheetName(`${item.dia} parte ${item.parte + 1}`);
+
+      if(idx === 0){
+        templateWs.name = nombre;
+        return { ...item, ws: templateWs };
+      }
+
+      return { ...item, ws: this.clonarHojaFormato(templateWs, wb, nombre) };
+    });
+
+    for(const item of hojas){
+      const dia = item.dia;
+      const ws = item.ws;
+      const rows = item.rows;
+
+      let nombreRec = (
+        rows[0]?.recorredorNombre ||
+        rows[0]?.recorredorCompleto ||
+        rows[0]?.nombreRecorredor ||
+        rows[0]?.recorredor ||
+        rec ||
+        ''
+      );
+
+      const mapaRecorredores = {
+        'cirilo': 'Cirilo Cancino Gómez',
+        'cirilo cancino': 'Cirilo Cancino Gómez',
+        'manrique': 'Manrique Jiménez',
+        'juan': 'Juan Carlos Flores',
+        'juan carlos': 'Juan Carlos Flores',
+        'flores': 'Juan Carlos Flores',
+        'luis': 'Luis Carlos Flores',
+        'luis carlos': 'Luis Carlos Flores'
+      };
+
+      const clave = String(nombreRec).trim().toLowerCase();
+
+      for(const k in mapaRecorredores){
+        if(clave.includes(k)){
+          nombreRec = mapaRecorredores[k];
+          break;
+        }
+      }
+
+      ws.getCell('D3').value = nombreRec;
+      ws.getCell('D3').font = Object.assign({}, ws.getCell('D3').font || {}, { size: 13, bold: true });
+      ws.getCell('D3').alignment = { horizontal:'center', vertical:'middle' };
+      ws.getCell('P3').value = dia;
+
+      item.coRows.forEach((r, i) => {
         const row = 7 + i;
         const p = this.parsed(r);
-
         const tipo = this.tipoReporte(r);
 
-        ws.getCell(`B${row}`).value = i + 1;
+        ws.getCell(`B${row}`).value = item.parte * 21 + i + 1;
         ws.getCell(`C${row}`).value = AdminUtils.placeText(r);
         ws.getCell(`C${row}`).alignment = { horizontal:'center', vertical:'middle' };
         ws.getCell(`D${row}`).value = this.timeFromRow(r);
 
         if(tipo === 'NOTA' || tipo === 'CABEZAL' || tipo === 'ESTACION'){
-
-          // Limpiar columnas de ESTATUS a CARRERA
           ['E','F','G','H','I','J','K','L','M'].forEach(col => {
             try{ ws.getCell(`${col}${row}`).value = ''; }catch(e){}
           });
 
-          // Restaurar merges exactos
           try{ ws.unMergeCells(`E${row}:M${row}`); }catch(e){}
-          try{ ws.unMergeCells(`O${row}:P${row}`); }catch(e){}
+          try{ ws.unMergeCells(`N${row}:P${row}`); }catch(e){}
 
-          // NOTA/CABEZAL/ESTACIÓN ocupa únicamente ESTATUS → CARRERA
           ws.mergeCells(`E${row}:M${row}`);
-
           const notaCell = ws.getCell(`E${row}`);
           notaCell.value = this.cortarTxt(this.textoNota(r), 90);
-          notaCell.alignment = {
-            horizontal:'left',
-            vertical:'middle',
-            wrapText:false,
-            shrinkToFit:true
-          };
+          notaCell.alignment = { horizontal:'left', vertical:'middle', wrapText:false, shrinkToFit:true };
 
-          // OBSERVACIONES conserva su bloque original
           ws.mergeCells(`N${row}:P${row}`);
-
           const obs = ws.getCell(`N${row}`);
           obs.value = '';
-          obs.alignment = {
-            horizontal:'left',
-            vertical:'middle',
-            wrapText:false,
-            shrinkToFit:false
-          };
+          obs.alignment = { horizontal:'left', vertical:'middle', wrapText:false, shrinkToFit:false };
 
           return;
         }
@@ -441,23 +498,6 @@ window.AdminExportaciones = {
         ws.getCell(`M${row}`).value = r.co?.carrera || p.carrera || '';
         ws.getCell(`N${row}`).value = this.cortarTxt(this.obsReal(r), 55);
         ws.getCell(`N${row}`).alignment = { horizontal:'left', vertical:'middle', wrapText:false, shrinkToFit:false };
-        });
-
-      // Turno 1: B-E, filas 32-46
-      // Turno 2: G-J, filas 32-46
-      // Turno 3: L-O, filas 32-46
-      const grupos = {1:[],2:[],3:[]};
-
-      nivelRows.forEach(r => {
-        const tipo = this.tipoReporte(r);
-
-        // Regla operativa:
-        // - REPORTE DE VISITA que fluye a FT: Turno 1
-        // - NIVELES DE GUARDIA: Turno 2
-        let turno = 1;
-        if(tipo === 'NIVEL_GUARDIA') turno = 2;
-
-        grupos[turno].push(r);
       });
 
       const map = {
@@ -467,13 +507,12 @@ window.AdminExportaciones = {
       };
 
       [1,2,3].forEach(turno => {
-        grupos[turno].slice(0,15).forEach((r, i) => {
+        item.grupos[turno].forEach((r, i) => {
           const row = 32 + i;
           const c = map[turno];
 
-          ws.getCell(`${c.no}${row}`).value = i + 1;
+          ws.getCell(`${c.no}${row}`).value = item.parte * 15 + i + 1;
           ws.getCell(`${c.pozo}${row}`).value = AdminUtils.placeText(r);
-          ws.getCell(`${c.pozo}${row}`).alignment = { horizontal:'center', vertical:'middle' };
           ws.getCell(`${c.hora}${row}`).value = this.timeFromRow(r);
           ws.getCell(`${c.nivel}${row}`).value = this.nivelCm(r);
 
@@ -486,29 +525,19 @@ window.AdminExportaciones = {
         });
       });
 
-      // Impresión: una hoja tamaño carta horizontal
       ws.pageSetup = {
         paperSize: 1,
         orientation: 'landscape',
         fitToPage: true,
         fitToWidth: 1,
         fitToHeight: 1,
-        margins:{
-          left:0.10,
-          right:0.10,
-          top:0.10,
-          bottom:0.10,
-          header:0.10,
-          footer:0.10
-        },
+        margins:{ left:0.10, right:0.10, top:0.10, bottom:0.10, header:0.10, footer:0.10 },
         horizontalCentered:true,
         verticalCentered:false,
         printArea:'A1:P46'
       };
 
       ws.views = [{ showGridLines:false, zoomScale:85 }];
-
-      
     }
 
     const file = `Diario_${rec.replace(/\s+/g,'_')}_${desde}_a_${hasta}.xlsx`;
@@ -537,13 +566,32 @@ window.AdminExportaciones = {
       const wb = await this.loadTemplate('../templates/tpl_soporte.xlsx?v=' + Date.now());
       const ws = wb.worksheets[0];
 
-      const startCol = 5;   // E
-      const block = 8;      // Fecha + 7 columnas de conteo
+      const startCol = 5;   // E = fecha
+      const block = 8;      // fecha + SUPER + NIVEL + demás columnas
       const firstRow = 3;
       const lastRow = ws.rowCount;
 
+      function normPozo(v){
+        return String(v || '')
+          .toUpperCase()
+          .replace(/CUICHAPA/g,'')
+          .replace(/POZO/g,'')
+          .replace(/[^A-Z0-9]/g,'')
+          .replace(/^C/,'');
+      }
+
+      const pozoRow = {};
+      for(let r = firstRow; r <= lastRow; r++){
+        const pz = ws.getCell(r, 3).value;
+        const key = normPozo(pz);
+        if(key) pozoRow[key] = r;
+      }
+
+      // 1) Preparar fechas y limpiar SUPER/NIVEL
       for(let dia = 1; dia <= 31; dia++){
         const colFecha = startCol + ((dia - 1) * block);
+        const colSuper = colFecha + 1;
+        const colNivel = colFecha + 2;
         const dd = String(dia).padStart(2, '0');
         const textoFecha = `${dd}-${mes}`;
 
@@ -551,21 +599,77 @@ window.AdminExportaciones = {
           ws.getColumn(c).hidden = dia > diasMes;
         }
 
-        if(dia <= diasMes){
-          for(let r = firstRow; r <= lastRow; r++){
-            const pozo = ws.getCell(r, 3).value;
-            if(pozo){
-              const cell = ws.getCell(r, colFecha);
-              cell.value = textoFecha;
-              cell.numFmt = '@';
-            }
+        for(let r = firstRow; r <= lastRow; r++){
+          const pozo = ws.getCell(r, 3).value;
+
+          if(dia <= diasMes && pozo){
+            ws.getCell(r, colFecha).value = textoFecha;
+            ws.getCell(r, colFecha).numFmt = '@';
           }
-        }else{
-          for(let r = firstRow; r <= lastRow; r++){
-            ws.getCell(r, colFecha).value = null;
-          }
+
+          // limpiar solo SUPER y NIVEL
+          ws.getCell(r, colSuper).value = null;
+          ws.getCell(r, colNivel).value = null;
         }
       }
+
+      // 2) Llenar SUPER y NIVEL desde reportes
+      const reportes = AdminFirebase.reportes || [];
+
+      reportes.forEach(r => {
+        const ymd = this.ymdFromRow(r);
+        if(!ymd) return;
+
+        const [yy, mm, dd] = ymd.split('-').map(Number);
+        if(yy !== year || mm !== month) return;
+        if(dd < 1 || dd > diasMes) return;
+
+        const msg = String(r.msg || r.mensaje || '').toUpperCase();
+        const modo = String(r.modo || r.tipo || '').toLowerCase();
+
+        const pozoTxt = r.pozo || r.pozoNombre || r.well || AdminUtils.placeText(r);
+        const row = pozoRow[normPozo(pozoTxt)];
+        if(!row) return;
+
+        const colFecha = startCol + ((dd - 1) * block);
+        const colSuper = colFecha + 1;
+        const colNivel = colFecha + 2;
+
+        const esVisita =
+          msg.includes('REPORTE DE VISITA') ||
+          modo === 'co' ||
+          modo === 'control' ||
+          modo === 'control operativo';
+
+        const esGuardia =
+          msg.includes('NIVELES DE GUARDIA') ||
+          modo === 'guardia' ||
+          modo === 'nivel';
+
+        const fluye = String(
+          r.co?.fluye ||
+          r.fluye ||
+          ''
+        ).toUpperCase();
+
+        const esFT =
+          fluye === 'FT' ||
+          fluye.includes('FT') ||
+          msg.includes('FLUYE: FT') ||
+          msg.includes('FLUYE FT');
+
+        if(esVisita){
+          ws.getCell(row, colSuper).value = 1;
+
+          if(esFT){
+            ws.getCell(row, colNivel).value = 1;
+          }
+        }
+
+        if(esGuardia && !esVisita){
+          ws.getCell(row, colNivel).value = 1;
+        }
+      });
 
       const file = `Soporte_Mensual_${mes}_${year}.xlsx`;
       await this.downloadWorkbook(wb, file);
