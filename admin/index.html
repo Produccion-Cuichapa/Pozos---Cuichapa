@@ -19,7 +19,9 @@
   <script src="./js/reportes.js" defer></script>
   <script src="./js/alarmas.js" defer></script>
   <script src="./js/exportar.js" defer></script>
+  <script src="./js/exportaciones.js" defer></script>
   <script src="./js/app.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 </head>
 
 <body>
@@ -56,6 +58,7 @@
         <button class="nav-btn active" data-view="dashboard">Dashboard</button>
         <button class="nav-btn" data-view="reportes">Reportes</button>
         <button class="nav-btn" data-view="alarmas">Alarmas</button>
+        <button class="nav-btn" data-view="exportaciones">Exportaciones</button>
       </nav>
 
       <div class="side-footer">
@@ -178,6 +181,49 @@
           </table>
         </div>
       </section>
+    
+      <section id="exportacionesView" class="view hidden">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Reportes automáticos</h2>
+            <span class="muted">Plantillas oficiales Excel</span>
+          </div>
+
+          <div class="export-grid">
+            <article class="export-card">
+              <h3>Diario por recorredor</h3>
+              <p>Genera el formato diario usando la plantilla oficial.</p>
+              <select id="expRecorredor">
+                <option value="">Seleccionar recorredor</option>
+                <option>Manrique</option>
+                <option>Juan Carlos</option>
+                <option>Cirilo</option>
+              </select>
+              <input id="expDesde" type="date">
+              <input id="expHasta" type="date">
+              <button id="btnDiarioPreview" class="primary-btn">Preparar diario</button>
+              <div id="diarioStatus" class="export-status"></div>
+            </article>
+
+            <article class="export-card">
+              <h3>Soporte mensual</h3>
+              <p>Consolidado por pozo: visitas, nivel, trabajo, drenar, aforo e intermitente.</p>
+              <input id="supMes" type="month">
+              <button id="btnSoportePreview" class="primary-btn">Preparar soporte</button>
+              <div id="soporteStatus" class="export-status"></div>
+            </article>
+
+            <article class="export-card">
+              <h3>Historial por pozo</h3>
+              <p>Reporte adicional propuesto para revisar la evolución de un pozo.</p>
+              <input id="histPozo" placeholder="Ej. 131 o C-131">
+              <button id="btnHistorialPreview" class="primary-btn">Preparar historial</button>
+              <div id="historialStatus" class="export-status"></div>
+            </article>
+          </div>
+        </div>
+      </section>
+
     </main>
   </section>
 
@@ -191,5 +237,6 @@
     </div>
     <div id="detailBody" class="detail-body"></div>
   </dialog>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 </body>
 </html>
