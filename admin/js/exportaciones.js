@@ -522,66 +522,92 @@ window.AdminExportaciones = {
   },
 
   async generarSoporte(){
-    const desde = document.getElementById('supDesde').value;
-    const hasta = document.getElementById('supHasta').value;
     const box = document.getElementById('soporteStatus');
-
-    if(!desde || !hasta){
-      box.textContent = 'Selecciona fecha desde y fecha hasta.';
-      return;
-    }
-
-    box.textContent = 'Generando soporte desde plantilla oficial...';
-
-    const acc = {};
-
-    (AdminFirebase.reportes || []).forEach(r => {
-      const ymd = this.ymdFromRow(r);
-      if(ymd < desde || ymd > hasta) return;
-
-      const pozo = AdminUtils.placeText(r);
-      if(!pozo) return;
-
-      const msg = String(r.msg || '').toLowerCase();
-
-      if(!acc[pozo]){
-        acc[pozo] = {
-          pozo,
-          supervision:0,
-          nivel:0,
-          trabajo:0,
-          drenar:0,
-          aforo:0,
-          intermitente:0
-        };
-      }
-
-      acc[pozo].supervision++;
-
-      if(this.isNivel(r)) acc[pozo].nivel++;
-      if(msg.includes('trabajo') || r.checks?.trabajo) acc[pozo].trabajo++;
-      if(msg.includes('drenar') || msg.includes('barrido') || r.checks?.drenar) acc[pozo].drenar++;
-      if(msg.includes('aforo') || r.checks?.aforo) acc[pozo].aforo++;
-      if(msg.includes('intermitente') || r.checks?.intermitente) acc[pozo].intermitente++;
-    });
-
-    const rows = Object.values(acc).sort((a,b) => String(a.pozo).localeCompare(String(b.pozo), 'es', {numeric:true}));
-
-    if(!rows.length){
-      box.textContent = 'No hay datos para soporte en ese rango.';
-      return;
-    }
+    if(box) box.textContent = 'Generando soporte desde plantilla oficial...';
 
     try{
-      const wb = await this.loadTemplate('../templates/tpl_soporte.xlsx');
+      const card = box ? box.closest('.card, .panel, section, div') : document;
+      const inputs = Array.from((card || document).querySelectorAll('input'));
+      const desde = inputs[0]?.value || '';
+      const hasta = inputs[1]?.value || '';
 
-      const file = `Soporte_Mensual_${desde}_a_${hasta}.xlsx`;
+      const wb = await this.loadTemplate('../templates/tpl_soporte.xlsx');
+      const ws = wb.worksheets[0];
+
+      const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+      function parseDate(v){
+        if(!v) return null;
+        const p = String(v).split('-');
+        if(p.length === 3) return new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
+        return null;
+      }
+
+      function fmt(d){
+        return String(d.getDate()).padStart(2,'0') + '-' + meses[d.getMonth()];
+      }
+
+      const d0 = parseDate(desde);
+      const d1 = parseDate(hasta);
+
+      const headersConteo = new Set([
+        'SUPER','NIVEL','TRABAJO','DRENAR','MEDICION BS2','MEDICIÓN BS2',
+        'AFORO FT','A. INTERMITENTE'
+      ]);
+
+      ws.eachRow((row) => {
+        row.eachCell((cell) => {
+          const txt = String(cell.value ?? '').trim().toUpperCase();
+
+          if(headersConteo.has(txt)){
+            const col = cell.col;
+            for(let r = cell.row + 1; r <= ws.rowCount; r++){
+              ws.getCell(r, col).value = null;
+            }
+          }
+        });
+      });
+
+      if(d0 && d1){
+        let currentDayIndex = 0;
+        const fechaCols = [];
+
+        ws.eachRow((row) => {
+          row.eachCell((cell) => {
+            const txt = String(cell.value ?? '').trim().toLowerCase();
+            if(/^\d{2}[-/]\w{3}/.test(txt)){
+              if(!fechaCols.includes(cell.col)) fechaCols.push(cell.col);
+            }
+          });
+        });
+
+        fechaCols.sort((a,b) => a-b);
+
+        for(const col of fechaCols){
+          const d = new Date(d0);
+          d.setDate(d0.getDate() + currentDayIndex);
+          if(d > d1) break;
+
+          for(let r = 3; r <= ws.rowCount; r++){
+            const cell = ws.getCell(r, col);
+            const txt = String(cell.value ?? '').trim().toLowerCase();
+            if(/^\d{2}[-/]\w{3}/.test(txt)){
+              cell.value = fmt(d);
+            }
+          }
+
+          currentDayIndex++;
+        }
+      }
+
+      const file = `Soporte_Mensual_${desde || 'inicio'}_a_${hasta || 'fin'}.xlsx`;
       await this.downloadWorkbook(wb, file);
 
-      box.innerHTML = `Soporte mensual descargado desde plantilla oficial.`;
+      if(box) box.textContent = 'Soporte mensual descargado desde plantilla oficial.';
     }catch(err){
       console.error('ERROR SOPORTE:', err);
-      box.textContent = 'Error al generar soporte: ' + err.message;
+      if(box) box.textContent = 'Error al generar soporte: ' + err.message;
+      alert('Error al generar soporte: ' + err.message);
     }
   },
 
