@@ -670,11 +670,22 @@ window.AdminExportaciones = {
       }
 
       function normPozo(v){
-        return String(v || '').toUpperCase()
+        let x = String(v || '').toUpperCase();
+
+        // Buscar preferente: C-107, C_107, C 107, CUICHAPA 107, CUICHAPA 106D
+        const m1 = x.match(/C\s*[-_]?\s*([0-9]+[A-Z]?)/);
+        if(m1) return m1[1];
+
+        const m2 = x.match(/CUICHAPA\s*([0-9]+[A-Z]?)/);
+        if(m2) return m2[1];
+
+        x = x
           .replace(/CUICHAPA/g,'')
           .replace(/POZO/g,'')
           .replace(/[^A-Z0-9]/g,'')
           .replace(/^C/,'');
+
+        return x;
       }
 
       // Solo filas reales de pozos. NO toca la fila de totales/fórmulas.
@@ -714,6 +725,10 @@ window.AdminExportaciones = {
       }
 
       const reportes = AdminFirebase.reportes || [];
+      let dbgTotalMes = 0;
+      let dbgSinPozo = 0;
+      let dbgNoEncontrado = 0;
+      const dbgNoEncontrados = [];
 
       reportes.forEach(r => {
         const ymd = this.ymdFromRow(r);
@@ -721,13 +736,30 @@ window.AdminExportaciones = {
 
         const [yy, mm, dd] = ymd.split('-').map(Number);
         if(yy !== year || mm !== month || dd < 1 || dd > diasMes) return;
+        dbgTotalMes++;
 
         const msg = String(r.msg || r.mensaje || '').toUpperCase();
         const modo = String(r.modo || r.tipo || '').toLowerCase();
 
-        const pozoTxt = r.pozo || r.pozoNombre || r.well || AdminUtils.placeText(r);
-        const row = pozoRow[normPozo(pozoTxt)];
-        if(!row) return;
+        let pozoTxt = r.pozo || r.pozoNombre || r.well || AdminUtils.placeText(r);
+
+        if(!normPozo(pozoTxt)){
+          const msgPozo = msg.match(/POZO:\s*\*?\s*([^\n\r*]+)/i);
+          if(msgPozo) pozoTxt = msgPozo[1];
+        }
+
+        const keyPozo = normPozo(pozoTxt);
+        if(!keyPozo){
+          dbgSinPozo++;
+          return;
+        }
+
+        const row = pozoRow[keyPozo];
+        if(!row){
+          dbgNoEncontrado++;
+          if(dbgNoEncontrados.length < 25) dbgNoEncontrados.push(keyPozo + ' ← ' + pozoTxt);
+          return;
+        }
 
         const colFecha = startCol + ((dd - 1) * block);
         const colSuper = colFecha + 1;
@@ -760,6 +792,10 @@ window.AdminExportaciones = {
           setNum(colName(colNivel) + row, 1);
         }
       });
+
+      // Diagnóstico interno, fuera del área visible principal
+      setText('A1', `DBG mes=${supMes} reportesMes=${dbgTotalMes} sinPozo=${dbgSinPozo} pozoNoEncontrado=${dbgNoEncontrado}`);
+      setText('A2', dbgNoEncontrados.join(' | '));
 
       zip.file(sheetName, new XMLSerializer().serializeToString(doc));
 
