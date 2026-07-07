@@ -563,20 +563,26 @@ window.AdminExportaciones = {
       const mes = meses[month - 1];
       const diasMes = new Date(year, month, 0).getDate();
 
-      if(typeof JSZip === 'undefined'){
-        throw new Error('JSZip no está cargado.');
-      }
+      if(typeof JSZip === 'undefined') throw new Error('JSZip no está cargado.');
 
       const res = await fetch('../templates/tpl_soporte.xlsx?v=' + Date.now());
       if(!res.ok) throw new Error('No se pudo cargar la plantilla.');
 
       const zip = await JSZip.loadAsync(await res.blob());
+
       const sheetName = 'xl/worksheets/sheet1.xml';
-      const xmlText = await zip.file(sheetName).async('string');
+      const sheetXml = await zip.file(sheetName).async('string');
 
       const parser = new DOMParser();
-      const doc = parser.parseFromString(xmlText, 'application/xml');
+      const doc = parser.parseFromString(sheetXml, 'application/xml');
       const ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+
+      let shared = [];
+      if(zip.file('xl/sharedStrings.xml')){
+        const ssXml = await zip.file('xl/sharedStrings.xml').async('string');
+        const ssDoc = parser.parseFromString(ssXml, 'application/xml');
+        shared = Array.from(ssDoc.getElementsByTagNameNS(ns,'si')).map(si => si.textContent || '');
+      }
 
       function colName(n){
         let s = '';
@@ -590,6 +596,11 @@ window.AdminExportaciones = {
 
       function getRow(r){
         let row = Array.from(doc.getElementsByTagNameNS(ns,'row')).find(x => x.getAttribute('r') == r);
+        return row || null;
+      }
+
+      function ensureRow(r){
+        let row = getRow(r);
         if(!row){
           row = doc.createElementNS(ns,'row');
           row.setAttribute('r', r);
@@ -600,7 +611,7 @@ window.AdminExportaciones = {
 
       function getCell(addr){
         const r = Number(addr.match(/\d+/)[0]);
-        const row = getRow(r);
+        const row = ensureRow(r);
         let cell = Array.from(row.getElementsByTagNameNS(ns,'c')).find(c => c.getAttribute('r') === addr);
         if(!cell){
           cell = doc.createElementNS(ns,'c');
@@ -610,10 +621,27 @@ window.AdminExportaciones = {
         return cell;
       }
 
+      function readCell(addr){
+        const r = Number(addr.match(/\d+/)[0]);
+        const row = getRow(r);
+        if(!row) return '';
+        const c = Array.from(row.getElementsByTagNameNS(ns,'c')).find(x => x.getAttribute('r') === addr);
+        if(!c) return '';
+
+        const t = c.getAttribute('t');
+        const v = c.getElementsByTagNameNS(ns,'v')[0]?.textContent || '';
+
+        if(t === 's') return shared[Number(v)] || '';
+        if(t === 'inlineStr') return c.getElementsByTagNameNS(ns,'t')[0]?.textContent || '';
+        return v;
+      }
+
       function setText(addr, value){
         const c = getCell(addr);
         c.setAttribute('t','inlineStr');
+
         Array.from(c.childNodes).forEach(n => c.removeChild(n));
+
         const is = doc.createElementNS(ns,'is');
         const t = doc.createElementNS(ns,'t');
         t.textContent = value;
@@ -624,14 +652,19 @@ window.AdminExportaciones = {
       function setNum(addr, value){
         const c = getCell(addr);
         c.removeAttribute('t');
+
         Array.from(c.childNodes).forEach(n => c.removeChild(n));
+
         const v = doc.createElementNS(ns,'v');
         v.textContent = String(value);
         c.appendChild(v);
       }
 
-      function clearCell(addr){
+      function clearValueOnly(addr){
         const c = getCell(addr);
+        const formula = c.getElementsByTagNameNS(ns,'f')[0];
+        if(formula) return; // JAMÁS tocar fórmulas
+
         c.removeAttribute('t');
         Array.from(c.childNodes).forEach(n => c.removeChild(n));
       }
@@ -644,33 +677,40 @@ window.AdminExportaciones = {
           .replace(/^C/,'');
       }
 
-      // Mapa pozo -> fila, leyendo columna C visible de la plantilla
+      // Solo filas reales de pozos. NO toca la fila de totales/fórmulas.
+      const dataRows = [];
       const pozoRow = {};
-      for(let r = 3; r <= 260; r++){
-        const cell = Array.from(getRow(r).getElementsByTagNameNS(ns,'c')).find(c => c.getAttribute('r') === 'C' + r);
-        let txt = '';
-        if(cell){
-          txt = cell.textContent || '';
-        }
+
+      for(let r = 3; r <= 300; r++){
+        const txt = readCell('C' + r);
         const key = normPozo(txt);
-        if(key) pozoRow[key] = r;
+
+        if(key){
+          dataRows.push(r);
+          pozoRow[key] = r;
+        }
       }
 
       const startCol = 5; // E
-      const block = 8;
+      const block = 8;    // Fecha + SUPER + NIVEL + demás
 
-      // Fechas + limpieza SUPER/NIVEL
-      for(let dia = 1; dia <= diasMes; dia++){
+      // Fechas y limpieza SOLO en filas de pozos
+      for(let dia = 1; dia <= 31; dia++){
         const colFecha = startCol + ((dia - 1) * block);
         const colSuper = colFecha + 1;
         const colNivel = colFecha + 2;
         const dd = String(dia).padStart(2,'0');
 
-        for(let r = 3; r <= 260; r++){
-          setText(colName(colFecha) + r, `${dd}-${mes}`);
-          clearCell(colName(colSuper) + r);
-          clearCell(colName(colNivel) + r);
-        }
+        dataRows.forEach(r => {
+          if(dia <= diasMes){
+            setText(colName(colFecha) + r, `${dd}-${mes}`);
+          }else{
+            clearValueOnly(colName(colFecha) + r);
+          }
+
+          clearValueOnly(colName(colSuper) + r);
+          clearValueOnly(colName(colNivel) + r);
+        });
       }
 
       const reportes = AdminFirebase.reportes || [];
@@ -693,11 +733,23 @@ window.AdminExportaciones = {
         const colSuper = colFecha + 1;
         const colNivel = colFecha + 2;
 
-        const esVisita = msg.includes('REPORTE DE VISITA') || modo === 'co';
-        const esGuardia = msg.includes('NIVELES DE GUARDIA') || modo === 'guardia' || modo === 'nivel';
+        const esVisita =
+          msg.includes('REPORTE DE VISITA') ||
+          modo === 'co' ||
+          modo === 'control' ||
+          modo === 'control operativo';
+
+        const esGuardia =
+          msg.includes('NIVELES DE GUARDIA') ||
+          modo === 'guardia' ||
+          modo === 'nivel';
 
         const fluye = String(r.co?.fluye || r.fluye || '').toUpperCase();
-        const esFT = fluye.includes('FT') || msg.includes('FLUYE: FT') || msg.includes('FLUYE FT');
+
+        const esFT =
+          fluye.includes('FT') ||
+          msg.includes('FLUYE: FT') ||
+          msg.includes('FLUYE FT');
 
         if(esVisita){
           setNum(colName(colSuper) + row, 1);
@@ -709,8 +761,7 @@ window.AdminExportaciones = {
         }
       });
 
-      const finalXml = new XMLSerializer().serializeToString(doc);
-      zip.file(sheetName, finalXml);
+      zip.file(sheetName, new XMLSerializer().serializeToString(doc));
 
       const blobFinal = await zip.generateAsync({
         type:'blob',
@@ -730,7 +781,7 @@ window.AdminExportaciones = {
         a.remove();
       }, 1000);
 
-      if(box) box.textContent = 'Soporte mensual descargado.';
+      if(box) box.textContent = `Soporte mensual descargado. Pozos detectados: ${dataRows.length}.`;
     }catch(err){
       console.error('ERROR SOPORTE:', err);
       if(box) box.textContent = 'Error al generar soporte: ' + err.message;
