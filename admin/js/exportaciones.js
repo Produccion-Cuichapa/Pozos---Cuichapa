@@ -532,84 +532,49 @@ window.AdminExportaciones = {
       const [year, month] = supMes.split('-').map(Number);
       const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
       const mes = meses[month - 1];
+      const diasMes = new Date(year, month, 0).getDate();
 
-      if(typeof JSZip === 'undefined'){
-        throw new Error('JSZip no está cargado. Recarga la plataforma con Ctrl + Shift + R.');
+      const wb = await this.loadTemplate('../templates/tpl_soporte.xlsx?v=' + Date.now());
+      const ws = wb.worksheets[0];
+
+      const startCol = 5;   // E
+      const block = 8;      // Fecha + 7 columnas de conteo
+      const firstRow = 3;
+      const lastRow = ws.rowCount;
+
+      for(let dia = 1; dia <= 31; dia++){
+        const colFecha = startCol + ((dia - 1) * block);
+        const dd = String(dia).padStart(2, '0');
+        const textoFecha = `${dd}-${mes}`;
+
+        for(let c = colFecha; c < colFecha + block; c++){
+          ws.getColumn(c).hidden = dia > diasMes;
+        }
+
+        if(dia <= diasMes){
+          for(let r = firstRow; r <= lastRow; r++){
+            const pozo = ws.getCell(r, 3).value;
+            if(pozo){
+              const cell = ws.getCell(r, colFecha);
+              cell.value = textoFecha;
+              cell.numFmt = '@';
+            }
+          }
+        }else{
+          for(let r = firstRow; r <= lastRow; r++){
+            ws.getCell(r, colFecha).value = null;
+          }
+        }
       }
 
-      const res = await fetch('../templates/tpl_soporte.xlsx?v=' + Date.now());
-      if(!res.ok) throw new Error('No se pudo cargar templates/tpl_soporte.xlsx');
-
-      const blobOriginal = await res.blob();
-      const zip = await JSZip.loadAsync(blobOriginal);
-
-      const archivos = Object.keys(zip.files).filter(name =>
-        !zip.files[name].dir && (
-          name.endsWith('.xml') ||
-          name.endsWith('.rels')
-        )
-      );
-
-      for(const name of archivos){
-        let xml = await zip.file(name).async('string');
-
-        // Fechas reales de Excel: junio 2026 = seriales 46174 al 46203.
-        // Las movemos al mes seleccionado, conservando el día.
-        function excelSerial(y, m, d){
-          return Math.floor(Date.UTC(y, m - 1, d) / 86400000) + 25570;
-        }
-
-        for(let dia = 1; dia <= 31; dia++){
-          const oldSerial = Math.floor(Date.UTC(2026, 6 - 1, dia) / 86400000) + 25569;
-          const newSerial = Math.floor(Date.UTC(year, month - 1, dia) / 86400000) + 25569;
-
-          // La plantilla puede traer serial normal o corrido por compatibilidad Excel.
-          [oldSerial - 1, oldSerial, oldSerial + 1].forEach(function(serial){
-            xml = xml.replace(
-              new RegExp('(<v>)' + serial + '(</v>)', 'g'),
-              '$1' + newSerial + '$2'
-            );
-          });
-        }
-
-        // Refuerzo para fechas guardadas como texto plano.
-        for(let dia = 1; dia <= 31; dia++){
-          const dd = String(dia).padStart(2, '0');
-          xml = xml.replace(new RegExp(dd + '-jun', 'gi'), dd + '-' + mes);
-        }
-
-        xml = xml
-          .replace(/-(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)/gi, '-' + mes)
-          .replace(/ (ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)/gi, ' ' + mes)
-          .replace(/_(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)/gi, '_' + mes);
-
-        zip.file(name, xml);
-      }
-
-      const blobFinal = await zip.generateAsync({
-        type: 'blob',
-        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      });
-
-      const url = URL.createObjectURL(blobFinal);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Soporte_Mensual_${mes}_${year}.xlsx`;
-      a.style.display = 'none';
-
-      document.body.appendChild(a);
-      a.click();
-
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-        a.remove();
-      }, 1000);
+      const file = `Soporte_Mensual_${mes}_${year}.xlsx`;
+      await this.downloadWorkbook(wb, file);
 
       if(box) box.textContent = 'Soporte mensual descargado.';
     }catch(err){
       console.error('ERROR SOPORTE:', err);
-      if(box) box.textContent = 'Error al descargar soporte: ' + err.message;
-      alert('Error al descargar soporte: ' + err.message);
+      if(box) box.textContent = 'Error al generar soporte: ' + err.message;
+      alert('Error al generar soporte: ' + err.message);
     }
   },
 
