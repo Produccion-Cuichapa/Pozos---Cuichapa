@@ -553,6 +553,21 @@ window.AdminExportaciones = {
       for(const name of archivos){
         let xml = await zip.file(name).async('string');
 
+        // Fechas reales de Excel: junio 2026 = seriales 46174 al 46203.
+        // Las movemos al mes seleccionado, conservando el día.
+        function excelSerial(y, m, d){
+          return Math.floor(Date.UTC(y, m - 1, d) / 86400000) + 25569;
+        }
+
+        for(let dia = 1; dia <= 31; dia++){
+          const oldSerial = excelSerial(2026, 6, dia);
+          const newSerial = excelSerial(year, month, dia);
+          xml = xml.replace(
+            new RegExp('(<v>)' + oldSerial + '(</v>)', 'g'),
+            '$1' + newSerial + '$2'
+          );
+        }
+
         xml = xml
           .replace(/-(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)/gi, '-' + mes)
           .replace(/ (ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)/gi, ' ' + mes)
