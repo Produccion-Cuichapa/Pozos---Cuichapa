@@ -672,12 +672,21 @@ window.AdminExportaciones = {
       function normPozo(v){
         let x = String(v || '').toUpperCase();
 
-        // Buscar preferente: C-107, C_107, C 107, CUICHAPA 107, CUICHAPA 106D
-        const m1 = x.match(/C\s*[-_]?\s*([0-9]+[A-Z]?)/);
-        if(m1) return m1[1];
+        // Casos directos dentro de texto completo:
+        // Pozo: C-106D, Pozo: *C-107*, CUICHAPA 106D, C_139_
+        const patrones = [
+          /POZO[:\s]*\*?\s*C\s*[-_]?\s*([0-9]+[A-Z]?)/i,
+          /POZO[:\s]*\*?\s*CUICHAPA\s*([0-9]+[A-Z]?)/i,
+          /POZO[:\s]*\*?\s*([0-9]+[A-Z]?)/i,
+          /CUICHAPA\s*([0-9]+[A-Z]?)/i,
+          /\bC\s*[-_]?\s*([0-9]+[A-Z]?)\b/i,
+          /\b([0-9]{2,4}[A-Z]?)\b/i
+        ];
 
-        const m2 = x.match(/CUICHAPA\s*([0-9]+[A-Z]?)/);
-        if(m2) return m2[1];
+        for(const re of patrones){
+          const m = x.match(re);
+          if(m && m[1]) return String(m[1]).toUpperCase();
+        }
 
         x = x
           .replace(/CUICHAPA/g,'')
@@ -738,17 +747,29 @@ window.AdminExportaciones = {
         if(yy !== year || mm !== month || dd < 1 || dd > diasMes) return;
         dbgTotalMes++;
 
-        const msg = String(r.msg || r.mensaje || '').toUpperCase();
-        const modo = String(r.modo || r.tipo || '').toLowerCase();
+        const textoReporte = [
+          r.msg,
+          r.mensaje,
+          r.message,
+          r.texto,
+          r.descripcion,
+          r.whatsapp,
+          r.whatsappText,
+          r.raw,
+          JSON.stringify(r)
+        ].filter(Boolean).join('\n');
 
-        let pozoTxt = r.pozo || r.pozoNombre || r.well || AdminUtils.placeText(r);
+        const msg = String(textoReporte || '').toUpperCase();
+        const modo = String(r.modo || r.tipo || r.modulo || '').toLowerCase();
 
-        if(!normPozo(pozoTxt)){
-          const msgPozo = msg.match(/POZO:\s*\*?\s*([^\n\r*]+)/i);
-          if(msgPozo) pozoTxt = msgPozo[1];
+        let pozoTxt = r.pozo || r.pozoNombre || r.well || r.pozoId || r.nombrePozo || AdminUtils.placeText(r);
+
+        // Si el campo estructurado no sirve, extraerlo del texto completo del reporte.
+        let keyPozo = normPozo(pozoTxt);
+        if(!keyPozo){
+          keyPozo = normPozo(msg);
+          pozoTxt = keyPozo;
         }
-
-        const keyPozo = normPozo(pozoTxt);
         if(!keyPozo){
           dbgSinPozo++;
           return;
