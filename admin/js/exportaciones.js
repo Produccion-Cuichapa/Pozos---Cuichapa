@@ -563,57 +563,116 @@ window.AdminExportaciones = {
       const mes = meses[month - 1];
       const diasMes = new Date(year, month, 0).getDate();
 
-      const wb = await this.loadTemplate('../templates/tpl_soporte.xlsx?v=' + Date.now());
-      const ws = wb.worksheets[0];
+      if(typeof JSZip === 'undefined'){
+        throw new Error('JSZip no está cargado.');
+      }
 
-      const startCol = 5;   // E = fecha
-      const block = 8;      // fecha + SUPER + NIVEL + demás columnas
-      const firstRow = 3;
-      const lastRow = ws.rowCount;
+      const res = await fetch('../templates/tpl_soporte.xlsx?v=' + Date.now());
+      if(!res.ok) throw new Error('No se pudo cargar la plantilla.');
+
+      const zip = await JSZip.loadAsync(await res.blob());
+      const sheetName = 'xl/worksheets/sheet1.xml';
+      const xmlText = await zip.file(sheetName).async('string');
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(xmlText, 'application/xml');
+      const ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+
+      function colName(n){
+        let s = '';
+        while(n > 0){
+          let m = (n - 1) % 26;
+          s = String.fromCharCode(65 + m) + s;
+          n = Math.floor((n - 1) / 26);
+        }
+        return s;
+      }
+
+      function getRow(r){
+        let row = Array.from(doc.getElementsByTagNameNS(ns,'row')).find(x => x.getAttribute('r') == r);
+        if(!row){
+          row = doc.createElementNS(ns,'row');
+          row.setAttribute('r', r);
+          doc.getElementsByTagNameNS(ns,'sheetData')[0].appendChild(row);
+        }
+        return row;
+      }
+
+      function getCell(addr){
+        const r = Number(addr.match(/\d+/)[0]);
+        const row = getRow(r);
+        let cell = Array.from(row.getElementsByTagNameNS(ns,'c')).find(c => c.getAttribute('r') === addr);
+        if(!cell){
+          cell = doc.createElementNS(ns,'c');
+          cell.setAttribute('r', addr);
+          row.appendChild(cell);
+        }
+        return cell;
+      }
+
+      function setText(addr, value){
+        const c = getCell(addr);
+        c.setAttribute('t','inlineStr');
+        Array.from(c.childNodes).forEach(n => c.removeChild(n));
+        const is = doc.createElementNS(ns,'is');
+        const t = doc.createElementNS(ns,'t');
+        t.textContent = value;
+        is.appendChild(t);
+        c.appendChild(is);
+      }
+
+      function setNum(addr, value){
+        const c = getCell(addr);
+        c.removeAttribute('t');
+        Array.from(c.childNodes).forEach(n => c.removeChild(n));
+        const v = doc.createElementNS(ns,'v');
+        v.textContent = String(value);
+        c.appendChild(v);
+      }
+
+      function clearCell(addr){
+        const c = getCell(addr);
+        c.removeAttribute('t');
+        Array.from(c.childNodes).forEach(n => c.removeChild(n));
+      }
 
       function normPozo(v){
-        return String(v || '')
-          .toUpperCase()
+        return String(v || '').toUpperCase()
           .replace(/CUICHAPA/g,'')
           .replace(/POZO/g,'')
           .replace(/[^A-Z0-9]/g,'')
           .replace(/^C/,'');
       }
 
+      // Mapa pozo -> fila, leyendo columna C visible de la plantilla
       const pozoRow = {};
-      for(let r = firstRow; r <= lastRow; r++){
-        const pz = ws.getCell(r, 3).value;
-        const key = normPozo(pz);
+      for(let r = 3; r <= 260; r++){
+        const cell = Array.from(getRow(r).getElementsByTagNameNS(ns,'c')).find(c => c.getAttribute('r') === 'C' + r);
+        let txt = '';
+        if(cell){
+          txt = cell.textContent || '';
+        }
+        const key = normPozo(txt);
         if(key) pozoRow[key] = r;
       }
 
-      // 1) Preparar fechas y limpiar SUPER/NIVEL
-      for(let dia = 1; dia <= 31; dia++){
+      const startCol = 5; // E
+      const block = 8;
+
+      // Fechas + limpieza SUPER/NIVEL
+      for(let dia = 1; dia <= diasMes; dia++){
         const colFecha = startCol + ((dia - 1) * block);
         const colSuper = colFecha + 1;
         const colNivel = colFecha + 2;
-        const dd = String(dia).padStart(2, '0');
-        const textoFecha = `${dd}-${mes}`;
+        const dd = String(dia).padStart(2,'0');
 
-        for(let c = colFecha; c < colFecha + block; c++){
-          ws.getColumn(c).hidden = dia > diasMes;
-        }
-
-        for(let r = firstRow; r <= lastRow; r++){
-          const pozo = ws.getCell(r, 3).value;
-
-          if(dia <= diasMes && pozo){
-            ws.getCell(r, colFecha).value = textoFecha;
-            ws.getCell(r, colFecha).numFmt = '@';
-          }
-
-          // limpiar solo SUPER y NIVEL
-          ws.getCell(r, colSuper).value = null;
-          ws.getCell(r, colNivel).value = null;
+        for(let r = 3; r <= 260; r++){
+          setText(colName(colFecha) + r, `${dd}-${mes}`);
+          clearCell(colName(colSuper) + r);
+          clearCell(colName(colNivel) + r);
         }
       }
 
-      // 2) Llenar SUPER y NIVEL desde reportes
       const reportes = AdminFirebase.reportes || [];
 
       reportes.forEach(r => {
@@ -621,8 +680,7 @@ window.AdminExportaciones = {
         if(!ymd) return;
 
         const [yy, mm, dd] = ymd.split('-').map(Number);
-        if(yy !== year || mm !== month) return;
-        if(dd < 1 || dd > diasMes) return;
+        if(yy !== year || mm !== month || dd < 1 || dd > diasMes) return;
 
         const msg = String(r.msg || r.mensaje || '').toUpperCase();
         const modo = String(r.modo || r.tipo || '').toLowerCase();
@@ -635,44 +693,42 @@ window.AdminExportaciones = {
         const colSuper = colFecha + 1;
         const colNivel = colFecha + 2;
 
-        const esVisita =
-          msg.includes('REPORTE DE VISITA') ||
-          modo === 'co' ||
-          modo === 'control' ||
-          modo === 'control operativo';
+        const esVisita = msg.includes('REPORTE DE VISITA') || modo === 'co';
+        const esGuardia = msg.includes('NIVELES DE GUARDIA') || modo === 'guardia' || modo === 'nivel';
 
-        const esGuardia =
-          msg.includes('NIVELES DE GUARDIA') ||
-          modo === 'guardia' ||
-          modo === 'nivel';
-
-        const fluye = String(
-          r.co?.fluye ||
-          r.fluye ||
-          ''
-        ).toUpperCase();
-
-        const esFT =
-          fluye === 'FT' ||
-          fluye.includes('FT') ||
-          msg.includes('FLUYE: FT') ||
-          msg.includes('FLUYE FT');
+        const fluye = String(r.co?.fluye || r.fluye || '').toUpperCase();
+        const esFT = fluye.includes('FT') || msg.includes('FLUYE: FT') || msg.includes('FLUYE FT');
 
         if(esVisita){
-          ws.getCell(row, colSuper).value = 1;
-
-          if(esFT){
-            ws.getCell(row, colNivel).value = 1;
-          }
+          setNum(colName(colSuper) + row, 1);
+          if(esFT) setNum(colName(colNivel) + row, 1);
         }
 
         if(esGuardia && !esVisita){
-          ws.getCell(row, colNivel).value = 1;
+          setNum(colName(colNivel) + row, 1);
         }
       });
 
-      const file = `Soporte_Mensual_${mes}_${year}.xlsx`;
-      await this.downloadWorkbook(wb, file);
+      const finalXml = new XMLSerializer().serializeToString(doc);
+      zip.file(sheetName, finalXml);
+
+      const blobFinal = await zip.generateAsync({
+        type:'blob',
+        mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+
+      const url = URL.createObjectURL(blobFinal);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Soporte_Mensual_${mes}_${year}.xlsx`;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+        a.remove();
+      }, 1000);
 
       if(box) box.textContent = 'Soporte mensual descargado.';
     }catch(err){
