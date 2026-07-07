@@ -544,25 +544,19 @@ window.AdminExportaciones = {
       const zip = await JSZip.loadAsync(blobOriginal);
 
       const archivos = Object.keys(zip.files).filter(name =>
-        name.startsWith('xl/worksheets/') || name === 'xl/sharedStrings.xml'
+        !zip.files[name].dir && (
+          name.endsWith('.xml') ||
+          name.endsWith('.rels')
+        )
       );
 
       for(const name of archivos){
         let xml = await zip.file(name).async('string');
 
         xml = xml
-          .replace(/-ene/g, '-' + mes)
-          .replace(/-feb/g, '-' + mes)
-          .replace(/-mar/g, '-' + mes)
-          .replace(/-abr/g, '-' + mes)
-          .replace(/-may/g, '-' + mes)
-          .replace(/-jun/g, '-' + mes)
-          .replace(/-jul/g, '-' + mes)
-          .replace(/-ago/g, '-' + mes)
-          .replace(/-sep/g, '-' + mes)
-          .replace(/-oct/g, '-' + mes)
-          .replace(/-nov/g, '-' + mes)
-          .replace(/-dic/g, '-' + mes);
+          .replace(/-(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)/gi, '-' + mes)
+          .replace(/ (ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)/gi, ' ' + mes)
+          .replace(/_(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)/gi, '_' + mes);
 
         zip.file(name, xml);
       }
