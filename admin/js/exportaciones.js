@@ -550,7 +550,19 @@ window.AdminExportaciones = {
       for(const name of archivos){
         let xml = await zip.file(name).async('string');
 
-        xml = xml.replace(/(0[1-9]|[12][0-9]|3[01])-(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)/g, '$1-' + mes);
+        xml = xml
+          .replace(/-ene/g, '-' + mes)
+          .replace(/-feb/g, '-' + mes)
+          .replace(/-mar/g, '-' + mes)
+          .replace(/-abr/g, '-' + mes)
+          .replace(/-may/g, '-' + mes)
+          .replace(/-jun/g, '-' + mes)
+          .replace(/-jul/g, '-' + mes)
+          .replace(/-ago/g, '-' + mes)
+          .replace(/-sep/g, '-' + mes)
+          .replace(/-oct/g, '-' + mes)
+          .replace(/-nov/g, '-' + mes)
+          .replace(/-dic/g, '-' + mes);
 
         zip.file(name, xml);
       }
