@@ -572,23 +572,17 @@ window.AdminExportaciones = {
       return;
     }
 
-    const wb = await this.loadTemplate('../templates/tpl_soporte.xlsx');
-    const ws = wb.worksheets[0];
+    try{
+      const wb = await this.loadTemplate('../templates/tpl_soporte.xlsx');
 
-    rows.forEach((r, i) => {
-      const row = 2 + i;
-      ws.getCell(`A${row}`).value = r.pozo;
-      ws.getCell(`B${row}`).value = r.supervision;
-      ws.getCell(`C${row}`).value = r.nivel;
-      ws.getCell(`D${row}`).value = r.trabajo;
-      ws.getCell(`E${row}`).value = r.drenar;
-      ws.getCell(`F${row}`).value = r.aforo;
-      ws.getCell(`G${row}`).value = r.intermitente;
-    });
+      const file = `Soporte_Mensual_${desde}_a_${hasta}.xlsx`;
+      await this.downloadWorkbook(wb, file);
 
-    const file = `Soporte_${desde}_a_${hasta}.xlsx`;
-    await this.downloadWorkbook(wb, file);
-    box.innerHTML = `<b>${rows.length}</b> pozos exportados en plantilla oficial.`;
+      box.innerHTML = `Soporte mensual descargado desde plantilla oficial.`;
+    }catch(err){
+      console.error('ERROR SOPORTE:', err);
+      box.textContent = 'Error al generar soporte: ' + err.message;
+    }
   },
 
   generarHistorial(){
