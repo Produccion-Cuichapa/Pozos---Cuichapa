@@ -560,12 +560,22 @@ window.AdminExportaciones = {
         }
 
         for(let dia = 1; dia <= 31; dia++){
-          const oldSerial = excelSerial(2026, 6, dia);
-          const newSerial = excelSerial(year, month, dia);
-          xml = xml.replace(
-            new RegExp('(<v>)' + oldSerial + '(</v>)', 'g'),
-            '$1' + newSerial + '$2'
-          );
+          const oldSerial = Math.floor(Date.UTC(2026, 6 - 1, dia) / 86400000) + 25569;
+          const newSerial = Math.floor(Date.UTC(year, month - 1, dia) / 86400000) + 25569;
+
+          // La plantilla puede traer serial normal o corrido por compatibilidad Excel.
+          [oldSerial - 1, oldSerial, oldSerial + 1].forEach(function(serial){
+            xml = xml.replace(
+              new RegExp('(<v>)' + serial + '(</v>)', 'g'),
+              '$1' + newSerial + '$2'
+            );
+          });
+        }
+
+        // Refuerzo para fechas guardadas como texto plano.
+        for(let dia = 1; dia <= 31; dia++){
+          const dd = String(dia).padStart(2, '0');
+          xml = xml.replace(new RegExp(dd + '-jun', 'gi'), dd + '-' + mes);
         }
 
         xml = xml
