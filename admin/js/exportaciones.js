@@ -526,29 +526,21 @@ window.AdminExportaciones = {
     if(box) box.textContent = 'Preparando soporte mensual...';
 
     try{
-      const card = box ? box.closest('.card, .panel, section, div') : document;
-      const inputs = Array.from((card || document).querySelectorAll('input'));
-      const desde = inputs[0]?.value || '';
-      const hasta = inputs[1]?.value || '';
+      const supMes = document.getElementById('supMes')?.value || '';
+      if(!supMes) throw new Error('Selecciona el mes del soporte.');
 
+      const [year, month] = supMes.split('-').map(Number);
       const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+      const mes = meses[month - 1];
 
-      let mes = 'jun';
-      if(desde && desde.includes('-')){
-        const partes = desde.split('-');
-        const m = Number(partes[1]);
-        if(m >= 1 && m <= 12) mes = meses[m - 1];
+      if(typeof JSZip === 'undefined'){
+        throw new Error('JSZip no está cargado. Recarga la plataforma con Ctrl + Shift + R.');
       }
 
       const res = await fetch('../templates/tpl_soporte.xlsx?v=' + Date.now());
       if(!res.ok) throw new Error('No se pudo cargar templates/tpl_soporte.xlsx');
 
       const blobOriginal = await res.blob();
-
-      if(typeof JSZip === 'undefined'){
-        throw new Error('JSZip no está cargado en la plataforma');
-      }
-
       const zip = await JSZip.loadAsync(blobOriginal);
 
       const archivos = Object.keys(zip.files).filter(name =>
@@ -558,38 +550,7 @@ window.AdminExportaciones = {
       for(const name of archivos){
         let xml = await zip.file(name).async('string');
 
-        xml = xml
-          .replace(/01-jun/g, '01-' + mes)
-          .replace(/02-jun/g, '02-' + mes)
-          .replace(/03-jun/g, '03-' + mes)
-          .replace(/04-jun/g, '04-' + mes)
-          .replace(/05-jun/g, '05-' + mes)
-          .replace(/06-jun/g, '06-' + mes)
-          .replace(/07-jun/g, '07-' + mes)
-          .replace(/08-jun/g, '08-' + mes)
-          .replace(/09-jun/g, '09-' + mes)
-          .replace(/10-jun/g, '10-' + mes)
-          .replace(/11-jun/g, '11-' + mes)
-          .replace(/12-jun/g, '12-' + mes)
-          .replace(/13-jun/g, '13-' + mes)
-          .replace(/14-jun/g, '14-' + mes)
-          .replace(/15-jun/g, '15-' + mes)
-          .replace(/16-jun/g, '16-' + mes)
-          .replace(/17-jun/g, '17-' + mes)
-          .replace(/18-jun/g, '18-' + mes)
-          .replace(/19-jun/g, '19-' + mes)
-          .replace(/20-jun/g, '20-' + mes)
-          .replace(/21-jun/g, '21-' + mes)
-          .replace(/22-jun/g, '22-' + mes)
-          .replace(/23-jun/g, '23-' + mes)
-          .replace(/24-jun/g, '24-' + mes)
-          .replace(/25-jun/g, '25-' + mes)
-          .replace(/26-jun/g, '26-' + mes)
-          .replace(/27-jun/g, '27-' + mes)
-          .replace(/28-jun/g, '28-' + mes)
-          .replace(/29-jun/g, '29-' + mes)
-          .replace(/30-jun/g, '30-' + mes)
-          .replace(/31-jun/g, '31-' + mes);
+        xml = xml.replace(/(0[1-9]|[12][0-9]|3[01])-(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)/g, '$1-' + mes);
 
         zip.file(name, xml);
       }
@@ -602,7 +563,7 @@ window.AdminExportaciones = {
       const url = URL.createObjectURL(blobFinal);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Soporte_Mensual_${desde || mes}_a_${hasta || mes}.xlsx`;
+      a.download = `Soporte_Mensual_${mes}_${year}.xlsx`;
       a.style.display = 'none';
 
       document.body.appendChild(a);
