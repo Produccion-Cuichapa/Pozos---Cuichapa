@@ -697,31 +697,27 @@ window.AdminExportaciones = {
         return x;
       }
 
-      // Solo filas reales de pozos. NO toca la fila de totales/fórmulas.
+      // Mapa fijo de pozos según la plantilla oficial.
+      // Evita fallas por sharedStrings, formato del Excel o lectura incompleta.
+      const pozosPlantilla = [
+        '106D','107','119','124D','128','131','137','138','139','167',
+        '169','172','176','179','180','187','19','191','201','207',
+        '213','306','324','326','327','328','331','342','343','346',
+        '350','352','356','359','363','364','367','373','376','377',
+        '385','401','500','502','504','505','507','513','601','602','603'
+      ];
+
       const dataRows = [];
       const pozoRow = {};
 
-      for(let r = 3; r <= 300; r++){
-        let txt = readCell('C' + r);
-
-        // Rescate fuerte: si readCell falla, leer texto interno de la celda C.
-        if(!txt){
-          const rowXml = getRow(r);
-          const cellXml = rowXml ? Array.from(rowXml.getElementsByTagNameNS(ns,'c')).find(c => c.getAttribute('r') === 'C' + r) : null;
-          if(cellXml) txt = cellXml.textContent || '';
-        }
-
-        const key = normPozo(txt);
-
-        if(key){
-          dataRows.push(r);
-          pozoRow[key] = r;
-
-          // equivalencias comunes
-          pozoRow['C' + key] = r;
-          pozoRow['CUICHAPA' + key] = r;
-        }
-      }
+      pozosPlantilla.forEach((pz, i) => {
+        const row = 3 + i;
+        dataRows.push(row);
+        pozoRow[pz] = row;
+        pozoRow['C' + pz] = row;
+        pozoRow['CUICHAPA' + pz] = row;
+        pozoRow['CUICHAPA ' + pz] = row;
+      });
 
       const startCol = 5; // E
       const block = 8;    // Fecha + SUPER + NIVEL + demás
@@ -832,7 +828,8 @@ window.AdminExportaciones = {
         const row =
           pozoRow[keyPozo] ||
           pozoRow['C' + keyPozo] ||
-          pozoRow['CUICHAPA' + keyPozo];
+          pozoRow['CUICHAPA' + keyPozo] ||
+          pozoRow['CUICHAPA ' + keyPozo];
         if(!row){
           dbgNoEncontrado++;
           if(dbgNoEncontrados.length < 25) dbgNoEncontrados.push(keyPozo + ' ← ' + pozoTxt);
