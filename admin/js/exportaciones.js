@@ -681,17 +681,8 @@ window.AdminExportaciones = {
         for(let row = 3; row <= 53; row++){
           clearCell(colName(colSuper) + row);
         }
-
-        // contador de SUPER en fila 54
-        clearCell(colName(colSuper) + 54);
-        setNum(colName(colSuper) + 54, 0);
       }
 
-      const superTotales = {};
-      for(let dia = 1; dia <= 31; dia++){
-        const colSuper = startCol + ((dia - 1) * block) + 1;
-        superTotales[colSuper] = 0;
-      }
 
       (AdminFirebase.reportes || []).forEach(r => {
         const texto = [
@@ -718,12 +709,6 @@ window.AdminExportaciones = {
         const addr = colName(colSuper) + row;
 
         setNum(addr, 1);
-
-        superTotales[colSuper] = (superTotales[colSuper] || 0) + 1;
-      });
-
-      Object.keys(superTotales).forEach(col => {
-        setNum(colName(Number(col)) + 54, superTotales[col]);
       });
 
       zip.file(sheetName, new XMLSerializer().serializeToString(doc));
