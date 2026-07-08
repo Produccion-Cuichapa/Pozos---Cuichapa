@@ -745,6 +745,39 @@ window.AdminExportaciones = {
         });
       }
 
+
+      function ymdSoporte(r){
+        const campos = [
+          r.fecha,
+          r.date,
+          r.fechaTexto,
+          r.createdAt,
+          r.timestamp,
+          r.hora,
+          r.msg,
+          r.mensaje,
+          JSON.stringify(r)
+        ].filter(Boolean).join(' ');
+
+        const txt = String(campos);
+
+        // Formato mexicano: 06/07/2026 = 6 de julio de 2026
+        let m = txt.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/);
+        if(m){
+          const d = String(Number(m[1])).padStart(2,'0');
+          const mo = String(Number(m[2])).padStart(2,'0');
+          return `${m[3]}-${mo}-${d}`;
+        }
+
+        // ISO: 2026-07-06
+        m = txt.match(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/);
+        if(m){
+          return `${m[1]}-${String(Number(m[2])).padStart(2,'0')}-${String(Number(m[3])).padStart(2,'0')}`;
+        }
+
+        return this.ymdFromRow(r);
+      }
+
       const reportes = AdminFirebase.reportes || [];
       let dbgTotalMes = 0;
       let dbgSinPozo = 0;
@@ -752,7 +785,7 @@ window.AdminExportaciones = {
       const dbgNoEncontrados = [];
 
       reportes.forEach(r => {
-        const ymd = this.ymdFromRow(r);
+        const ymd = ymdSoporte.call(this, r);
         if(!ymd) return;
 
         const [yy, mm, dd] = ymd.split('-').map(Number);
