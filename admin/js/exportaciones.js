@@ -1,6 +1,7 @@
 window.AdminExportaciones = {
   init(){
     document.getElementById('btnDiarioPreview')?.addEventListener('click', () => this.generarDiario());
+    document.getElementById('btnDiarioPDF')?.addEventListener('click', () => this.generarDiarioPDF());
     document.getElementById('btnSoportePreview')?.addEventListener('click', () => this.generarSoporte());
     document.getElementById('btnHistorialPreview')?.addEventListener('click', () => this.generarHistorial());
   },
@@ -537,6 +538,15 @@ window.AdminExportaciones = {
         printArea:'A1:P46'
       };
 
+      // Forzar impresión en UNA sola hoja carta horizontal
+      ws.pageSetup.paperSize = 1;          // Letter / Carta
+      ws.pageSetup.orientation = 'landscape';
+      ws.pageSetup.fitToPage = true;
+      ws.pageSetup.fitToWidth = 1;
+      ws.pageSetup.fitToHeight = 1;
+      ws.pageSetup.printArea = 'A1:P46';
+      delete ws.pageSetup.scale;
+
       ws.views = [{ showGridLines:false, zoomScale:85 }];
     }
 
@@ -548,6 +558,12 @@ window.AdminExportaciones = {
       const box = document.getElementById('diarioStatus');
       if(box) box.textContent = 'ERROR: ' + (err && err.message ? err.message : err);
     }
+  },
+
+
+  async generarDiarioPDF(){
+    const box = document.getElementById('diarioStatus');
+    if(box) box.textContent = 'PDF directo pendiente: por ahora este botón ya no descarga Excel. Para PDF automático hay que convertir el XLSX con backend/Cloud Function.';
   },
 
   async generarSoporte(){
@@ -840,23 +856,19 @@ window.AdminExportaciones = {
         const colSuper = colFecha + 1;
         const colNivel = colFecha + 2;
 
-        const esVisita =
-          msg.includes('REPORTE DE VISITA') ||
-          modo === 'co' ||
-          modo === 'control' ||
-          modo === 'control operativo';
+        // FILTRO ESTRICTO:
+        // Solo estos dos tipos alimentan SUPER/NIVEL del soporte.
+        const esVisita = msg.includes('REPORTE DE VISITA');
+        const esGuardia = msg.includes('NIVELES DE GUARDIA');
 
-        const esGuardia =
-          msg.includes('NIVELES DE GUARDIA') ||
-          modo === 'guardia' ||
-          modo === 'nivel';
+        if(!esVisita && !esGuardia) return;
 
         const fluye = String(r.co?.fluye || r.fluye || '').toUpperCase();
 
         const esFT =
-          fluye.includes('FT') ||
-          msg.includes('FLUYE: FT') ||
-          msg.includes('FLUYE FT');
+          /FLUYE\s*:\s*FT\b/i.test(msg) ||
+          /FLUYE\s+FT\b/i.test(msg) ||
+          fluye === 'FT';
 
         if(esVisita){
           setNum(colName(colSuper) + row, 1);
