@@ -577,7 +577,6 @@ window.AdminExportaciones = {
       const [year, month] = supMes.split('-').map(Number);
       const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
       const mes = meses[month - 1];
-      const diasMes = new Date(year, month, 0).getDate();
 
       if(typeof JSZip === 'undefined') throw new Error('JSZip no está cargado.');
 
@@ -585,7 +584,6 @@ window.AdminExportaciones = {
       if(!res.ok) throw new Error('No se pudo cargar la plantilla.');
 
       const zip = await JSZip.loadAsync(await res.blob());
-
       const sheetName = 'xl/worksheets/sheet1.xml';
       const sheetXml = await zip.file(sheetName).async('string');
 
@@ -593,17 +591,10 @@ window.AdminExportaciones = {
       const doc = parser.parseFromString(sheetXml, 'application/xml');
       const ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
 
-      let shared = [];
-      if(zip.file('xl/sharedStrings.xml')){
-        const ssXml = await zip.file('xl/sharedStrings.xml').async('string');
-        const ssDoc = parser.parseFromString(ssXml, 'application/xml');
-        shared = Array.from(ssDoc.getElementsByTagNameNS(ns,'si')).map(si => si.textContent || '');
-      }
-
       function colName(n){
         let s = '';
         while(n > 0){
-          let m = (n - 1) % 26;
+          const m = (n - 1) % 26;
           s = String.fromCharCode(65 + m) + s;
           n = Math.floor((n - 1) / 26);
         }
@@ -611,110 +602,63 @@ window.AdminExportaciones = {
       }
 
       function getRow(r){
-        let row = Array.from(doc.getElementsByTagNameNS(ns,'row')).find(x => x.getAttribute('r') == r);
-        return row || null;
-      }
-
-      function ensureRow(r){
-        let row = getRow(r);
-        if(!row){
-          row = doc.createElementNS(ns,'row');
-          row.setAttribute('r', r);
-          doc.getElementsByTagNameNS(ns,'sheetData')[0].appendChild(row);
-        }
-        return row;
+        return Array.from(doc.getElementsByTagNameNS(ns,'row')).find(x => x.getAttribute('r') == r);
       }
 
       function getCell(addr){
         const r = Number(addr.match(/\d+/)[0]);
-        const row = ensureRow(r);
-        let cell = Array.from(row.getElementsByTagNameNS(ns,'c')).find(c => c.getAttribute('r') === addr);
-        if(!cell){
-          cell = doc.createElementNS(ns,'c');
-          cell.setAttribute('r', addr);
-          row.appendChild(cell);
-        }
-        return cell;
-      }
-
-      function readCell(addr){
-        const r = Number(addr.match(/\d+/)[0]);
         const row = getRow(r);
-        if(!row) return '';
-        const c = Array.from(row.getElementsByTagNameNS(ns,'c')).find(x => x.getAttribute('r') === addr);
-        if(!c) return '';
-
-        const t = c.getAttribute('t');
-        const v = c.getElementsByTagNameNS(ns,'v')[0]?.textContent || '';
-
-        if(t === 's') return shared[Number(v)] || '';
-        if(t === 'inlineStr') return c.getElementsByTagNameNS(ns,'t')[0]?.textContent || '';
-        return v;
+        if(!row) return null;
+        return Array.from(row.getElementsByTagNameNS(ns,'c')).find(c => c.getAttribute('r') === addr) || null;
       }
 
-      function setText(addr, value){
+      function clearCell(addr){
         const c = getCell(addr);
-        c.setAttribute('t','inlineStr');
-
+        if(!c) return;
         Array.from(c.childNodes).forEach(n => c.removeChild(n));
-
-        const is = doc.createElementNS(ns,'is');
-        const t = doc.createElementNS(ns,'t');
-        t.textContent = value;
-        is.appendChild(t);
-        c.appendChild(is);
+        c.removeAttribute('t');
       }
 
       function setNum(addr, value){
         const c = getCell(addr);
-        c.removeAttribute('t');
-
+        if(!c) return;
         Array.from(c.childNodes).forEach(n => c.removeChild(n));
-
+        c.removeAttribute('t');
         const v = doc.createElementNS(ns,'v');
         v.textContent = String(value);
         c.appendChild(v);
       }
 
-      function clearValueOnly(addr){
-        const c = getCell(addr);
-        const formula = c.getElementsByTagNameNS(ns,'f')[0];
-        if(formula) return; // JAMÁS tocar fórmulas
-
-        c.removeAttribute('t');
-        Array.from(c.childNodes).forEach(n => c.removeChild(n));
+      function excelSerial(y, m, d){
+        return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(1899, 11, 30)) / 86400000);
       }
 
       function normPozo(v){
-        let x = String(v || '').toUpperCase();
-
-        // Casos directos dentro de texto completo:
-        // Pozo: C-106D, Pozo: *C-107*, CUICHAPA 106D, C_139_
-        const patrones = [
-          /POZO[:\s]*\*?\s*C\s*[-_]?\s*([0-9]+[A-Z]?)/i,
-          /POZO[:\s]*\*?\s*CUICHAPA\s*([0-9]+[A-Z]?)/i,
-          /POZO[:\s]*\*?\s*([0-9]+[A-Z]?)/i,
-          /CUICHAPA\s*([0-9]+[A-Z]?)/i,
-          /\bC\s*[-_]?\s*([0-9]+[A-Z]?)\b/i,
-          /\b([0-9]{2,4}[A-Z]?)\b/i
-        ];
-
-        for(const re of patrones){
-          const m = x.match(re);
-          if(m && m[1]) return String(m[1]).toUpperCase();
-        }
-
-        x = x
-          .replace(/CUICHAPA/g,'')
-          .replace(/POZO/g,'')
-          .replace(/[^A-Z0-9]/g,'')
-          .replace(/^C/,'');
-
-        return x;
+        const x = String(v || '').toUpperCase();
+        const m = x.match(/C\s*[-_]?\s*([0-9]+[A-Z]?)/i)
+          || x.match(/CUICHAPA\s*([0-9]+[A-Z]?)/i)
+          || x.match(/\b([0-9]{2,4}[A-Z]?)\b/i);
+        return m ? String(m[1]).toUpperCase() : '';
       }
 
-      // Mapa fijo de pozos según la plantilla oficial.
-      // Evita fallas por sharedStrings, formato del Excel o lectura incompleta.
+      function ymdSoporte(r){
+        const d0 = AdminUtils.dateObj(r);
+        if(d0) return AdminUtils.ymd(d0);
+
+        const txt = [
+          r.fecha, r.date, r.createdAt, r.timestamp,
+          r.msg, r.mensaje, JSON.stringify(r)
+        ].filter(Boolean).join(' ');
+
+        let m = String(txt).match(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/);
+        if(m) return `${m[3]}-${String(Number(m[2])).padStart(2,'0')}-${String(Number(m[1])).padStart(2,'0')}`;
+
+        m = String(txt).match(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/);
+        if(m) return `${m[1]}-${String(Number(m[2])).padStart(2,'0')}-${String(Number(m[3])).padStart(2,'0')}`;
+
+        return '';
+      }
+
       const pozosPlantilla = [
         '106D','107','119','124D','128','131','137','138','139','167',
         '169','172','176','179','180','187','19','191','201','207',
@@ -723,152 +667,72 @@ window.AdminExportaciones = {
         '385','401','500','502','504','505','507','513','601','602','603'
       ];
 
-      const dataRows = [];
       const pozoRow = {};
-
       pozosPlantilla.forEach((pz, i) => {
-        const row = 3 + i;
-        dataRows.push(row);
-        pozoRow[pz] = row;
-        pozoRow['C' + pz] = row;
-        pozoRow['CUICHAPA' + pz] = row;
-        pozoRow['CUICHAPA ' + pz] = row;
+        pozoRow[pz] = 3 + i;
       });
 
       const startCol = 5; // E
-      const block = 8;    // Fecha + SUPER + NIVEL + demás
+      const block = 8;
 
-      // Fechas y limpieza SOLO en filas de pozos
+      // ÚNICA fecha que se toca: E3. Las demás fechas son fórmulas del Excel.
+      setNum('E3', excelSerial(year, month, 1));
+
+      // Limpiar SOLO SUPER/NIVEL de tabla principal: filas 3-53.
       for(let dia = 1; dia <= 31; dia++){
         const colFecha = startCol + ((dia - 1) * block);
         const colSuper = colFecha + 1;
         const colNivel = colFecha + 2;
-        const dd = String(dia).padStart(2,'0');
 
-        dataRows.forEach(r => {
-          if(dia <= diasMes){
-            setText(colName(colFecha) + r, `${dd}-${mes}`);
-          }else{
-            clearValueOnly(colName(colFecha) + r);
-          }
-
-          clearValueOnly(colName(colSuper) + r);
-          clearValueOnly(colName(colNivel) + r);
-        });
+        for(let row = 3; row <= 53; row++){
+          clearCell(colName(colSuper) + row);
+          clearCell(colName(colNivel) + row);
+        }
       }
 
-
-      function ymdSoporte(r){
-        const campos = [
-          r.fecha,
-          r.date,
-          r.fechaTexto,
-          r.createdAt,
-          r.timestamp,
-          r.hora,
-          r.msg,
-          r.mensaje,
-          JSON.stringify(r)
-        ].filter(Boolean).join(' ');
-
-        const txt = String(campos);
-
-        // Formato mexicano: 06/07/2026 = 6 de julio de 2026
-        let m = txt.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/);
-        if(m){
-          const d = String(Number(m[1])).padStart(2,'0');
-          const mo = String(Number(m[2])).padStart(2,'0');
-          return `${m[3]}-${mo}-${d}`;
-        }
-
-        // ISO: 2026-07-06
-        m = txt.match(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/);
-        if(m){
-          return `${m[1]}-${String(Number(m[2])).padStart(2,'0')}-${String(Number(m[3])).padStart(2,'0')}`;
-        }
-
-        return this.ymdFromRow(r);
-      }
-
-      const reportes = AdminFirebase.reportes || [];
-      let dbgTotalMes = 0;
-      let dbgSinPozo = 0;
-      let dbgNoEncontrado = 0;
-      const dbgNoEncontrados = [];
-
-      reportes.forEach(r => {
-        const ymd = ymdSoporte.call(this, r);
+      (AdminFirebase.reportes || []).forEach(r => {
+        const ymd = ymdSoporte(r);
         if(!ymd) return;
 
         const [yy, mm, dd] = ymd.split('-').map(Number);
-        if(yy !== year || mm !== month || dd < 1 || dd > diasMes) return;
-        dbgTotalMes++;
+        if(yy !== year || mm !== month || dd < 1 || dd > 31) return;
 
-        const textoReporte = [
-          r.msg,
-          r.mensaje,
-          r.message,
-          r.texto,
-          r.descripcion,
-          r.whatsapp,
-          r.whatsappText,
-          r.raw,
-          JSON.stringify(r)
+        const texto = [
+          r.msg, r.mensaje, r.message, r.texto,
+          r.whatsappText, r.raw, JSON.stringify(r)
         ].filter(Boolean).join('\n');
 
-        const msg = String(textoReporte || '').toUpperCase();
+        const msg = String(texto).toUpperCase();
         const modo = String(r.modo || r.tipo || r.modulo || '').toLowerCase();
 
-        let pozoTxt = r.pozo || r.pozoNombre || r.well || r.pozoId || r.nombrePozo || AdminUtils.placeText(r);
+        const esVisita =
+          msg.includes('REPORTE DE VISITA') ||
+          modo === 'co' ||
+          modo === 'control operativo';
 
-        // Extracción fuerte desde texto WhatsApp:
-        // Pozo: *C-385*  /  Pozo: C-385  /  Pozo: *CUICHAPA 385*
-        let keyPozo = '';
-        const mPozoC = msg.match(/POZO\s*:\s*\*?\s*C\s*[-_]?\s*([0-9]+[A-Z]?)/i);
-        const mPozoCuichapa = msg.match(/POZO\s*:\s*\*?\s*CUICHAPA\s*([0-9]+[A-Z]?)/i);
+        const esGuardia =
+          msg.includes('NIVELES DE GUARDIA') ||
+          modo === 'guardia' ||
+          modo === 'nivel';
 
-        if(mPozoC && mPozoC[1]){
-          keyPozo = String(mPozoC[1]).toUpperCase();
-          pozoTxt = keyPozo;
-        }else if(mPozoCuichapa && mPozoCuichapa[1]){
-          keyPozo = String(mPozoCuichapa[1]).toUpperCase();
-          pozoTxt = keyPozo;
-        }else{
-          keyPozo = normPozo(pozoTxt) || normPozo(msg);
-        }
-        if(!keyPozo){
-          dbgSinPozo++;
-          return;
-        }
+        if(!esVisita && !esGuardia) return;
 
-        const row =
-          pozoRow[keyPozo] ||
-          pozoRow['C' + keyPozo] ||
-          pozoRow['CUICHAPA' + keyPozo] ||
-          pozoRow['CUICHAPA ' + keyPozo];
-        if(!row){
-          dbgNoEncontrado++;
-          if(dbgNoEncontrados.length < 25) dbgNoEncontrados.push(keyPozo + ' ← ' + pozoTxt);
-          return;
-        }
+        const pozoKey = normPozo(
+          r.pozo || r.pozoNombre || r.well || r.pozoId || r.nombrePozo || msg
+        );
+
+        const row = pozoRow[pozoKey];
+        if(!row) return;
 
         const colFecha = startCol + ((dd - 1) * block);
         const colSuper = colFecha + 1;
         const colNivel = colFecha + 2;
 
-        // FILTRO ESTRICTO:
-        // Solo estos dos tipos alimentan SUPER/NIVEL del soporte.
-        const esVisita = msg.includes('REPORTE DE VISITA');
-        const esGuardia = msg.includes('NIVELES DE GUARDIA');
-
-        if(!esVisita && !esGuardia) return;
-
         const fluye = String(r.co?.fluye || r.fluye || '').toUpperCase();
-
         const esFT =
+          fluye === 'FT' ||
           /FLUYE\s*:\s*FT\b/i.test(msg) ||
-          /FLUYE\s+FT\b/i.test(msg) ||
-          fluye === 'FT';
+          /FLUYE\s+FT\b/i.test(msg);
 
         if(esVisita){
           setNum(colName(colSuper) + row, 1);
@@ -879,10 +743,6 @@ window.AdminExportaciones = {
           setNum(colName(colNivel) + row, 1);
         }
       });
-
-      // Diagnóstico interno, fuera del área visible principal
-      setText('A1', `DBG mes=${supMes} reportesMes=${dbgTotalMes} sinPozo=${dbgSinPozo} pozoNoEncontrado=${dbgNoEncontrado}`);
-      setText('A2', dbgNoEncontrados.join(' | '));
 
       zip.file(sheetName, new XMLSerializer().serializeToString(doc));
 
@@ -904,7 +764,7 @@ window.AdminExportaciones = {
         a.remove();
       }, 1000);
 
-      if(box) box.textContent = `Soporte mensual descargado. Pozos detectados: ${dataRows.length}.`;
+      if(box) box.textContent = 'Soporte mensual descargado.';
     }catch(err){
       console.error('ERROR SOPORTE:', err);
       if(box) box.textContent = 'Error al generar soporte: ' + err.message;
