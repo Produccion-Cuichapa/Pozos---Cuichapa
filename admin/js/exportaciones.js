@@ -764,11 +764,20 @@ window.AdminExportaciones = {
 
         let pozoTxt = r.pozo || r.pozoNombre || r.well || r.pozoId || r.nombrePozo || AdminUtils.placeText(r);
 
-        // Si el campo estructurado no sirve, extraerlo del texto completo del reporte.
-        let keyPozo = normPozo(pozoTxt);
-        if(!keyPozo){
-          keyPozo = normPozo(msg);
+        // Extracción fuerte desde texto WhatsApp:
+        // Pozo: *C-385*  /  Pozo: C-385  /  Pozo: *CUICHAPA 385*
+        let keyPozo = '';
+        const mPozoC = msg.match(/POZO\s*:\s*\*?\s*C\s*[-_]?\s*([0-9]+[A-Z]?)/i);
+        const mPozoCuichapa = msg.match(/POZO\s*:\s*\*?\s*CUICHAPA\s*([0-9]+[A-Z]?)/i);
+
+        if(mPozoC && mPozoC[1]){
+          keyPozo = String(mPozoC[1]).toUpperCase();
           pozoTxt = keyPozo;
+        }else if(mPozoCuichapa && mPozoCuichapa[1]){
+          keyPozo = String(mPozoCuichapa[1]).toUpperCase();
+          pozoTxt = keyPozo;
+        }else{
+          keyPozo = normPozo(pozoTxt) || normPozo(msg);
         }
         if(!keyPozo){
           dbgSinPozo++;
