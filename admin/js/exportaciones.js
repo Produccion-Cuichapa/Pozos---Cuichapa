@@ -568,7 +568,7 @@ window.AdminExportaciones = {
 
   async generarSoporte(){
     const box = document.getElementById('soporteStatus');
-    if(box) box.textContent = 'Preparando soporte mensual...';
+    if(box) box.textContent = 'Generando soporte mensual: SUPER...';
 
     try{
       const supMes = document.getElementById('supMes')?.value || '';
@@ -629,21 +629,22 @@ window.AdminExportaciones = {
         c.appendChild(v);
       }
 
-      function excelSerial(y, m, d){
-        return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(1899, 11, 30)) / 86400000);
-      }
-
       function normPozo(v){
         const x = String(v || '').toUpperCase();
-        const m = x.match(/C\s*[-_]?\s*([0-9]+[A-Z]?)/i)
-          || x.match(/CUICHAPA\s*([0-9]+[A-Z]?)/i)
-          || x.match(/\b([0-9]{2,4}[A-Z]?)\b/i);
+        const m =
+          x.match(/POZO\s*:\s*\*?\s*C\s*[-_]?\s*([0-9]+[A-Z]?)/i) ||
+          x.match(/C\s*[-_]?\s*([0-9]+[A-Z]?)/i) ||
+          x.match(/CUICHAPA\s*([0-9]+[A-Z]?)/i) ||
+          x.match(/\b([0-9]{2,4}[A-Z]?)\b/i);
+
         return m ? String(m[1]).toUpperCase() : '';
       }
 
       function ymdSoporte(r){
-        const d0 = AdminUtils.dateObj(r);
-        if(d0) return AdminUtils.ymd(d0);
+        if(r.fecha){
+          const d = new Date(r.fecha);
+          if(!isNaN(d)) return d.toISOString().slice(0,10);
+        }
 
         const txt = [
           r.fecha, r.date, r.createdAt, r.timestamp,
@@ -656,7 +657,7 @@ window.AdminExportaciones = {
         m = String(txt).match(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/);
         if(m) return `${m[1]}-${String(Number(m[2])).padStart(2,'0')}-${String(Number(m[3])).padStart(2,'0')}`;
 
-        return '';
+        return this.ymdFromRow(r);
       }
 
       const pozosPlantilla = [
@@ -668,80 +669,57 @@ window.AdminExportaciones = {
       ];
 
       const pozoRow = {};
-      pozosPlantilla.forEach((pz, i) => {
-        pozoRow[pz] = 3 + i;
-      });
+      pozosPlantilla.forEach((pz, i) => pozoRow[pz] = 3 + i);
 
-      const startCol = 5; // E
-      const block = 8;
+      const startCol = 5; // E fecha
+      const block = 8;    // fecha + SUPER + NIVEL + demás
 
-      // ÚNICA fecha que se toca: E3. Las demás fechas son fórmulas del Excel.
-      setNum('E3', excelSerial(year, month, 1));
-
-      // Limpiar SOLO SUPER/NIVEL de tabla principal: filas 3-53.
+      // Limpiar SOLO SUPER en tabla principal.
       for(let dia = 1; dia <= 31; dia++){
-        const colFecha = startCol + ((dia - 1) * block);
-        const colSuper = colFecha + 1;
-        const colNivel = colFecha + 2;
+        const colSuper = startCol + ((dia - 1) * block) + 1;
 
         for(let row = 3; row <= 53; row++){
           clearCell(colName(colSuper) + row);
-          clearCell(colName(colNivel) + row);
         }
+
+        // contador de SUPER en fila 54
+        clearCell(colName(colSuper) + 54);
+        setNum(colName(colSuper) + 54, 0);
       }
 
+      const superTotales = {};
+
       (AdminFirebase.reportes || []).forEach(r => {
-        const ymd = ymdSoporte(r);
-        if(!ymd) return;
-
-        const [yy, mm, dd] = ymd.split('-').map(Number);
-        if(yy !== year || mm !== month || dd < 1 || dd > 31) return;
-
         const texto = [
           r.msg, r.mensaje, r.message, r.texto,
           r.whatsappText, r.raw, JSON.stringify(r)
         ].filter(Boolean).join('\n');
 
         const msg = String(texto).toUpperCase();
-        const modo = String(r.modo || r.tipo || r.modulo || '').toLowerCase();
 
-        const esVisita =
-          msg.includes('REPORTE DE VISITA') ||
-          modo === 'co' ||
-          modo === 'control operativo';
+        // SOLO reporte de visita cuenta para SUPER.
+        if(!msg.includes('REPORTE DE VISITA')) return;
 
-        const esGuardia =
-          msg.includes('NIVELES DE GUARDIA') ||
-          modo === 'guardia' ||
-          modo === 'nivel';
+        const ymd = ymdSoporte.call(this, r);
+        if(!ymd) return;
 
-        if(!esVisita && !esGuardia) return;
+        const [yy, mm, dd] = ymd.split('-').map(Number);
+        if(yy !== year || mm !== month || dd < 1 || dd > 31) return;
 
-        const pozoKey = normPozo(
-          r.pozo || r.pozoNombre || r.well || r.pozoId || r.nombrePozo || msg
-        );
-
+        const pozoKey = normPozo(msg);
         const row = pozoRow[pozoKey];
         if(!row) return;
 
-        const colFecha = startCol + ((dd - 1) * block);
-        const colSuper = colFecha + 1;
-        const colNivel = colFecha + 2;
+        const colSuper = startCol + ((dd - 1) * block) + 1;
+        const addr = colName(colSuper) + row;
 
-        const fluye = String(r.co?.fluye || r.fluye || '').toUpperCase();
-        const esFT =
-          fluye === 'FT' ||
-          /FLUYE\s*:\s*FT\b/i.test(msg) ||
-          /FLUYE\s+FT\b/i.test(msg);
+        setNum(addr, 1);
 
-        if(esVisita){
-          setNum(colName(colSuper) + row, 1);
-          if(esFT) setNum(colName(colNivel) + row, 1);
-        }
+        superTotales[colSuper] = (superTotales[colSuper] || 0) + 1;
+      });
 
-        if(esGuardia && !esVisita){
-          setNum(colName(colNivel) + row, 1);
-        }
+      Object.keys(superTotales).forEach(col => {
+        setNum(colName(Number(col)) + 54, superTotales[col]);
       });
 
       zip.file(sheetName, new XMLSerializer().serializeToString(doc));
@@ -764,7 +742,7 @@ window.AdminExportaciones = {
         a.remove();
       }, 1000);
 
-      if(box) box.textContent = 'Soporte mensual descargado.';
+      if(box) box.textContent = 'Soporte mensual descargado. SUPER generado.';
     }catch(err){
       console.error('ERROR SOPORTE:', err);
       if(box) box.textContent = 'Error al generar soporte: ' + err.message;
