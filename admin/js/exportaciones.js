@@ -702,12 +702,24 @@ window.AdminExportaciones = {
       const pozoRow = {};
 
       for(let r = 3; r <= 300; r++){
-        const txt = readCell('C' + r);
+        let txt = readCell('C' + r);
+
+        // Rescate fuerte: si readCell falla, leer texto interno de la celda C.
+        if(!txt){
+          const rowXml = getRow(r);
+          const cellXml = rowXml ? Array.from(rowXml.getElementsByTagNameNS(ns,'c')).find(c => c.getAttribute('r') === 'C' + r) : null;
+          if(cellXml) txt = cellXml.textContent || '';
+        }
+
         const key = normPozo(txt);
 
         if(key){
           dataRows.push(r);
           pozoRow[key] = r;
+
+          // equivalencias comunes
+          pozoRow['C' + key] = r;
+          pozoRow['CUICHAPA' + key] = r;
         }
       }
 
@@ -784,7 +796,10 @@ window.AdminExportaciones = {
           return;
         }
 
-        const row = pozoRow[keyPozo];
+        const row =
+          pozoRow[keyPozo] ||
+          pozoRow['C' + keyPozo] ||
+          pozoRow['CUICHAPA' + keyPozo];
         if(!row){
           dbgNoEncontrado++;
           if(dbgNoEncontrados.length < 25) dbgNoEncontrados.push(keyPozo + ' ← ' + pozoTxt);
