@@ -688,6 +688,10 @@ window.AdminExportaciones = {
       }
 
       const superTotales = {};
+      for(let dia = 1; dia <= 31; dia++){
+        const colSuper = startCol + ((dia - 1) * block) + 1;
+        superTotales[colSuper] = 0;
+      }
 
       (AdminFirebase.reportes || []).forEach(r => {
         const texto = [
