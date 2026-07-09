@@ -681,18 +681,21 @@ window.AdminExportaciones = {
       }
 
       function ymdSoporte(r){
+        // Prioridad 1: fecha escrita en el mensaje de WhatsApp.
+        // Ejemplo: 📅 08/07/2026 06:17 p.m.
+        const msgTxt = String([r.msg, r.mensaje, r.message, r.texto, r.whatsappText].filter(Boolean).join(' '));
+        let m = msgTxt.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/);
+        if(m) return `${m[3]}-${String(Number(m[2])).padStart(2,'0')}-${String(Number(m[1])).padStart(2,'0')}`;
+
+        // Prioridad 2: fecha estructurada del registro.
         if(r.fecha){
           const d = new Date(r.fecha);
           if(!isNaN(d)) return d.toISOString().slice(0,10);
         }
 
         const txt = [
-          r.fecha, r.date, r.createdAt, r.timestamp,
-          r.msg, r.mensaje, JSON.stringify(r)
+          r.date, r.createdAt, r.timestamp, JSON.stringify(r)
         ].filter(Boolean).join(' ');
-
-        let m = String(txt).match(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/);
-        if(m) return `${m[3]}-${String(Number(m[2])).padStart(2,'0')}-${String(Number(m[1])).padStart(2,'0')}`;
 
         m = String(txt).match(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/);
         if(m) return `${m[1]}-${String(Number(m[2])).padStart(2,'0')}-${String(Number(m[3])).padStart(2,'0')}`;
