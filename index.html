@@ -3053,21 +3053,21 @@ function _continuarEnvio(){
     // GPS en tiempo real del recorredor
     var gpsLinea2 = la ? gpsLine() : '';
     var msg2=''
-      +'🌙════════════════════🌙\n'
-      +'      NIVEL DE GUARDIA\n'
-      +'🌙════════════════════🌙\n'
+      +'════════════════════\n'
+      +'🌙 NIVEL DE GUARDIA\n'
+      +'════════════════════\n'
       +_recHeader(REC)+'\n'
       +'\n'
       +'🛢 Pozo: *C-'+W+'*\n'
       +'📅 '+now()+'\n'
       +'\n'
-      +'🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙\n'
+      +'\n'
       +(medBls?'🛢 BARRILES\n      ► '+medBls+' bls\n':'')
       +(medCm?'📏 CENTÍMETROS\n      ► '+medCm+' cm\n':'')
       +'🕐 HORA\n      ► '+hr2+'\n'
       +(v('medObs')?'📝 '+v('medObs')+'\n':'')
-      +'🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙\n'
-      +(gpsLinea2?'\n📍════════════════════📍\n          GPS\n📍════════════════════📍\n'+gpsLinea2+'\n':'')
+      +'\n'
+      +(gpsLinea2?'\n════════════════════\n📍 GPS\n════════════════════\n'+gpsLinea2+'\n':'')
       +'_C-'+W+'_';
     if(fotos.length) msg2+='📸 Evidencia: '+fotos.length+' foto'+(fotos.length===1?'':'s')+'\n';
     // Mostrar overlay de confirmación
@@ -3087,9 +3087,9 @@ function _continuarEnvio(){
 
   // ── MODO COMPLETO ──
   var msg=''
-    +'📋════════════════════📋\n'
-    +'      REPORTE DE VISITA\n'
-    +'📋════════════════════📋\n'
+    +'════════════════════\n'
+    +'📋 REPORTE DE VISITA\n'
+    +'════════════════════\n'
     +_recHeader(REC)+'\n'
     +'\n'
     +'🛢 Pozo: *C-'+W+'*\n📅 '+now()+'\n';
@@ -3130,15 +3130,15 @@ function _continuarEnvio(){
     var _nivelTitulo=(_nivTipo==='pm'?'NIVEL PRESA METÁLICA':'NIVEL FRAC TANK');
     var _nivelEmoji=(_nivTipo==='pm'?'🔩':'🛢');
     msg+='\n'
-      +_nivelEmoji+'════════════════════'+_nivelEmoji+'\n'
-      +'      '+_nivelTitulo+'\n'
-      +_nivelEmoji+'════════════════════'+_nivelEmoji+'\n'
-      +'🛢🛢🛢🛢🛢🛢🛢🛢🛢🛢\n'
+      +'════════════════════\n'
+      +'📊 '+_nivelTitulo+'\n'
+      +'════════════════════\n'
+      +'\n'
       +'🛢 BARRILES\n      ► '+bls+' bls\n'
       +'📏 CENTÍMETROS\n      ► '+ctm+' cm\n'
       +'🕐 HORA\n      ► '+hr+'\n'
       +(v('nivObs')?'📝 '+v('nivObs')+'\n':'')
-      +'🛢🛢🛢🛢🛢🛢🛢🛢🛢🛢\n'
+      +'\n'
     ;ok=true;
   }
   var peraMsg = peraLinea();
@@ -3156,7 +3156,7 @@ function _continuarEnvio(){
     msg+='══════════════════\n'+peraMsg+'\n';ok=true;
   }
   if(!ok){showToast('⚠️ Llena al menos un apartado antes de enviar');return}
-  msg+='\n📍════════════════════📍\n          GPS\n📍════════════════════📍\n'+gpsLine()+'\n';
+  msg+='\n════════════════════\n📍 GPS\n════════════════════\n'+gpsLine()+'\n';
   if(fotos.length) msg+='📸 Evidencia: '+fotos.length+' foto'+(fotos.length===1?'':'s')+'\n';
   // QR line removed
 
