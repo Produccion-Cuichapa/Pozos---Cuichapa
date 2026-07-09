@@ -38,6 +38,50 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.min.css"/>
 <link rel="stylesheet" href="./styles.css"/>
+<style id="tutorial-styles">
+/* === TUTORIAL INTERACTIVO === */
+#tut-overlay{position:fixed;inset:0;z-index:20000;background:linear-gradient(160deg,#0a0f1e 0%,#0d1a2f 100%);display:none;flex-direction:column;font-family:'Inter',sans-serif;overflow:hidden}
+#tut-overlay.show{display:flex}
+#tut-slides{flex:1;overflow:hidden;position:relative}
+.tut-slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px 0;opacity:0;transform:translateX(40px);transition:opacity .35s ease,transform .35s ease;pointer-events:none}
+.tut-slide.active{opacity:1;transform:translateX(0);pointer-events:auto}
+.tut-slide.exit{opacity:0;transform:translateX(-40px)}
+.tut-visual{width:100%;max-width:300px;height:200px;border-radius:24px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.12);margin-bottom:24px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.tut-title{font-size:22px;font-weight:800;color:#fff;margin-bottom:10px;text-align:center}
+.tut-body{font-size:14px;color:#9ca3af;line-height:1.65;text-align:center;max-width:300px}
+.tut-body strong{color:#e2e8f0}
+.tut-cards{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px;width:100%;max-width:340px}
+.tut-card{background:rgba(255,255,255,.09);border:1.5px solid rgba(255,255,255,.14);border-radius:14px;padding:9px 12px;font-size:12px;font-weight:700;color:#e2e8f0;display:flex;align-items:center;gap:6px}
+#tut-nav{display:flex;align-items:center;justify-content:space-between;padding:14px 24px 28px;gap:12px}
+.tut-dots{display:flex;gap:8px}
+.tut-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.22);transition:all .25s}
+.tut-dot.on{background:#3b82f6;width:20px;border-radius:4px}
+.tut-btn-skip{font-size:13px;color:#6b7280;background:none;border:none;cursor:pointer;padding:8px 4px;font-family:inherit}
+.tut-btn-next{background:#3b82f6;color:#fff;border:none;cursor:pointer;padding:13px 28px;border-radius:14px;font-size:15px;font-weight:800;font-family:inherit;transition:transform .1s,box-shadow .2s;box-shadow:0 4px 20px rgba(59,130,246,.4)}
+.tut-btn-next:active{transform:scale(.96)}
+.tut-btn-next.green{background:#16a34a;box-shadow:0 4px 20px rgba(22,163,74,.35)}
+@keyframes tut-pulse{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.12);opacity:1}}
+@keyframes tut-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes tut-bounce{0%,100%{transform:translateY(0)}30%{transform:translateY(-14px)}60%{transform:translateY(-6px)}}
+@keyframes tut-gps-expand{0%{transform:scale(.4);opacity:.8}100%{transform:scale(2.2);opacity:0}}
+@keyframes tut-fly{0%{transform:translateX(-30px);opacity:.3}45%{transform:translateX(0);opacity:1}55%{transform:translateX(0);opacity:1}100%{transform:translateX(30px);opacity:.3}}
+.anim-pulse{animation:tut-pulse 2s ease-in-out infinite}
+.anim-float{animation:tut-float 3s ease-in-out infinite}
+.anim-bounce{animation:tut-bounce 1.6s ease-in-out infinite}
+.tut-gps-ring{width:80px;height:80px;border-radius:50%;border:3px solid #3b82f6;position:absolute;opacity:0;animation:tut-gps-expand 2.4s ease-out infinite}
+.tut-gps-ring:nth-child(2){animation-delay:.8s}
+.tut-gps-ring:nth-child(3){animation-delay:1.6s}
+.tut-plane{font-size:48px;display:block;animation:tut-fly 2.5s ease-in-out infinite;text-align:center}
+#tut-help-modal{position:fixed;inset:0;z-index:21000;background:rgba(0,0,0,.75);display:none;align-items:flex-end;justify-content:center}
+#tut-help-modal.show{display:flex}
+#tut-help-box{background:#0f172a;border-radius:22px 22px 0 0;padding:20px 18px 36px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;border-top:2px solid rgba(255,255,255,.1)}
+.tut-help-item{padding:12px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+.tut-help-term{font-size:13px;font-weight:800;color:#60a5fa;margin-bottom:3px}
+.tut-help-def{font-size:12px;color:#94a3b8;line-height:1.55}
+.tut-help-btn{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:rgba(96,165,250,.18);border:1.5px solid #3b82f6;color:#60a5fa;font-size:11px;font-weight:800;cursor:pointer;vertical-align:middle;margin-left:6px;flex-shrink:0}
+@keyframes tut-cam-flash{0%{opacity:0}40%{opacity:1}70%{opacity:.7}100%{opacity:0}}
+.tut-flash{position:absolute;inset:0;background:#fff;border-radius:22px;animation:tut-cam-flash 1.8s ease-in-out infinite;pointer-events:none}
+</style>
 <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
@@ -117,6 +161,11 @@ window.addEventListener('unhandledrejection', function(e){
   </div>
 
   <div class="sidebar-divider"></div>
+
+  <!-- Tutorial / Aprender -->
+  <div class="sidebar-icon" id="icon-tutorial" onclick="TutorialApp.abrir()" data-tip="🎓 Tutorial" style="display:flex;align-items:center;justify-content:center">
+    <span style="font-size:18px">🎓</span>
+  </div>
 
   <!-- Supervisión -->
   <div class="sidebar-icon sidebar-locked" id="icon-supervision" data-tip="Supervisión" onclick="sidebarNav('supervision')" style="display:none;align-items:center;justify-content:center">
@@ -2977,6 +3026,21 @@ function _enviarTodoInner(soloPreview){
 }
 
 // Continuación real del envío (después de pasar el aviso GPS)
+
+// Identidad visual por recorredor para mensajes WhatsApp
+function _recHeader(nombre){
+  var n=(nombre||'').toUpperCase().trim();
+  if(n==='MANRIQUE'||n==='MIGUEL'||n==='M')
+    return '🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩\n🌿👷  MANRIQUE  👷🌿\n🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩';
+  if(n==='JUANCARLOS'||n==='JUAN CARLOS'||n==='JC')
+    return '🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵\n⚙️👷  JUAN CARLOS  👷⚙️\n🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵';
+  if(n==='LUISCARLOS'||n==='LUIS CARLOS'||n==='LUIS'||n==='L')
+    return '🟨⬛🟨⬛🟨⬛🟨⬛🟨⬛\n🛢👷  LUIS CARLOS  👷🛢\n🟨⬛🟨⬛🟨⬛🟨⬛🟨⬛';
+  if(n==='CIRILO'||n==='C')
+    return '🟪🟪🟪🟪🟪🟪🟪🟪🟪🟪\n🛰👷  CIRILO  👷🛰\n🟪🟪🟪🟪🟪🟪🟪🟪🟪🟪';
+  return '⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜\n👷  '+nombre+'  👷\n⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜';
+}
+
 function _continuarEnvio(){
   if(!REC||!W||W==='???') return;
   var ci=getCicloInfo(REC);
@@ -2988,13 +3052,22 @@ function _continuarEnvio(){
     var hr2=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
     // GPS en tiempo real del recorredor
     var gpsLinea2 = la ? gpsLine() : '';
-    var msg2='🌙 *NIVELES DE GUARDIA*\n🛢 Pozo: *C-'+W+'*\n👷 Recorredor: '+REC+'\n📅 '+now()+'\n'
-      +'══════════════════\n'
-      +(medBls?'🛢 Barriles: '+medBls+'\n':'')
-      +(medCm?'📐 Centímetros: '+medCm+'\n':'')
-      +'🕐 '+hr2+'\n'
+    var msg2=''
+      +'🌙════════════════════🌙\n'
+      +'      NIVEL DE GUARDIA\n'
+      +'🌙════════════════════🌙\n'
+      +_recHeader(REC)+'\n'
+      +'\n'
+      +'🛢 Pozo: *C-'+W+'*\n'
+      +'📅 '+now()+'\n'
+      +'\n'
+      +'🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙\n'
+      +(medBls?'🛢 BARRILES\n      ► '+medBls+' bls\n':'')
+      +(medCm?'📏 CENTÍMETROS\n      ► '+medCm+' cm\n':'')
+      +'🕐 HORA\n      ► '+hr2+'\n'
       +(v('medObs')?'📝 '+v('medObs')+'\n':'')
-      +gpsLinea2
+      +'🌙🌙🌙🌙🌙🌙🌙🌙🌙🌙\n'
+      +(gpsLinea2?'\n📍════════════════════📍\n          GPS\n📍════════════════════📍\n'+gpsLinea2+'\n':'')
       +'_C-'+W+'_';
     if(fotos.length) msg2+='📸 Evidencia: '+fotos.length+' foto'+(fotos.length===1?'':'s')+'\n';
     // Mostrar overlay de confirmación
@@ -3013,7 +3086,13 @@ function _continuarEnvio(){
   }
 
   // ── MODO COMPLETO ──
-  var msg='📋 *REPORTE DE VISITA*\n🛢 Pozo: *C-'+W+'*\n👷 Recorredor: '+REC+'\n📅 '+now()+'\n';
+  var msg=''
+    +'📋════════════════════📋\n'
+    +'      REPORTE DE VISITA\n'
+    +'📋════════════════════📋\n'
+    +_recHeader(REC)+'\n'
+    +'\n'
+    +'🛢 Pozo: *C-'+W+'*\n📅 '+now()+'\n';
   var ok=false;
   var est=v('coEstatus'),flu=v('coFlujo'),sis=v('coSistema');
   if(est||flu||sis){
@@ -3031,7 +3110,7 @@ function _continuarEnvio(){
     } else if(flujoTipo==='franco'){
       estrangLine = '⚙️ Franco - TP #Vueltas: '+(vueltasTP||'—')+'\n';
     }
-    msg+='══════════════════\n🔧 *CONTROL OPERATIVO*\n📌 Estatus: '+est+'\n💧 Fluye: '+flu+'\n'+estrangLine+'⚙️ SAP: '+sis+'\n'+d+'\n'+(v('coObs')?'📝 '+v('coObs')+'\n':'');ok=true;
+    msg+='══════════════════\n🔧 *CONTROL OPERATIVO*\n📌 Estatus: '+est+'\n💧 Fluye: '+flu+'\n'+estrangLine+'⚙️ SAP: '+sis+'\n'+d+'\n'+(v('coObs')?'\n📝════════════════════📝\n      OBSERVACIONES\n📝════════════════════📝\n'+v('coObs')+'\n':'');ok=true;
   }
   var medBls=v('medBarriles'),medCm=v('medCentimetros');
   if(medBls||medCm){
@@ -3048,7 +3127,19 @@ function _continuarEnvio(){
     if(!ctm||!bls){showToast('⚠️ Nivel: Falta CTM o BLS');return}
     var hr=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
     document.getElementById('horaBox').textContent='⏱ '+hr;
-    msg+='══════════════════\n📊 *'+(_nivTipo==='pm'?'NIVEL PRESA METÁLICA':'NIVEL FRAC TANK')+'*\n📏 CTM: '+ctm+' cm · 🛢 BLS: '+bls+' bls · 🕐 '+hr+'\n'+(v('nivObs')?'📝 '+v('nivObs')+'\n':'');ok=true;
+    var _nivelTitulo=(_nivTipo==='pm'?'NIVEL PRESA METÁLICA':'NIVEL FRAC TANK');
+    var _nivelEmoji=(_nivTipo==='pm'?'🔩':'🛢');
+    msg+='\n'
+      +_nivelEmoji+'════════════════════'+_nivelEmoji+'\n'
+      +'      '+_nivelTitulo+'\n'
+      +_nivelEmoji+'════════════════════'+_nivelEmoji+'\n'
+      +'🛢🛢🛢🛢🛢🛢🛢🛢🛢🛢\n'
+      +'🛢 BARRILES\n      ► '+bls+' bls\n'
+      +'📏 CENTÍMETROS\n      ► '+ctm+' cm\n'
+      +'🕐 HORA\n      ► '+hr+'\n'
+      +(v('nivObs')?'📝 '+v('nivObs')+'\n':'')
+      +'🛢🛢🛢🛢🛢🛢🛢🛢🛢🛢\n'
+    ;ok=true;
   }
   var peraMsg = peraLinea();
   if(checks.trabajo||checks.drenar||checks.aforo||checks.intermitente){
@@ -3065,7 +3156,7 @@ function _continuarEnvio(){
     msg+='══════════════════\n'+peraMsg+'\n';ok=true;
   }
   if(!ok){showToast('⚠️ Llena al menos un apartado antes de enviar');return}
-  msg+='══════════════════\n'+gpsLine()+'\n';
+  msg+='\n📍════════════════════📍\n          GPS\n📍════════════════════📍\n'+gpsLine()+'\n';
   if(fotos.length) msg+='📸 Evidencia: '+fotos.length+' foto'+(fotos.length===1?'':'s')+'\n';
   // QR line removed
 
@@ -6366,6 +6457,7 @@ function initFirebase(){
         actualizarSyncBar('conectado');
         // Al recuperar señal: intentar sincronizar correcciones que quedaron pendientes offline
         setTimeout(sincronizarCorrencionesPendientes, 2000); // 2s de margen para que el reporte original sincronice primero
+        setTimeout(reconciliarTodosPendientes, 3500);          // 3.5s — después de que el original ya sincronizó, reconciliar con registry
       }
     });
     sincronizarAFirebase();
@@ -7909,32 +8001,134 @@ function intentarEnviar(id){
 // No duplica si ya fue enviado — la CF tiene su propio lock en /whatsappSentRegistry.
 // Mecanismo: limpiar el lock antiguo + resetear whatsappStatus:'pending' en Firebase.
 // La CF sendWhatsApp ya desplegada lo procesará como si fuera nuevo, con deduplicación.
+// ── Reconciliación registry → reportes ───────────────────────────────────
+// Para cada id en la lista, lee /whatsappSentRegistry/{id}.
+// Si status=sent → parchea /reportes/{id} sin reenviar WhatsApp.
+// Si no existe → lo deja en cola para reintento real.
+// Llama onDone({reparados, sinRegistry}) cuando termina.
+function reconciliarConRegistry(ids, onDone){
+  if(!fbDB || !ids || !ids.length){
+    if(onDone) onDone({reparados:0, sinRegistry:[]});
+    return;
+  }
+  var pendientes = ids.slice();
+  var reparados = 0;
+  var sinRegistry = [];
+  var completados = 0;
+
+  pendientes.forEach(function(id){
+    fbDB.ref('whatsappSentRegistry/' + id).once('value').then(function(snap){
+      var reg = snap.val();
+      if(reg && reg.status === 'sent'){
+        // Registry confirma envío — parchar /reportes/{id} sin tocar WhatsApp
+        var patch = {
+          estado:           'enviado',
+          whatsappStatus:   'sent',
+          whatsappSent:     true,
+          whatsappSentAt:   reg.sentAt || null,
+          ultraMsgResponseId: reg.ultraMsgResponseId || reg.ultraId || null
+        };
+        fbDB.ref('reportes/' + id).update(patch).then(function(){
+          reparados++;
+          // Sincronizar también el historial local
+          var hist = getHistorial();
+          var idx = hist.findIndex(function(x){ return String(x.id) === String(id); });
+          if(idx !== -1){
+            Object.assign(hist[idx], patch);
+            saveHistorial(hist);
+          }
+        }).catch(function(e){
+          console.warn('[RECONCILIAR] update falló para', id, e.message);
+        }).finally(function(){
+          completados++;
+          if(completados === pendientes.length){
+            renderHistorial();
+            if(onDone) onDone({reparados:reparados, sinRegistry:sinRegistry});
+          }
+        });
+      } else {
+        // No está en registry → reintento real necesario
+        sinRegistry.push(id);
+        completados++;
+        if(completados === pendientes.length){
+          renderHistorial();
+          if(onDone) onDone({reparados:reparados, sinRegistry:sinRegistry});
+        }
+      }
+    }).catch(function(){
+      sinRegistry.push(id);
+      completados++;
+      if(completados === pendientes.length){
+        if(onDone) onDone({reparados:reparados, sinRegistry:sinRegistry});
+      }
+    });
+  });
+}
+
+// Reconciliación masiva: busca TODOS los reportes pending locales,
+// contrasta con el registry y repara los que ya fueron enviados.
+// Llamada al reconectar y desde el botón manual.
+function reconciliarTodosPendientes(mostrarResultado){
+  if(!fbDB || !fbConnected) return;
+  var hist = getHistorial();
+  var pendingIds = hist.filter(function(r){
+    return !r.esAlarma
+      && r.estado !== 'enviado'
+      && r.whatsappStatus !== 'sent'
+      && r.whatsappSent !== true;
+  }).map(function(r){ return r.id; });
+
+  if(!pendingIds.length){
+    if(mostrarResultado) showToast('✅ No hay reportes pendientes de reconciliar');
+    return;
+  }
+  console.log('[RECONCILIAR] verificando', pendingIds.length, 'reportes pendientes en registry...');
+
+  reconciliarConRegistry(pendingIds, function(result){
+    console.log('[RECONCILIAR] reparados:', result.reparados, '| sin registry:', result.sinRegistry.length);
+    if(mostrarResultado){
+      if(result.reparados > 0){
+        showToast('✅ ' + result.reparados + ' reporte(s) reconciliado(s) con Firebase');
+      } else if(result.sinRegistry.length > 0){
+        showToast('⚠️ ' + result.sinRegistry.length + ' reporte(s) sin confirmar en registry');
+      } else {
+        showToast('ℹ️ Todos los pendientes ya verificados');
+      }
+    }
+  });
+}
+
 function reintentarEnvioPendiente(id){
   if(!fbDB){ showToast('⚠️ Sin conexión Firebase'); return; }
   var r = getReporte(id);
   if(!r){ showToast('❌ Reporte no encontrado'); return; }
 
-  // Verificar SIEMPRE el remoto antes de reintentar — podría haberse enviado
-  // desde otro dispositivo o en segundo plano sin que el local se actualizara.
-  fbDB.ref('reportes/' + id).once('value').then(function(snap){
-    var remoto = snap.val();
-    if(remoto && (remoto.whatsappStatus === 'sent' || remoto.whatsappSent === true)){
-      showToast('✅ Este reporte ya fue enviado al grupo');
-      // Actualizar local para que refleje el estado real
-      var hist = getHistorial();
-      var idx = hist.findIndex(function(x){ return x.id == id; });
-      if(idx !== -1){
-        hist[idx].whatsappStatus = 'sent';
-        hist[idx].whatsappSent = true;
-        hist[idx].estado = 'enviado';
-        saveHistorial(hist);
-        renderHistorial();
-      }
+  // PASO 1: Consultar el registry — si ya dice sent, solo reconciliar (NO reenviar WA)
+  reconciliarConRegistry([id], function(result){
+    if(result.reparados > 0){
+      showToast('✅ Reporte reconciliado — ya había sido enviado al grupo');
       return;
     }
+    // PASO 2: No está en registry → verificar /reportes directamente
+    fbDB.ref('reportes/' + id).once('value').then(function(snap){
+      var remoto = snap.val();
+      if(remoto && (remoto.whatsappStatus === 'sent' || remoto.whatsappSent === true)){
+        showToast('✅ Este reporte ya fue enviado al grupo');
+        var hist = getHistorial();
+        var idx = hist.findIndex(function(x){ return x.id == id; });
+        if(idx !== -1){
+          hist[idx].whatsappStatus = 'sent';
+          hist[idx].whatsappSent = true;
+          hist[idx].estado = 'enviado';
+          saveHistorial(hist);
+          renderHistorial();
+        }
+        return;
+      }
 
-    // Limpiar el lock para que el CF no lo rechace por duplicado
-    fbDB.ref('whatsappSentRegistry/' + id).remove().then(function(){
+      // PASO 3: No está en registry NI en reportes como sent → reintento real
+      // Limpiar el lock para que el CF no lo rechace por duplicado
+      fbDB.ref('whatsappSentRegistry/' + id).remove().then(function(){
       // Resetear status a 'pending' — dispara la CF sendWhatsApp
       return fbDB.ref('reportes/' + id).update({
         whatsappStatus: 'pending',
@@ -7960,9 +8154,10 @@ function reintentarEnvioPendiente(id){
     }).catch(function(e){
       showToast('❌ Error al reintentar: ' + e.message);
     });
-  }).catch(function(e){
-    showToast('❌ No se pudo verificar estado en Firebase: ' + e.message);
-  });
+    }).catch(function(e){
+      showToast('❌ No se pudo verificar estado en Firebase: ' + e.message);
+    });
+  }); // fin reconciliarConRegistry callback
 }
 
 // ── Procesar cola completa — silencioso ──────────
@@ -8312,13 +8507,16 @@ function renderHistorial(){
   // Badge cola
   var qBadge = '';
   if(pendientes.length){
+    var _qNoConf = pendientes.filter(function(r){ return !r.esAlarma && r.whatsappStatus !== 'sent' && r.whatsappSent !== true; });
+    var _verBtn = (fbDB && fbConnected && _qNoConf.length)
+      ? '<button onclick="reconciliarTodosPendientes(true)" title="Comparar con registro Firebase" style="flex-shrink:0;background:#3b82f6;color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:800;cursor:pointer">🔧 Verificar</button>'
+      : '';
     qBadge = '<div style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#78350f,#92400e);color:#fef3c7;'
       +'border-radius:12px;padding:12px 16px;margin-bottom:12px;font-size:13px;font-weight:700;">'
       +'<span style="font-size:20px">⏳</span>'
-      +'<div><div>'+pendientes.length+' reporte'+(pendientes.length>1?'s':'')+' pendiente'+(pendientes.length>1?'s':'')+' de envío</div>'
+      +'<div style="flex:1"><div>'+pendientes.length+' reporte'+(pendientes.length>1?'s':'')+' pendiente'+(pendientes.length>1?'s':'')+' de envío</div>'
       +'<div style="font-size:11px;opacity:.8;margin-top:2px">Se enviarán automáticamente cuando haya señal</div></div>'
-      +'<button onclick="procesarCola()" style="margin-left:auto;background:#f59e0b;color:#fff;border:none;border-radius:8px;'
-      +'padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer">Enviar ya</button></div>';
+      +_verBtn+'</div>';
   }
 
   if(countEl) countEl.textContent = arr.length ? arr.length+' reporte'+(arr.length===1?'':'s') : '';
@@ -8649,82 +8847,37 @@ function cerrarBanner(){
 }
 
 // ══ WELL PICKER — selección de pozo ══
-// ══ WELL PICKER OPTIMIZADO — FASE 1 ══
-// Objetivo: evitar congelamiento en Android.
-// La lista ya NO se renderiza al cargar la app; se arma solo cuando el usuario abre el selector.
-var _wpRendered = false;
-var _wpSelectedEl = null;
-
-function _wpGetWells(){
-  try{
-    if(typeof WELLS_ALL !== 'undefined' && Array.isArray(WELLS_ALL) && WELLS_ALL.length){
-      return WELLS_ALL.slice();
-    }
-  }catch(e){}
-  return ['19','106D','119','128','139','167','172','179','187','191','197','201','213','224',
-          '324','326','327','342','346','350','352','356','359','363','364','367','373','376',
-          '385','500','502','504','505','601','602','603'];
-}
-
-function _wpRenderOnce(){
-  var sugg = document.getElementById('wpSuggestions');
-  if(!sugg || _wpRendered) return;
-
-  var wells = _wpGetWells();
-  var frag = document.createDocumentFragment();
-
-  wells.forEach(function(w){
-    var d = document.createElement('div');
-    d.className = 'wp-item';
-    d.setAttribute('data-well', String(w));
-    d.innerHTML = '<span class="wp-item-icon">🛢</span><span class="wp-item-num">C-' + w + '</span>';
-    d.addEventListener('click', function(){ setWellFromPicker(w, d); }, {passive:true});
-    frag.appendChild(d);
-  });
-
-  sugg.textContent = '';
-  sugg.appendChild(frag);
-  _wpRendered = true;
-}
-
-function setWellFromPicker(num, el){
+function setWellFromPicker(num){
   W = num;
-
+  // Update title
   var wt = document.getElementById('wellTitle');
   if(wt) wt.textContent = 'C-' + num;
-
+  // Close the picker list
   var list = document.getElementById('wpSuggestions');
   if(list) list.classList.remove('open');
-
   var arrow = document.getElementById('wpArrow');
   if(arrow) arrow.classList.remove('open');
-
-  // En vez de recorrer todos los pozos cada vez, solo limpia el anterior y marca el nuevo.
-  if(_wpSelectedEl){
-    _wpSelectedEl.style.background = '';
-    _wpSelectedEl.style.color = '';
-    _wpSelectedEl.style.fontWeight = '';
-  }
-
-  if(!el && list){
-    el = list.querySelector('[data-well="' + String(num).replace(/"/g,'\\"') + '"]');
-  }
-
-  if(el){
-    el.style.background = 'var(--accent2)';
-    el.style.color = '#fff';
-    el.style.fontWeight = '800';
-    _wpSelectedEl = el;
-  }
-
+  // Mark selected item
+  document.querySelectorAll('#wpSuggestions .wp-item').forEach(function(el){
+    var active = el.textContent.trim() === 'C-'+num;
+    el.style.background = active ? 'var(--accent2)' : '';
+    el.style.color = active ? '#fff' : '';
+    el.style.fontWeight = active ? '800' : '';
+  });
+  // Update GPS button visibility
   actualizarEnviarBtn();
 }
 
 (function initPicker(){
-  if(W !== '???') return;
-  var picker = document.getElementById('wellPicker');
+  if(W!=='???') return;
+  var picker=document.getElementById('wellPicker');
   if(picker) picker.classList.add('show');
-  // No renderizar aquí. Se renderiza al abrir el selector.
+  var sugg=document.getElementById('wpSuggestions');
+  if(!sugg) return;
+    var TODOS=WELLS_ALL.slice();
+  sugg.innerHTML=TODOS.map(function(w){
+    return '<div class="wp-item" onclick="setWellFromPicker(\'' + w + '\')">'      + '<span class="wp-item-icon">🛢</span>'      + '<span class="wp-item-num">C-' + w + '</span>'      + '</div>';
+  }).join('');
 })();
 
 
@@ -8772,10 +8925,6 @@ function toggleWellList(){
   var list  = document.getElementById('wpSuggestions');
   var arrow = document.getElementById('wpArrow');
   if(!list) return;
-
-  // Render diferido: solo construye la lista cuando realmente se abre.
-  _wpRenderOnce();
-
   var isOpen = list.classList.toggle('open');
   if(arrow) arrow.classList.toggle('open', isOpen);
 }
@@ -10051,339 +10200,6 @@ function ubiFiltrar(){ /* replaced by filter buttons */ }
 </div>
 
 <script src="./assets/js/android-fix.js"></script>
-
-<script>
-(function(){
-  if(window.PC_ADMIN_HASH_INSTALLED) return;
-  window.PC_ADMIN_HASH_INSTALLED = true;
-
-  function isAdminRoute(){
-    return location.hash === "#admin";
-  }
-
-  function adminLogin(){
-    var u = document.getElementById("pcAdminUser").value.trim();
-    var p = document.getElementById("pcAdminPass").value;
-    if(u === "Admin" && p === "1234"){
-      sessionStorage.setItem("pc_admin_ok","1");
-      renderAdmin();
-    }else{
-      document.getElementById("pcAdminErr").textContent = "Usuario o contraseña incorrectos";
-    }
-  }
-
-  function rowText(r){
-    return JSON.stringify(r || {}).replace(/[<>&]/g, function(c){
-      return {"<":"&lt;",">":"&gt;","&":"&amp;"}[c];
-    });
-  }
-
-  function renderAdmin(){
-    document.body.innerHTML = `
-      <style>
-        body{margin:0;background:#07111f;color:#eef6ff;font-family:Segoe UI,Arial,sans-serif}
-        .pc-admin{padding:24px}
-        .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
-        .card{background:#0d1b2d;border:1px solid #203a5a;border-radius:16px;padding:18px;margin-bottom:16px}
-        .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-        .kpi strong{font-size:34px;display:block}
-        .muted{color:#8ca3bd}
-        input,button{padding:11px;border-radius:10px;border:1px solid #203a5a}
-        input{background:#09182a;color:white}
-        button{background:#2f81f7;color:white;font-weight:700;cursor:pointer}
-        table{width:100%;border-collapse:collapse;background:#0d1b2d}
-        th,td{padding:10px;border-bottom:1px solid #203a5a;text-align:left;font-size:13px;vertical-align:top}
-        th{color:#8ca3bd}
-        pre{white-space:pre-wrap;font-size:12px}
-      </style>
-
-      <div class="pc-admin">
-        <div class="top">
-          <div>
-            <h1>Plataforma Pozos Cuichapa</h1>
-            <div class="muted">Admin integrado en la ruta principal</div>
-          </div>
-          <button onclick="location.href='/'">Volver a la app</button>
-        </div>
-
-        <div class="grid">
-          <div class="card kpi"><span class="muted">Reportes</span><strong id="admRep">0</strong></div>
-          <div class="card kpi"><span class="muted">Alarmas</span><strong id="admAlm">0</strong></div>
-          <div class="card kpi"><span class="muted">Pendientes WA</span><strong id="admPen">0</strong></div>
-          <div class="card kpi"><span class="muted">Total</span><strong id="admTot">0</strong></div>
-        </div>
-
-        <div class="card">
-          <h2>Reportes recientes</h2>
-          <table>
-            <thead><tr><th>Fecha</th><th>Usuario</th><th>Pozo</th><th>Modo</th><th>WhatsApp</th><th>Detalle</th></tr></thead>
-            <tbody id="admReportes"><tr><td colspan="6">Cargando...</td></tr></tbody>
-          </table>
-        </div>
-
-        <div class="card">
-          <h2>Alarmas recientes</h2>
-          <table>
-            <thead><tr><th>Fecha</th><th>Usuario</th><th>Pozo/Lugar</th><th>Tipo</th><th>Mensaje</th></tr></thead>
-            <tbody id="admAlarmas"><tr><td colspan="5">Cargando...</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    `;
-
-    setTimeout(loadAdminData, 800);
-  }
-
-  function renderLogin(){
-    document.body.innerHTML = `
-      <style>
-        body{margin:0;background:#07111f;color:#eef6ff;font-family:Segoe UI,Arial,sans-serif;display:grid;place-items:center;min-height:100vh}
-        .login{width:min(420px,90%);background:#0d1b2d;border:1px solid #203a5a;border-radius:20px;padding:26px}
-        input,button{width:100%;box-sizing:border-box;padding:12px;margin-top:10px;border-radius:10px;border:1px solid #203a5a}
-        input{background:#09182a;color:white}
-        button{background:#2f81f7;color:white;font-weight:800;cursor:pointer}
-        .err{color:#ff5c5c;margin-top:10px}
-      </style>
-      <div class="login">
-        <h1>Admin Pozos Cuichapa</h1>
-        <input id="pcAdminUser" placeholder="Usuario" value="Admin">
-        <input id="pcAdminPass" type="password" placeholder="Contraseña">
-        <button id="pcAdminBtn">Entrar</button>
-        <div id="pcAdminErr" class="err"></div>
-      </div>
-    `;
-    document.getElementById("pcAdminBtn").onclick = adminLogin;
-  }
-
-  function loadAdminData(){
-    var db = window.fbDB || (window.firebase && firebase.database ? firebase.database() : null);
-    if(!db){
-      alert("Firebase todavía no está listo. Recarga la página.");
-      return;
-    }
-
-    db.ref("/reportes").limitToLast(100).on("value", function(snap){
-      var arr = [];
-      snap.forEach(function(ch){ arr.push(Object.assign({id:ch.key}, ch.val() || {})); });
-      arr.reverse();
-
-      document.getElementById("admRep").textContent = arr.length;
-      document.getElementById("admPen").textContent = arr.filter(function(r){
-        return String(r.whatsappStatus || r.estado || "").toLowerCase().includes("pending");
-      }).length;
-
-      document.getElementById("admReportes").innerHTML = arr.slice(0,50).map(function(r){
-        return `<tr>
-          <td>${r.fecha || r.fechaHora || r.createdAt || ""}</td>
-          <td>${r.recorredor || r.usuario || ""}</td>
-          <td>${r.pozo || r.nombrePozo || r.lugar || ""}</td>
-          <td>${r.modo || ""}</td>
-          <td>${r.whatsappStatus || r.estado || ""}</td>
-          <td><pre>${rowText(r)}</pre></td>
-        </tr>`;
-      }).join("") || "<tr><td colspan='6'>Sin reportes</td></tr>";
-
-      var alm = Number(document.getElementById("admAlm").textContent || 0);
-      document.getElementById("admTot").textContent = arr.length + alm;
-    });
-
-    db.ref("/alarmas").limitToLast(50).on("value", function(snap){
-      var arr = [];
-      snap.forEach(function(ch){ arr.push(Object.assign({id:ch.key}, ch.val() || {})); });
-      arr.reverse();
-
-      document.getElementById("admAlm").textContent = arr.length;
-      document.getElementById("admAlarmas").innerHTML = arr.map(function(r){
-        return `<tr>
-          <td>${r.fecha || r.fechaHora || r.createdAt || ""}</td>
-          <td>${r.usuario || r.recorredor || ""}</td>
-          <td>${r.pozo || r.lugar || r.nombrePozo || ""}</td>
-          <td>${r.tipo || r.modo || "alarma"}</td>
-          <td>${r.mensaje || r.msg || r.descripcion || ""}</td>
-        </tr>`;
-      }).join("") || "<tr><td colspan='5'>Sin alarmas</td></tr>";
-
-      var rep = Number(document.getElementById("admRep").textContent || 0);
-      document.getElementById("admTot").textContent = rep + arr.length;
-    });
-  }
-
-  if(isAdminRoute()){
-    if(sessionStorage.getItem("pc_admin_ok") === "1") renderAdmin();
-    else renderLogin();
-  }
-})();
-</script>
-
-
-<script>
-(function(){
-  if(!new URLSearchParams(location.search).has("panel")) return;
-  if(new URLSearchParams(location.search).get("panel") !== "admin") return;
-
-  function waitFirebase(cb){
-    var tries = 0;
-    var timer = setInterval(function(){
-      tries++;
-      if(window.firebase && firebase.database){
-        clearInterval(timer);
-        cb(firebase.database());
-      }
-      if(tries > 80){
-        clearInterval(timer);
-        document.body.innerHTML = "<h2 style='font-family:Arial'>Firebase no cargó. Recarga la página.</h2>";
-      }
-    }, 250);
-  }
-
-  function esc(v){
-    return String(v ?? "").replace(/[&<>"']/g, function(c){
-      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c];
-    });
-  }
-
-  function login(){
-    var u = document.getElementById("admUser").value.trim();
-    var p = document.getElementById("admPass").value;
-    if(u === "Admin" && p === "1234"){
-      sessionStorage.setItem("pc_admin_panel","1");
-      renderPanel();
-    }else{
-      document.getElementById("admErr").textContent = "Usuario o contraseña incorrectos";
-    }
-  }
-
-  function renderLogin(){
-    document.body.innerHTML = `
-      <style>
-        body{margin:0;background:#07111f;color:#eef6ff;font-family:Segoe UI,Arial,sans-serif;display:grid;place-items:center;min-height:100vh}
-        .box{width:min(420px,92%);background:#0d1b2d;border:1px solid #203a5a;border-radius:22px;padding:28px}
-        input,button{width:100%;box-sizing:border-box;margin-top:12px;padding:12px;border-radius:12px;border:1px solid #203a5a}
-        input{background:#09182a;color:white}
-        button{background:#2f81f7;color:white;font-weight:800;cursor:pointer}
-        .err{color:#ff5c5c;margin-top:12px}
-      </style>
-      <div class="box">
-        <h1>Plataforma Pozos Cuichapa</h1>
-        <input id="admUser" value="Admin" placeholder="Usuario">
-        <input id="admPass" type="password" placeholder="Contraseña">
-        <button id="admBtn">Entrar</button>
-        <div id="admErr" class="err"></div>
-      </div>
-    `;
-    document.getElementById("admBtn").onclick = login;
-  }
-
-  function renderPanel(){
-    document.body.innerHTML = `
-      <style>
-        body{margin:0;background:#07111f;color:#eef6ff;font-family:Segoe UI,Arial,sans-serif}
-        .wrap{padding:24px}
-        .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
-        .card{background:#0d1b2d;border:1px solid #203a5a;border-radius:16px;padding:18px;margin-bottom:16px}
-        .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-        .kpi strong{font-size:34px;display:block}
-        .muted{color:#8ca3bd}
-        button{background:#2f81f7;color:white;border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer}
-        table{width:100%;border-collapse:collapse}
-        th,td{border-bottom:1px solid #203a5a;padding:10px;text-align:left;font-size:13px;vertical-align:top}
-        th{color:#8ca3bd}
-        pre{white-space:pre-wrap;max-height:120px;overflow:auto;font-size:11px}
-      </style>
-      <div class="wrap">
-        <div class="top">
-          <div>
-            <h1>Plataforma Pozos Cuichapa</h1>
-            <div class="muted">Panel administrativo integrado</div>
-          </div>
-          <button onclick="location.href='/'">Volver a la app</button>
-        </div>
-
-        <div class="grid">
-          <div class="card kpi"><span class="muted">Reportes</span><strong id="rCount">0</strong></div>
-          <div class="card kpi"><span class="muted">Alarmas</span><strong id="aCount">0</strong></div>
-          <div class="card kpi"><span class="muted">Pendientes WA</span><strong id="pCount">0</strong></div>
-          <div class="card kpi"><span class="muted">Total</span><strong id="tCount">0</strong></div>
-        </div>
-
-        <div class="card">
-          <h2>Reportes recientes</h2>
-          <table>
-            <thead><tr><th>Fecha</th><th>Recorredor</th><th>Pozo</th><th>Modo</th><th>WhatsApp</th><th>Detalle</th></tr></thead>
-            <tbody id="repBody"><tr><td colspan="6">Cargando...</td></tr></tbody>
-          </table>
-        </div>
-
-        <div class="card">
-          <h2>Alarmas recientes</h2>
-          <table>
-            <thead><tr><th>Fecha</th><th>Usuario</th><th>Pozo/Lugar</th><th>Tipo</th><th>Mensaje</th></tr></thead>
-            <tbody id="almBody"><tr><td colspan="5">Cargando...</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    `;
-
-    waitFirebase(function(db){
-      db.ref("/reportes").limitToLast(100).on("value", function(snap){
-        var arr = [];
-        snap.forEach(function(ch){ arr.push(Object.assign({id:ch.key}, ch.val() || {})); });
-        arr.reverse();
-
-        document.getElementById("rCount").textContent = arr.length;
-        document.getElementById("pCount").textContent = arr.filter(function(x){
-          return String(x.whatsappStatus || x.estado || "").toLowerCase().includes("pending");
-        }).length;
-
-        document.getElementById("repBody").innerHTML = arr.map(function(r){
-          return `<tr>
-            <td>${esc(r.fecha || r.fechaHora || r.createdAt || "")}</td>
-            <td>${esc(r.recorredor || r.usuario || "")}</td>
-            <td>${esc(r.pozo || r.nombrePozo || r.lugar || "")}</td>
-            <td>${esc(r.modo || "")}</td>
-            <td>${esc(r.whatsappStatus || r.estado || "")}</td>
-            <td><pre>${esc(JSON.stringify(r,null,2))}</pre></td>
-          </tr>`;
-        }).join("") || "<tr><td colspan='6'>Sin reportes</td></tr>";
-
-        updateTotal();
-      });
-
-      db.ref("/alarmas").limitToLast(50).on("value", function(snap){
-        var arr = [];
-        snap.forEach(function(ch){ arr.push(Object.assign({id:ch.key}, ch.val() || {})); });
-        arr.reverse();
-
-        document.getElementById("aCount").textContent = arr.length;
-        document.getElementById("almBody").innerHTML = arr.map(function(r){
-          return `<tr>
-            <td>${esc(r.fecha || r.fechaHora || r.createdAt || "")}</td>
-            <td>${esc(r.usuario || r.recorredor || "")}</td>
-            <td>${esc(r.pozo || r.lugar || r.nombrePozo || "")}</td>
-            <td>${esc(r.tipo || r.modo || "alarma")}</td>
-            <td>${esc(r.mensaje || r.msg || r.descripcion || "")}</td>
-          </tr>`;
-        }).join("") || "<tr><td colspan='5'>Sin alarmas</td></tr>";
-
-        updateTotal();
-      });
-    });
-  }
-
-  function updateTotal(){
-    var r = Number(document.getElementById("rCount")?.textContent || 0);
-    var a = Number(document.getElementById("aCount")?.textContent || 0);
-    var t = document.getElementById("tCount");
-    if(t) t.textContent = r + a;
-  }
-
-  setTimeout(function(){
-    if(sessionStorage.getItem("pc_admin_panel") === "1") renderPanel();
-    else renderLogin();
-  }, 500);
-})();
-</script>
-
 </body>
 </html>
 <!-- index-cache-bust -->
