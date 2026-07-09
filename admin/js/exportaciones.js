@@ -906,6 +906,25 @@ window.AdminExportaciones = {
       });
       zip.file(sheetName, new XMLSerializer().serializeToString(doc));
 
+      // Forzar recálculo de fórmulas al abrir el Excel
+      if(zip.file('xl/workbook.xml')){
+        let wbXml = await zip.file('xl/workbook.xml').async('string');
+
+        if(wbXml.includes('<calcPr')){
+          wbXml = wbXml.replace(/<calcPr[^>]*\/>/, '<calcPr calcMode="auto" fullCalcOnLoad="1" forceFullCalc="1"/>');
+          wbXml = wbXml.replace(/<calcPr[^>]*>/, '<calcPr calcMode="auto" fullCalcOnLoad="1" forceFullCalc="1">');
+        }else{
+          wbXml = wbXml.replace('</workbook>', '<calcPr calcMode="auto" fullCalcOnLoad="1" forceFullCalc="1"/></workbook>');
+        }
+
+        zip.file('xl/workbook.xml', wbXml);
+      }
+
+      // Eliminar cadena de cálculo vieja para que Excel no use caché antigua
+      if(zip.file('xl/calcChain.xml')){
+        zip.remove('xl/calcChain.xml');
+      }
+
       const blobFinal = await zip.generateAsync({
         type:'blob',
         mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
