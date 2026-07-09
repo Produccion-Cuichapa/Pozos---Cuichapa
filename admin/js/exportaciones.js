@@ -905,6 +905,76 @@ window.AdminExportaciones = {
         setCachedFormulaValue(colName(Number(col)) + 54, interTotales[col]);
       });
 
+      // Actualizar cache visible de fórmulas sin borrar fórmulas.
+      // Esto hace que la tabla inferior muestre lo que toma de arriba.
+      function formulaText(addr){
+        const c = getCell(addr);
+        if(!c) return '';
+        return c.getElementsByTagNameNS(ns,'f')[0]?.textContent || '';
+      }
+
+      function valueNum(addr){
+        const c = getCell(addr);
+        if(!c) return 0;
+        const v = c.getElementsByTagNameNS(ns,'v')[0]?.textContent;
+        const n = Number(v);
+        return isNaN(n) ? 0 : n;
+      }
+
+      function evalFormula(f){
+        if(!f) return null;
+        let x = String(f).replace(/^=/,'').replace(/^\+/,'').trim().toUpperCase();
+
+        // Referencia directa: F3
+        if(/^[A-Z]+[0-9]+$/.test(x)){
+          return valueNum(x);
+        }
+
+        // Suma: SUM(F2:F53)
+        let m = x.match(/^SUM\(([A-Z]+)([0-9]+):([A-Z]+)([0-9]+)\)$/);
+        if(m){
+          const c1 = colNum(m[1]);
+          const r1 = Number(m[2]);
+          const c2 = colNum(m[3]);
+          const r2 = Number(m[4]);
+          let total = 0;
+          for(let c = c1; c <= c2; c++){
+            for(let r = r1; r <= r2; r++){
+              total += valueNum(colName(c) + r);
+            }
+          }
+          return total;
+        }
+
+        // Operaciones simples: G59-F59 / M59+F59 / E59+1
+        m = x.match(/^([A-Z]+[0-9]+)([+\-])([A-Z]+[0-9]+|[0-9.]+)$/);
+        if(m){
+          const a = valueNum(m[1]);
+          const b = /^[A-Z]+[0-9]+$/.test(m[3]) ? valueNum(m[3]) : Number(m[3]);
+          return m[2] === '+' ? a + b : a - b;
+        }
+
+        return null;
+      }
+
+      // Varias pasadas porque abajo hay fórmulas que dependen de otras fórmulas.
+      for(let pass = 0; pass < 6; pass++){
+        for(let r = 54; r <= 1640; r++){
+          const row = getRow(r);
+          if(!row) continue;
+
+          Array.from(row.getElementsByTagNameNS(ns,'c')).forEach(c => {
+            const addr = c.getAttribute('r');
+            const f = formulaText(addr);
+            const val = evalFormula(f);
+
+            if(val !== null && !isNaN(val)){
+              setCachedFormulaValue(addr, val);
+            }
+          });
+        }
+      }
+
       zip.file(sheetName, new XMLSerializer().serializeToString(doc));
 
       const blobFinal = await zip.generateAsync({
