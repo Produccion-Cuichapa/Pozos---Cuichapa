@@ -720,27 +720,53 @@ window.AdminExportaciones = {
       // Solo fecha base. Las demás fechas las maneja el Excel.
       setNum('E3', excelSerial(year, month, 1));
 
-      // Limpiar SOLO SUPER y NIVEL arriba.
+      // Limpiar SOLO columnas que llenamos arriba.
       for(let dia = 1; dia <= 31; dia++){
         const colSuper = startCol + ((dia - 1) * block) + 1;
         const colNivel = startCol + ((dia - 1) * block) + 2;
+        const colTrabajo = startCol + ((dia - 1) * block) + 3;
+        const colDrenar = startCol + ((dia - 1) * block) + 4;
+        const colAforo = startCol + ((dia - 1) * block) + 6;
+        const colInter = startCol + ((dia - 1) * block) + 7;
 
         for(let row = 3; row <= 53; row++){
           clearCell(colName(colSuper) + row);
           clearCell(colName(colNivel) + row);
+          clearCell(colName(colTrabajo) + row);
+          clearCell(colName(colDrenar) + row);
+          clearCell(colName(colAforo) + row);
+          clearCell(colName(colInter) + row);
         }
       }
 
       const superCeldas = {};
       const nivelCeldas = {};
+      const trabajoCeldas = {};
+      const drenarCeldas = {};
+      const aforoCeldas = {};
+      const interCeldas = {};
+
       const superTotales = {};
       const nivelTotales = {};
+      const trabajoTotales = {};
+      const drenarTotales = {};
+      const aforoTotales = {};
+      const interTotales = {};
 
       for(let dia = 1; dia <= 31; dia++){
         const colSuper = startCol + ((dia - 1) * block) + 1;
         const colNivel = startCol + ((dia - 1) * block) + 2;
+        const colTrabajo = startCol + ((dia - 1) * block) + 3;
+        const colDrenar = startCol + ((dia - 1) * block) + 4;
+        const colAforo = startCol + ((dia - 1) * block) + 6;
+        const colInter = startCol + ((dia - 1) * block) + 7;
+
         superTotales[colSuper] = 0;
         nivelTotales[colNivel] = 0;
+        trabajoTotales[colTrabajo] = 0;
+        drenarTotales[colDrenar] = 0;
+        aforoTotales[colAforo] = 0;
+        interTotales[colInter] = 0;
       }
 
       (AdminFirebase.reportes || []).forEach(r => {
@@ -768,9 +794,17 @@ window.AdminExportaciones = {
 
         const colSuper = startCol + ((dd - 1) * block) + 1;
         const colNivel = startCol + ((dd - 1) * block) + 2;
+        const colTrabajo = startCol + ((dd - 1) * block) + 3;
+        const colDrenar = startCol + ((dd - 1) * block) + 4;
+        const colAforo = startCol + ((dd - 1) * block) + 6;
+        const colInter = startCol + ((dd - 1) * block) + 7;
 
         const addrSuper = colName(colSuper) + row;
         const addrNivel = colName(colNivel) + row;
+        const addrTrabajo = colName(colTrabajo) + row;
+        const addrDrenar = colName(colDrenar) + row;
+        const addrAforo = colName(colAforo) + row;
+        const addrInter = colName(colInter) + row;
 
         const fluye = String(r.co?.fluye || r.fluye || '').toUpperCase();
 
@@ -787,6 +821,28 @@ window.AdminExportaciones = {
             nivelCeldas[addrNivel] = (nivelCeldas[addrNivel] || 0) + 1;
             nivelTotales[colNivel] = (nivelTotales[colNivel] || 0) + 1;
           }
+
+          const registro = (msg.match(/REGISTRO[\\s\\S]*?(COND\\.? DE PERA|GPS|$)/i) || [''])[0];
+
+          if(/✅\s*TRABAJO/i.test(registro)){
+            trabajoCeldas[addrTrabajo] = (trabajoCeldas[addrTrabajo] || 0) + 1;
+            trabajoTotales[colTrabajo] = (trabajoTotales[colTrabajo] || 0) + 1;
+          }
+
+          if(/✅\s*DRENAR/i.test(registro)){
+            drenarCeldas[addrDrenar] = (drenarCeldas[addrDrenar] || 0) + 1;
+            drenarTotales[colDrenar] = (drenarTotales[colDrenar] || 0) + 1;
+          }
+
+          if(/✅\s*AFORO/i.test(registro)){
+            aforoCeldas[addrAforo] = (aforoCeldas[addrAforo] || 0) + 1;
+            aforoTotales[colAforo] = (aforoTotales[colAforo] || 0) + 1;
+          }
+
+          if(/✅\s*INTERMITENTE/i.test(registro)){
+            interCeldas[addrInter] = (interCeldas[addrInter] || 0) + 1;
+            interTotales[colInter] = (interTotales[colInter] || 0) + 1;
+          }
         }
 
         if(esGuardia){
@@ -797,6 +853,10 @@ window.AdminExportaciones = {
 
       Object.entries(superCeldas).forEach(([addr, val]) => setNum(addr, val));
       Object.entries(nivelCeldas).forEach(([addr, val]) => setNum(addr, val));
+      Object.entries(trabajoCeldas).forEach(([addr, val]) => setNum(addr, val));
+      Object.entries(drenarCeldas).forEach(([addr, val]) => setNum(addr, val));
+      Object.entries(aforoCeldas).forEach(([addr, val]) => setNum(addr, val));
+      Object.entries(interCeldas).forEach(([addr, val]) => setNum(addr, val));
 
       Object.keys(superTotales).forEach(col => {
         setCachedFormulaValue(colName(Number(col)) + 54, superTotales[col]);
@@ -804,6 +864,22 @@ window.AdminExportaciones = {
 
       Object.keys(nivelTotales).forEach(col => {
         setCachedFormulaValue(colName(Number(col)) + 54, nivelTotales[col]);
+      });
+
+      Object.keys(trabajoTotales).forEach(col => {
+        setCachedFormulaValue(colName(Number(col)) + 54, trabajoTotales[col]);
+      });
+
+      Object.keys(drenarTotales).forEach(col => {
+        setCachedFormulaValue(colName(Number(col)) + 54, drenarTotales[col]);
+      });
+
+      Object.keys(aforoTotales).forEach(col => {
+        setCachedFormulaValue(colName(Number(col)) + 54, aforoTotales[col]);
+      });
+
+      Object.keys(interTotales).forEach(col => {
+        setCachedFormulaValue(colName(Number(col)) + 54, interTotales[col]);
       });
 
       zip.file(sheetName, new XMLSerializer().serializeToString(doc));
