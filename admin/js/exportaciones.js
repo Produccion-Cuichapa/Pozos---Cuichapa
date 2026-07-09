@@ -822,24 +822,28 @@ window.AdminExportaciones = {
             nivelTotales[colNivel] = (nivelTotales[colNivel] || 0) + 1;
           }
 
-          const registro = (msg.match(/REGISTRO[\\s\\S]*?(COND\\.? DE PERA|GPS|$)/i) || [''])[0];
+          // REGISTRO: contar solo si viene palomita junto al concepto.
+          const tieneTrabajo = /✅\s*TRABAJO/i.test(msg);
+          const tieneDrenar = /✅\s*DRENAR/i.test(msg);
+          const tieneAforo = /✅\s*AFORO/i.test(msg) || /✅\s*AFORO\/PROYECCI[ÓO]N/i.test(msg);
+          const tieneInter = /✅\s*INTERMITENTE/i.test(msg);
 
-          if(/✅\s*TRABAJO/i.test(registro)){
+          if(tieneTrabajo){
             trabajoCeldas[addrTrabajo] = (trabajoCeldas[addrTrabajo] || 0) + 1;
             trabajoTotales[colTrabajo] = (trabajoTotales[colTrabajo] || 0) + 1;
           }
 
-          if(/✅\s*DRENAR/i.test(registro)){
+          if(tieneDrenar){
             drenarCeldas[addrDrenar] = (drenarCeldas[addrDrenar] || 0) + 1;
             drenarTotales[colDrenar] = (drenarTotales[colDrenar] || 0) + 1;
           }
 
-          if(/✅\s*AFORO/i.test(registro)){
+          if(tieneAforo){
             aforoCeldas[addrAforo] = (aforoCeldas[addrAforo] || 0) + 1;
             aforoTotales[colAforo] = (aforoTotales[colAforo] || 0) + 1;
           }
 
-          if(/✅\s*INTERMITENTE/i.test(registro)){
+          if(tieneInter){
             interCeldas[addrInter] = (interCeldas[addrInter] || 0) + 1;
             interTotales[colInter] = (interTotales[colInter] || 0) + 1;
           }
