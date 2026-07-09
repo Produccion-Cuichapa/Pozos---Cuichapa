@@ -822,30 +822,19 @@ window.AdminExportaciones = {
             nivelTotales[colNivel] = (nivelTotales[colNivel] || 0) + 1;
           }
 
-          // REGISTRO + OBSERVACIONES:
-          // Si cumple por palomita o por texto de observación, cuenta solo 1 vez por reporte.
-          const obsTxt = msg;
+          
+// REGISTRO: contar SOLO si viene palomita.
+          const tieneTrabajo = /✅\s*TRABAJO/i.test(msg);
 
-          const tieneTrabajo =
-            /✅\s*TRABAJO/i.test(msg) ||
-            /SE\s+TRABAJ[ÓO]|SE\s+ABRI[ÓO]|SE\s+ABRE|ESTRANGULADOR|SE\s+ALINE[ÓO]/i.test(obsTxt);
-
-          const tieneDrenar =
-            /✅\s*DRENAR/i.test(msg) ||
-            /SE\s+DREN[ÓO]|BARRI[ÓO]|BARRIDO|DRENADO/i.test(obsTxt);
+          const tieneDrenar = /✅\s*DRENAR/i.test(msg);
 
           const tieneAforo =
             /✅\s*AFORO/i.test(msg) ||
-            /✅\s*AFORO\/PROYECCI[ÓO]N/i.test(msg) ||
-            /\bBPH\b|PROYECCI[ÓO]N/i.test(obsTxt);
+            /✅\s*AFORO\/PROYECCI[ÓO]N/i.test(msg);
 
-          const pozosIntermitentes = new Set(['505','119','500','401','352']);
           const tieneInter =
-            (
-              /✅\s*INTERMITENTE/i.test(msg) ||
-              /INTERMITENTE/i.test(obsTxt)
-            ) &&
-            pozosIntermitentes.has(pozoKey);
+            /✅\s*INTERMITENTE/i.test(msg);
+
 
           if(tieneTrabajo){
             trabajoCeldas[addrTrabajo] = (trabajoCeldas[addrTrabajo] || 0) + 1;
