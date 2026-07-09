@@ -9691,7 +9691,7 @@ window.mostrarConfirmacion = function(){
     W = _cabSel;
     _esperarGPSReal(function(){
       var obs=document.getElementById('cabObsText');
-      var msg='🔧 *REPORTE CABEZAL*\n🛢 '+_cabSel.replace('-',' ')+'\n👷 '+REC+'\n📅 '+now()+'\n══════════════════\n'+(obs&&obs.value.trim()?'📝 '+obs.value.trim()+'\n':'')+'\n'+gpsLine();
+      var msg='🔧 *REPORTE CABEZAL*\n'+_recHeader(REC)+'\n\n🛢 '+_cabSel.replace('-',' ')+'\n📅 '+now()+'\n══════════════════\n'+(obs&&obs.value.trim()?'📝 '+obs.value.trim()+'\n':'')+'\n'+gpsLine();
       _abrirConfirmOverlay(msg);
     });
     return;
@@ -9701,7 +9701,7 @@ window.mostrarConfirmacion = function(){
     W = _estSel;
     _esperarGPSReal(function(){
       var obs2=document.getElementById('estObsText');
-      var msg2='🏭 *REPORTE ESTACIÓN*\n'+_estSel.replace('-',' ')+'\n👷 '+REC+'\n📅 '+now()+'\n══════════════════\n'+(obs2&&obs2.value.trim()?'📝 '+obs2.value.trim()+'\n':'')+'\n'+gpsLine();
+      var msg2='🏭 *REPORTE ESTACIÓN*\n'+_recHeader(REC)+'\n\n'+_estSel.replace('-',' ')+'\n📅 '+now()+'\n══════════════════\n'+(obs2&&obs2.value.trim()?'📝 '+obs2.value.trim()+'\n':'')+'\n'+gpsLine();
       _abrirConfirmOverlay(msg2);
     });
     return;
@@ -9711,7 +9711,7 @@ window.mostrarConfirmacion = function(){
     if(!nt||!nt.value.trim()){ showToast('⚠️ Escribe una nota'); return; }
     W='NOTA';
     _esperarGPSReal(function(){
-      var msg3='📝 *NOTA DE CAMPO*\n👷 '+REC+'\n📅 '+now()+'\n══════════════════\n'+nt.value.trim()+'\n'+gpsLine();
+      var msg3='📝 *NOTA DE CAMPO*\n'+_recHeader(REC)+'\n\n📅 '+now()+'\n══════════════════\n'+nt.value.trim()+'\n'+gpsLine();
       _abrirConfirmOverlay(msg3);
     });
     return;
