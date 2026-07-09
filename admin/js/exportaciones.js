@@ -609,7 +609,32 @@ window.AdminExportaciones = {
         const r = Number(addr.match(/\d+/)[0]);
         const row = getRow(r);
         if(!row) return null;
-        return Array.from(row.getElementsByTagNameNS(ns,'c')).find(c => c.getAttribute('r') === addr) || null;
+
+        let cell = Array.from(row.getElementsByTagNameNS(ns,'c')).find(c => c.getAttribute('r') === addr);
+        if(cell) return cell;
+
+        // Crear celda si no existe físicamente en el XML.
+        cell = doc.createElementNS(ns,'c');
+        cell.setAttribute('r', addr);
+
+        const cells = Array.from(row.getElementsByTagNameNS(ns,'c'));
+        const colLetters = addr.replace(/[0-9]/g,'');
+        const colNum = colLetters.split('').reduce((n,ch)=>n*26 + ch.charCodeAt(0)-64, 0);
+
+        let inserted = false;
+        for(const existing of cells){
+          const exAddr = existing.getAttribute('r') || '';
+          const exCol = exAddr.replace(/[0-9]/g,'');
+          const exNum = exCol.split('').reduce((n,ch)=>n*26 + ch.charCodeAt(0)-64, 0);
+          if(exNum > colNum){
+            row.insertBefore(cell, existing);
+            inserted = true;
+            break;
+          }
+        }
+
+        if(!inserted) row.appendChild(cell);
+        return cell;
       }
 
       function clearCell(addr){
