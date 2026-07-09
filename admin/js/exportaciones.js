@@ -568,7 +568,7 @@ window.AdminExportaciones = {
 
   async generarSoporte(){
     const box = document.getElementById('soporteStatus');
-    if(box) box.textContent = 'Generando soporte mensual: SUPER...';
+    if(box) box.textContent = 'Generando soporte mensual: SUPER y NIVEL...';
 
     try{
       const supMes = document.getElementById('supMes')?.value || '';
@@ -601,6 +601,10 @@ window.AdminExportaciones = {
         return s;
       }
 
+      function colNum(letters){
+        return letters.split('').reduce((n,ch)=>n*26 + ch.charCodeAt(0)-64, 0);
+      }
+
       function getRow(r){
         return Array.from(doc.getElementsByTagNameNS(ns,'row')).find(x => x.getAttribute('r') == r);
       }
@@ -613,20 +617,16 @@ window.AdminExportaciones = {
         let cell = Array.from(row.getElementsByTagNameNS(ns,'c')).find(c => c.getAttribute('r') === addr);
         if(cell) return cell;
 
-        // Crear celda si no existe físicamente en el XML.
         cell = doc.createElementNS(ns,'c');
         cell.setAttribute('r', addr);
 
+        const targetCol = colNum(addr.replace(/[0-9]/g,''));
         const cells = Array.from(row.getElementsByTagNameNS(ns,'c'));
-        const colLetters = addr.replace(/[0-9]/g,'');
-        const colNum = colLetters.split('').reduce((n,ch)=>n*26 + ch.charCodeAt(0)-64, 0);
 
         let inserted = false;
         for(const existing of cells){
-          const exAddr = existing.getAttribute('r') || '';
-          const exCol = exAddr.replace(/[0-9]/g,'');
-          const exNum = exCol.split('').reduce((n,ch)=>n*26 + ch.charCodeAt(0)-64, 0);
-          if(exNum > colNum){
+          const exCol = colNum((existing.getAttribute('r') || '').replace(/[0-9]/g,''));
+          if(exCol > targetCol){
             row.insertBefore(cell, existing);
             inserted = true;
             break;
@@ -657,14 +657,16 @@ window.AdminExportaciones = {
       function setCachedFormulaValue(addr, value){
         const c = getCell(addr);
         if(!c) return;
-
         let v = c.getElementsByTagNameNS(ns,'v')[0];
         if(!v){
           v = doc.createElementNS(ns,'v');
           c.appendChild(v);
         }
-
         v.textContent = String(value);
+      }
+
+      function excelSerial(y, m, d){
+        return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(1899, 11, 30)) / 86400000);
       }
 
       function normPozo(v){
@@ -712,22 +714,31 @@ window.AdminExportaciones = {
       const startCol = 5; // E fecha
       const block = 8;    // fecha + SUPER + NIVEL + demás
 
-      const superTotales = {};
+      // Solo fecha base. Las demás fechas las maneja el Excel.
+      setNum('E3', excelSerial(year, month, 1));
 
+      // Limpiar SOLO SUPER y NIVEL arriba.
       for(let dia = 1; dia <= 31; dia++){
         const colSuper = startCol + ((dia - 1) * block) + 1;
-        superTotales[colSuper] = 0;
-      }
-
-      // Limpiar SOLO SUPER en tabla principal.
-      for(let dia = 1; dia <= 31; dia++){
-        const colSuper = startCol + ((dia - 1) * block) + 1;
+        const colNivel = startCol + ((dia - 1) * block) + 2;
 
         for(let row = 3; row <= 53; row++){
           clearCell(colName(colSuper) + row);
+          clearCell(colName(colNivel) + row);
         }
       }
 
+      const superCeldas = {};
+      const nivelCeldas = {};
+      const superTotales = {};
+      const nivelTotales = {};
+
+      for(let dia = 1; dia <= 31; dia++){
+        const colSuper = startCol + ((dia - 1) * block) + 1;
+        const colNivel = startCol + ((dia - 1) * block) + 2;
+        superTotales[colSuper] = 0;
+        nivelTotales[colNivel] = 0;
+      }
 
       (AdminFirebase.reportes || []).forEach(r => {
         const texto = [
@@ -737,8 +748,10 @@ window.AdminExportaciones = {
 
         const msg = String(texto).toUpperCase();
 
-        // SOLO reporte de visita cuenta para SUPER.
-        if(!msg.includes('REPORTE DE VISITA')) return;
+        const esVisita = msg.includes('REPORTE DE VISITA');
+        const esGuardia = msg.includes('NIVELES DE GUARDIA');
+
+        if(!esVisita && !esGuardia) return;
 
         const ymd = ymdSoporte.call(this, r);
         if(!ymd) return;
@@ -751,14 +764,43 @@ window.AdminExportaciones = {
         if(!row) return;
 
         const colSuper = startCol + ((dd - 1) * block) + 1;
-        const addr = colName(colSuper) + row;
+        const colNivel = startCol + ((dd - 1) * block) + 2;
 
-        setNum(addr, 1);
-        superTotales[colSuper] = (superTotales[colSuper] || 0) + 1;
+        const addrSuper = colName(colSuper) + row;
+        const addrNivel = colName(colNivel) + row;
+
+        const fluye = String(r.co?.fluye || r.fluye || '').toUpperCase();
+
+        const esFT =
+          fluye === 'FT' ||
+          /FLUYE\s*:\s*FT\b/i.test(msg) ||
+          /FLUYE\s+FT\b/i.test(msg);
+
+        if(esVisita){
+          superCeldas[addrSuper] = (superCeldas[addrSuper] || 0) + 1;
+          superTotales[colSuper] = (superTotales[colSuper] || 0) + 1;
+
+          if(esFT){
+            nivelCeldas[addrNivel] = (nivelCeldas[addrNivel] || 0) + 1;
+            nivelTotales[colNivel] = (nivelTotales[colNivel] || 0) + 1;
+          }
+        }
+
+        if(esGuardia){
+          nivelCeldas[addrNivel] = (nivelCeldas[addrNivel] || 0) + 1;
+          nivelTotales[colNivel] = (nivelTotales[colNivel] || 0) + 1;
+        }
       });
+
+      Object.entries(superCeldas).forEach(([addr, val]) => setNum(addr, val));
+      Object.entries(nivelCeldas).forEach(([addr, val]) => setNum(addr, val));
 
       Object.keys(superTotales).forEach(col => {
         setCachedFormulaValue(colName(Number(col)) + 54, superTotales[col]);
+      });
+
+      Object.keys(nivelTotales).forEach(col => {
+        setCachedFormulaValue(colName(Number(col)) + 54, nivelTotales[col]);
       });
 
       zip.file(sheetName, new XMLSerializer().serializeToString(doc));
@@ -781,7 +823,7 @@ window.AdminExportaciones = {
         a.remove();
       }, 1000);
 
-      if(box) box.textContent = 'Soporte mensual descargado. SUPER generado.';
+      if(box) box.textContent = 'Soporte mensual descargado. SUPER y NIVEL generados.';
     }catch(err){
       console.error('ERROR SOPORTE:', err);
       if(box) box.textContent = 'Error al generar soporte: ' + err.message;
