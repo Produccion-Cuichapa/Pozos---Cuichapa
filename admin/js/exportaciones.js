@@ -629,6 +629,19 @@ window.AdminExportaciones = {
         c.appendChild(v);
       }
 
+      function setCachedFormulaValue(addr, value){
+        const c = getCell(addr);
+        if(!c) return;
+
+        let v = c.getElementsByTagNameNS(ns,'v')[0];
+        if(!v){
+          v = doc.createElementNS(ns,'v');
+          c.appendChild(v);
+        }
+
+        v.textContent = String(value);
+      }
+
       function normPozo(v){
         const x = String(v || '').toUpperCase();
         const m =
@@ -674,6 +687,13 @@ window.AdminExportaciones = {
       const startCol = 5; // E fecha
       const block = 8;    // fecha + SUPER + NIVEL + demás
 
+      const superTotales = {};
+
+      for(let dia = 1; dia <= 31; dia++){
+        const colSuper = startCol + ((dia - 1) * block) + 1;
+        superTotales[colSuper] = 0;
+      }
+
       // Limpiar SOLO SUPER en tabla principal.
       for(let dia = 1; dia <= 31; dia++){
         const colSuper = startCol + ((dia - 1) * block) + 1;
@@ -709,6 +729,11 @@ window.AdminExportaciones = {
         const addr = colName(colSuper) + row;
 
         setNum(addr, 1);
+        superTotales[colSuper] = (superTotales[colSuper] || 0) + 1;
+      });
+
+      Object.keys(superTotales).forEach(col => {
+        setCachedFormulaValue(colName(Number(col)) + 54, superTotales[col]);
       });
 
       zip.file(sheetName, new XMLSerializer().serializeToString(doc));
