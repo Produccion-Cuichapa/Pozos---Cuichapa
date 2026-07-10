@@ -3028,6 +3028,14 @@ function _enviarTodoInner(soloPreview){
 // Continuación real del envío (después de pasar el aviso GPS)
 
 // Identidad visual por recorredor para mensajes WhatsApp
+function _recNom(n2){
+  var n=(n2||'').toUpperCase().trim();
+  if(n==='MANRIQUE'||n==='MIGUEL'||n==='M') return '🌿 MANRIQUE 🌿';
+  if(n==='JUANCARLOS'||n==='JUAN CARLOS'||n==='JC') return '⚙️ JUAN CARLOS ⚙️';
+  if(n==='LUISCARLOS'||n==='LUIS CARLOS'||n==='LUIS'||n==='L') return '🛢 LUIS CARLOS 🛢';
+  if(n==='CIRILO'||n==='C') return '🛰 CIRILO 🛰';
+  return '👷 '+n2+' 👷';
+}
 function _recHeader(nombre){
   var n=(nombre||'').toUpperCase().trim();
   if(n==='MANRIQUE'||n==='MIGUEL'||n==='M')
@@ -3052,22 +3060,13 @@ function _continuarEnvio(){
     var hr2=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
     // GPS en tiempo real del recorredor
     var gpsLinea2 = la ? gpsLine() : '';
-    var msg2=''
-      +'════════════════════\n'
-      +'🌙 NIVEL DE GUARDIA\n'
-      +'════════════════════\n'
-      +_recHeader(REC)+'\n'
-      +'\n'
-      +'🛢 Pozo: *C-'+W+'*\n'
-      +'📅 '+now()+'\n'
-      +'\n'
-      +'\n'
-      +(medBls?'🛢 BARRILES\n      ► '+medBls+' bls\n':'')
-      +(medCm?'📏 CENTÍMETROS\n      ► '+medCm+' cm\n':'')
-      +'🕐 HORA\n      ► '+hr2+'\n'
+    var msg2='🌙 *NIVELES DE GUARDIA*\n🛢 Pozo: *C-'+W+'*\n👷 Recorredor: '+_recNom(REC)+'\n📅 '+now()+'\n'
+      +'══════════════════\n'
+      +(medBls?'🛢 Barriles: '+medBls+'\n':'')
+      +(medCm?'📐 Centímetros: '+medCm+'\n':'')
+      +'🕐 '+hr2+'\n'
       +(v('medObs')?'📝 '+v('medObs')+'\n':'')
-      +'\n'
-      +(gpsLinea2?'\n════════════════════\n📍 GPS\n════════════════════\n'+gpsLinea2+'\n':'')
+      +gpsLinea2
       +'_C-'+W+'_';
     if(fotos.length) msg2+='📸 Evidencia: '+fotos.length+' foto'+(fotos.length===1?'':'s')+'\n';
     // Mostrar overlay de confirmación
@@ -3086,13 +3085,7 @@ function _continuarEnvio(){
   }
 
   // ── MODO COMPLETO ──
-  var msg=''
-    +'════════════════════\n'
-    +'📋 REPORTE DE VISITA\n'
-    +'════════════════════\n'
-    +_recHeader(REC)+'\n'
-    +'\n'
-    +'🛢 Pozo: *C-'+W+'*\n📅 '+now()+'\n';
+  var msg='📋 *REPORTE DE VISITA*\n🛢 Pozo: *C-'+W+'*\n👷 Recorredor: '+_recNom(REC)+'\n📅 '+now()+'\n';
   var ok=false;
   var est=v('coEstatus'),flu=v('coFlujo'),sis=v('coSistema');
   if(est||flu||sis){
@@ -3110,7 +3103,7 @@ function _continuarEnvio(){
     } else if(flujoTipo==='franco'){
       estrangLine = '⚙️ Franco - TP #Vueltas: '+(vueltasTP||'—')+'\n';
     }
-    msg+='══════════════════\n🔧 *CONTROL OPERATIVO*\n📌 Estatus: '+est+'\n💧 Fluye: '+flu+'\n'+estrangLine+'⚙️ SAP: '+sis+'\n'+d+'\n'+(v('coObs')?'\n📝════════════════════📝\n      OBSERVACIONES\n📝════════════════════📝\n'+v('coObs')+'\n':'');ok=true;
+    msg+='══════════════════\n🔧 *CONTROL OPERATIVO*\n📌 Estatus: '+est+'\n💧 Fluye: '+flu+'\n'+estrangLine+'⚙️ SAP: '+sis+'\n'+d+'\n'+(v('coObs')?'📝 '+v('coObs')+'\n':'');ok=true;
   }
   var medBls=v('medBarriles'),medCm=v('medCentimetros');
   if(medBls||medCm){
@@ -3127,19 +3120,7 @@ function _continuarEnvio(){
     if(!ctm||!bls){showToast('⚠️ Nivel: Falta CTM o BLS');return}
     var hr=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
     document.getElementById('horaBox').textContent='⏱ '+hr;
-    var _nivelTitulo=(_nivTipo==='pm'?'NIVEL PRESA METÁLICA':'NIVEL FRAC TANK');
-    var _nivelEmoji=(_nivTipo==='pm'?'🔩':'🛢');
-    msg+='\n'
-      +'════════════════════\n'
-      +'📊 '+_nivelTitulo+'\n'
-      +'════════════════════\n'
-      +'\n'
-      +'🛢 BARRILES\n      ► '+bls+' bls\n'
-      +'📏 CENTÍMETROS\n      ► '+ctm+' cm\n'
-      +'🕐 HORA\n      ► '+hr+'\n'
-      +(v('nivObs')?'📝 '+v('nivObs')+'\n':'')
-      +'\n'
-    ;ok=true;
+    msg+='══════════════════\n📊 *'+(_nivTipo==='pm'?'NIVEL PRESA METÁLICA':'NIVEL FRAC TANK')+'*\n📏 CTM: '+ctm+' cm · 🛢 BLS: '+bls+' bls · 🕐 '+hr+'\n'+(v('nivObs')?'📝 '+v('nivObs')+'\n':'');ok=true;
   }
   var peraMsg = peraLinea();
   if(checks.trabajo||checks.drenar||checks.aforo||checks.intermitente){
@@ -3156,7 +3137,7 @@ function _continuarEnvio(){
     msg+='══════════════════\n'+peraMsg+'\n';ok=true;
   }
   if(!ok){showToast('⚠️ Llena al menos un apartado antes de enviar');return}
-  msg+='\n════════════════════\n📍 GPS\n════════════════════\n'+gpsLine()+'\n';
+  msg+='══════════════════\n'+gpsLine()+'\n';
   if(fotos.length) msg+='📸 Evidencia: '+fotos.length+' foto'+(fotos.length===1?'':'s')+'\n';
   // QR line removed
 
@@ -9691,7 +9672,7 @@ window.mostrarConfirmacion = function(){
     W = _cabSel;
     _esperarGPSReal(function(){
       var obs=document.getElementById('cabObsText');
-      var msg='🔧 *REPORTE CABEZAL*\n'+_recHeader(REC)+'\n\n🛢 '+_cabSel.replace('-',' ')+'\n📅 '+now()+'\n══════════════════\n'+(obs&&obs.value.trim()?'📝 '+obs.value.trim()+'\n':'')+'\n'+gpsLine();
+      var msg='🔧 *REPORTE CABEZAL*\n🛢 '+_cabSel.replace('-',' ')+'\n👷 Recorredor: '+_recNom(REC)+'\n📅 '+now()+'\n══════════════════\n'+(obs&&obs.value.trim()?'📝 '+obs.value.trim()+'\n':'')+'\n'+gpsLine();
       _abrirConfirmOverlay(msg);
     });
     return;
@@ -9701,7 +9682,7 @@ window.mostrarConfirmacion = function(){
     W = _estSel;
     _esperarGPSReal(function(){
       var obs2=document.getElementById('estObsText');
-      var msg2='🏭 *REPORTE ESTACIÓN*\n'+_recHeader(REC)+'\n\n'+_estSel.replace('-',' ')+'\n📅 '+now()+'\n══════════════════\n'+(obs2&&obs2.value.trim()?'📝 '+obs2.value.trim()+'\n':'')+'\n'+gpsLine();
+      var msg2='🏭 *REPORTE ESTACIÓN*\n'+_estSel.replace('-',' ')+'\n👷 Recorredor: '+_recNom(REC)+'\n📅 '+now()+'\n══════════════════\n'+(obs2&&obs2.value.trim()?'📝 '+obs2.value.trim()+'\n':'')+'\n'+gpsLine();
       _abrirConfirmOverlay(msg2);
     });
     return;
@@ -9711,7 +9692,7 @@ window.mostrarConfirmacion = function(){
     if(!nt||!nt.value.trim()){ showToast('⚠️ Escribe una nota'); return; }
     W='NOTA';
     _esperarGPSReal(function(){
-      var msg3='📝 *NOTA DE CAMPO*\n'+_recHeader(REC)+'\n\n📅 '+now()+'\n══════════════════\n'+nt.value.trim()+'\n'+gpsLine();
+      var msg3='📝 *NOTA DE CAMPO*\n👷 Recorredor: '+_recNom(REC)+'\n📅 '+now()+'\n══════════════════\n'+nt.value.trim()+'\n'+gpsLine();
       _abrirConfirmOverlay(msg3);
     });
     return;
