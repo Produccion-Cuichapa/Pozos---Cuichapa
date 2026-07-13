@@ -1,0 +1,401 @@
+/* ═══════════════════════════════════════
+   UPV — Unidades de Producción y Volumen
+   CSS exclusivo: no comparte nada con la
+   app principal de recorredores.
+═══════════════════════════════════════ */
+
+/* ── Reset & Base ─────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0d1b2a;
+  --surface:   #142032;
+  --surface2:  #1c2d42;
+  --border:    rgba(255,255,255,.12);
+  --accent:    #1e6fbf;
+  --accent2:   #2489e8;
+  --txt:       #e8edf2;
+  --txt2:      #8aa4bf;
+  --green:     #22c55e;
+  --orange:    #f59e0b;
+  --red:       #ef4444;
+  --radius:    14px;
+  --nav-w:     64px;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--txt);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 15px;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+/* ── Layout ──────────────────────────── */
+#upv-app {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Sidebar navegación lateral derecha */
+#upv-nav {
+  width: var(--nav-w);
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
+  gap: 8px;
+  order: 2;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.nav-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  color: var(--txt2);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  transition: background .15s, color .15s;
+}
+.nav-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+.nav-btn:active { transform: scale(.92); }
+.nav-btn .nav-icon { font-size: 20px; }
+
+/* Área de contenido */
+#upv-content {
+  flex: 1;
+  overflow-y: auto;
+  order: 1;
+  padding: 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Screens ─────────────────────────── */
+.upv-screen {
+  display: none;
+  min-height: 100%;
+  padding: 16px 14px 32px;
+}
+.upv-screen.active { display: block; }
+
+/* ── Pantalla de acceso ──────────────── */
+#screen-login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  gap: 0;
+}
+.login-logo {
+  font-size: 56px;
+  font-weight: 900;
+  color: var(--accent2);
+  letter-spacing: -2px;
+  margin-bottom: 4px;
+}
+.login-sub {
+  font-size: 13px;
+  color: var(--txt2);
+  margin-bottom: 40px;
+  text-align: center;
+}
+.login-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--txt2);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.login-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 320px;
+}
+.empresa-btn {
+  padding: 20px;
+  border-radius: 16px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--txt);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  cursor: pointer;
+  transition: border-color .15s, background .15s, transform .1s;
+  text-align: center;
+}
+.empresa-btn:active { transform: scale(.96); }
+.empresa-btn[data-empresa="PETROSMART"] { border-color: #3b82f6; }
+.empresa-btn[data-empresa="ATO"]        { border-color: #22c55e; }
+.empresa-btn[data-empresa="IPEP"]       { border-color: #f59e0b; }
+.empresa-btn.selected {
+  background: var(--accent);
+  border-color: var(--accent2);
+  color: #fff;
+}
+
+/* ── Header pantalla principal ───────── */
+#upv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.header-empresa {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--accent2);
+  letter-spacing: .04em;
+}
+.header-title { font-size: 13px; color: var(--txt2); }
+.conn-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(34,197,94,.15);
+  color: var(--green);
+  border: 1px solid rgba(34,197,94,.3);
+}
+.conn-badge.offline {
+  background: rgba(239,68,68,.15);
+  color: var(--red);
+  border-color: rgba(239,68,68,.3);
+}
+
+/* ── Cards / Secciones ───────────────── */
+.upv-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.upv-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--txt2);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.upv-input {
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--surface2);
+  color: var(--txt);
+  font-size: 16px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color .15s;
+}
+.upv-input:focus { border-color: var(--accent2); }
+
+.upv-select {
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--surface2);
+  color: var(--txt);
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238aa4bf' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  cursor: pointer;
+}
+.upv-select:focus { border-color: var(--accent2); }
+
+/* Selector grande de tipo (CARGA / DESCARGA) */
+.tipo-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.tipo-btn {
+  padding: 18px 10px;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  background: var(--surface2);
+  color: var(--txt2);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  cursor: pointer;
+  transition: all .15s;
+  text-align: center;
+}
+.tipo-btn.active-carga {
+  border-color: #22c55e;
+  background: rgba(34,197,94,.1);
+  color: #22c55e;
+}
+.tipo-btn.active-descarga {
+  border-color: #f59e0b;
+  background: rgba(245,158,11,.1);
+  color: #f59e0b;
+}
+.tipo-btn:active { transform: scale(.96); }
+
+/* Área dinámica */
+#campos-dinamicos { margin-top: 4px; }
+
+/* GPS provisional */
+.gps-mock {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--surface2);
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  font-size: 13px;
+  color: var(--txt2);
+}
+.gps-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--orange);
+  flex-shrink: 0;
+  animation: upv-blink 1.4s ease-in-out infinite;
+}
+@keyframes upv-blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* Fotos provisional */
+.fotos-mock {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  background: var(--surface2);
+  border-radius: 10px;
+  border: 1.5px dashed var(--border);
+  color: var(--txt2);
+  font-size: 13px;
+  cursor: pointer;
+}
+.fotos-mock .cam-icon { font-size: 24px; }
+
+/* Botones de acción */
+.upv-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  cursor: pointer;
+  transition: transform .1s, box-shadow .2s;
+  box-shadow: 0 4px 16px rgba(30,111,191,.35);
+}
+.upv-btn:active { transform: scale(.97); }
+.upv-btn.green { background: #16a34a; box-shadow: 0 4px 16px rgba(22,163,74,.3); }
+.upv-btn.danger { background: var(--red); box-shadow: 0 4px 16px rgba(239,68,68,.3); }
+
+/* Mensaje provisional */
+.upv-msg-provisional {
+  padding: 20px;
+  border-radius: 12px;
+  background: rgba(245,158,11,.1);
+  border: 1.5px solid rgba(245,158,11,.3);
+  color: var(--orange);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* Historial */
+.hist-item {
+  background: var(--surface2);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  border-left: 3px solid var(--accent);
+}
+.hist-item-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--txt2);
+  margin-bottom: 6px;
+}
+.hist-item-title { font-size: 14px; font-weight: 700; color: var(--txt); }
+.hist-empty {
+  text-align: center;
+  color: var(--txt2);
+  padding: 40px 20px;
+  font-size: 14px;
+}
+
+/* Separador */
+.upv-sep {
+  height: 1px;
+  background: var(--border);
+  margin: 16px 0;
+}
+
+/* Tag de empresa */
+.emp-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .06em;
+}
+.emp-tag.PETROSMART { background: rgba(59,130,246,.2); color: #60a5fa; }
+.emp-tag.ATO        { background: rgba(34,197,94,.2);  color: #4ade80; }
+.emp-tag.IPEP       { background: rgba(245,158,11,.2); color: #fbbf24; }
+
+/* Utilidades */
+.mt8  { margin-top: 8px; }
+.mt12 { margin-top: 12px; }
+.mt16 { margin-top: 16px; }
+.fw7  { font-weight: 700; }
+.fs13 { font-size: 13px; }
+.txt2 { color: var(--txt2); }
+
+/* ── Responsive ──────────────────────── */
+@media (min-width: 480px) {
+  .upv-card { padding: 20px; }
+  .login-btns { max-width: 360px; }
+}
