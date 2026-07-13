@@ -1,0 +1,25 @@
+{
+  "name": "UPV – Unidades de Producción y Volumen",
+  "short_name": "UPV",
+  "description": "Control operativo de unidades pipas para empresas de servicio",
+  "start_url": "/Pozos---Cuichapa/upv/",
+  "scope": "/Pozos---Cuichapa/upv/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d1b2a",
+  "theme_color": "#1a3a5c",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
