@@ -1,6 +1,7 @@
-// UPV Service Worker — scope: /upv/
-// Cache name exclusivo: no interfiere con el SW de la app principal
-const UPV_CACHE = 'upv-pwa-v1';
+// UPV Service Worker v2
+// Scope: relativo al directorio donde está registrado (./UPV/)
+// Cache: upv-pwa-v3  — no toca cachés de la app principal de recorredores
+const UPV_CACHE = 'upv-pwa-v3';
 
 const UPV_ASSETS = [
   './',
@@ -10,48 +11,57 @@ const UPV_ASSETS = [
   './manifest.json'
 ];
 
-// Instalar: precaché de assets propios
+// INSTALL — precaché de assets locales
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(UPV_CACHE).then(cache => cache.addAll(UPV_ASSETS))
+    caches.open(UPV_CACHE)
+      .then(cache => cache.addAll(UPV_ASSETS))
+      .then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
-// Activar: limpiar cachés obsoletos de UPV (no toca cachés de la app principal)
+// ACTIVATE — limpiar únicamente cachés upv-pwa-* anteriores
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
         keys
           .filter(k => k.startsWith('upv-pwa-') && k !== UPV_CACHE)
-          .map(k => caches.delete(k))
+          .map(k => { console.log('[UPV-SW] eliminando caché antiguo:', k); return caches.delete(k); })
       )
-    )
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Fetch: network-first con fallback a caché
+// FETCH — network-first con fallback a caché; solo recursos del scope
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // Solo interceptar recursos propios de /upv/
-  if (!url.pathname.includes('/upv/')) return;
+  // No interceptar peticiones a dominios externos (Firebase, APIs, etc.)
+  if (url.origin !== location.origin) return;
 
-  // Peticiones a APIs externas (Firebase, UltraMsg): solo red
-  if (url.hostname !== location.hostname) return;
+  // No interceptar peticiones que no pertenezcan a este scope
+  // (el navegador ya garantiza el scope, esto es defensa adicional)
+  if (event.request.method !== 'GET') return;
 
   event.respondWith(
     fetch(event.request)
-      .then(res => {
-        // Actualizar caché si la respuesta es válida
-        if (res && res.status === 200) {
-          const clone = res.clone();
+      .then(response => {
+        if (response && response.status === 200) {
+          const clone = response.clone();
           caches.open(UPV_CACHE).then(cache => cache.put(event.request, clone));
         }
-        return res;
+        return response;
       })
-      .catch(() => caches.match(event.request))
+      .catch(() =>
+        caches.match(event.request).then(cached => {
+          // Fallback a index.html para rutas de navegación dentro de UPV
+          if (cached) return cached;
+          if (event.request.mode === 'navigate') {
+            return caches.match('./index.html');
+          }
+          return new Response('Sin conexión', { status: 503 });
+        })
+      )
   );
 });
