@@ -1,6 +1,93 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<style>
+/* ── Registro de Actividades — tarjetas grandes (Nivel de Guardia) ── */
+.nivel-act-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface2);
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.nivel-act-card.nivel-act-sel {
+  border-color: var(--accent2);
+  background: rgba(30,111,191,.12);
+}
+.nivel-act-check {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--accent2);
+  flex-shrink: 0;
+  transition: background .15s, border-color .15s;
+}
+.nivel-act-check.checked {
+  background: var(--accent2);
+  border-color: var(--accent2);
+  color: #fff;
+}
+.nivel-act-ico { font-size: 28px; flex-shrink: 0; }
+.nivel-act-info { flex: 1; min-width: 0; }
+.nivel-act-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--txt);
+  margin-bottom: 2px;
+}
+.nivel-act-desc {
+  font-size: 12px;
+  color: var(--txt2);
+  line-height: 1.4;
+}
+
+/* ── Control Operativo / Estado del Pozo — Nivel de Guardia ── */
+.nivel-ep-btn {
+  flex: 1;
+  padding: 14px 8px;
+  border-radius: 14px;
+  border: 2px solid var(--border);
+  background: var(--surface2);
+  color: var(--txt);
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  line-height: 1.6;
+  font-family: Inter, sans-serif;
+  transition: border-color .15s, background .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.nivel-ep-btn span {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .3px;
+  margin-top: 4px;
+}
+.nivel-ep-btn.nivel-ep-sel {
+  border-color: var(--accent2);
+  background: rgba(30,111,191,.15);
+}
+.nivel-ep-btn.nivel-ep-sel-green  { border-color: #16a34a; background: rgba(22,163,74,.15); }
+.nivel-ep-btn.nivel-ep-sel-red    { border-color: #dc2626; background: rgba(220,38,38,.15); }
+.nivel-ep-btn.nivel-ep-sel-amber  { border-color: #d97706; background: rgba(217,119,6,.15); }
+</style>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>Pozos Campo Cuichapa</title>
@@ -38,58 +125,14 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.min.css"/>
 <link rel="stylesheet" href="./styles.css"/>
-<style id="tutorial-styles">
-/* === TUTORIAL INTERACTIVO === */
-#tut-overlay{position:fixed;inset:0;z-index:20000;background:linear-gradient(160deg,#0a0f1e 0%,#0d1a2f 100%);display:none;flex-direction:column;font-family:'Inter',sans-serif;overflow:hidden}
-#tut-overlay.show{display:flex}
-#tut-slides{flex:1;overflow:hidden;position:relative}
-.tut-slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px 0;opacity:0;transform:translateX(40px);transition:opacity .35s ease,transform .35s ease;pointer-events:none}
-.tut-slide.active{opacity:1;transform:translateX(0);pointer-events:auto}
-.tut-slide.exit{opacity:0;transform:translateX(-40px)}
-.tut-visual{width:100%;max-width:300px;height:200px;border-radius:24px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.12);margin-bottom:24px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
-.tut-title{font-size:22px;font-weight:800;color:#fff;margin-bottom:10px;text-align:center}
-.tut-body{font-size:14px;color:#9ca3af;line-height:1.65;text-align:center;max-width:300px}
-.tut-body strong{color:#e2e8f0}
-.tut-cards{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px;width:100%;max-width:340px}
-.tut-card{background:rgba(255,255,255,.09);border:1.5px solid rgba(255,255,255,.14);border-radius:14px;padding:9px 12px;font-size:12px;font-weight:700;color:#e2e8f0;display:flex;align-items:center;gap:6px}
-#tut-nav{display:flex;align-items:center;justify-content:space-between;padding:14px 24px 28px;gap:12px}
-.tut-dots{display:flex;gap:8px}
-.tut-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.22);transition:all .25s}
-.tut-dot.on{background:#3b82f6;width:20px;border-radius:4px}
-.tut-btn-skip{font-size:13px;color:#6b7280;background:none;border:none;cursor:pointer;padding:8px 4px;font-family:inherit}
-.tut-btn-next{background:#3b82f6;color:#fff;border:none;cursor:pointer;padding:13px 28px;border-radius:14px;font-size:15px;font-weight:800;font-family:inherit;transition:transform .1s,box-shadow .2s;box-shadow:0 4px 20px rgba(59,130,246,.4)}
-.tut-btn-next:active{transform:scale(.96)}
-.tut-btn-next.green{background:#16a34a;box-shadow:0 4px 20px rgba(22,163,74,.35)}
-@keyframes tut-pulse{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.12);opacity:1}}
-@keyframes tut-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-@keyframes tut-bounce{0%,100%{transform:translateY(0)}30%{transform:translateY(-14px)}60%{transform:translateY(-6px)}}
-@keyframes tut-gps-expand{0%{transform:scale(.4);opacity:.8}100%{transform:scale(2.2);opacity:0}}
-@keyframes tut-fly{0%{transform:translateX(-30px);opacity:.3}45%{transform:translateX(0);opacity:1}55%{transform:translateX(0);opacity:1}100%{transform:translateX(30px);opacity:.3}}
-.anim-pulse{animation:tut-pulse 2s ease-in-out infinite}
-.anim-float{animation:tut-float 3s ease-in-out infinite}
-.anim-bounce{animation:tut-bounce 1.6s ease-in-out infinite}
-.tut-gps-ring{width:80px;height:80px;border-radius:50%;border:3px solid #3b82f6;position:absolute;opacity:0;animation:tut-gps-expand 2.4s ease-out infinite}
-.tut-gps-ring:nth-child(2){animation-delay:.8s}
-.tut-gps-ring:nth-child(3){animation-delay:1.6s}
-.tut-plane{font-size:48px;display:block;animation:tut-fly 2.5s ease-in-out infinite;text-align:center}
-#tut-help-modal{position:fixed;inset:0;z-index:21000;background:rgba(0,0,0,.75);display:none;align-items:flex-end;justify-content:center}
-#tut-help-modal.show{display:flex}
-#tut-help-box{background:#0f172a;border-radius:22px 22px 0 0;padding:20px 18px 36px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;border-top:2px solid rgba(255,255,255,.1)}
-.tut-help-item{padding:12px 0;border-bottom:1px solid rgba(255,255,255,.07)}
-.tut-help-term{font-size:13px;font-weight:800;color:#60a5fa;margin-bottom:3px}
-.tut-help-def{font-size:12px;color:#94a3b8;line-height:1.55}
-.tut-help-btn{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:rgba(96,165,250,.18);border:1.5px solid #3b82f6;color:#60a5fa;font-size:11px;font-weight:800;cursor:pointer;vertical-align:middle;margin-left:6px;flex-shrink:0}
-@keyframes tut-cam-flash{0%{opacity:0}40%{opacity:1}70%{opacity:.7}100%{opacity:0}}
-.tut-flash{position:absolute;inset:0;background:#fff;border-radius:22px;animation:tut-cam-flash 1.8s ease-in-out infinite;pointer-events:none}
-</style>
-<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
-<script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-routing-machine/3.2.12/leaflet-routing-machine.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 // ══ DIAGNÓSTICO GLOBAL DE ERRORES ════════════════════════════
 window.onerror = function(msg, src, line, col, err){
@@ -161,11 +204,6 @@ window.addEventListener('unhandledrejection', function(e){
   </div>
 
   <div class="sidebar-divider"></div>
-
-  <!-- Tutorial / Aprender -->
-  <div class="sidebar-icon" id="icon-tutorial" onclick="TutorialApp.abrir()" data-tip="🎓 Tutorial" style="display:flex;align-items:center;justify-content:center">
-    <span style="font-size:18px">🎓</span>
-  </div>
 
   <!-- Supervisión -->
   <div class="sidebar-icon sidebar-locked" id="icon-supervision" data-tip="Supervisión" onclick="sidebarNav('supervision')" style="display:none;align-items:center;justify-content:center">
@@ -310,120 +348,14 @@ function _fotosCheck(){
   if(fotos.length > MAX_FOTOS_ANDROID){
     fotos.splice(MAX_FOTOS_ANDROID);
     console.warn('[ANDROID] Fotos limitadas a MAX_FOTOS_ANDROID='+MAX_FOTOS_ANDROID);
-    if(typeof showToast==='function') showToast('⚠️ Máximo '+MAX_FOTOS_ANDROID+' fotos por reporte');
+    if(typeof showToast==='function') showToast('⚠️ Máximo 4 fotos por reporte');
     return false;
   }
   return true;
 }
 var fotosAlarma = [];
-var MAX_FOTOS_ANDROID = 7; // máximo 7 fotos por reporte y por alarma
 </script>
 <script src="./fotos.js"></script>
-<script>
-// ══ OVERRIDE: agregarFotos y agregarFotosAlarma ══════════════
-// Reemplaza las funciones de fotos.js para soportar hasta 7 fotos,
-// múltiples archivos, compresión canvas y logs [WA_FRONT].
-
-// ── Comprimir imagen con canvas ───────────────────────────────
-function _comprimirYAgregar(file, callback){
-  var reader = new FileReader();
-  reader.onload = function(e){
-    var img = new Image();
-    img.onload = function(){
-      var MAX_W = 1280, MAX_H = 1280, Q = 0.82;
-      var w = img.width, h = img.height;
-      if(w > MAX_W){ h = Math.round(h * MAX_W / w); w = MAX_W; }
-      if(h > MAX_H){ w = Math.round(w * MAX_H / h); h = MAX_H; }
-      var canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      var ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, w, h);
-      var b64 = canvas.toDataURL('image/jpeg', Q);
-      // Liberar canvas
-      canvas.width = 0; canvas.height = 0;
-      callback(b64);
-    };
-    img.onerror = function(){ callback(e.target.result); }; // fallback sin compresión
-    img.src = e.target.result;
-  };
-  reader.onerror = function(){ console.warn('[WA_FRONT] Error leyendo foto:', file.name); };
-  reader.readAsDataURL(file);
-}
-
-// ── Render fotos de alarma ────────────────────────────────────
-function _renderAlarmFotos(){
-  var grid = document.getElementById('alarmFotoGrid');
-  var cnt  = document.getElementById('alarmFotoCountNew');
-  if(!grid) return;
-  grid.innerHTML = '';
-  fotosAlarma.forEach(function(f, i){
-    var div = document.createElement('div');
-    div.style.cssText = 'position:relative;display:inline-block;margin:4px;vertical-align:top';
-    var img = document.createElement('img');
-    img.src = (typeof f === 'object') ? (f.data || f) : f;
-    img.style.cssText = 'width:64px;height:64px;object-fit:cover;border-radius:8px;display:block';
-    var btn = document.createElement('button');
-    btn.textContent = '×';
-    btn.style.cssText = 'position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:13px;line-height:1;padding:0';
-    btn.onclick = (function(idx){ return function(e){ e.stopPropagation(); fotosAlarma.splice(idx,1); _renderAlarmFotos(); }; })(i);
-    div.appendChild(img); div.appendChild(btn);
-    grid.appendChild(div);
-  });
-  if(cnt) cnt.textContent = fotosAlarma.length > 0
-    ? fotosAlarma.length + ' foto' + (fotosAlarma.length > 1 ? 's' : '')
-    : '';
-}
-
-// ── agregarFotos (reportes) — override ───────────────────────
-function agregarFotos(event){
-  var files = event.target.files;
-  if(!files || !files.length){ event.target.value = ''; return; }
-  var remaining = MAX_FOTOS_ANDROID - fotos.length;
-  if(remaining <= 0){
-    showToast('⚠️ Ya tienes ' + MAX_FOTOS_ANDROID + ' fotos (límite alcanzado)');
-    event.target.value = ''; return;
-  }
-  var toProcess = Math.min(files.length, remaining);
-  if(files.length > remaining)
-    showToast('⚠️ Solo se agregarán ' + remaining + ' foto(s) más (máx ' + MAX_FOTOS_ANDROID + ')');
-  console.log('[WA_FRONT] report fotos selected:', files.length, '— processing:', toProcess);
-  for(var i = 0; i < toProcess; i++){
-    (function(file){
-      _comprimirYAgregar(file, function(b64){
-        fotos.push({ data: b64, nombre: file.name || ('foto' + (fotos.length+1) + '.jpg') });
-        if(typeof renderFotos === 'function') renderFotos();
-        var fc = document.getElementById('fotoCount');
-        if(fc) fc.textContent = fotos.length + ' foto' + (fotos.length > 1 ? 's' : '');
-      });
-    })(files[i]);
-  }
-  event.target.value = '';
-}
-
-// ── agregarFotosAlarma — override ────────────────────────────
-function agregarFotosAlarma(event){
-  var files = event.target.files;
-  if(!files || !files.length){ event.target.value = ''; return; }
-  var remaining = MAX_FOTOS_ANDROID - fotosAlarma.length;
-  if(remaining <= 0){
-    showToast('⚠️ Ya tienes ' + MAX_FOTOS_ANDROID + ' fotos de alarma (límite alcanzado)');
-    event.target.value = ''; return;
-  }
-  var toProcess = Math.min(files.length, remaining);
-  if(files.length > remaining)
-    showToast('⚠️ Solo se agregarán ' + remaining + ' foto(s) (máx ' + MAX_FOTOS_ANDROID + ')');
-  console.log('[WA_FRONT] alarm fotos selected:', files.length, '— processing:', toProcess);
-  for(var i = 0; i < toProcess; i++){
-    (function(file){
-      _comprimirYAgregar(file, function(b64){
-        fotosAlarma.push({ data: b64, nombre: file.name || ('foto' + (fotosAlarma.length+1) + '.jpg') });
-        _renderAlarmFotos();
-      });
-    })(files[i]);
-  }
-  event.target.value = '';
-}
-</script>
 <script>
 (function(){
   function t(){var d=new Date(),e=document.getElementById('ppClk');if(e)e.textContent=d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}
@@ -811,10 +743,6 @@ function ppToggle(id){
 <!-- GPS compacto -->
 <div class="gps-bar" id="gpsBar">📡 Obteniendo ubicación GPS...</div>
 <div class="gps-coords" id="gpsCoords"></div>
-<div style="text-align:right;margin:2px 0 4px">
-  <button onclick="document.getElementById('gpsDiagPanel').style.display=document.getElementById('gpsDiagPanel').style.display==='none'?'block':'none'" style="background:none;border:none;color:#9ca3af;font-size:10px;text-decoration:underline;cursor:pointer;padding:2px">🔧 Diagnóstico GPS</button>
-</div>
-<div id="gpsDiagPanel" style="display:none;background:#0d1525;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:11px;color:#cbd5e1;line-height:1.7;font-family:monospace"></div>
 
 <!-- Contador de visitas (oculto, mantiene funcionalidad) -->
 <div id="cnt-panel" class="cnt-panel" style="margin-bottom:10px;display:none!important">
@@ -899,8 +827,53 @@ function ppToggle(id){
     </div>
     <div id="editReporteSub" style="font-size:12px;color:var(--txt2);margin-bottom:16px;font-family:Inter,sans-serif"></div>
 
-    <!-- Campos correctables — generados dinámicamente por JS (abrirEditarReporte) -->
-    <div id="editFieldsContainer"></div>
+    <!-- PTP -->
+    <div style="background:var(--surface2);border-radius:14px;padding:14px 16px;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.08em;margin-bottom:8px">TUBERÍA DE PRODUCCIÓN (PTP)</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1;text-align:center">
+          <div style="font-size:10px;color:var(--txt2);margin-bottom:4px">Valor actual</div>
+          <div id="editPtpOld" style="font-size:18px;font-weight:700;color:var(--txt);text-decoration:line-through;opacity:.5">—</div>
+        </div>
+        <div style="font-size:20px;color:var(--txt2)">→</div>
+        <div style="flex:1;text-align:center">
+          <div style="font-size:10px;color:var(--txt2);margin-bottom:4px">Nuevo valor</div>
+          <input id="editPtpNew" type="number" step="0.1" placeholder="kg/cm²" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--txt);font-size:16px;font-weight:700;text-align:center;font-family:Inter,sans-serif">
+        </div>
+      </div>
+    </div>
+
+    <!-- PTR -->
+    <div style="background:var(--surface2);border-radius:14px;padding:14px 16px;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.08em;margin-bottom:8px">TUBERÍA DE REVESTIMIENTO (PTR)</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1;text-align:center">
+          <div style="font-size:10px;color:var(--txt2);margin-bottom:4px">Valor actual</div>
+          <div id="editPtrOld" style="font-size:18px;font-weight:700;color:var(--txt);text-decoration:line-through;opacity:.5">—</div>
+        </div>
+        <div style="font-size:20px;color:var(--txt2)">→</div>
+        <div style="flex:1;text-align:center">
+          <div style="font-size:10px;color:var(--txt2);margin-bottom:4px">Nuevo valor</div>
+          <input id="editPtrNew" type="number" step="0.1" placeholder="kg/cm²" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--txt);font-size:16px;font-weight:700;text-align:center;font-family:Inter,sans-serif">
+        </div>
+      </div>
+    </div>
+
+    <!-- BLS -->
+    <div style="background:var(--surface2);border-radius:14px;padding:14px 16px;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.08em;margin-bottom:8px">PRODUCCIÓN (BLS)</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1;text-align:center">
+          <div style="font-size:10px;color:var(--txt2);margin-bottom:4px">Valor actual</div>
+          <div id="editBlsOld" style="font-size:18px;font-weight:700;color:var(--txt);text-decoration:line-through;opacity:.5">—</div>
+        </div>
+        <div style="font-size:20px;color:var(--txt2)">→</div>
+        <div style="flex:1;text-align:center">
+          <div style="font-size:10px;color:var(--txt2);margin-bottom:4px">Nuevo valor</div>
+          <input id="editBlsNew" type="number" step="0.5" placeholder="bls" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--txt);font-size:16px;font-weight:700;text-align:center;font-family:Inter,sans-serif">
+        </div>
+      </div>
+    </div>
 
     <!-- Nota -->
     <div style="margin-bottom:16px">
@@ -908,23 +881,7 @@ function ppToggle(id){
       <textarea id="editNota" rows="2" placeholder="Ej: Error de captura, presión real fue..." style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface2);color:var(--txt);font-size:13px;font-family:Inter,sans-serif;resize:none;box-sizing:border-box"></textarea>
     </div>
 
-    <!-- Resumen de confirmación — oculto hasta que el usuario pulse Vista previa -->
-    <button onclick="guardarCorreccionReporte()" id="editPreviewBtn" style="width:100%;padding:15px;border-radius:14px;border:none;background:#3b82f6;color:#fff;font-size:16px;font-weight:800;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1.5px">VER CAMBIOS Y CONFIRMAR</button>
-  </div><!-- /editReporteModal inner -->
-</div><!-- /editReporteModal -->
-
-<!-- Overlay de confirmación — SIBLING de editReporteModal, no child.
-     position:fixed funciona correctamente solo fuera de otro fixed container. -->
-<div id="editConfirmPanel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:10001;align-items:center;justify-content:center;padding:16px">
-  <div style="background:var(--surface);border-radius:20px;padding:20px 18px;width:100%;max-width:420px;max-height:80vh;overflow-y:auto">
-    <div id="editConfirmPanelInner" style="font-size:13px;color:var(--txt)">
-      <div style="font-weight:800;margin-bottom:8px;color:#60a5fa">Se modificarán:</div>
-      <div id="editConfirmChanges"></div>
-      <div style="display:flex;gap:10px;margin-top:14px">
-        <button onclick="document.getElementById('editConfirmPanel').style.display='none';document.getElementById('editPreviewBtn').style.display='block'" style="flex:1;padding:12px;border-radius:12px;border:none;background:var(--surface2);color:var(--txt2);font-size:14px;font-weight:700;cursor:pointer">Cancelar</button>
-        <button onclick="_editConfirmarGuardar()" style="flex:1;padding:12px;border-radius:12px;border:none;background:#3b82f6;color:#fff;font-size:14px;font-weight:800;cursor:pointer">✅ Guardar corrección</button>
-      </div>
-    </div>
+    <button onclick="guardarCorreccionReporte()" style="width:100%;padding:15px;border-radius:14px;border:none;background:#3b82f6;color:#fff;font-size:16px;font-weight:800;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1.5px">GUARDAR CORRECCIÓN</button>
   </div>
 </div>
 
@@ -1003,6 +960,28 @@ function ppToggle(id){
     </div>
   </div>
   <textarea id="medObs" placeholder="Observaciones..." style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--surface2);color:var(--txt);resize:none;height:64px;font-family:'Inter',sans-serif"></textarea>
+
+  <!-- ══ CONTROL OPERATIVO — ESTADO DEL POZO (nuevo, independiente) ══ -->
+  <div class="step-card" style="margin-top:0;border-top:2px solid var(--border)">
+    <div class="step-label">Control Operativo</div>
+    <div class="big-field-label" style="margin-bottom:12px">Estado del Pozo</div>
+    <div style="display:flex;gap:10px;margin-bottom:8px">
+      <button class="nivel-ep-btn" id="nivel-ep-abierto"
+              onclick="selNivelEstadoPozo(this,'Abierto')">
+        🟢<br><span>Abierto</span>
+      </button>
+      <button class="nivel-ep-btn" id="nivel-ep-cerrado"
+              onclick="selNivelEstadoPozo(this,'Cerrado')">
+        🔴<br><span>Cerrado</span>
+      </button>
+      <button class="nivel-ep-btn" id="nivel-ep-intermitente"
+              onclick="selNivelEstadoPozo(this,'Intermitente')">
+        🟡<br><span>Intermitente</span>
+      </button>
+    </div>
+    <input type="hidden" id="nivelEstadoPozo">
+  </div>
+
 </div>
 
 <!-- ══ REPORTE COMPLETO ══ -->
@@ -1120,29 +1099,48 @@ function ppToggle(id){
   <div class="step-card">
     <div class="step-label">Registro de Actividades</div>
 
-    <!-- Checkboxes grandes -->
-    <div class="big-chk" onclick="toggleChk('trabajo')">
-      <div class="big-chk-box" id="icon-trabajo"></div>
-      <div><div class="big-chk-lbl">🔨 Trabajo</div><div class="big-chk-sub">Se realizó trabajo en el pozo</div></div>
+    <!-- Tarjetas grandes seleccionables — reutilizan toggleChk() existente -->
+    <div class="nivel-act-card" id="nivel-card-trabajo" onclick="toggleChk('trabajo')">
+      <div class="nivel-act-check" id="icon-trabajo"></div>
+      <div class="nivel-act-ico">🔨</div>
+      <div class="nivel-act-info">
+        <div class="nivel-act-title">Trabajo</div>
+        <div class="nivel-act-desc">Se realizó trabajo en el pozo</div>
+      </div>
     </div>
-    <div class="big-chk" onclick="toggleChk('drenar')">
-      <div class="big-chk-box" id="icon-drenar"></div>
-      <div><div class="big-chk-lbl">💧 Drenar / Barrido</div><div class="big-chk-sub">Drenado o barrido de líquidos</div></div>
+
+    <div class="nivel-act-card" id="nivel-card-drenar" onclick="toggleChk('drenar')">
+      <div class="nivel-act-check" id="icon-drenar"></div>
+      <div class="nivel-act-ico">💧</div>
+      <div class="nivel-act-info">
+        <div class="nivel-act-title">Drenar / Barrido</div>
+        <div class="nivel-act-desc">Drenado o barrido de líquidos</div>
+      </div>
     </div>
-    <div class="big-chk" onclick="toggleChk('aforo')">
-      <div class="big-chk-box" id="icon-aforo"></div>
-      <div><div class="big-chk-lbl">📏 Aforo / Proyección</div><div class="big-chk-sub">Medición de producción</div></div>
+
+    <div class="nivel-act-card" id="nivel-card-aforo" onclick="toggleChk('aforo')">
+      <div class="nivel-act-check" id="icon-aforo"></div>
+      <div class="nivel-act-ico">📏</div>
+      <div class="nivel-act-info">
+        <div class="nivel-act-title">Aforo / Proyección</div>
+        <div class="nivel-act-desc">Medición de producción</div>
+      </div>
     </div>
-    <div class="aforo-extra" id="aforo-input">
+    <div class="aforo-extra" id="aforo-input" style="display:none">
       <div class="big-field-label">Cantidad BPH *</div>
       <input class="big-input" type="number" id="regAforo" placeholder="" step="0.1">
     </div>
-    <div class="big-chk" onclick="toggleChk('intermitente')">
-      <div class="big-chk-box" id="icon-intermitente"></div>
-      <div><div class="big-chk-lbl">🔄 Intermitente</div><div class="big-chk-sub">Aporte intermitente</div></div>
+
+    <div class="nivel-act-card" id="nivel-card-intermitente" onclick="toggleChk('intermitente')">
+      <div class="nivel-act-check" id="icon-intermitente"></div>
+      <div class="nivel-act-ico">🔄</div>
+      <div class="nivel-act-info">
+        <div class="nivel-act-title">Intermitente</div>
+        <div class="nivel-act-desc">Aporte intermitente</div>
+      </div>
     </div>
 
-    <!-- Estado del pozo -->
+    <!-- Estado del pozo — EXISTENTE, sin cambios -->
     <div class="big-field-label" style="margin-top:16px">¿Cómo está el pozo?</div>
     <div style="display:flex;gap:10px;margin-bottom:16px">
       <button class="big-status-btn green" id="btn-estable"   onclick="selEstado(this,'Estable')">✅<br>Estable</button>
@@ -1925,59 +1923,8 @@ if(typeof WELL_COORDS_ALL!=='undefined' && !WELL_COORDS_ALL['131']){
   WELL_COORDS_ALL['131']={lat:17.942964,lon:-94.287442};
 }
 var la=0,lo=0,ac=0,REC='',nightMode=false;
-// FIX GPS Android: detección de plataforma — Android sin red necesita
-// cold-start GNSS puro (sin AGPS), mucho más lento que iOS.
-var _isAndroidUA = /android/i.test(navigator.userAgent || '');
-var GPS_WAIT_MS  = _isAndroidUA ? 35000 : 5000; // 35s Android (espera GNSS real sin red), 5s resto (iPhone ya funciona)
-// Última ubicación válida conocida — persistente durante la sesión y en localStorage.
-var _lastGps = { lat:null, lon:null, acc:null, ts:0, source:null };
-(function _lastGpsRestore(){
-  try{
-    var saved = JSON.parse(localStorage.getItem('cuichapa_last_gps')||'null');
-    if(saved && saved.lat && saved.lon) _lastGps = saved;
-  }catch(e){}
-})();
-function _lastGpsSave(lat,lon,acc,source){
-  _lastGps = { lat:lat, lon:lon, acc:acc, ts:Date.now(), source:source };
-  try{ localStorage.setItem('cuichapa_last_gps', JSON.stringify(_lastGps)); }catch(e){}
-}
-var _esperandoGPSEnvio = false; // anti-doble-envío mientras se espera GPS
-var _gpsSourceForReport     = 'none';  // 'fresh' | 'recent' | 'none' — fuente del último fix usado
-var _gpsCapturedAtForReport = null;    // ISO timestamp de cuándo se capturó esa ubicación
-var _gpsSinValidarConfirmado = false;  // true SOLO durante la construcción del mensaje tras "Enviar sin GPS"
-// ── Diagnóstico GPS visible en pantalla ──────────────────────────
-var _gpsLastError = null; // 'PERMISSION_DENIED' | 'POSITION_UNAVAILABLE' | 'TIMEOUT' | null
-var GPS_SUPERVISOR_PIN = '4477'; // clave para habilitar "enviar sin GPS" en operación normal
-function _actualizarDiagnosticoGPS(){
-  var panel = document.getElementById('gpsDiagPanel');
-  if(!panel) return;
-  var edadTxt = '—';
-  if(_lastGps.ts){
-    var edadS = Math.round((Date.now() - _lastGps.ts)/1000);
-    edadTxt = edadS + 's';
-  }
-  var permTxt = '—';
-  if(navigator.permissions && navigator.permissions.query){
-    navigator.permissions.query({name:'geolocation'}).then(function(r){
-      var pEl = document.getElementById('gpsDiagPerm');
-      if(pEl) pEl.textContent = r.state;
-    }).catch(function(){});
-  }
-  var posibleAvion = navigator.onLine === false;
-  panel.innerHTML =
-    'Permiso: <span id="gpsDiagPerm">' + permTxt + '</span><br>' +
-    'lat: ' + (la || '—') + '<br>' +
-    'lon: ' + (lo || '—') + '<br>' +
-    'precisión: ' + (ac ? '±'+ac+'m' : '—') + '<br>' +
-    'edad última ubicación: ' + edadTxt + '<br>' +
-    'fuente: ' + (_gpsSourceForReport || 'none') + '<br>' +
-    'último error: ' + (_gpsLastError || '—') + '<br>' +
-    'posible modo avión / sin red: ' + (posibleAvion ? 'SÍ' : 'no') + '<br>' +
-    'HTTPS: ' + (location.protocol === 'https:' ? 'sí' : 'NO ⚠️') + '<br>' +
-    'navigator.geolocation: ' + (navigator.geolocation ? 'disponible' : 'NO DISPONIBLE ⚠️') + '<br>' +
-    'plataforma: ' + (_isAndroidUA ? 'Android' : 'otro');
-}
 var checks={trabajo:false,drenar:false,aforo:false,intermitente:false};
+var estadoPozo=''; // nuevo campo independiente de Estable/Inestable
 var _nivTipo='ft', _medTipo='ft';
 // ← movido a config.js → CICLOS
 // ← movido a config.js → THEMES
@@ -1999,51 +1946,14 @@ function toggleMode(){
 }
 try{if(localStorage.getItem('cuichapa_mode')==='night'){nightMode=true;document.body.classList.add('night');document.getElementById('modeBtn').textContent='☀️ Día';}}catch(e){}
 
-// FIX — botón "Ver en Maps": geo: nativo en Android (igual que Google Maps,
-// no requiere internet, abre la app de mapas con el GPS ya capturado) con
-// fallback automático a maps.google.com si no hay app que maneje geo:.
-// No reemplaza la captura de GPS — solo permite verificar visualmente.
-function _actualizarMapsLink(lat, lon){
-  var link = document.getElementById('mapsLink');
-  if(!link) return;
-  if(!lat || !lon){
-    link.textContent = '📍 Obteniendo GPS…';
-    link.href = '#';
-    link.onclick = function(e){ e.preventDefault(); showToast('📍 Obteniendo GPS… espera unos segundos'); };
-    return;
-  }
-  link.textContent = '📍 Ver mi ubicación en Google Maps';
-  var webUrl = 'https://maps.google.com/?q=' + lat + ',' + lon;
-  if(_isAndroidUA){
-    var geoUrl = 'geo:' + lat + ',' + lon + '?q=' + lat + ',' + lon;
-    link.href = geoUrl;
-    link.onclick = function(e){
-      e.preventDefault();
-      var _hiddenAt = Date.now();
-      window.location.href = geoUrl;
-      // Si tras 800ms seguimos en la pestaña (ninguna app de mapas tomó el
-      // intent geo:), caer al enlace web — mismo patrón que usa Maps/WhatsApp.
-      setTimeout(function(){
-        if(!document.hidden && (Date.now() - _hiddenAt) >= 750){
-          window.open(webUrl, '_blank');
-        }
-      }, 800);
-    };
-  } else {
-    link.href = webUrl;
-    link.onclick = null; // comportamiento normal de enlace (ya funciona en iPhone)
-  }
-}
-
 function gpsOk(p){
   la=p.coords.latitude;lo=p.coords.longitude;ac=Math.round(p.coords.accuracy);
-  _lastGpsSave(la,lo,ac,'getCurrentPosition');
   var gb=document.getElementById('gpsBar');if(gb)gb.className='gps-bar ok';
   document.getElementById('gpsBar').innerHTML='✅ GPS listo · ±'+ac+' metros';
   document.getElementById('gpsCoords').style.display='block';
   document.getElementById('gpsCoords').textContent='📍 '+la.toFixed(6)+', '+lo.toFixed(6);
   document.getElementById('mapsLink').style.display='block';
-  _actualizarMapsLink(la, lo);
+  document.getElementById('mapsLink').href='https://maps.google.com/?q='+la+','+lo;
 }
 function gpsErr(){
   var gb2=document.getElementById('gpsBar');if(gb2)gb2.className='gps-bar err';
@@ -2055,13 +1965,10 @@ if(navigator.geolocation){
   navigator.geolocation.getCurrentPosition(gpsOk,gpsErr,{enableHighAccuracy:true,timeout:15000,maximumAge:0});
   // Actualización continua
   navigator.geolocation.watchPosition(
-    function(p){ la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy); _lastGpsSave(la,lo,ac,'watchPosition'); _actualizarMapsLink(la,lo); },
+    function(p){ la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy); },
     function(){},
     {enableHighAccuracy:true, maximumAge:10000, timeout:15000}
   );
-  // Botón "Ver en Maps" visible desde el inicio, en estado de espera.
-  var _mlInit = document.getElementById('mapsLink');
-  if(_mlInit){ _mlInit.style.display='block'; _actualizarMapsLink(0,0); }
 } else { gpsErr(); }
 
 function showTab(id,btn){
@@ -2152,11 +2059,8 @@ function verificarPermisos(){
           if(gpsValIcon) gpsValIcon.textContent = '⚠️';
           if(gpsValTxt)  gpsValTxt.style.color = '#facc15';
           if(gpsValTxt)  gpsValTxt.textContent = 'Buscando...';
-          // FIX GPS Android: 8s era insuficiente para cold-start GNSS sin red.
-          // Usa el mismo timeout calibrado por plataforma que enviarTodo().
           navigator.geolocation.getCurrentPosition(
             function(p){ la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy);
-              _lastGpsSave(la,lo,ac,'getCurrentPosition');
               if(gpsValIcon) gpsValIcon.textContent='✅';
               if(gpsValTxt){ gpsValTxt.style.color='#4ade80'; gpsValTxt.textContent='±'+ac+'m'; }
             },
@@ -2164,7 +2068,7 @@ function verificarPermisos(){
               if(gpsValIcon) gpsValIcon.textContent='❌';
               if(gpsValTxt){ gpsValTxt.style.color='#f87171'; gpsValTxt.textContent='Sin señal'; }
             },
-            {enableHighAccuracy:true,timeout:GPS_WAIT_MS,maximumAge:0}
+            {enableHighAccuracy:true,timeout:8000,maximumAge:0}
           );
         }
       } else {
@@ -2458,46 +2362,6 @@ function selTipoNivel(tipo, btn){
   var ctm=document.getElementById('nivCTM');
   if(ctm&&ctm.value) cmABls(ctm.value,'nivBLS');
 }
-// ── Edición de Guardia: variables y funciones escoped (prefijo ec_) ──────
-var _ecMedTipo = 'ft'; // tipo del tanque en el modal de corrección de Guardia
-function cmABlsEc(cm){
-  // Misma lógica que cmABls pero lee _ecMedTipo y escribe en ec_medBarriles
-  var blsEl = document.getElementById('ec_medBarriles');
-  if(!blsEl) return;
-  var cmVal = parseFloat(cm);
-  if(isNaN(cmVal) || cmVal <= 0){ blsEl.value = ''; return; }
-  if(W === '376'){ blsEl.value = (cmVal * 1.6).toFixed(1); return; }
-  var esPresa = _ecMedTipo === 'pm';
-  if(esPresa){
-    blsEl.value = (cmVal * 0.67).toFixed(1);
-  } else {
-    var cmInt = Math.round(cmVal);
-    if(CM_BLS_TABLE[cmInt] !== undefined){
-      blsEl.value = CM_BLS_TABLE[cmInt];
-    } else if(cmInt > 255){
-      blsEl.value = (CM_BLS_TABLE[255] + (cmInt - 255) * 1.9).toFixed(1);
-    } else {
-      var lo = Math.floor(cmVal), hi = Math.ceil(cmVal);
-      var blo = CM_BLS_TABLE[lo]||0, bhi = CM_BLS_TABLE[hi]||blo;
-      blsEl.value = (blo + (bhi-blo)*(cmVal-lo)).toFixed(1);
-    }
-  }
-}
-function selTipoGuardiaEdit(tipo, btn){
-  _ecMedTipo = tipo;
-  ['ec_btn-med-ft','ec_btn-med-pm'].forEach(function(id){
-    var el = document.getElementById(id);
-    if(!el) return;
-    var isFt = id.indexOf('-ft') !== -1;
-    var activo = (tipo === 'ft') === isFt;
-    el.style.background  = activo ? 'var(--accent2)' : 'var(--surface2)';
-    el.style.color       = activo ? '#fff' : 'var(--txt)';
-    el.style.borderColor = activo ? 'var(--accent2)' : 'var(--border)';
-  });
-  var ctmEl = document.getElementById('ec_medCentimetros');
-  if(ctmEl && ctmEl.value) cmABlsEc(ctmEl.value);
-}
-
 function selTipoGuardia(tipo, btn){
   _medTipo = tipo;
   var ft=document.getElementById('btn-med-ft'), pm=document.getElementById('btn-med-pm');
@@ -2544,6 +2408,23 @@ function peraLinea(){
   return parts.length ? '🛢 *Cond. de Pera*\n'+parts.map(function(p){ return (p.includes('✓')?'✅':'❌')+' '+p.replace(': ✓','').replace(': ✗',''); }).join('\n') : '';
 }
 
+function selNivelEstadoPozo(btn, val){
+  // Radio group: solo uno activo a la vez
+  // Botones del grupo Estado del Pozo en Nivel de Guardia
+  var btns=['nivel-ep-abierto','nivel-ep-cerrado','nivel-ep-intermitente'];
+  btns.forEach(function(id){
+    var b=document.getElementById(id);
+    if(!b) return;
+    b.classList.remove('nivel-ep-sel','nivel-ep-sel-green','nivel-ep-sel-red','nivel-ep-sel-amber');
+  });
+  if(btn.id==='nivel-ep-abierto')     btn.classList.add('nivel-ep-sel','nivel-ep-sel-green');
+  else if(btn.id==='nivel-ep-cerrado') btn.classList.add('nivel-ep-sel','nivel-ep-sel-red');
+  else                                 btn.classList.add('nivel-ep-sel','nivel-ep-sel-amber');
+  estadoPozo = val;
+  var hid=document.getElementById('nivelEstadoPozo');
+  if(hid) hid.value=val;
+}
+
 function selEstado(btn, val){
   document.querySelectorAll('#btn-estable,#btn-inestable').forEach(function(b){
     b.classList.remove('sel-a','sel-b');
@@ -2579,9 +2460,12 @@ function toggleChk(key){
   checks[key]=!checks[key];
   var icon=document.getElementById('icon-'+key);
   if(icon){
-    icon.textContent = checks[key] ? '✓' : '';
+    icon.textContent = checks[key] ? '\u2713' : '';
     icon.classList.toggle('checked', checks[key]);
   }
+  // Actualizar estado visual de la tarjeta grande (nivel-act-card)
+  var card=document.getElementById('nivel-card-'+key);
+  if(card) card.classList.toggle('nivel-act-sel', checks[key]);
   if(key==='aforo'){
     var af=document.getElementById('aforo-input');
     if(af) af.style.display=checks[key]?'block':'none';
@@ -2598,11 +2482,7 @@ function _calcDist(wc){
 // ← movido a utils.js → _rangoLabel
 
 function gpsLine(){
-  if(!la||!lo){
-    return _gpsSinValidarConfirmado
-      ? 'GPS: No disponible — enviado sin validación de ubicación'
-      : 'GPS: No disponible';
-  }
+  if(!la||!lo) return 'GPS: No disponible';
   var base='GPS: '+la.toFixed(6)+', '+lo.toFixed(6)+' (±'+ac+'m)\n🗺 maps.google.com/?q='+la+','+lo;
   var wc = W && WELL_COORDS_ALL[W] ? WELL_COORDS_ALL[W] : null;
   if(wc){
@@ -2765,211 +2645,7 @@ function calcDistanciaPozo(){
   return Math.round(_calcDist(WELL_COORDS_ALL[W]));
 }
 
-// FIX QUIRÚRGICO GPS — función COMPARTIDA de espera de GPS real.
-// Android debe comportarse como iPhone: capturar la ubicación REAL del
-// dispositivo (GNSS), aunque no haya señal, esperando el tiempo necesario
-// (hasta 35s en Android). La caché de última ubicación (≤60s) es SOLO el
-// último recurso si la captura activa se agota — nunca el camino principal.
-// IMPORTANTE: cb() NO se ejecuta hasta tener la/lo válidos O hasta que el
-// usuario confirme explícitamente "Enviar sin GPS" — ningún caller puede
-// armar mensaje ni abrir preview antes de eso.
-// No toca enviarAlarma() (ya tiene su propio patrón funcional).
-// ════════════════════════════════════════════════════════════════
-// requireGpsBeforeReport(callback, options) — GATE ÚNICO Y OBLIGATORIO
-// Ningún reporte (CO, Nivel, Guardia, Cabezal, Estación, Nota) puede
-// armar mensaje ni abrir preview sin pasar por aquí. Espera hasta 90s
-// en Android (cold-start GNSS real, sin red). Sin "enviar sin GPS"
-// automático — solo con clave de supervisor.
-// options.allowSkip (interno, no usar desde fuera): true únicamente
-// tras validar el PIN de supervisor.
-// ════════════════════════════════════════════════════════════════
-var GPS_WAIT_MS_ANDROID = 90000; // 90s — espera real GNSS sin red en Android
-function requireGpsBeforeReport(cb, options){
-  options = options || {};
-  var waitMs = _isAndroidUA ? GPS_WAIT_MS_ANDROID : GPS_WAIT_MS;
-
-  // GPS ya disponible ahora mismo (watchPosition continuo ya tiene fix) — fresh.
-  if(la !== 0 && lo !== 0){
-    _gpsSourceForReport = 'fresh';
-    _gpsCapturedAtForReport = new Date().toISOString();
-    _actualizarDiagnosticoGPS();
-    cb();
-    return;
-  }
-
-  // Anti-doble-envío: si ya se está esperando GPS, no iniciar otra espera/captura.
-  if(_esperandoGPSEnvio){
-    showToast('📍 Buscando GPS real… espera, ya está en proceso');
-    return; // NO se llama cb — el usuario debe esperar a que termine la espera en curso
-  }
-
-  if(!navigator.geolocation){
-    _gpsLastError = 'POSITION_UNAVAILABLE';
-    _gpsSourceForReport = 'none';
-    _actualizarDiagnosticoGPS();
-    _mostrarAvisoSinGPS(cb);
-    return;
-  }
-
-  _esperandoGPSEnvio = true;
-  _gpsLastError = null;
-  var _etStart = Date.now();
-  var gb = document.getElementById('gpsBar');
-  if(gb){ gb.className='gps-bar'; gb.innerHTML='📡 Buscando GPS real del dispositivo… sal al exterior y no te muevas (0s)'; }
-
-  // Contador de tiempo transcurrido visible mientras se espera.
-  var _etTickInterval = setInterval(function(){
-    var secs = Math.round((Date.now() - _etStart)/1000);
-    if(gb) gb.innerHTML = '📡 Buscando GPS real del dispositivo… sal al exterior y no te muevas (' + secs + 's)';
-  }, 1000);
-
-  var _etDone   = false;
-  var _etWatchId = null;
-  var _etTimeout = null;
-
-  function _etCleanup(){
-    if(_etTimeout !== null){ clearTimeout(_etTimeout); _etTimeout = null; }
-    if(_etWatchId !== null){ navigator.geolocation.clearWatch(_etWatchId); _etWatchId = null; }
-    if(_etTickInterval !== null){ clearInterval(_etTickInterval); _etTickInterval = null; }
-  }
-
-  function _etFinish(lat, lon, acc, source){
-    if(_etDone) return; // garantiza UN solo resultado — sin doble envío
-    _etDone = true;
-    _esperandoGPSEnvio = false;
-    _etCleanup();
-    if(lat !== null){
-      la = lat; lo = lon; ac = acc;
-      _lastGpsSave(la, lo, ac, source === 'recent' ? 'cache' : 'getCurrentPosition');
-      _gpsSourceForReport = source;
-      _gpsCapturedAtForReport = new Date().toISOString();
-      _actualizarMapsLink(la, lo);
-      _actualizarDiagnosticoGPS();
-      if(source === 'recent'){
-        showToast('📍 Usando última ubicación reciente (no es un fix nuevo)');
-      }
-      cb();
-    } else {
-      _gpsSourceForReport = 'none';
-      _actualizarDiagnosticoGPS();
-      var gb2 = document.getElementById('gpsBar');
-      if(gb2){ gb2.className='gps-bar err'; gb2.innerHTML='⚠️ Android no entregó ubicación GPS'; }
-      if(_isAndroidUA){
-        alert('Android no entregó ubicación GPS. Abre Google Maps hasta que aparezca el punto azul, vuelve a la app e intenta de nuevo.');
-      }
-      _mostrarAvisoSinGPS(cb);
-    }
-  }
-
-  // Se agota la espera completa (90s Android / 5s resto). Recién ahí se
-  // evalúa la caché (≤60s) como ÚLTIMO recurso — nunca antes.
-  _etTimeout = setTimeout(function(){
-    _gpsLastError = 'TIMEOUT';
-    var _cacheOk = _lastGps.lat && _lastGps.lon && (Date.now() - _lastGps.ts) < 60*1000;
-    if(_cacheOk) _etFinish(_lastGps.lat, _lastGps.lon, _lastGps.acc || 50, 'recent');
-    else _etFinish(null, null, null, 'none');
-  }, waitMs);
-
-  function _etError(err){
-    if(err && err.code === 1) _gpsLastError = 'PERMISSION_DENIED';
-    else if(err && err.code === 2) _gpsLastError = 'POSITION_UNAVAILABLE';
-    else if(err && err.code === 3) _gpsLastError = 'TIMEOUT';
-    _actualizarDiagnosticoGPS();
-    // Permiso denegado: no tiene sentido seguir esperando, terminar ya.
-    if(err && err.code === 1){
-      var _cacheOk2 = _lastGps.lat && _lastGps.lon && (Date.now() - _lastGps.ts) < 60*1000;
-      if(_cacheOk2) _etFinish(_lastGps.lat, _lastGps.lon, _lastGps.acc || 50, 'recent');
-      else _etFinish(null, null, null, 'none');
-    }
-    // POSITION_UNAVAILABLE/TIMEOUT del watch o de getCurrentPosition: dejar
-    // que el otro método o el timeout general decidan, no terminar aún.
-  }
-
-  // getCurrentPosition + watchPosition EN PARALELO: el que responda primero
-  // gana (vía _etFinish, protegido contra doble ejecución). No usar
-  // maximumAge:0 como única estrategia — watchPosition acepta hasta 5s de
-  // antigüedad del sistema, lo que puede acelerar el primer resultado real
-  // sin sacrificar que sea una ubicación genuina del dispositivo.
-  navigator.geolocation.getCurrentPosition(
-    function(p){ _etFinish(p.coords.latitude, p.coords.longitude, Math.round(p.coords.accuracy), 'fresh'); },
-    _etError,
-    {enableHighAccuracy:true, timeout:waitMs, maximumAge:0}
-  );
-  _etWatchId = navigator.geolocation.watchPosition(
-    function(p){ _etFinish(p.coords.latitude, p.coords.longitude, Math.round(p.coords.accuracy), 'fresh'); },
-    _etError,
-    {enableHighAccuracy:true, timeout:waitMs, maximumAge:5000}
-  );
-}
-
-// Alias de compatibilidad — todo el código existente que ya llama
-// _esperarGPSReal() automáticamente queda cubierto por el gate único.
-function _esperarGPSReal(cb){ requireGpsBeforeReport(cb); }
-
 function enviarTodo(soloPreview){
-  _esperarGPSReal(function(){ _enviarTodoInner(soloPreview); });
-}
-
-// Botón único del overlay GPS: decide si requiere PIN de supervisor
-// (caso "sin GPS") o no (caso "fuera de radio", GPS válido, decisión normal
-// del recorredor).
-function _gpsWarnConfirmar(){
-  var gpsWNoGps = document.getElementById('gpsWarnBodyNoGps');
-  var esCasoSinGPS = gpsWNoGps && gpsWNoGps.style.display !== 'none';
-
-  if(esCasoSinGPS){
-    var pin = prompt('Para enviar un reporte SIN GPS se requiere clave de supervisor:');
-    if(pin !== GPS_SUPERVISOR_PIN){
-      if(pin !== null) showToast('❌ Clave incorrecta — reporte no enviado');
-      return; // cancela: no se llama el callback, no hay envío
-    }
-  }
-
-  document.getElementById('gpsWarnOverlay').style.display = 'none';
-  if(window._gpsContinueCallback){
-    var cb = window._gpsContinueCallback;
-    window._gpsContinueCallback = null;
-    cb();
-  } else {
-    _continuarEnvio();
-  }
-}
-
-// Advertencia explícita antes de enviar sin GPS — reutiliza el overlay
-// existente de aviso GPS (gpsWarnOverlay), sin crear UI nueva.
-// Advertencia explícita antes de enviar sin GPS — reutiliza el overlay
-// existente de aviso GPS (gpsWarnOverlay), sin crear UI nueva.
-// cb genérico: se ejecuta SOLO si el usuario confirma "Enviar de todas
-// formas"; si cancela, no se envía nada.
-function _mostrarAvisoSinGPS(cb){
-  var gb = document.getElementById('gpsBar');
-  if(gb){ gb.className='gps-bar err'; gb.innerHTML='⚠️ No se pudo obtener GPS real — activa ubicación en tu celular'; }
-  var gpsWO = document.getElementById('gpsWarnOverlay');
-  var gpsWT = document.getElementById('gpsWarnTitulo');
-  var gpsWRadio = document.getElementById('gpsWarnBodyRadio');
-  var gpsWNoGps = document.getElementById('gpsWarnBodyNoGps');
-  if(gpsWO){
-    if(gpsWT) gpsWT.textContent = 'Sin ubicación GPS';
-    if(gpsWRadio) gpsWRadio.style.display = 'none';
-    if(gpsWNoGps) gpsWNoGps.style.display = 'block';
-    gpsWO.style.display = 'flex';
-    window._gpsContinueCallback = function(){
-      // El usuario confirmó explícitamente enviar sin GPS — el mensaje
-      // debe dejarlo claro. La bandera se limpia inmediatamente después
-      // de construir el mensaje (gpsLine corre de forma síncrona dentro de cb).
-      _gpsSinValidarConfirmado = true;
-      cb();
-      _gpsSinValidarConfirmado = false;
-    };
-  } else {
-    // Fallback si el overlay no existe en el DOM por algún motivo
-    _gpsSinValidarConfirmado = true;
-    cb();
-    _gpsSinValidarConfirmado = false;
-  }
-}
-
-function _enviarTodoInner(soloPreview){
   if(!REC){showToast('⚠️ Selecciona tu nombre primero');return}
   // Validar que se haya escogido un pozo
   if(!W || W==='???'){showToast('⚠️ Selecciona el pozo antes de enviar');return}
@@ -3012,11 +2688,6 @@ function _enviarTodoInner(soloPreview){
     if(gpsWD) gpsWD.textContent = distTxt2 || '?';
     if(gpsWP) gpsWP.textContent = nombreStr;
     if(gpsWO){
-      var _gwR = document.getElementById('gpsWarnBodyRadio');
-      var _gwN = document.getElementById('gpsWarnBodyNoGps');
-      if(_gwR) _gwR.style.display = 'block';
-      if(_gwN) _gwN.style.display = 'none';
-      if(gpsWT) gpsWT.textContent = 'Fuera del rango del pozo';
       gpsWO.style.display = 'flex';
       window._gpsContinueCallback = function(){ _continuarEnvio(); };
     }
@@ -3026,29 +2697,6 @@ function _enviarTodoInner(soloPreview){
 }
 
 // Continuación real del envío (después de pasar el aviso GPS)
-
-// Identidad visual por recorredor para mensajes WhatsApp
-function _recNom(n2){
-  var n=(n2||'').toUpperCase().trim();
-  if(n==='MANRIQUE'||n==='MIGUEL'||n==='M') return '🟢 MANRIQUE 🟢';
-  if(n==='JUANCARLOS'||n==='JUAN CARLOS'||n==='JC') return '🔵 JUAN CARLOS 🔵';
-  if(n==='LUISCARLOS'||n==='LUIS CARLOS'||n==='LUIS'||n==='L') return '🟠 LUIS CARLOS 🟠';
-  if(n==='CIRILO'||n==='C') return '🟣 CIRILO 🟣';
-  return '⚪ '+n2+' ⚪';
-}
-function _recHeader(nombre){
-  var n=(nombre||'').toUpperCase().trim();
-  if(n==='MANRIQUE'||n==='MIGUEL'||n==='M')
-    return '🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩\n🌿👷  MANRIQUE  👷🌿\n🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩';
-  if(n==='JUANCARLOS'||n==='JUAN CARLOS'||n==='JC')
-    return '🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵\n⚙️👷  JUAN CARLOS  👷⚙️\n🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵';
-  if(n==='LUISCARLOS'||n==='LUIS CARLOS'||n==='LUIS'||n==='L')
-    return '🟨⬛🟨⬛🟨⬛🟨⬛🟨⬛\n🛢👷  LUIS CARLOS  👷🛢\n🟨⬛🟨⬛🟨⬛🟨⬛🟨⬛';
-  if(n==='CIRILO'||n==='C')
-    return '🟪🟪🟪🟪🟪🟪🟪🟪🟪🟪\n🛰👷  CIRILO  👷🛰\n🟪🟪🟪🟪🟪🟪🟪🟪🟪🟪';
-  return '⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜\n👷  '+nombre+'  👷\n⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜';
-}
-
 function _continuarEnvio(){
   if(!REC||!W||W==='???') return;
   var ci=getCicloInfo(REC);
@@ -3060,7 +2708,7 @@ function _continuarEnvio(){
     var hr2=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
     // GPS en tiempo real del recorredor
     var gpsLinea2 = la ? gpsLine() : '';
-    var msg2='🌙 *NIVELES DE GUARDIA*\n🛢 Pozo: *C-'+W+'*\n👷 Recorredor: '+_recNom(REC)+'\n📅 '+now()+'\n'
+    var msg2='🌙 *NIVELES DE GUARDIA*\n🛢 Pozo: *C-'+W+'*\n👷 Recorredor: '+REC+'\n📅 '+now()+'\n'
       +'══════════════════\n'
       +(medBls?'🛢 Barriles: '+medBls+'\n':'')
       +(medCm?'📐 Centímetros: '+medCm+'\n':'')
@@ -3085,7 +2733,7 @@ function _continuarEnvio(){
   }
 
   // ── MODO COMPLETO ──
-  var msg='📋 *REPORTE DE VISITA*\n🛢 Pozo: *C-'+W+'*\n👷 Recorredor: '+_recNom(REC)+'\n📅 '+now()+'\n';
+  var msg='📋 *REPORTE DE VISITA*\n🛢 Pozo: *C-'+W+'*\n👷 Recorredor: '+REC+'\n📅 '+now()+'\n';
   var ok=false;
   var est=v('coEstatus'),flu=v('coFlujo'),sis=v('coSistema');
   if(est||flu||sis){
@@ -3185,7 +2833,8 @@ function resetFormulario(){
     'coTP','coLDD','coTR','coLBN','coKimray','coConico','coStarpack','coTrVuelta',
     'coPTR_bm','coPresion','coEmb','coCarrera','coObs',
     'medBarriles','medCentimetros','medObs',
-    'regTrabajo','regDrenar','regAforo','regIntermitente','regObs'];
+    'regTrabajo','regDrenar','regAforo','regIntermitente','regObs',
+    'nivelEstadoPozo'];
   inputs.forEach(function(id){
     var el = document.getElementById(id);
     if(el) el.value = '';
@@ -3194,6 +2843,24 @@ function resetFormulario(){
   document.querySelectorAll('.big-status-btn.active, .big-status-btn.sel-a, .big-status-btn.sel-b, .big-status-btn.sel-c, .alarm-opt.selected').forEach(function(b){
     b.classList.remove('active','sel-a','sel-b','sel-c','selected');
   });
+  // Limpiar Estado del Pozo (Nivel de Guardia)
+  estadoPozo = '';
+  var nivelEpEl = document.getElementById('nivelEstadoPozo');
+  if(nivelEpEl) nivelEpEl.value = '';
+  ['nivel-ep-abierto','nivel-ep-cerrado','nivel-ep-intermitente'].forEach(function(id){
+    var b=document.getElementById(id);
+    if(b) b.classList.remove('nivel-ep-sel','nivel-ep-sel-green','nivel-ep-sel-red','nivel-ep-sel-amber');
+  });
+  // Limpiar tarjetas de actividades (visual)
+  ['trabajo','drenar','aforo','intermitente'].forEach(function(k){
+    checks[k]=false;
+    var icon=document.getElementById('icon-'+k);
+    if(icon){ icon.textContent=''; icon.classList.remove('checked'); }
+    var card=document.getElementById('nivel-card-'+k);
+    if(card) card.classList.remove('nivel-act-sel');
+  });
+  var afEl=document.getElementById('aforo-input'); if(afEl) afEl.style.display='none';
+  var afVal=document.getElementById('regAforo'); if(afVal) afVal.value='';
   // Ocultar secciones condicionales
   ['cond-estrangulador','cond-franco','cond-bnfy','cond-bm','cond-bn-extra'].forEach(function(id){
     var el = document.getElementById(id);
@@ -3592,7 +3259,6 @@ var FB_CONFIG = {
 var FCM_VAPID = 'BPDP_k_ctkFgMwXdpdahv5I2pNU8s7Us45ARF2AfpXcRJr9za_jFKPrHoX8sTjfubhA6Sb_Txz4nugU44AbIgmI';
 var fbApp = null;
 var fbDB  = null;
-var fbConnected = false; // estado REAL de conexión RTDB (no solo SDK cargado)
 
 // ══ MODO ALARMA ══════════════════════════════════
 var alarmTipoSeleccionado = '';
@@ -3732,12 +3398,6 @@ function alarmCcVerificar(){
   if(!navigator.onLine){ showToast('⚠️ Sin señal todavía'); return; }
   _alarmCcSet('Msg','⏳','Verificando y reenviando...');
   _alarmCcSet('Foto','⏳','Verificando...');
-  console.warn('[ALARM_RETRY_BLOCKED] alarmCcVerificar ya no usa UltraMsg directo. CF maneja reintentos.');
-  if(fbDB){
-    fbDB.ref('alarmas/'+_alarmLastReporteId).update({whatsappStatus:'pending', whatsappSent:false});
-  }
-  _alarmCcSet('Msg','☁️','Reintento enviado al servidor...');
-  return;
   enviarConUltramsg(_alarmLastReporteId, function(ok){
     actualizarBadgeHistorial();
     if(ok){
@@ -3792,9 +3452,7 @@ function enviarAlarma(){
     // Guardar local + historial
     var arr = getAlarmasLocales(); arr.unshift(alarmaData); saveAlarmasLocales(arr);
     var fotosCopy = fotosAlarma.slice();
-    console.log('[WA_FRONT] alarm saving fotos:', fotosCopy.length);
-    /* guardarReporte de alarma desactivado: no meter alarmas a cola normal */
-    /* guardarReporte({
+    guardarReporte({
       id:           alarmaData.id,
       fecha:        alarmaData.fecha,
       pozo:         lugar,
@@ -3806,11 +3464,11 @@ function enviarAlarma(){
       intentos:     0,
       esAlarma:     true,
       tipoAlarma:   tipoCapturado
-    }); */
+    });
     _alarmLastReporteId = alarmaData.id;
 
     // Firebase push
-    /* Escritura inicial de alarma desactivada: se escribe una sola vez abajo con whatsappStatus:'pending' */
+    if(fbDB){ fbDB.ref('alarmas/'+alarmaData.id).set(alarmaData).catch(function(){}); enviarPushATodos(alarmaData); }
     // Escribir alarma activa en config para que todos los dispositivos la vean
     if(fbDB){ fbDB.ref('config/alarma_activa').set({
       id: alarmaData.id,
@@ -3854,17 +3512,18 @@ function enviarAlarma(){
       _alarmCcSet('Msg','⏳','Enviando alerta al grupo...');
       _alarmCcSet('Foto','⏳', nFotos>0?'Enviando '+nFotos+' foto'+(nFotos>1?'s':'')+'...':'Sin fotos adjuntas');
       // Alarma → Firebase → Cloud Function → WhatsApp (envío único)
+      alarmaData.msg               = msg;
+      alarmaData.fotos             = fotosCopy;
+      alarmaData.pozo              = lugar;
+      alarmaData.recorredor        = quien;
       alarmaData.whatsappStatus    = 'pending';
       alarmaData.whatsappSent      = false;
       alarmaData.whatsappDedupeKey = String(alarmaData.id);
       alarmaData.whatsappAttempts  = 0;
-      // ALARMA: solo se escribe en /alarmas.
-      // No usar guardarReporte() aquí para evitar doble envío por /reportes y /alarmas.
-      alarmaData.fotos  = fotosCopy;
-      alarmaData.nFotos = fotosCopy.length;
-      alarmaData.msg = msg;
+      guardarReporte(alarmaData);
       if(fbDB){
         fbDB.ref('alarmas/'+alarmaData.id).set(alarmaData);
+        guardarEnFirebase(alarmaData);
       }
       _alarmCcSet('Msg','☁️','Enviando vía servidor...');
       _alarmCcSet('Foto', nFotos>0?'☁️':'📷', nFotos>0?nFotos+' foto en proceso':'Sin fotos');
@@ -3956,15 +3615,11 @@ function hcCargar(){
   var locales = [];
   try{ locales = getHistorial(); }catch(e){}
   _hcData = locales.slice();
-  // FIX rendimiento (FASE 4): diferir el render pesado un tick para que el
-  // navegador pinte "Cargando reportes..." antes de construir las tarjetas;
-  // sin esto, ambas escrituras al DOM ocurren en el mismo frame y el texto
-  // de carga nunca llega a mostrarse — se siente como un congelamiento.
-  setTimeout(function(){ hcRender(); }, 0);
+  hcRender();
 
   if(typeof fbDB !== 'undefined' && fbDB){
     if(statusEl) statusEl.textContent = '🔄 Sincronizando todos los dispositivos...';
-    fbDB.ref('reportes').orderByChild('fecha').limitToLast(50).once('value', function(snap){
+    fbDB.ref('reportes').orderByChild('fecha').limitToLast(300).once('value', function(snap){
       try{
         var localIds={};
         locales.forEach(function(r){ if(r.id) localIds[r.id]=true; });
@@ -3981,29 +3636,14 @@ function hcCargar(){
           _hcData = [];
         }
         _hcFbLoaded=true;
-        if(statusEl){
-          var _visTotal = Math.min(_hcData.length, 50);
-          statusEl.textContent = (_hcData.length > 50)
-            ? '✅ '+_visTotal+' visibles de '+_hcData.length+' cargados · Todos los dispositivos'
-            : '✅ '+_hcData.length+' reporte'+(_hcData.length!==1?'s':'')+' · Todos los dispositivos';
-        }
+        if(statusEl) statusEl.textContent='✅ '+_hcData.length+' reporte'+(_hcData.length!==1?'s':'')+' · Todos los dispositivos';
         hcRender();
       }catch(e2){}
     }, function(){
-      if(statusEl){
-        var _visLoc = Math.min(locales.length, 50);
-        statusEl.textContent = (locales.length > 50)
-          ? '📱 '+_visLoc+' visibles de '+locales.length+' cargados · Este dispositivo'
-          : '📱 '+locales.length+' reporte'+(locales.length!==1?'s':'')+' · Este dispositivo';
-      }
+      if(statusEl) statusEl.textContent='📱 '+locales.length+' reporte'+(locales.length!==1?'s':'')+' · Este dispositivo';
     });
   } else {
-    if(statusEl){
-      var _visLoc2 = Math.min(locales.length, 50);
-      statusEl.textContent = (locales.length > 50)
-        ? '📱 '+_visLoc2+' visibles de '+locales.length+' cargados · Este dispositivo (sin conexión Firebase)'
-        : '📱 '+locales.length+' reporte'+(locales.length!==1?'s':'')+' · Este dispositivo (sin conexión Firebase)';
-    }
+    if(statusEl) statusEl.textContent='📱 '+locales.length+' reporte'+(locales.length!==1?'s':'')+' · Este dispositivo (sin conexión Firebase)';
   }
 }
 
@@ -4071,9 +3711,6 @@ function hcRender(){
       else arr=arr.filter(function(r){ return r.recorredor===HC_FILTRO_REC; });
     }
     arr.sort(function(a,b){ return new Date(b.fecha)-new Date(a.fecha); });
-    // FIX rendimiento: nunca pintar más de 50 tarjetas de golpe (FASE 2) —
-    // hcCargar puede traer hasta ~50 locales + 300 de Firebase = 350 items potenciales
-    if(arr.length > 50) arr = arr.slice(0, 50);
     var list=document.getElementById('hcList');
     var countEl=document.getElementById('hcCount');
     if(!list) return;
@@ -4091,7 +3728,7 @@ function hcRender(){
         var meta=HC_META[tipo]||HC_META.co;
         var fecha=new Date(r.fecha);
         var fechaStr=isNaN(fecha.getTime())?'\u2014':fecha.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'})+' '+fecha.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
-        var enviado=(r.estado==='enviado' || r.whatsappStatus==='sent' || r.whatsappSent===true);
+        var enviado=r.estado==='enviado';
         var nFotos=r.nFotos||(r.fotos?r.fotos.length:0);
         var titulo=r.esAlarma?'\ud83d\udea8 '+(r.tipoAlarma||'Alarma'):(r.pozo?'C-'+r.pozo:meta.label);
         var rec=r.recorredor||'\u2014';
@@ -4120,32 +3757,8 @@ function hcRender(){
           h+='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--txt2)">'+device+'</div>';
           if(nFotos>0) h+='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--txt2)">\ud83d\udcf8 '+nFotos+' foto'+(nFotos>1?'s':'')+'</div>';
           else h+='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--txt2)">Sin fotos</div>';
-          // FIX: condición alineada con el sistema de corrección (15 min,
-          // no alarmas) — antes mostraba el botón sin chequear antigüedad.
-          if(!r.esAlarma && r.estado==='enviado' && _minutosDesdeEnvio(r) < 15){
-            // FIX: r.id es NUMBER (Date.now()) — pasarlo entre comillas lo
-            // convertía en string, y getReporte() usa === estricto, así que
-            // SIEMPRE devolvía null y el modal nunca se abría.
-            h+='<button onclick="event.stopPropagation();abrirEditarReporte('+r.id+')" style="margin-left:auto;padding:7px 14px;border-radius:10px;border:1.5px solid #3b82f6;background:transparent;color:#3b82f6;font-size:12px;font-weight:800;cursor:pointer;font-family:Inter,sans-serif">✏️ Editar</button>';
-          }
-          // FIX: Historial Central no mostraba qué cambió — solo el badge
-          // "Corregido". Se agrega el detalle de editHistory[], igual que
-          // ya se muestra en el historial inline (renderHistorial).
-          if(r.editHistory && r.editHistory.length){
-            h+='<div style="background:var(--surface2);border-radius:10px;padding:10px 12px;margin-top:8px;font-size:11px;color:var(--txt2);width:100%">';
-            h+='<div style="font-weight:800;margin-bottom:6px;color:var(--txt)">✏️ Correcciones realizadas</div>';
-            h+=r.editHistory.map(function(eh){
-              var etiqueta = eh.label  || eh.campo;
-              var unidad   = eh.unidad ? (' ' + eh.unidad) : '';
-              var antesTxt = (eh.antes===''||eh.antes===null||eh.antes===undefined) ? '—' : String(eh.antes);
-              var despuesTxt = (eh.despues===null||eh.despues===undefined) ? '—' : String(eh.despues);
-              return '<div style="margin-bottom:4px">• <strong>'+escapeHTML(String(etiqueta))+'</strong>: '
-                +'<span style="text-decoration:line-through;opacity:.6">'+escapeHTML(antesTxt)+unidad+'</span>'
-                +' → <span style="color:#4ade80;font-weight:700">'+escapeHTML(despuesTxt)+unidad+'</span>'
-                +(eh.usuario ? ' <span style="opacity:.5;font-size:10px">('+escapeHTML(String(eh.usuario))+')</span>' : '')
-                +'</div>';
-            }).join('');
-            h+='</div>';
+          if(!r.esAlarma && (r.ptp!==null&&r.ptp!==undefined || r.ptr!==null&&r.ptr!==undefined || r.bls!==null&&r.bls!==undefined)){
+            h+='<button onclick="event.stopPropagation();abrirEditarReporte(\''+(r.id)+'\')" style="margin-left:auto;padding:7px 14px;border-radius:10px;border:1.5px solid #3b82f6;background:transparent;color:#3b82f6;font-size:12px;font-weight:800;cursor:pointer;font-family:Inter,sans-serif">✏️ Editar</button>';
           }
           if(_puedeEliminar()){
             var _rid=String(r.id||r.fbKey||'');
@@ -5190,831 +4803,121 @@ function escucharConfigFirebase(){
 
 // ══ EDITAR / CORREGIR REPORTE ══════════════════════════
 var _editReporteId = null;
-var _editOriginalReporte = null; // copia COMPLETA leída de Firebase, antes de cualquier cambio
-var EDIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutos
-
-// Campos correctables — etiqueta + si es numérico. GPS/distancia/radio/
-// usuario/fecha/hora original quedan deliberadamente fuera de esta lista.
-// FIX: campos correctables específicos por TIPO de reporte — antes era
-// una lista única para todos los modos (mostraba EPM en reportes de Nivel).
-// Campos correctables por tipo de reporte.
-// Se usan en: formulario de corrección, diff, mensaje de WA.
-// select: lista de opciones predefinidas. checkbox: verdadero/falso. numeric/text: libre.
-var CORRECCION_FIELDS_CO = [
-  { key:'estatus',       label:'Estatus',
-    options:['Abierto','Cerrado','Intermitente','Fuera de operación'] },
-  { key:'fluye',         label:'Fluye',
-    options:['Sí','No','Intermitente'] },
-  { key:'sap',           label:'SAP (sistema)',
-    options:['BN','BM','FY','GAS','OTRO'] },
-  { key:'estrang',       label:'Estrangulador', text:true },
-  { key:'ptp',           label:'PTP',     unit:'kg/cm²', numeric:true },
-  { key:'ldd',           label:'LDD',     unit:'kg/cm²', text:true },
-  { key:'ptr',           label:'PTR',     unit:'kg/cm²', numeric:true },
-  { key:'lbn',           label:'LBN',     unit:'kg/cm²', numeric:true },
-  { key:'epm',           label:'EPM / Velocidad', numeric:true },
-  { key:'carrera',       label:'Carrera', unit:'pulg', numeric:true },
-  { key:'checks.trabajo',      label:'Trabajo',      checkbox:true },
-  { key:'checks.drenar',       label:'Drenar',       checkbox:true },
-  { key:'checks.aforo',        label:'Aforo/Proyección', checkbox:true },
-  { key:'checks.intermitente', label:'Intermitente', checkbox:true },
-  { key:'observaciones', label:'Observaciones', text:true }
-];
-var CORRECCION_FIELDS_NIVEL = [
-  { key:'bls',       label:'Barriles',       unit:'bls', numeric:true },
-  { key:'ctm',       label:'Centímetros',    unit:'cm',  numeric:true },
-  { key:'nivelHora', label:'Hora de nivel',  text:true,  nested:'nivel.hora' },
-  { key:'observaciones', label:'Observaciones', text:true }
-];
-var CORRECCION_FIELDS_CAB = [
-  { key:'observaciones', label:'Observaciones / Reporte de cabezal', text:true }
-];
-var CORRECCION_FIELDS_EST = [
-  { key:'observaciones', label:'Observaciones / Reporte de estación', text:true }
-];
-var CORRECCION_FIELDS_NOTA = [
-  { key:'observaciones', label:'Texto de la nota', text:true }
-];
-
-// Detecta el set de campos correcto según el modo y el contenido real del
-// reporte (un reporte de Nivel puede venir guardado con modo:'co' si solo
-// se tomó lectura — se detecta por ausencia de campos propios de C.O.).
-// Mapa de modo → etiqueta legible (para el mensaje de WhatsApp de corrección)
-var _MODO_LABEL = {
-  'co':       'Cabeza de Pozo (C.O.)',
-  'guardia':  'Guardia / Nocturno',
-  'cab':      'Cabezal',
-  'estacion': 'Estación',
-  'nota':     'Nota de campo'
-};
-
-function _camposParaModo(r){
-  var modo = r.modo || 'co';
-  // Modos con campos propios conocidos → lista exacta, sin heurísticas.
-  if(modo === 'cab')      return CORRECCION_FIELDS_CAB;
-  if(modo === 'estacion') return CORRECCION_FIELDS_EST;
-  if(modo === 'nota')     return CORRECCION_FIELDS_NOTA;
-  if(modo === 'guardia')  return CORRECCION_FIELDS_NIVEL;
-  // modo 'co': usar campos CO por defecto.
-  // Excepción: si el reporte tiene bls/ctm pero NO estatus/fluye/sap/ptp/ptr
-  // reales (no solo distintos de null — sino con valor real), es un Nivel.
-  // Solo cuentan strings no-vacíos y números no-cero como valor CO real
-  var _noVacio = function(v){ return v!=null && v!=='' && v!==0; };
-  var tieneCOReal = !!(_noVacio(r.estatus) || _noVacio(r.fluye) || _noVacio(r.sap) ||
-                       _noVacio(r.estrang) || _noVacio(r.ptp) || _noVacio(r.ptr));
-  var tieneNivelReal = !!(
-    (r.bls != null && r.bls !== 0) ||
-    (r.ctm != null && r.ctm !== 0) ||
-    (r.nivel && ((r.nivel.bls != null && r.nivel.bls !== 0) || (r.nivel.ctm != null && r.nivel.ctm !== 0)))
-  );
-  if(tieneNivelReal && !tieneCOReal) return CORRECCION_FIELDS_NIVEL;
-  return CORRECCION_FIELDS_CO;
-}
-
-function _minutosDesdeEnvio(r){
-  // FIX: para reportes creados offline, r.fecha es el momento de CAPTURA,
-  // no el de envío real. whatsappSentAt es el timestamp confirmado por el CF
-  // (siempre posterior o igual a fecha). Usar whatsappSentAt cuando exista
-  // para que la ventana de 15 min cuente desde que el grupo recibió el mensaje,
-  // no desde que el recorredor tecleó.
-  var base = r.whatsappSentAt || r.fecha;
-  return (Date.now() - new Date(base).getTime()) / 60000;
-}
 
 function abrirEditarReporte(id){
-  var rLocal = getReporte(id);
-  if(!rLocal){ showToast('❌ Reporte no encontrado'); return; }
-
-  if(rLocal.esAlarma){ showToast('⚠️ Las alarmas no se corrigen desde aquí'); return; }
-
-  if(_minutosDesdeEnvio(rLocal) >= 15){
-    showToast('⏱️ Este reporte ya no puede modificarse.');
-    return;
+  var r = getReporte(id);
+  if(!r){ showToast('\u274c Reporte no encontrado'); return; }
+  _editReporteId = id;
+  // Restaurar estadoPozo si es un reporte de guardia
+  if(r.estadoPozo){
+    estadoPozo = r.estadoPozo;
+    var nivelEpHid = document.getElementById('nivelEstadoPozo');
+    if(nivelEpHid) nivelEpHid.value = r.estadoPozo;
+    var idMap = {Abierto:'nivel-ep-abierto',Cerrado:'nivel-ep-cerrado',Intermitente:'nivel-ep-intermitente'};
+    var clsMap = {Abierto:'nivel-ep-sel-green',Cerrado:'nivel-ep-sel-red',Intermitente:'nivel-ep-sel-amber'};
+    var targetId = idMap[r.estadoPozo];
+    if(targetId){
+      var targetBtn = document.getElementById(targetId);
+      if(targetBtn) selNivelEstadoPozo(targetBtn, r.estadoPozo);
+    }
   }
 
-  // FIX: leer SIEMPRE desde Firebase, no de la copia local — saveHistorial()
-  // ya recorta campos no esenciales en reportes enviados (rendimiento), así
-  // que la copia local puede no tener estatus/fluye/sap/etc. Firebase
-  // siempre conserva el reporte completo.
-  function _continuarConDatos(r){
-    _editReporteId = id;
-    _editOriginalReporte = r;
+  var modal = document.getElementById('editReporteModal');
+  if(!modal) return;
+  modal.style.display = 'flex';
 
-    var modal = document.getElementById('editReporteModal');
-    if(!modal) return;
-    modal.style.display = 'flex';
+  // Subtitle
+  var sub = document.getElementById('editReporteSub');
+  if(sub) sub.textContent = 'C-'+r.pozo+' · '+r.recorredor;
 
-    var sub = document.getElementById('editReporteSub');
-    if(sub) sub.textContent = 'C-'+r.pozo+' · '+r.recorredor;
+  // Show current values
+  var ptpOld = document.getElementById('editPtpOld');
+  var ptrOld = document.getElementById('editPtrOld');
+  var blsOld = document.getElementById('editBlsOld');
+  if(ptpOld) ptpOld.textContent = r.ptp !== null && r.ptp !== undefined ? r.ptp+' kg/cm²' : '—';
+  if(ptrOld) ptrOld.textContent = r.ptr !== null && r.ptr !== undefined ? r.ptr+' kg/cm²' : '—';
+  if(blsOld) blsOld.textContent = r.bls !== null && r.bls !== undefined ? r.bls+' bls' : '—';
 
-    var cont = document.getElementById('editFieldsContainer');
-    if(!cont) return;
+  // Pre-fill new values with current
+  var ptpNew = document.getElementById('editPtpNew');
+  var ptrNew = document.getElementById('editPtrNew');
+  var blsNew = document.getElementById('editBlsNew');
+  if(ptpNew) ptpNew.value = r.ptp !== null && r.ptp !== undefined ? r.ptp : '';
+  if(ptrNew) ptrNew.value = r.ptr !== null && r.ptr !== undefined ? r.ptr : '';
+  if(blsNew) blsNew.value = r.bls !== null && r.bls !== undefined ? r.bls : '';
 
-    // ── PILOTO: Nivel de Guardia — diseño visual original ───────────────────
-    var modo = r.modo || 'co';
-    var esModoGuardia = (modo === 'guardia') ||
-      (!['cab','estacion','nota'].includes(modo) &&
-       !!(r.bls||r.ctm||(r.nivel&&(r.nivel.bls||r.nivel.ctm))) &&
-       !(r.estatus||r.fluye||r.sap||r.estrang||r.ptp||r.ptr));
-
-    if(esModoGuardia){
-      // Leer valores del reporte (bls/ctm pueden estar en top-level o en nivel.*)
-      var _ecCtm  = r.ctm  || (r.nivel && r.nivel.ctm)  || '';
-      var _ecBls  = r.bls  || (r.nivel && r.nivel.bls)  || '';
-      var _ecObs  = r.observaciones || r.obs || '';
-      var _ecHora = (r.nivel && r.nivel.hora) || '';
-      // Tipo de tanque guardado en el reporte (si existe)
-      var _ecTipo = (r.nivel && r.nivel.tipo) || 'ft';
-      _ecMedTipo  = _ecTipo; // sincronizar la variable global escoped
-
-      // Estilos de los botones ft/pm (calculados antes para evitar quoting anidado)
-      var ecFtBg  = _ecTipo === 'ft' ? 'var(--accent2)' : 'var(--surface)';
-      var ecFtBrd = _ecTipo === 'ft' ? 'var(--accent2)' : 'var(--border)';
-      var ecFtClr = _ecTipo === 'ft' ? '#fff' : 'var(--txt)';
-      var ecPmBg  = _ecTipo === 'pm' ? 'var(--accent2)' : 'var(--surface)';
-      var ecPmBrd = _ecTipo === 'pm' ? 'var(--accent2)' : 'var(--border)';
-      var ecPmClr = _ecTipo === 'pm' ? '#fff' : 'var(--txt)';
-      var btnStyle= 'flex:1;padding:8px 4px;border-radius:10px;border:2px solid ';
-      var btnBase = ';font-size:12px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif';
-      var _ecHtmlParts = [];
-      _ecHtmlParts.push('<div style="border:2.5px solid var(--accent2);border-radius:16px;padding:14px 14px 10px;background:var(--surface2)">');
-      _ecHtmlParts.push('<div class="step-label" style="color:var(--accent2);margin-bottom:10px">Niveles de Guardia</div>');
-      _ecHtmlParts.push('<div style="display:flex;gap:8px;margin-bottom:12px">');
-      var _ecBtnFt = document.createElement('button');
-      _ecBtnFt.id = 'ec_btn-med-ft';
-      _ecBtnFt.setAttribute('onclick',"selTipoGuardiaEdit('ft',this)");
-      _ecBtnFt.setAttribute('style', btnStyle+ecFtBrd+';background:'+ecFtBg+';color:'+ecFtClr+btnBase);
-      _ecBtnFt.textContent = '🪣 Frac Tank';
-      var _ecBtnPm = document.createElement('button');
-      _ecBtnPm.id = 'ec_btn-med-pm';
-      _ecBtnPm.setAttribute('onclick',"selTipoGuardiaEdit('pm',this)");
-      _ecBtnPm.setAttribute('style', btnStyle+ecPmBrd+';background:'+ecPmBg+';color:'+ecPmClr+btnBase);
-      _ecBtnPm.textContent = '🔩 Presa Metálica';
-      _ecHtmlParts.push(_ecBtnFt.outerHTML);
-      _ecHtmlParts.push(_ecBtnPm.outerHTML);
-      _ecHtmlParts.push('</div>');
-      _ecHtmlParts.push('<div style="display:flex;gap:12px;margin-bottom:12px">');
-      _ecHtmlParts.push('<div style="flex:1"><div class="big-field-label">Centímetros</div><input class="big-input" type="number" id="ec_medCentimetros" value="'+(_ecCtm||'')+'" placeholder="" step="0.1" oninput="cmABlsEc(this.value)"></div>');
-      _ecHtmlParts.push('<div style="flex:1"><div class="big-field-label">Barriles</div><input class="big-input" type="number" id="ec_medBarriles" value="'+(_ecBls||'')+'" placeholder="" step="0.1" readonly style="opacity:.7"></div>');
-      _ecHtmlParts.push('</div>');
-      _ecHtmlParts.push('<textarea id="ec_medObs" placeholder="Observaciones..." style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--surface);color:var(--txt);resize:none;height:64px;font-family:Inter,sans-serif;box-sizing:border-box">'+(_ecObs||'').replace(/</g,'&lt;')+'</textarea>');
-      _ecHtmlParts.push('</div>');
-      cont.innerHTML = _ecHtmlParts.join('');
-
-      // Recalcular barriles con el valor actual de CTM (para que la conversión sea correcta desde el inicio)
-      if(_ecCtm){ setTimeout(function(){ cmABlsEc(_ecCtm); }, 0); }
-
-      var notaEl = document.getElementById('editNota');
-      if(notaEl) notaEl.value = '';
-      return; // ← salir de _continuarConDatos, no ejecutar el formulario genérico
-    }
-    // ── FIN PILOTO Guardia ───────────────────────────────────────────────────
-
-    // ── FIN PILOTO Guardia ───────────────────────────────────────────────────
-
-    // == CO / Reporte Diario =====================================================
-    if(modo === 'co' && !esModoGuardia){
-      var _sap  = r.sap || '';
-      var _esBM = _sap === 'BM';
-      var _co   = '';
-      _co += '<div class="step-card" style="margin-bottom:10px">';
-      _co += '<div class="step-label">Control Operativo &middot; C-'+r.pozo+'</div>';
-      // Estatus
-      _co += '<div class="big-field-label">Estado del pozo</div>';
-      _co += '<div style="display:flex;gap:10px;margin-bottom:14px">';
-      [['Abierto','green','🟢'],['Cerrado','red','🔴'],['Intermitente','amber','🟡']].forEach(function(v){
-        _co += '<button class="big-status-btn '+v[1]+(r.estatus===v[0]?' active':'')+'" onclick="selBigStatus(this,\'ec_coEstatus\',\''+v[0]+'\')">'+v[2]+'<br>'+v[0]+'</button>';
-      });
-      _co += '</div><input type="hidden" id="ec_coEstatus" value="'+(r.estatus||'')+'">';
-      // Fluye
-      _co += '<div class="big-field-label">Fluye</div>';
-      _co += '<div style="display:flex;gap:10px;margin-bottom:14px">';
-      ['FT','BSC','Sí','No'].forEach(function(v){
-        _co += '<button class="big-status-btn blue'+(r.fluye===v?' active':'')+'" onclick="selBigStatus(this,\'ec_coFlujo\',\''+v+'\')">'+v+'</button>';
-      });
-      _co += '</div><input type="hidden" id="ec_coFlujo" value="'+(r.fluye||'')+'">';
-      // SAP
-      _co += '<div class="big-field-label">SAP</div>';
-      _co += '<div style="display:flex;gap:10px;margin-bottom:14px">';
-      ['BN','BM','FY'].forEach(function(v){
-        _co += '<button class="big-status-btn slate'+(_sap===v?' active':'')+'" onclick="selBigStatus(this,\'ec_coSistema\',\''+v+'\')">'+v+'</button>';
-      });
-      _co += '</div><input type="hidden" id="ec_coSistema" value="'+(r.sap||'')+'">';
-      // Estrangulador
-      _co += '<div class="big-field-label">Estrangulador (/64 pulg)</div>';
-      _co += '<input class="big-input" type="text" id="ec_coEstrang" value="'+(r.estrang||'')+'" placeholder="ej: 24" style="margin-bottom:14px">';
-      // Presiones según SAP original
-      if(_esBM){
-        _co += '<div style="display:flex;gap:10px;margin-bottom:10px">';
-        _co += '<div style="flex:1"><div class="big-field-label">PTP kg/cm²</div><input class="big-input" type="text" id="ec_coPTP" value="'+(r.ptp||'')+'" inputmode="decimal"></div>';
-        _co += '<div style="flex:1"><div class="big-field-label">PTR kg/cm²</div><input class="big-input" type="text" id="ec_coPTR" value="'+(r.ptr||'')+'" inputmode="decimal"></div>';
-        _co += '</div><div style="display:flex;gap:10px;margin-bottom:14px">';
-        _co += '<div style="flex:1"><div class="big-field-label">Velocidad EPM</div><input class="big-input" type="number" id="ec_coEPM" value="'+(r.epm||'')+'" step="1"></div>';
-        _co += '<div style="flex:1"><div class="big-field-label">Carrera (pulg)</div><input class="big-input" type="number" id="ec_coCarrera" value="'+(r.carrera||'')+'" step="1"></div>';
-        _co += '</div>';
-      } else {
-        _co += '<div style="display:flex;gap:10px;margin-bottom:10px">';
-        _co += '<div style="flex:1"><div class="big-field-label">PTP kg/cm²</div><input class="big-input" type="text" id="ec_coPTP" value="'+(r.ptp||'')+'" inputmode="decimal"></div>';
-        _co += '<div style="flex:1"><div class="big-field-label">LDD kg/cm²</div><input class="big-input" type="text" id="ec_coLDD" value="'+(r.ldd||'')+'" inputmode="decimal"></div>';
-        _co += '</div><div style="display:flex;gap:10px;margin-bottom:14px">';
-        _co += '<div style="flex:1"><div class="big-field-label">PTR kg/cm²</div><input class="big-input" type="text" id="ec_coPTR" value="'+(r.ptr||'')+'" inputmode="decimal"></div>';
-        _co += '<div style="flex:1"><div class="big-field-label">LBN kg/cm²</div><input class="big-input" type="text" id="ec_coLBN" value="'+(r.lbn||'')+'" inputmode="decimal"></div>';
-        _co += '</div>';
-      }
-      // Actividades
-      _co += '<div class="big-field-label" style="margin-top:4px">Actividades</div>';
-      var _chks = r.checks || {};
-      [['trabajo','🔨 Trabajo'],['drenar','💧 Drenar'],['aforo','📏 Aforo / Proyección'],['intermitente','🔄 Intermitente']].forEach(function(c){
-        _co += '<label style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer">';
-        _co += '<input type="checkbox" id="ec_chk_'+c[0]+'" '+(_chks[c[0]]?'checked':'')+' style="width:22px;height:22px;accent-color:#3b82f6;cursor:pointer;flex-shrink:0">';
-        _co += '<span style="font-size:14px;font-weight:600;color:var(--txt)">'+c[1]+'</span></label>';
-      });
-      // Observaciones
-      _co += '<div class="big-field-label" style="margin-top:14px">Observaciones</div>';
-      _co += '<textarea id="ec_coObs" rows="3" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--surface2);color:var(--txt);resize:none;font-family:Inter,sans-serif;box-sizing:border-box">'+((r.observaciones||r.obs||'').replace(/</g,'&lt;'))+'</textarea>';
-      _co += '</div>';
-      cont.innerHTML = _co;
-      var notaEl5=document.getElementById('editNota'); if(notaEl5) notaEl5.value='';
-      return;
-    }
-    // == CABEZAL ==============================================================
-    if(modo === 'cab'){
-      var _cabObs = r.observaciones||r.obs||'';
-      var _cab = '<div class="step-card" style="border:2.5px solid #0f766e;margin-bottom:10px">';
-      _cab += '<div class="step-label" style="color:#0f766e">🔧 Corrección de Cabezal</div>';
-      _cab += '<div style="background:rgba(15,118,110,.12);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:var(--txt)"><strong>Cabezal:</strong> '+(r.pozo||'—')+'</div>';
-      _cab += '<div style="font-size:12px;font-weight:700;color:#0f766e;margin-bottom:6px">📝 Observaciones</div>';
-      _cab += '<textarea id="ec_cabObs" rows="4" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #0f766e;background:var(--surface2);color:var(--txt);font-size:13px;font-family:inherit;resize:none;box-sizing:border-box">'+(_cabObs.replace(/</g,'&lt;'))+'</textarea>';
-      _cab += '</div>';
-      cont.innerHTML = _cab;
-      var notaEl6=document.getElementById('editNota'); if(notaEl6) notaEl6.value='';
-      return;
-    }
-    // == ESTACION =============================================================
-    if(modo === 'estacion'){
-      var _estObs = r.observaciones||r.obs||'';
-      var _est = '<div class="step-card" style="border:2.5px solid #1d4ed8;margin-bottom:10px">';
-      _est += '<div class="step-label" style="color:#1d4ed8">🏭 Corrección de Estación</div>';
-      _est += '<div style="background:rgba(29,78,216,.12);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:var(--txt)"><strong>Estación:</strong> '+(r.pozo||'—')+'</div>';
-      _est += '<div style="font-size:12px;font-weight:700;color:#1d4ed8;margin-bottom:6px">📝 Observaciones</div>';
-      _est += '<textarea id="ec_estObs" rows="4" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #1d4ed8;background:var(--surface2);color:var(--txt);font-size:13px;font-family:inherit;resize:none;box-sizing:border-box">'+(_estObs.replace(/</g,'&lt;'))+'</textarea>';
-      _est += '</div>';
-      cont.innerHTML = _est;
-      var notaEl7=document.getElementById('editNota'); if(notaEl7) notaEl7.value='';
-      return;
-    }
-    // == NOTA DE CAMPO ========================================================
-    if(modo === 'nota'){
-      var _notaObs = r.observaciones||r.obs||'';
-      var _not = '<div class="step-card" style="border:2.5px solid #7c3aed;margin-bottom:10px">';
-      _not += '<div class="step-label" style="color:#7c3aed">📝 Nota de Campo</div>';
-      _not += '<p style="font-size:12px;color:var(--txt2);margin:6px 0 10px">Corrige el texto de la nota.</p>';
-      _not += '<textarea id="ec_notaText" rows="5" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid #7c3aed;background:var(--surface2);color:var(--txt);font-size:14px;font-family:inherit;resize:none;box-sizing:border-box">'+(_notaObs.replace(/</g,'&lt;'))+'</textarea>';
-      _not += '</div>';
-      cont.innerHTML = _not;
-      var notaEl8=document.getElementById('editNota'); if(notaEl8) notaEl8.value='';
-      return;
-    }
-
-    // Fallback: formulario genérico (modos futuros)
-    var camposActivos = _camposParaModo(r);
-
-    // Resto de modos: formulario genérico (se reemplazará en iteraciones siguientes)
-    var camposActivos = _camposParaModo(r);
-    // Lee valores de rutas anidadas: checks.trabajo, nivel.hora, etc.
-    function _leerValorEditar(obj, f){
-      var ruta = (f.nested || f.key).split('.');
-      return ruta.reduce(function(o,k){ return (o&&o[k]!=null) ? o[k] : undefined; }, obj);
-    }
-    var _eid = function(k){ return 'editField_'+k.replace(/\./g,'__'); };
-    cont.innerHTML = camposActivos.map(function(f){
-      var actual = _leerValorEditar(r, f);
-      var usfx   = f.unit ? ' '+f.unit : '';
-      var actualTxt = (actual===null||actual===undefined||actual==='') ? '—'
-                    : (f.checkbox ? (actual ? 'Sí' : 'No') : String(actual)+usfx);
-      var inputHtml;
-      if(f.checkbox){
-        inputHtml = '<label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:6px 0">'
-          + '<input type="checkbox" id="'+_eid(f.key)+'" '+(actual?'checked':'')+' style="width:22px;height:22px;accent-color:#3b82f6;cursor:pointer">'
-          + '<span style="font-size:14px;color:var(--txt)">'+f.label+'</span>'
-          + '</label>';
-      } else if(f.options){
-        inputHtml = '<select id="'+_eid(f.key)+'" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--txt);font-size:14px;font-weight:700;font-family:Inter,sans-serif">'
-          + '<option value="">— sin cambio —</option>'
-          + f.options.map(function(op){
-              return '<option value="'+op+'"'+(actual===op?' selected':'')+'>'+op+'</option>';
-            }).join('')
-          + '</select>';
-      } else if(f.text){
-        inputHtml = '<textarea id="'+_eid(f.key)+'" rows="2" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--txt);font-size:13px;font-family:Inter,sans-serif;resize:none;box-sizing:border-box">'+(actual||'').replace(/</g,'&lt;')+'</textarea>';
-      } else {
-        inputHtml = '<input id="'+_eid(f.key)+'" type="'+(f.numeric?'number':'text')+'" '+(f.numeric?'step="0.1"':'')+' value="'+(actual!=null?actual:'')+'" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--txt);font-size:15px;font-weight:700;text-align:center;font-family:Inter,sans-serif">';
-      }
-      var actualBadge = f.checkbox ? ''
-        : '<div style="font-size:11px;color:var(--txt2);margin-bottom:5px">Actual: <span style="text-decoration:line-through;opacity:.55">'+actualTxt+'</span></div>';
-      return '<div style="background:var(--surface2);border-radius:14px;padding:12px 14px;margin-bottom:8px">'
-        + '<div style="font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.06em;margin-bottom:4px">' + f.label.toUpperCase() + (f.unit?' ('+f.unit+')':'') + '</div>'
-        + actualBadge
-        + inputHtml
-        + '</div>';
-    }).join('');
-
-    var notaEl = document.getElementById('editNota');
-    if(notaEl) notaEl.value = '';
-  }
-
-  if(fbDB){
-    fbDB.ref('reportes/'+id).once('value').then(function(snap){
-      var rRemoto = snap.val();
-      _continuarConDatos(rRemoto || rLocal);
-    }).catch(function(){ _continuarConDatos(rLocal); });
-  } else {
-    _continuarConDatos(rLocal);
-  }
+  var notaEl = document.getElementById('editNota');
+  if(notaEl) notaEl.value = '';
 }
 
 function cerrarEditarReporte(){
   var modal = document.getElementById('editReporteModal');
   if(modal) modal.style.display = 'none';
   _editReporteId = null;
-  _editOriginalReporte = null;
-  // Reset confirmation panel for next open
-  var panel = document.getElementById('editConfirmPanel');
-  if(panel) panel.style.display = 'none';
-  var previewBtn = document.getElementById('editPreviewBtn');
-  if(previewBtn) previewBtn.style.display = 'block';
-  _editPendingUpdates = _editPendingCambios = _editPendingHistNuevo = _editPendingAhora = _editPendingUsuario = null;
 }
 
-// guardarCorreccionReporte — ahora es el PASO 1: calcular cambios y mostrar
-// resumen de confirmación. Solo escribe cuando el usuario pulsa "Guardar".
 function guardarCorreccionReporte(){
-  if(!_editReporteId || !_editOriginalReporte){ cerrarEditarReporte(); return; }
-  var r = _editOriginalReporte;
+  if(!_editReporteId){ cerrarEditarReporte(); return; }
+  var r = getReporte(_editReporteId);
+  if(!r){ cerrarEditarReporte(); return; }
 
-  if(_minutosDesdeEnvio(r) >= 15){
-    showToast('⏱️ Este reporte ya no puede modificarse.');
-    cerrarEditarReporte();
-    return;
-  }
+  var ptpNew = parseFloat(document.getElementById('editPtpNew').value);
+  var ptrNew = parseFloat(document.getElementById('editPtrNew').value);
+  var blsNew = parseFloat(document.getElementById('editBlsNew').value);
+  var nota   = (document.getElementById('editNota').value||'').trim();
 
-  var camposActivos = _camposParaModo(r);
+  // Build correction WhatsApp message
   var cambios = [];
-  var editHistoryNuevo = [];
-  var updates = {};
-  var usuario = (typeof REC !== 'undefined' && REC) ? REC : (loggedUser || 'Supervisor');
+  var ptpOld = r.ptp; var ptrOld = r.ptr; var blsOld = r.bls;
+
+  if(!isNaN(ptpNew) && ptpNew !== ptpOld) cambios.push('PTP: '+ptpOld+' → *'+ptpNew+'* kg/cm²');
+  if(!isNaN(ptrNew) && ptrNew !== ptrOld) cambios.push('PTR: '+ptrOld+' → *'+ptrNew+'* kg/cm²');
+  if(!isNaN(blsNew) && blsNew !== blsOld) cambios.push('BLS: '+blsOld+' → *'+blsNew+'* bls');
+
+  if(!cambios.length){ showToast('ℹ️ No hubo cambios'); cerrarEditarReporte(); return; }
+
+  var horaOrig = (function(d){var h=d.getHours(),m=d.getMinutes();return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;})(new Date(r.fecha));
+  var corrMsg = ['\uD83D\uDD04 *CORRECCI\u00D3N \u00B7 C-'+r.pozo+'*',
+    '\uD83D\uDD50 Reporte original: '+horaOrig,
+    '\uD83D\uDC77 '+r.recorredor,
+    '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550',
+    cambios.join('\n'),
+    (nota ? '\uD83D\uDCDD '+nota : '\uD83D\uDCDD Error de captura. Dato actualizado en sistema.')
+  ].join('\n');
+  // Update report
   var ahora = new Date().toISOString();
+  r.ptp = !isNaN(ptpNew) ? ptpNew : r.ptp;
+  r.ptr = !isNaN(ptrNew) ? ptrNew : r.ptr;
+  r.bls = !isNaN(blsNew) ? blsNew : r.bls;
+  r.editadoEn  = ahora;
+  r.editadoPor = typeof REC !== 'undefined' ? REC : 'Supervisor';
 
-  var _eidGuardar = function(k){ return 'editField_'+k.replace(/\./g,'__'); };
-  var _leerViejoG = function(f){
-    var ruta = (f.nested || f.key).split('.');
-    return ruta.reduce(function(o,k){ return (o&&o[k]!=null) ? o[k] : undefined; }, r);
-  };
+  // Save locally
+  var hist = getHistorial();
+  var idx = hist.findIndex(function(x){ return x.id === r.id; });
+  if(idx !== -1) hist[idx] = r;
+  saveHistorial(hist);
 
-  // ── PILOTO Guardia: leer desde los IDs ec_ del diseño visual ─────────────
-  var modoR = r.modo || 'co';
-  var esGuardiaEdit = (modoR === 'guardia') ||
-    (!['cab','estacion','nota'].includes(modoR) &&
-     !!(r.bls||r.ctm||(r.nivel&&(r.nivel.bls||r.nivel.ctm))) &&
-     !(r.estatus||r.fluye||r.sap||r.estrang||r.ptp||r.ptr));
+  // Sync to Firebase
+  if(fbDB) fbDB.ref('reportes/'+r.id).update({
+    ptp: r.ptp, ptr: r.ptr, bls: r.bls,
+    editadoEn: ahora, editadoPor: r.editadoPor
+  }).catch(function(){});
 
-  if(esGuardiaEdit){
-    var ecCtmEl  = document.getElementById('ec_medCentimetros');
-    var ecBlsEl  = document.getElementById('ec_medBarriles');
-    var ecObsEl  = document.getElementById('ec_medObs');
-    if(!ecCtmEl){ showToast('❌ No se encontró el formulario de corrección'); return; }
-
-    var viejoCtm  = r.ctm  || (r.nivel && r.nivel.ctm)  || null;
-    var viejoBls  = r.bls  || (r.nivel && r.nivel.bls)  || null;
-    var viejoObs  = r.observaciones || r.obs || '';
-
-    var nuevoCtm  = parseFloat(ecCtmEl.value);
-    var nuevoBls  = parseFloat(ecBlsEl.value);
-    var nuevoObs  = ecObsEl ? ecObsEl.value.trim() : '';
-
-    var tieneCambios = false;
-    if(!isNaN(nuevoCtm) && nuevoCtm !== viejoCtm){
-      cambios.push({ label:'Centímetros', antes:viejoCtm, despues:nuevoCtm, unit:'cm' });
-      editHistoryNuevo.push({ campo:'ctm', label:'Centímetros', antes:viejoCtm||'', despues:nuevoCtm, unidad:'cm', usuario:usuario, fecha:ahora });
-      updates['ctm'] = nuevoCtm;
-      updates['bls'] = !isNaN(nuevoBls) ? nuevoBls : null;
-      if(!isNaN(nuevoBls) && nuevoBls !== viejoBls){
-        cambios.push({ label:'Barriles', antes:viejoBls, despues:nuevoBls, unit:'bls' });
-        editHistoryNuevo.push({ campo:'bls', label:'Barriles', antes:viejoBls||'', despues:nuevoBls, unidad:'bls', usuario:usuario, fecha:ahora });
-      }
-      tieneCambios = true;
-    } else if(!isNaN(nuevoBls) && nuevoBls !== viejoBls){
-      cambios.push({ label:'Barriles', antes:viejoBls, despues:nuevoBls, unit:'bls' });
-      editHistoryNuevo.push({ campo:'bls', label:'Barriles', antes:viejoBls||'', despues:nuevoBls, unidad:'bls', usuario:usuario, fecha:ahora });
-      updates['bls'] = nuevoBls;
-      tieneCambios = true;
-    }
-    if(nuevoObs !== viejoObs){
-      cambios.push({ label:'Observaciones', antes:viejoObs, despues:nuevoObs, unit:'' });
-      editHistoryNuevo.push({ campo:'observaciones', label:'Observaciones', antes:viejoObs||'', despues:nuevoObs, unidad:'', usuario:usuario, fecha:ahora });
-      updates['observaciones'] = nuevoObs;
-      updates['obs'] = nuevoObs;
-      tieneCambios = true;
-    }
-    // Guardar también el tipo de tanque si cambió
-    var viejoTipo = (r.nivel && r.nivel.tipo) || 'ft';
-    if(_ecMedTipo !== viejoTipo){
-      updates['nivel'] = Object.assign({}, r.nivel || {}, { tipo:_ecMedTipo, ctm:nuevoCtm||viejoCtm, bls:nuevoBls||viejoBls });
-    }
-
-    if(!cambios.length){ showToast('ℹ️ No hubo cambios'); return; }
-    _editPendingUpdates   = updates;
-    _editPendingCambios   = cambios;
-    _editPendingHistNuevo = editHistoryNuevo;
-    _editPendingAhora     = ahora;
-    _editPendingUsuario   = usuario;
-    // Mostrar panel de confirmación (código compartido con el path genérico)
-  } else if(modoR === 'co'){
-  // == CO diff reader =========================================================
-    var _getDom = function(id){ return document.getElementById(id); };
-    var _addCambio = function(campo, label, antes, despues, unit){
-      cambios.push({ label:label, antes:antes, despues:despues, unit:unit||'' });
-      editHistoryNuevo.push({ campo:campo, label:label, antes:(antes===null||antes===undefined)?'':antes, despues:despues, unidad:unit||'', usuario:usuario, fecha:ahora });
-      updates[campo] = despues;
-    };
-    var _diff = function(campo, label, elId, unit, numeric){
-      var el = _getDom(elId); if(!el) return;
-      var nv = numeric ? parseFloat(el.value) : el.value.trim();
-      var ov = r[campo];
-      if(numeric){ if(isNaN(nv)||nv===ov) return; }
-      else { if(!nv||nv===String(ov||'')) return; }
-      _addCambio(campo, label, ov, nv, unit);
-    };
-    var _diffHidden = function(campo, label, elId){
-      var el=_getDom(elId); if(!el||!el.value||el.value===String(r[campo]||'')) return;
-      _addCambio(campo, label, r[campo], el.value, '');
-    };
-    _diffHidden('estatus', 'Estatus', 'ec_coEstatus');
-    _diffHidden('fluye',   'Fluye',   'ec_coFlujo');
-    _diffHidden('sap',     'SAP',     'ec_coSistema');
-    _diff('estrang', 'Estrangulador', 'ec_coEstrang', '/64 pulg', false);
-    _diff('ptp', 'PTP', 'ec_coPTP', 'kg/cm²', false);
-    _diff('ldd', 'LDD', 'ec_coLDD', 'kg/cm²', false);
-    _diff('ptr', 'PTR', 'ec_coPTR', 'kg/cm²', false);
-    _diff('lbn', 'LBN', 'ec_coLBN', 'kg/cm²', false);
-    _diff('epm', 'EPM', 'ec_coEPM', '', true);
-    _diff('carrera', 'Carrera', 'ec_coCarrera', 'pulg', true);
-    // Actividades (checkboxes)
-    var _chkOld = r.checks || {};
-    [['trabajo','Trabajo'],['drenar','Drenar'],['aforo','Aforo'],['intermitente','Intermitente']].forEach(function(c){
-      var el=_getDom('ec_chk_'+c[0]); if(!el) return;
-      var nv=el.checked, ov=!!_chkOld[c[0]];
-      if(nv===ov) return;
-      cambios.push({ label:c[1], antes:ov, despues:nv, unit:'' });
-      editHistoryNuevo.push({ campo:'checks.'+c[0], label:c[1], antes:ov, despues:nv, unidad:'', usuario:usuario, fecha:ahora });
-      updates['checks/'+c[0]] = nv;
-    });
-    // Observaciones
-    var ecObsCO = _getDom('ec_coObs');
-    if(ecObsCO){
-      var novCO=ecObsCO.value.trim(), ovCO=r.observaciones||r.obs||'';
-      if(novCO!==ovCO){ _addCambio('observaciones','Observaciones',ovCO,novCO,''); updates['obs']=novCO; }
-    }
-
-  } else if(modoR === 'cab'){
-  // == Cabezal diff reader ====================================================
-    var ecObsCab=document.getElementById('ec_cabObs');
-    if(ecObsCab){
-      var nvC=ecObsCab.value.trim(), ovC=r.observaciones||r.obs||'';
-      if(nvC!==ovC){
-        cambios.push({ label:'Observaciones', antes:ovC, despues:nvC, unit:'' });
-        editHistoryNuevo.push({ campo:'observaciones', label:'Observaciones', antes:ovC||'', despues:nvC, unidad:'', usuario:usuario, fecha:ahora });
-        updates['observaciones']=nvC; updates['obs']=nvC;
-      }
-    }
-
-  } else if(modoR === 'estacion'){
-  // == Estación diff reader ===================================================
-    var ecObsEst=document.getElementById('ec_estObs');
-    if(ecObsEst){
-      var nvE=ecObsEst.value.trim(), ovE=r.observaciones||r.obs||'';
-      if(nvE!==ovE){
-        cambios.push({ label:'Observaciones', antes:ovE, despues:nvE, unit:'' });
-        editHistoryNuevo.push({ campo:'observaciones', label:'Observaciones', antes:ovE||'', despues:nvE, unidad:'', usuario:usuario, fecha:ahora });
-        updates['observaciones']=nvE; updates['obs']=nvE;
-      }
-    }
-
-  } else if(modoR === 'nota'){
-  // == Nota de Campo diff reader ==============================================
-    var ecNotaTxt=document.getElementById('ec_notaText');
-    if(ecNotaTxt){
-      var nvN=ecNotaTxt.value.trim(), ovN=r.observaciones||r.obs||'';
-      if(nvN!==ovN){
-        cambios.push({ label:'Texto de la nota', antes:ovN, despues:nvN, unit:'' });
-        editHistoryNuevo.push({ campo:'observaciones', label:'Texto de la nota', antes:ovN||'', despues:nvN, unidad:'', usuario:usuario, fecha:ahora });
-        updates['observaciones']=nvN; updates['obs']=nvN;
-      }
-    }
-
-  } else {
-  // ── FIN PILOTO Guardia — path genérico para otros modos ──────────────────
-
-  camposActivos.forEach(function(f){
-    var el = document.getElementById(_eidGuardar(f.key));
-  }); // forEach no-op generic placeholder
-
-  } // closes else (generic fallback)
-
-  if(!cambios.length){ showToast('ℹ️ No hubo cambios'); return; }
-
-  // Guardar para que _editConfirmarGuardar los use sin recalcular.
-  _editPendingUpdates      = updates;
-  _editPendingCambios      = cambios;
-  _editPendingHistNuevo    = editHistoryNuevo;
-  _editPendingAhora        = ahora;
-  _editPendingUsuario      = usuario;
-
-  // ── Mostrar resumen de confirmación ──────────────────────
-  var TIPO_LABELS = { co:'Reporte Diario / C.O.', guardia:'Nivel de Guardia', cab:'Cabezal', estacion:'Estación', nota:'Nota de Campo' };
-  var tipoLabel = TIPO_LABELS[r.modo] || (r.modo || 'Reporte');
-  var fechaEnv  = r.fecha ? (function(d){
-    return (d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear()
-      +' '+(d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes());
-  })(new Date(r.fecha)) : '—';
-
-  var panel = document.getElementById('editConfirmPanel');
-  var cont  = document.getElementById('editConfirmChanges') || document.getElementById('editConfirmPanelInner');
-  if(!panel) return;
-  if(!cont){ cont = document.getElementById('editConfirmPanelInner'); }
-
-  var _notaPreview = (document.getElementById('editNota') ? document.getElementById('editNota').value : '').trim();
-  cont.innerHTML = ''
-    // Encabezado
-    + '<div style="font-size:15px;font-weight:800;color:var(--txt);margin-bottom:10px">✅ Confirmar corrección</div>'
-    // Reporte info
-    + '<div style="background:rgba(255,255,255,.06);border-radius:10px;padding:9px 11px;margin-bottom:10px;font-size:12px;line-height:1.7;color:var(--txt2)">'
-    +   '<div style="font-weight:700;color:var(--txt);margin-bottom:2px">Reporte:</div>'
-    +   '<div>' + tipoLabel + ' · C-' + (r.pozo||'?') + '</div>'
-    +   '<div>' + (r.recorredor||'?') + ' · ' + fechaEnv + '</div>'
-    + '</div>'
-    // Cambios
-    + '<div style="font-weight:700;color:var(--txt2);font-size:11px;margin-bottom:4px">Cambios:</div>'
-    + cambios.map(function(c){
-        var antesTxt = (c.antes===null||c.antes===undefined||c.antes==='') ? '—' : String(c.antes);
-        var unidad   = c.unit ? ' ' + c.unit : '';
-        return '<div style="display:flex;align-items:baseline;gap:6px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:13px">'
-          + '<span style="min-width:0;flex:1;color:var(--txt2)">' + c.label + '</span>'
-          + '<span style="text-decoration:line-through;opacity:.45;white-space:nowrap">' + antesTxt + unidad + '</span>'
-          + '<span style="opacity:.5">→</span>'
-          + '<span style="color:#4ade80;font-weight:800;white-space:nowrap">' + String(c.despues) + unidad + '</span>'
-          + '</div>';
-      }).join('')
-    // Motivo (si lo escribió)
-    + (_notaPreview
-        ? '<div style="margin-top:8px;padding:7px 10px;background:rgba(255,255,255,.05);border-radius:8px;font-size:12px;color:var(--txt2)">'
-          + '📝 <em>' + _notaPreview + '</em></div>'
-        : '')
-    // Footer aviso
-    + '<div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:10px">GPS, fecha y recorredor no se modificarán.</div>';
-
-  panel.style.display = 'flex';
-  // Ocultar el botón principal mientras el panel de confirmación está visible
-  var previewBtn = document.getElementById('editPreviewBtn');
-  if(previewBtn) previewBtn.style.display = 'none';
-}
-
-// Variables de estado para el paso de confirmación
-var _editPendingUpdates   = null;
-var _editPendingCambios   = null;
-var _editPendingHistNuevo = null;
-var _editPendingAhora     = null;
-var _editPendingUsuario   = null;
-
-// ── Cola offline de correcciones pendientes ─────────────────────────────────
-var CORR_QUEUE_KEY = 'cuichapa_correcciones_pendientes';
-function _corrQueueGet(){
-  try{ return JSON.parse(localStorage.getItem(CORR_QUEUE_KEY)||'[]'); }catch(e){ return []; }
-}
-function _corrQueueSave(q){
-  try{ localStorage.setItem(CORR_QUEUE_KEY, JSON.stringify(q)); }catch(e){}
-}
-function _corrQueueAdd(item){ // item: {corrId,reporteId,updates,corrMsg,editHistNuevo,ahora,usuario}
-  var q = _corrQueueGet();
-  if(q.some(function(x){ return x.corrId === item.corrId; })) return; // anti-duplicado
-  q.push(item);
-  _corrQueueSave(q);
-}
-function _corrQueueRemove(corrId){
-  var q = _corrQueueGet().filter(function(x){ return x.corrId !== corrId; });
-  _corrQueueSave(q);
-}
-
-// Sincronizar correcciones pendientes cuando vuelve la señal.
-// Regla: primero verifica que el reporte original YA existe en Firebase.
-// Si no existe todavía (fue enviado offline y aún no sincronizó), espera.
-function sincronizarCorrencionesPendientes(){
-  if(!fbDB || !fbConnected) return;
-  var q = _corrQueueGet();
-  if(!q.length) return;
-  console.log('[CORRECCION] sincronizando', q.length, 'corrección(es) pendiente(s)');
-
-  q.forEach(function(item){
-    fbDB.ref('reportes/' + item.reporteId).once('value').then(function(snap){
-      var remoto = snap.val();
-      if(!remoto){
-        // Reporte original todavía no existe en Firebase — dejar en cola.
-        console.log('[CORRECCION] reporte', item.reporteId, 'aún no sincronizado — corrección en espera');
-        return;
-      }
-      // El reporte original existe → aplicar corrección
-      var editHistCompleto = (remoto.editHistory || []).concat(item.editHistNuevo);
-      var updates = Object.assign({}, item.updates, {
-        edited:      true,
-        editedAt:    item.ahora,
-        editedBy:    item.usuario,
-        editHistory: editHistCompleto,
-        editadoEn:   item.ahora,
-        editadoPor:  item.usuario
-      });
-      // 1. Actualizar el reporte en Firebase
-      fbDB.ref('reportes/' + item.reporteId).update(updates).then(function(){
-        // 2. Escribir en /correcciones para que la CF mande WhatsApp
-        return fbDB.ref('correcciones/' + Date.now()).set({
-          reporteId: item.reporteId,
-          msg:       item.corrMsg,
-          usuario:   item.usuario,
-          fecha:     item.ahora,
-          estado:    'pendiente'
-        });
-      }).then(function(){
-        // 3. Quitar de la cola y marcar local como sincronizado
-        _corrQueueRemove(item.corrId);
-        var hist = getHistorial();
-        var idx = hist.findIndex(function(x){ return String(x.id) === String(item.reporteId); });
-        if(idx !== -1){
-          Object.assign(hist[idx], updates);
-          delete hist[idx].correccionPendiente; // ya no es pendiente
-          saveHistorial(hist);
-          renderHistorial();
-        }
-        console.log('[CORRECCION] sincronizada OK:', item.corrId);
-        showToast('✅ Corrección sincronizada con Firebase y enviada al grupo');
-      }).catch(function(e){
-        console.warn('[CORRECCION] sync falló:', item.corrId, e.message);
-      });
-    }).catch(function(e){
-      console.warn('[CORRECCION] no se pudo leer reporte remoto:', item.reporteId, e.message);
-    });
+  // Send correction message to WhatsApp
+  umSendText(corrMsg, function(ok){
+    if(ok) showToast('✅ Corrección enviada al grupo');
+    else   showToast('⚠️ No se pudo enviar al grupo — reporte corregido localmente');
   });
-}
 
-
-// PASO 2: usuario confirmó — ejecutar todos los efectos secundarios
-function _editConfirmarGuardar(){
-  if(!_editReporteId || !_editOriginalReporte || !_editPendingCambios){ cerrarEditarReporte(); return; }
-  var r       = _editOriginalReporte;
-  var updates = _editPendingUpdates;
-  var cambios = _editPendingCambios;
-  var editHistoryNuevo = _editPendingHistNuevo;
-  var ahora   = _editPendingAhora;
-  var usuario = _editPendingUsuario;
-
-  // Limpiar estado pendiente
-  _editPendingUpdates = _editPendingCambios = _editPendingHistNuevo = _editPendingAhora = _editPendingUsuario = null;
-
-  // ── Construir mensaje de WhatsApp ────────────────────────
-  var TIPO_LABELS = { co:'Reporte Diario / C.O.', guardia:'Nivel de Guardia', cab:'Cabezal', estacion:'Estación', nota:'Nota de Campo' };
-  var tipoLabel = TIPO_LABELS[r.modo] || (r.modo || 'Reporte');
-  var horaCorr  = (function(d){
-    var h=d.getHours(),m=d.getMinutes(),ap=h>=12?'p.m.':'a.m.',h12=h%12||12;
-    return (h12<10?'0':'')+h12+':'+(m<10?'0':'')+m+' '+ap;
-  })(new Date());
-
-  var nota = (document.getElementById('editNota') ? document.getElementById('editNota').value : '').trim();
-  // Fecha del reporte original formateada
-  var _fechaOrig = (function(){
-    try{
-      var d = new Date(r.fecha);
-      var h = d.getHours(), m = d.getMinutes(), ap = h>=12?'p.m.':'a.m.', h12=h%12||12;
-      return (d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear())+' '
-             +(h12<10?'0':'')+h12+':'+(m<10?'0':'')+m+' '+ap;
-    }catch(e){ return '—'; }
-  })();
-  // Título específico por tipo (no genérico "CORRECCIÓN DE REPORTE")
-  var WA_TITULO = {
-    'co':       '🚨✏️ *CORRECCIÓN DE REPORTE DIARIO*',
-    'guardia':  '🚨✏️ *CORRECCIÓN DE NIVEL DE GUARDIA*',
-    'cab':      '🚨✏️ *CORRECCIÓN DE CABEZAL*',
-    'estacion': '🚨✏️ *CORRECCIÓN DE ESTACIÓN*',
-    'nota':     '🚨✏️ *CORRECCIÓN DE NOTA DE CAMPO*'
-  };
-  var tituloWA = WA_TITULO[r.modo] || '🚨✏️ *CORRECCIÓN DE REPORTE*';
-
-  var lineas = [
-    tituloWA,
-    '📋 Tipo: *' + tipoLabel + '*',
-    '🛢 Pozo: *C-' + r.pozo + '*',
-    '👷 Recorredor: *' + r.recorredor + '*',
-    '🕒 Reporte original: *' + _fechaOrig + '*',
-    '🕘 Corrección: *' + horaCorr + '*',
-    '━━━━━━━━━━━━━━',
-    '📌 *ANTES*'
-  ];
-  cambios.forEach(function(c){
-    var antesTxt = (c.antes===null||c.antes===undefined||c.antes==='') ? '—' : String(c.antes);
-    var unidad   = c.unit ? ' '+c.unit : '';
-    lineas.push(c.label+': '+antesTxt+unidad);
-  });
-  lineas.push('━━━━━━━━━━━━━━', '✅ *DESPUÉS*');
-  cambios.forEach(function(c){
-    var unidad = c.unit ? ' '+c.unit : '';
-    lineas.push(c.label+': '+String(c.despues)+unidad);
-  });
-  lineas.push('━━━━━━━━━━━━━━');
-  if(nota){
-    lineas.push('📝 Motivo:');
-    lineas.push(nota);
-  }
-  lineas.push('⚠️ GPS, fecha, hora original y recorredor no fueron modificados.');
-  var corrMsg = lineas.join('\n');
-
-  // ── Firebase: actualizar reporte + nodo de corrección ───────────────────
-  // Regla: PRIMERO verificar que el reporte original ya existe en Firebase.
-  // Si no existe (fue creado offline), encolar la corrección y marcarla como
-  // pendiente localmente — no aplicarla hasta que el original sincronice.
-  var _editHistCompleto = (r.editHistory || []).concat(editHistoryNuevo);
-  updates.edited      = true;
-  updates.editedAt    = ahora;
-  updates.editedBy    = usuario;
-  updates.editHistory = _editHistCompleto;
-  updates.editadoEn   = ahora;
-  updates.editadoPor  = usuario;
-
-  var _corrId = 'corr_' + String(r.id) + '_' + Date.now();
-  var _queueItem = {
-    corrId:        _corrId,
-    reporteId:     r.id,
-    updates:       updates,
-    corrMsg:       corrMsg,
-    editHistNuevo: editHistoryNuevo,
-    ahora:         ahora,
-    usuario:       usuario
-  };
-
-  function _aplicarLocal(esSincronizada){
-    var localUpdates = Object.assign({}, updates);
-    if(!esSincronizada){
-      localUpdates.edited            = false;
-      localUpdates.correccionPendiente = _corrId;
-      delete localUpdates.editHistory; // no sobreescribir el historial local hasta que Firebase confirme
-    }
-    var rAct = Object.assign({}, r, localUpdates);
-    var hist = getHistorial();
-    var idxH = hist.findIndex(function(x){ return String(x.id) === String(r.id); });
-    if(idxH !== -1) hist[idxH] = rAct; else hist.unshift(rAct);
-    saveHistorial(hist);
-    renderHistorial();
-    actualizarBadgeHistorial();
-  }
-
-  if(fbDB && fbConnected){
-    // Verificar que el reporte original ya existe en Firebase
-    fbDB.ref('reportes/' + r.id).once('value').then(function(snap){
-      if(!snap.val()){
-        // Original no existe aún → encolar y marcar pendiente
-        _corrQueueAdd(_queueItem);
-        _aplicarLocal(false);
-        showToast('⏳ Reporte original no sincronizado aún — corrección en cola');
-        return;
-      }
-      // Original existe → aplicar
-      fbDB.ref('reportes/' + r.id).update(updates).then(function(){
-        return fbDB.ref('correcciones/' + Date.now()).set({
-          reporteId: r.id, msg: corrMsg, usuario: usuario, fecha: ahora, estado: 'pendiente'
-        });
-      }).then(function(){
-        _aplicarLocal(true);
-        showToast('✅ Corrección guardada — enviando al grupo…');
-      }).catch(function(e){
-        console.warn('[CORRECCION] Firebase falló, encolando:', e.message);
-        _corrQueueAdd(_queueItem);
-        _aplicarLocal(false);
-        showToast('⚠️ Sin conexión estable — corrección en cola');
-      });
-    }).catch(function(){
-      _corrQueueAdd(_queueItem);
-      _aplicarLocal(false);
-      showToast('⚠️ Señal inestable — corrección en cola, se enviará al reconectar');
-    });
-  } else {
-    _corrQueueAdd(_queueItem);
-    _aplicarLocal(false);
-    showToast('⏳ Sin señal — corrección guardada localmente, se sincronizará al reconectar');
-  }
-
-  // cerrar el modal de inmediato (local actualizado dentro de _aplicarLocal, async)
   cerrarEditarReporte();
+  renderHistorial();
+  actualizarBadgeHistorial();
 
+  // Update charts if open
   var infoPanel = document.getElementById('supInfoPanel');
   if(infoPanel && infoPanel.style.display === 'block') supRenderGraficas();
 }
-
 // ══════════════════════════════════════════════════════════
 
 // ← excel.js
@@ -6431,16 +5334,6 @@ function initFirebase(){
     if(fbApp){ escucharFirebase(); return; }
     fbApp = firebase.initializeApp(FB_CONFIG);
     fbDB  = firebase.database(fbApp);
-    // Detectar conexión REAL a RTDB (no solo que el SDK haya cargado)
-    fbDB.ref('.info/connected').on('value', function(snap){
-      fbConnected = snap.val() === true;
-      if(fbConnected){
-        actualizarSyncBar('conectado');
-        // Al recuperar señal: intentar sincronizar correcciones que quedaron pendientes offline
-        setTimeout(sincronizarCorrencionesPendientes, 2000); // 2s de margen para que el reporte original sincronice primero
-        setTimeout(reconciliarTodosPendientes, 3500);          // 3.5s — después de que el original ya sincronizó, reconciliar con registry
-      }
-    });
     sincronizarAFirebase();
     escucharFirebase();
     escucharAlarmas();
@@ -6526,8 +5419,6 @@ function initFCM(){
 
 // Enviar push a todos los tokens registrados al disparar alarma
 function enviarPushATodos(alarmaData){
-  console.warn('[ALARM_OLD_PUSH_BLOCKED] enviarPushATodos desactivado. Cloud Function envía WhatsApp.');
-  return;
   if(!fbDB) return;
   // Leer todos los tokens y guardar la alarma en un nodo especial para que el SW la procese
   fbDB.ref('fcm_tokens').once('value', function(snap){
@@ -6548,22 +5439,9 @@ function enviarPushATodos(alarmaData){
 function guardarEnFirebase(reporte){
   if(!fbDB || !reporte.id) return;
   try{
-    var ref = fbDB.ref('reportes/' + reporte.id);
-    // FIX: leer remoto antes de sobrescribir — nunca degradar un reporte ya 'sent'
-    // con una copia local vieja que aún diga 'pending' (evita el loop de procesarCola
-    // pisando el resultado de la Cloud Function).
-    ref.once('value').then(function(snap){
-      var remoto     = snap.val();
-      var yaEnviado  = !!(remoto && (remoto.whatsappStatus === 'sent' || remoto.whatsappSent === true || remoto.estado === 'enviado'));
-      var deviceName = typeof hcGetDeviceName === 'function' ? hcGetDeviceName() : '';
-      console.warn('[WA_WRITE_TRACE] guardarEnFirebase() va a hacer .set() — reportId:', reporte.id,
-        '| whatsappStatus LOCAL (reporte):', reporte.whatsappStatus,
-        '| whatsappSent LOCAL (reporte):', reporte.whatsappSent,
-        '| whatsappStatus REMOTO (antes de escribir):', remoto && remoto.whatsappStatus,
-        '| whatsappSent REMOTO (antes de escribir):', remoto && remoto.whatsappSent,
-        '| yaEnviado (protección activa):', yaEnviado,
-        '| stack:', (new Error()).stack);
-    ref.set({
+    // No subir fotos a Firebase (muy pesadas) — solo metadata
+    var deviceName = typeof hcGetDeviceName === 'function' ? hcGetDeviceName() : '';
+    fbDB.ref('reportes/' + reporte.id).set({
       // ── Identificación ────────────────────────────────────
       id:            reporte.id,
       fecha:         reporte.fecha,
@@ -6572,14 +5450,16 @@ function guardarEnFirebase(reporte){
       recorredor:    reporte.recorredor,
       perfil:        reporte.perfil        || null,
       modo:          reporte.modo          || 'co',
-      estado:        yaEnviado ? 'enviado' : reporte.estado,
+      estado:        reporte.estado,
       device:        deviceName,
       nFotos:        (reporte.fotos||[]).length,
-        fotos:         (reporte.fotos||[]).map(function(f){ return {data:(f.data||f), nombre:(f.nombre||'')}; }),
       esAlarma:      reporte.esAlarma      || false,
       tipoAlarma:    reporte.tipoAlarma    || null,
       // ── Mensaje completo (mantener siempre) ───────────────
       msg:           reporte.msg,
+      // ── Fotos reales para Cloud Function → UltraMsg ───────
+      // Antes solo se guardaba nFotos; ahora el servidor necesita la evidencia.
+      fotos:         reporte.fotos        || [],
       // ── C.O. — campos estructurados ───────────────────────
       estatus:       reporte.estatus       || null,
       fluye:         reporte.fluye         || null,
@@ -6598,16 +5478,11 @@ function guardarEnFirebase(reporte){
       ctm:           reporte.ctm           || null,
       // ── Checks de registro ────────────────────────────────
       checks:        reporte.checks        || null,
+      estadoPozo:    reporte.estadoPozo    || '',
       // ── WhatsApp Cloud Function trigger ───────────────────
-      // FIX: si el remoto ya está 'sent', conservar sent — nunca degradar a pending
-      whatsappStatus:    yaEnviado ? 'sent' : (reporte.whatsappStatus    || null),
-      whatsappSent:      yaEnviado ? true   : (reporte.whatsappSent      || false),
+      whatsappStatus:    reporte.whatsappStatus    || null,
+      whatsappSent:      reporte.whatsappSent      || false,
       whatsappDedupeKey: reporte.whatsappDedupeKey || null,
-      // Preservar campos que solo la Cloud Function escribe (se perdían en cada .set())
-      whatsappSentAt:        yaEnviado ? (remoto.whatsappSentAt        || null) : null,
-      whatsappTextStatus:    yaEnviado ? (remoto.whatsappTextStatus    || null) : null,
-      whatsappPhotoStatus:   yaEnviado ? (remoto.whatsappPhotoStatus   || null) : null,
-      ultraMsgResponseId:    yaEnviado ? (remoto.ultraMsgResponseId    || null) : null,
       // ── GPS estructurado ──────────────────────────────────
       gps:           reporte.gps           || null,
       // ── Observaciones ─────────────────────────────────────
@@ -6617,32 +5492,6 @@ function guardarEnFirebase(reporte){
       ultimoIntento: reporte.ultimoIntento || null,
       intentos:      reporte.intentos      || 0
     }).catch(function(e){ console.warn('FB write:', e); });
-      // FIX DEFENSIVO: autosanar la copia LOCAL si el remoto ya estaba enviado.
-      // Esto evita que un celular con caché/localStorage viejo siga insistiendo
-      // en degradar Firebase en cada sincronización posterior.
-      if(yaEnviado){
-        try{
-          var arr = getHistorial();
-          var changed = false;
-          for(var i=0;i<arr.length;i++){
-            if(arr[i].id === reporte.id){
-              if(arr[i].estado !== 'enviado' || arr[i].whatsappStatus !== 'sent' || arr[i].whatsappSent !== true){
-                arr[i].estado         = 'enviado';
-                arr[i].whatsappStatus = 'sent';
-                arr[i].whatsappSent   = true;
-                changed = true;
-              }
-              break;
-            }
-          }
-          if(changed) saveHistorial(arr);
-        }catch(e3){}
-      }
-    }).catch(function(e){
-      // Si falla la lectura del remoto (offline, etc.), no bloquear el guardado local;
-      // hacer el set normal — el peor caso es el comportamiento previo, no uno nuevo.
-      console.warn('FB read-before-write falló, set directo:', e);
-    });
   } catch(e){}
 }
 
@@ -6650,41 +5499,10 @@ function guardarEnFirebase(reporte){
 function actualizarEstadoFirebase(id, estado, ultimoIntento){
   if(!fbDB) return;
   try{
-    var ref = fbDB.ref('reportes/' + id);
-    // FIX DEFENSIVO: nunca degradar un reporte remoto sent/enviado con un
-    // estado 'pendiente'/'fallido' proveniente de un cliente con caché vieja.
-    ref.once('value').then(function(snap){
-      var remoto = snap.val();
-      var yaEnviado = !!(remoto && (remoto.whatsappStatus === 'sent' || remoto.whatsappSent === true || remoto.estado === 'enviado'));
-      if(yaEnviado && estado !== 'enviado'){
-        console.warn('[WA_GUARD] actualizarEstadoFirebase bloqueado — remoto ya enviado, reportId:', id, '| intento de degradar a:', estado);
-        // Auto-corregir la copia local para que deje de pelear contra Firebase
-        try{
-          var arr = getHistorial();
-          for(var i=0;i<arr.length;i++){
-            if(arr[i].id === id){
-              arr[i].estado = 'enviado';
-              arr[i].whatsappStatus = remoto.whatsappStatus || 'sent';
-              arr[i].whatsappSent   = true;
-              break;
-            }
-          }
-          saveHistorial(arr);
-        }catch(e2){}
-        return;
-      }
-      ref.update({
-        estado: estado,
-        ultimoIntento: ultimoIntento || new Date().toISOString(),
-        intentos: (getReporte(id) || {}).intentos || 0
-      });
-    }).catch(function(e){
-      // Si falla la lectura (offline), no bloquear — comportamiento previo como fallback
-      ref.update({
-        estado: estado,
-        ultimoIntento: ultimoIntento || new Date().toISOString(),
-        intentos: (getReporte(id) || {}).intentos || 0
-      });
+    fbDB.ref('reportes/' + id).update({
+      estado: estado,
+      ultimoIntento: ultimoIntento || new Date().toISOString(),
+      intentos: (getReporte(id) || {}).intentos || 0
     });
   } catch(e){}
 }
@@ -6749,24 +5567,10 @@ function escucharFirebase(){
         if(!r || !r.id) return;
         if(localMap[r.id]){
           // Actualizar estado desde Firebase
-          if(r.estado === 'enviado')  localMap[r.id].estado = 'enviado';
-          if(r.ultimoIntento)         localMap[r.id].ultimoIntento = r.ultimoIntento;
-          // FIX BUG3: sincronizar estado WhatsApp para que sincronizarAFirebase
-          // no sobreescriba la actualización del CF con el estado local 'pending'
-          if(r.whatsappStatus)        localMap[r.id].whatsappStatus = r.whatsappStatus;
-          if(r.whatsappSent === true) localMap[r.id].whatsappSent   = true;
-          // FIX: si el CF ya marcó 'sent', sincronizar también 'estado' local.
-          // Sin esto, getPendientes() sigue devolviendo el reporte para siempre
-          // (filtra por 'estado', no por whatsappStatus) y procesarCola() lo
-          // reenvía a Firebase cada 30s con la copia vieja, revirtiendo a 'pending'.
-          if(r.whatsappStatus === 'sent' || r.whatsappSent === true){
-            localMap[r.id].estado = 'enviado';
-          }
+          if(r.estado === 'enviado') localMap[r.id].estado = 'enviado';
+          if(r.ultimoIntento) localMap[r.id].ultimoIntento = r.ultimoIntento;
         } else {
           // Reporte de OTRO dispositivo — agregar sin fotos
-          // FIX: condición derivada por si el campo remoto 'estado' quedó
-          // desfasado en registros viejos (creados antes del fix del CF).
-          var _remotoEnviado = (r.estado === 'enviado' || r.whatsappStatus === 'sent' || r.whatsappSent === true);
           localMap[r.id] = {
             id:            r.id,
             fecha:         r.fecha,
@@ -6775,9 +5579,7 @@ function escucharFirebase(){
             msg:           r.msg,
             nFotos:        r.nFotos || 0,
             fotos:         [],  // fotos no se sincronizan (muy pesadas)
-            estado:        _remotoEnviado ? 'enviado' : r.estado,
-            whatsappStatus: r.whatsappStatus || null,
-            whatsappSent:   r.whatsappSent   || false,
+            estado:        r.estado,
             ultimoIntento: r.ultimoIntento || null,
             intentos:      r.intentos || 0,
             otroDisp:      true  // marca que viene de otro dispositivo
@@ -6805,15 +5607,6 @@ function escucharFirebase(){
 // Inicializar Firebase cuando cargue la app
 window.addEventListener('load', function(){
   setTimeout(initFirebase, 1000);
-  // FIX offline-first: si tras ~4.5s de iniciar Firebase no hay conexión
-  // real (fbDB sin datos confirmados), avisar y seguir en modo local.
-  // No bloquea nada — solo informa; la app ya funciona local de por sí.
-  setTimeout(function(){
-    if(!fbDB || !fbConnected){
-      actualizarSyncBar('local');
-      if(typeof showToast === 'function') showToast('📡 Señal inestable, trabajando en modo local');
-    }
-  }, 4500);
 });
 // Re-intentar conexión Firebase cuando vuelva señal
 window.addEventListener('unload', function(){ try{ var m=document.getElementById('pwa-manifest'); if(m&&m.href&&m.href.startsWith('blob:'))URL.revokeObjectURL(m.href); }catch(e){} });
@@ -6828,58 +5621,10 @@ function getHistorial(){
   try{ return JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); }
   catch(e){ return []; }
 }
-// Campos que SÍ se conservan para un reporte ya enviado.
-// Lista mínima pedida + campos que el render (renderHistorial/hcRender)
-// y la corrección post-envío (guardarCorreccionReporte) necesitan para
-// no romperse: msg (texto de la tarjeta), ptp/ptr/bls (diff de corrección),
-// esAlarma/tipoAlarma/lugar (tarjetas de alarma), device/editadoEn/editadoPor
-// (atribución), intentos/ultimoIntento/otroDisp/fbKey (estado de envío/origen).
-var HIST_KEEP_FIELDS_SENT = [
-  'id','pozo','fecha','hora','modo','recorredor',
-  'estado','whatsappStatus','whatsappSent','nFotos',
-  'msg','esAlarma','tipoAlarma','lugar',
-  'ptp','ptr','bls','device','editadoEn','editadoPor',
-  'intentos','ultimoIntento','otroDisp','fbKey',
-  // FIX correcciones: campos correctables + metadata de edición — sin
-  // esto, saveHistorial() los borraba al recortar reportes ya enviados.
-  'estatus','fluye','sap','estrang','ldd','epm','carrera','observaciones',
-  'edited','editedAt','editedBy','editHistory'
-];
-
 function saveHistorial(arr){
-  try{
-    // FIX rendimiento: ordenar por fecha, limitar a 50 más recientes,
-    // y reducir reportes ya enviados a solo los campos necesarios
-    // (elimina fotos/base64/gps/checks pesados que ya no se usan).
-    arr = arr.slice().sort(function(a,b){ return new Date(b.fecha) - new Date(a.fecha); });
-    if(arr.length > 50) arr = arr.slice(0, 50);
-    arr = arr.map(function(r){
-      var yaEnviado = (r.estado === 'enviado' || r.whatsappStatus === 'sent' || r.whatsappSent === true);
-      if(!yaEnviado) return r; // sin enviar: conservar completo (aún puede necesitarse)
-      var copia = {};
-      for(var i=0;i<HIST_KEEP_FIELDS_SENT.length;i++){
-        var k = HIST_KEEP_FIELDS_SENT[i];
-        if(r[k] !== undefined) copia[k] = r[k];
-      }
-      if(typeof copia.nFotos !== 'number'){
-        copia.nFotos = (r.fotos && r.fotos.length) ? r.fotos.length : 0;
-      }
-      return copia;
-    });
-    localStorage.setItem(HIST_KEY, JSON.stringify(arr));
-  }
+  try{ localStorage.setItem(HIST_KEY, JSON.stringify(arr)); }
   catch(e){ console.warn('localStorage lleno'); }
 }
-
-// FIX rendimiento (FASE 6): si el historial local ya excede 50 reportes al
-// cargar la app, recortarlo de inmediato — no esperar al próximo guardado.
-// No toca Firebase, solo localStorage.
-(function _hist_startup_trim(){
-  try{
-    var raw = getHistorial();
-    if(raw.length > 50) saveHistorial(raw); // saveHistorial ya aplica el cap+strip
-  }catch(e){}
-})();
 function getReporte(id){
   return getHistorial().filter(function(r){ return r.id===id; })[0] || null;
 }
@@ -6891,7 +5636,7 @@ function guardarReporte(reporte){
   for(var i=0;i<arr.length;i++){ if(arr[i].id===reporte.id){ idx=i; break; } }
   if(idx >= 0) arr[idx] = reporte;
   else arr.unshift(reporte);
-  if(arr.length > 50) arr = arr.slice(0, 50); // alineado con el cap de saveHistorial (FASE 1)
+  if(arr.length > 500) arr = arr.slice(0, 500);
   saveHistorial(arr);
   // Sincronizar a Firebase si hay señal
   if(fbDB) guardarEnFirebase(reporte);
@@ -6915,172 +5660,87 @@ function actualizarEstadoReporte(id, estado, ultimoIntento){
 
 // ── Cola: pendientes por enviar ───────────────────
 function getPendientes(){
-  return getHistorial().filter(function(r){
-    // FIX: excluir reportes ya marcados como enviados por whatsappStatus/whatsappSent,
-    // aunque el campo local 'estado' no se haya sincronizado todavía.
-    var yaEnviado = (r.estado === 'enviado' || r.whatsappStatus === 'sent' || r.whatsappSent === true);
-    return !yaEnviado && (r.estado==='pendiente'||r.estado==='fallido');
-  });
+  return getHistorial().filter(function(r){ return r.estado==='pendiente'||r.estado==='fallido'; });
 }
 
 // ── Enviar a WhatsApp ─────────────────────────────
 // ── Configuración Ultramsg ────────────────────────
 var RADIO_GPS_METROS = 80; // Radio GPS unificado — cambiar aquí para afectar todas las validaciones
-var UM_INSTANCE  = 'instance177727';
-var UM_TOKEN     = '0olfbxq3zi0rbsd1';
+// UltraMsg ya NO se configura en el cliente.
+// Instance/token/grupo viven solo en Cloud Functions.
+// Esto evita duplicados y también evita exponer credenciales en index.html.
+var MODO_PRUEBAS  = true;   // Solo referencia visual/local. El grupo real se define en functions:config.
 
-// ── MODO PRUEBAS ─────────────────────────────────────────────
-var MODO_PRUEBAS  = true;   // PRUEBAS
-var TEST_GROUP_ID = '120363424993135472@g.us';
-var PROD_GROUP_ID = '120363424993135472@g.us'; // BLOQUEADO: antes era Grupo Pozos; temporalmente apunta a TEST
-
-var UM_TO   = MODO_PRUEBAS ? TEST_GROUP_ID : PROD_GROUP_ID;
-var UM_BASE = 'https://api.ultramsg.com/' + UM_INSTANCE;
-var UM_URL       = UM_BASE + '/messages/chat';
-var UM_URL_IMG   = UM_BASE + '/messages/image';
-
-// ── Enviar texto por Ultramsg ─────────────────────
-function umSendText(texto, callback){
-  console.warn('[WA_CLIENT_BLOCKED] umSendText bloqueado. WhatsApp debe salir solo por Cloud Function.');
-  if(callback) callback(false);
-  return;
-  console.log('[WHATSAPP] Grupo destino:', UM_TO);
-  var body = 'token=' + encodeURIComponent(UM_TOKEN)
-           + '&to='   + encodeURIComponent(UM_TO)
-           + '&body=' + encodeURIComponent(texto);
-  // Timeout de 25s para no quedarse esperando indefinidamente
-  var _fetchCtrl = typeof AbortController!=='undefined' ? new AbortController() : null;
-  var _fetchTimeout = setTimeout(function(){ if(_fetchCtrl) _fetchCtrl.abort(); }, 25000);
-  fetch(UM_URL, {
-    method:'POST',
-    headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body: body,
-    signal: _fetchCtrl ? _fetchCtrl.signal : undefined
-  })
-  .then(function(r){ clearTimeout(_fetchTimeout); return r.json(); })
-  .then(function(d){
-    console.log('Ultramsg respuesta:', JSON.stringify(d));
-    var ok = !!(d && (d.sent==='true'||d.sent===true||d.id));
-    if(callback) callback(ok);
-  })
-  .catch(function(err){ clearTimeout(_fetchTimeout); console.error('Ultramsg error:', err); if(callback) callback(false); });
+// ── WhatsApp vía Cloud Function ─────────────────────
+// IMPORTANTE:
+// El celular YA NO llama UltraMsg directamente.
+// Solo escribe en Firebase con whatsappStatus:'pending'.
+// Las Cloud Functions desplegadas son las únicas autorizadas para enviar WhatsApp.
+function _waBackendId(prefix){
+  return String(Date.now()) + '_' + (prefix || 'wa') + '_' + Math.random().toString(36).slice(2,8);
 }
 
-// ── Enviar imagen: Firebase Storage → UltraMsg URL ──────────────────
-var IMGBB_KEY = '32d6bb4e34f5b0dfcac00dac04f3e512';
-
-// ← fotos.js → comprimirFoto
-
-function umSendImage(base64, caption, callback){
-  // Comprimir primero para subida rápida
-  comprimirFoto(base64, function(base64Comp){
-    _umSendImageInner(base64Comp, caption, callback);
-  });
-}
-
-function _umSendImageInner(base64, caption, callback){
-  console.warn('[WA_CLIENT_BLOCKED] umSendImage bloqueado. Fotos deben salir solo por Cloud Function.');
-  if(callback) callback(false);
-  return;
+function _waBackendQueue(payload, callback){
   try{
-    var imgData = base64.startsWith('data:') ? base64 : 'data:image/jpeg;base64,'+base64;
-    var b64only  = imgData.split(',')[1];
+    if(!fbDB){
+      console.warn('[WA_BACKEND_QUEUE] fbDB no disponible');
+      if(callback) callback(false);
+      return;
+    }
+    var id = payload.id || _waBackendId(payload.esAlarma ? 'alarm' : 'msg');
+    payload.id = id;
+    payload.fecha = payload.fecha || new Date().toISOString();
+    payload.estado = payload.estado || 'pendiente';
+    payload.whatsappStatus = 'pending';
+    payload.whatsappSent = false;
+    payload.whatsappDedupeKey = String(id);
+    payload.whatsappAttempts = payload.whatsappAttempts || 0;
+    payload.fotos = payload.fotos || [];
 
-    // ── MÉTODO 1: Enviar base64 directamente a UltraMsg ──
-    // UltraMsg acepta data URI en el campo 'image'
-    var bodyB64 = 'token='   + encodeURIComponent(UM_TOKEN)
-                + '&to='     + encodeURIComponent(UM_TO)
-                + '&image='  + encodeURIComponent(imgData)
-                + '&caption='+ encodeURIComponent(caption||'');
-
-    fetch(UM_URL_IMG, {
-      method:'POST',
-      headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body: bodyB64
-    })
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      var ok = !!(d && (d.sent==='true'||d.sent===true||d.id));
-      if(ok){
-        if(callback) callback(true);
-        return;
-      }
-      // Base64 no funcionó — intentar subir a ImgBB y enviar URL
-      console.warn('Base64 directo falló, intentando ImgBB:', JSON.stringify(d));
-      subirImgBB(b64only, caption, callback);
-    })
-    .catch(function(){
-      subirImgBB(b64only, caption, callback);
+    var path = payload.esAlarma ? ('alarmas/' + id) : ('reportes/' + id);
+    fbDB.ref(path).set(payload).then(function(){
+      console.log('[WA_BACKEND_QUEUE] queued:', path);
+      if(callback) callback(true);
+    }).catch(function(err){
+      console.error('[WA_BACKEND_QUEUE] error:', err);
+      if(callback) callback(false);
     });
-
-  } catch(e){
-    console.error('umSendImage err:', e);
+  }catch(e){
+    console.error('[WA_BACKEND_QUEUE] exception:', e);
     if(callback) callback(false);
   }
 }
 
-function subirImgBB(b64only, caption, callback){
-  var fd = new FormData();
-  fd.append('key',   IMGBB_KEY);
-  fd.append('image', b64only);
-  fetch('https://api.imgbb.com/1/upload', {method:'POST', body:fd})
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      if(d && d.success && d.data && d.data.url){
-        console.log('ImgBB URL:', d.data.url);
-        enviarUrlUltramsg(d.data.url, caption, callback);
-      } else {
-        console.warn('ImgBB falló:', JSON.stringify(d));
-        subirCloudinary(b64only, caption, callback);
-      }
-    })
-    .catch(function(){ subirCloudinary(b64only, caption, callback); });
+function umSendText(texto, callback){
+  _waBackendQueue({
+    msg: texto || '',
+    pozo: 'SISTEMA',
+    recorredor: (typeof REC !== 'undefined' && REC) ? REC : (loggedUser || 'Sistema'),
+    modo: 'mensaje_sistema',
+    fotos: []
+  }, callback);
 }
 
-function subirCloudinary(b64only, caption, callback){
-  var fd = new FormData();
-  fd.append('upload_preset', 'cuichapa_unsigned');
-  fd.append('folder', 'cuichapa');
-  fd.append('file', 'data:image/jpeg;base64,'+b64only);
-  fetch('https://api.cloudinary.com/v1_1/ddnftojl1/image/upload', {method:'POST', body:fd})
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      if(d && d.secure_url){
-        enviarUrlUltramsg(d.secure_url, caption, callback);
-      } else {
-        console.error('Todos los servicios fallaron');
-        showToast('⚠️ No se pudo subir la foto');
-        if(callback) callback(false);
-      }
-    })
-    .catch(function(){
-      showToast('⚠️ Error al subir foto');
-      if(callback) callback(false);
-    });
+function umSendImage(base64, caption, callback){
+  _waBackendQueue({
+    msg: caption || '📸 Evidencia fotográfica',
+    pozo: 'SISTEMA',
+    recorredor: (typeof REC !== 'undefined' && REC) ? REC : (loggedUser || 'Sistema'),
+    modo: 'foto_sistema',
+    fotos: [{ data: base64, nombre: 'foto.jpg' }]
+  }, callback);
 }
 
 function enviarUrlUltramsg(imgUrl, caption, callback){
-  var body = 'token='   + encodeURIComponent(UM_TOKEN)
-           + '&to='     + encodeURIComponent(UM_TO)
-           + '&image='  + encodeURIComponent(imgUrl)
-           + '&caption='+ encodeURIComponent(caption||'');
-  fetch(UM_URL_IMG, {
-    method:'POST',
-    headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body: body
-  })
-  .then(function(r){ return r.json(); })
-  .then(function(d){
-    console.log('UM img resp:', JSON.stringify(d));
-    var ok = !!(d && (d.sent==='true'||d.sent===true||d.id));
-    showToast(ok ? '✅ Foto enviada' : '⚠️ Foto no enviada: '+JSON.stringify(d));
-    if(callback) callback(ok);
-  })
-  .catch(function(err){
-    console.error('UM img err:', err);
-    showToast('⚠️ Error UltraMsg: '+err.message);
-    if(callback) callback(false);
-  });
+  // Ya no se envía URL directa a UltraMsg desde el celular.
+  // Se manda como mensaje informativo al backend.
+  _waBackendQueue({
+    msg: (caption || 'Imagen') + '\n' + (imgUrl || ''),
+    pozo: 'SISTEMA',
+    recorredor: (typeof REC !== 'undefined' && REC) ? REC : (loggedUser || 'Sistema'),
+    modo: 'url_imagen_sistema',
+    fotos: []
+  }, callback);
 }
 
 function sendImageFormData(base64, caption, callback){ umSendImage(base64, caption, callback); }
@@ -7885,271 +6545,70 @@ function _waEnqueue(r){
 }
 // ═════════════════════════════════════════════════════════════
 function enviarConUltramsg(id, callback, fotosDirectas){
-  console.warn('[WA_DIRECT_BLOCKED] enviarConUltramsg bloqueado. WhatsApp solo por Cloud Function.');
-  if(callback) callback(false);
-  return;
   var r = getReporte(id);
   if(!r){ if(callback) callback(false); return; }
-  // ── Check 1: registro persistente WA (fuente de verdad definitiva) ──
-  if(_waIsSent(r)){
-    console.log('[WA_SKIP_SENT] id:', id, '— ya enviado a WhatsApp');
-    if(r.estado !== 'enviado') actualizarEstadoReporte(id, 'enviado', new Date().toISOString());
-    if(callback) callback(true);
-    return;
-  }
-  // ── Check 2: _inFlight en memoria (doble tap / mismo ciclo) ──
-  if(!enviarConUltramsg._inFlight) enviarConUltramsg._inFlight = {};
-  if(enviarConUltramsg._inFlight[id]){
-    console.log('[WA_SKIP_SENDING] _inFlight bloqueado id:', id);
-    if(callback) callback(false);
-    return;
-  }
-  enviarConUltramsg._inFlight[id] = true;
-  // ── Check 3: marcar 'sending' en registry (persiste si app se cierra) ──
-  if(!_waMarkSending(r)){
-    // _waMarkSending devuelve false si ya está 'sent' en el registry
-    console.log('[WA_SKIP_SENT] registry bloqueó reenvío, id:', id);
-    delete enviarConUltramsg._inFlight[id];
+
+  // Nuevo flujo: NO enviar desde el celular.
+  // Solo dejar el reporte listo en Firebase para que la Cloud Function lo envíe una sola vez.
+  if(r.whatsappSent === true || r.estado === 'enviado'){
     if(callback) callback(true);
     return;
   }
 
-  // Si se pasan fotos directas (modo alarma), usarlas — evita depender de localStorage
-  var fotosSnapshot = fotosDirectas ? fotosDirectas.slice() : (r.fotos || []).slice();
-  var esAlarma = r.esAlarma;
-  var tipoAlarma = r.tipoAlarma || r.tipo || '';
-  var recorredor = r.recorredor || '';
-  var pozo = r.pozo || '';
+  r.whatsappStatus    = 'pending';
+  r.whatsappSent      = false;
+  r.whatsappDedupeKey = String(r.id);
+  r.whatsappAttempts  = r.whatsappAttempts || 0;
+  if(fotosDirectas && fotosDirectas.length) r.fotos = fotosDirectas.slice();
 
-  // 1. Enviar texto del reporte
-  umSendText(r.msg, function(okTexto){
-    if(!okTexto){
-      _waMarkFailed(r, 'umSendText failed');
-      actualizarEstadoReporte(id, 'pendiente', new Date().toISOString());
-      if(enviarConUltramsg._inFlight) delete enviarConUltramsg._inFlight[id];
-      renderHistorial();
-      if(callback) callback(false);
-      return;
-    }
-    // Texto enviado OK — 2. Enviar fotos
-    var imgs = fotosSnapshot;
-    if(!imgs.length){
-      // Sin fotos: marcar enviado en registry + estado
-      _waMarkSent(r);
-      if(enviarConUltramsg._inFlight) delete enviarConUltramsg._inFlight[id];
-      actualizarBadgeHistorial();
-      renderHistorial();
+  guardarReporte(r);
+
+  if(fbDB){
+    var path = r.esAlarma ? ('alarmas/' + r.id) : ('reportes/' + r.id);
+    fbDB.ref(path).update({
+      id: r.id,
+      fecha: r.fecha || new Date().toISOString(),
+      hora: r.hora || null,
+      pozo: r.pozo || r.lugar || null,
+      lugar: r.lugar || r.pozo || null,
+      recorredor: r.recorredor || r.quien || null,
+      quien: r.quien || r.recorredor || null,
+      msg: r.msg || '',
+      fotos: r.fotos || [],
+      esAlarma: r.esAlarma || false,
+      tipoAlarma: r.tipoAlarma || r.tipo || null,
+      tipo: r.tipo || r.tipoAlarma || null,
+      estado: 'pendiente',
+      whatsappStatus: 'pending',
+      whatsappSent: false,
+      whatsappDedupeKey: String(r.id),
+      whatsappAttempts: r.whatsappAttempts || 0
+    }).then(function(){
+      console.log('[WA_BACKEND] reintento enviado a Firebase:', path);
       if(callback) callback(true);
-      return;
-    }
-    var i = 0;
-    function enviarSigFoto(){
-      if(i >= imgs.length){
-        // Marcar enviado en registry + estado SOLO después de todas las fotos
-        _waMarkSent(r);
-        if(enviarConUltramsg._inFlight) delete enviarConUltramsg._inFlight[id];
-        actualizarBadgeHistorial();
-        renderHistorial();
-        if(callback) callback(true);
-        return;
-      }
-      var foto = imgs[i++];
-      var src  = foto.data || foto;
-      var caption = esAlarma
-        ? '📸 Foto '+i+' — 🚨 '+tipoAlarma+' ('+recorredor+')'
-        : '📸 Foto '+i+' — C-'+pozo+' ('+recorredor+')';
-      umSendImage(src, caption, function(){
-        setTimeout(enviarSigFoto, 1500);
-      });
-    }
-    enviarSigFoto();
-  });
+    }).catch(function(err){
+      console.error('[WA_BACKEND] error reintentando:', err);
+      if(callback) callback(false);
+    });
+  }else{
+    if(callback) callback(false);
+  }
 }
+
 
 // ── Intentar enviar un reporte (por ID) ──────────
 function intentarEnviar(id){
   var r = getReporte(id);
   if(!r) return;
-  // FIX: condición derivada — un cliente con caché vieja puede tener
-  // r.estado='pendiente' localmente aunque Firebase ya diga sent/enviado.
-  if(r.estado === 'enviado' || r.whatsappStatus === 'sent' || r.whatsappSent === true) return;
+  if(r.estado === 'enviado') return;
   actualizarEstadoReporte(id, 'pendiente', new Date().toISOString());
   renderHistorial();
   enviarConUltramsg(id, null);
 }
 
-// Reintentar envío a WhatsApp de un reporte que quedó pendiente.
-// No duplica si ya fue enviado — la CF tiene su propio lock en /whatsappSentRegistry.
-// Mecanismo: limpiar el lock antiguo + resetear whatsappStatus:'pending' en Firebase.
-// La CF sendWhatsApp ya desplegada lo procesará como si fuera nuevo, con deduplicación.
-// ── Reconciliación registry → reportes ───────────────────────────────────
-// Para cada id en la lista, lee /whatsappSentRegistry/{id}.
-// Si status=sent → parchea /reportes/{id} sin reenviar WhatsApp.
-// Si no existe → lo deja en cola para reintento real.
-// Llama onDone({reparados, sinRegistry}) cuando termina.
-function reconciliarConRegistry(ids, onDone){
-  if(!fbDB || !ids || !ids.length){
-    if(onDone) onDone({reparados:0, sinRegistry:[]});
-    return;
-  }
-  var pendientes = ids.slice();
-  var reparados = 0;
-  var sinRegistry = [];
-  var completados = 0;
-
-  pendientes.forEach(function(id){
-    fbDB.ref('whatsappSentRegistry/' + id).once('value').then(function(snap){
-      var reg = snap.val();
-      if(reg && reg.status === 'sent'){
-        // Registry confirma envío — parchar /reportes/{id} sin tocar WhatsApp
-        var patch = {
-          estado:           'enviado',
-          whatsappStatus:   'sent',
-          whatsappSent:     true,
-          whatsappSentAt:   reg.sentAt || null,
-          ultraMsgResponseId: reg.ultraMsgResponseId || reg.ultraId || null
-        };
-        fbDB.ref('reportes/' + id).update(patch).then(function(){
-          reparados++;
-          // Sincronizar también el historial local
-          var hist = getHistorial();
-          var idx = hist.findIndex(function(x){ return String(x.id) === String(id); });
-          if(idx !== -1){
-            Object.assign(hist[idx], patch);
-            saveHistorial(hist);
-          }
-        }).catch(function(e){
-          console.warn('[RECONCILIAR] update falló para', id, e.message);
-        }).finally(function(){
-          completados++;
-          if(completados === pendientes.length){
-            renderHistorial();
-            if(onDone) onDone({reparados:reparados, sinRegistry:sinRegistry});
-          }
-        });
-      } else {
-        // No está en registry → reintento real necesario
-        sinRegistry.push(id);
-        completados++;
-        if(completados === pendientes.length){
-          renderHistorial();
-          if(onDone) onDone({reparados:reparados, sinRegistry:sinRegistry});
-        }
-      }
-    }).catch(function(){
-      sinRegistry.push(id);
-      completados++;
-      if(completados === pendientes.length){
-        if(onDone) onDone({reparados:reparados, sinRegistry:sinRegistry});
-      }
-    });
-  });
-}
-
-// Reconciliación masiva: busca TODOS los reportes pending locales,
-// contrasta con el registry y repara los que ya fueron enviados.
-// Llamada al reconectar y desde el botón manual.
-function reconciliarTodosPendientes(mostrarResultado){
-  if(!fbDB || !fbConnected) return;
-  var hist = getHistorial();
-  var pendingIds = hist.filter(function(r){
-    return !r.esAlarma
-      && r.estado !== 'enviado'
-      && r.whatsappStatus !== 'sent'
-      && r.whatsappSent !== true;
-  }).map(function(r){ return r.id; });
-
-  if(!pendingIds.length){
-    if(mostrarResultado) showToast('✅ No hay reportes pendientes de reconciliar');
-    return;
-  }
-  console.log('[RECONCILIAR] verificando', pendingIds.length, 'reportes pendientes en registry...');
-
-  reconciliarConRegistry(pendingIds, function(result){
-    console.log('[RECONCILIAR] reparados:', result.reparados, '| sin registry:', result.sinRegistry.length);
-    if(mostrarResultado){
-      if(result.reparados > 0){
-        showToast('✅ ' + result.reparados + ' reporte(s) reconciliado(s) con Firebase');
-      } else if(result.sinRegistry.length > 0){
-        showToast('⚠️ ' + result.sinRegistry.length + ' reporte(s) sin confirmar en registry');
-      } else {
-        showToast('ℹ️ Todos los pendientes ya verificados');
-      }
-    }
-  });
-}
-
-function reintentarEnvioPendiente(id){
-  if(!fbDB){ showToast('⚠️ Sin conexión Firebase'); return; }
-  var r = getReporte(id);
-  if(!r){ showToast('❌ Reporte no encontrado'); return; }
-
-  // PASO 1: Consultar el registry — si ya dice sent, solo reconciliar (NO reenviar WA)
-  reconciliarConRegistry([id], function(result){
-    if(result.reparados > 0){
-      showToast('✅ Reporte reconciliado — ya había sido enviado al grupo');
-      return;
-    }
-    // PASO 2: No está en registry → verificar /reportes directamente
-    fbDB.ref('reportes/' + id).once('value').then(function(snap){
-      var remoto = snap.val();
-      if(remoto && (remoto.whatsappStatus === 'sent' || remoto.whatsappSent === true)){
-        showToast('✅ Este reporte ya fue enviado al grupo');
-        var hist = getHistorial();
-        var idx = hist.findIndex(function(x){ return x.id == id; });
-        if(idx !== -1){
-          hist[idx].whatsappStatus = 'sent';
-          hist[idx].whatsappSent = true;
-          hist[idx].estado = 'enviado';
-          saveHistorial(hist);
-          renderHistorial();
-        }
-        return;
-      }
-
-      // PASO 3: No está en registry NI en reportes como sent → reintento real
-      // Limpiar el lock para que el CF no lo rechace por duplicado
-      fbDB.ref('whatsappSentRegistry/' + id).remove().then(function(){
-      // Resetear status a 'pending' — dispara la CF sendWhatsApp
-      return fbDB.ref('reportes/' + id).update({
-        whatsappStatus: 'pending',
-        whatsappSent:   false,
-        whatsappAttempts: 0
-      });
-    }).then(function(){
-      showToast('🔄 Reintentando envío… el CF procesará en unos segundos');
-      // Escuchar el cambio de status hasta 30s para actualizar la UI
-      var done = false;
-      var timeout = setTimeout(function(){
-        if(!done){ done = true; showToast('⏱️ Tiempo de espera agotado — revisa el historial'); }
-      }, 30000);
-      fbDB.ref('reportes/' + id + '/whatsappStatus').on('value', function(s){
-        if(s.val() === 'sent' && !done){
-          done = true;
-          clearTimeout(timeout);
-          fbDB.ref('reportes/' + id + '/whatsappStatus').off('value');
-          showToast('✅ Reporte enviado correctamente al grupo');
-          renderHistorial();
-        }
-      });
-    }).catch(function(e){
-      showToast('❌ Error al reintentar: ' + e.message);
-    });
-    }).catch(function(e){
-      showToast('❌ No se pudo verificar estado en Firebase: ' + e.message);
-    });
-  }); // fin reconciliarConRegistry callback
-}
-
 // ── Procesar cola completa — silencioso ──────────
 var _colaEnProceso = false;
 function procesarCola(){
-  // DESACTIVADO: el envío a WhatsApp ahora lo hace exclusivamente la
-  // Cloud Function (Firebase -> sendWhatsApp -> UltraMsg). El frontend
-  // ya no debe reenviar reportes ni reescribir su estado — solo crea el
-  // reporte en 'pending' y refleja lo que diga Firebase (escucharFirebase).
-  // Se conserva el código original abajo, inalcanzable, por trazabilidad.
-  return;
   if(_colaEnProceso) return;
   var pendientes = getPendientes();
   if(!pendientes.length) return;
@@ -8189,36 +6648,13 @@ window.addEventListener('offline', function(){
 
 // Método 2: verificación activa contra servidor
 function verificarConectividad(callback){
-  // Ping a un endpoint confiable con timeout de 5s
-  var ctrl = null;
-  var timeout = null;
-  try{
-    ctrl = new AbortController();
-    timeout = setTimeout(function(){ ctrl.abort(); }, 5000);
-    fetch('https://api.ultramsg.com/instance177727/instance/status'
-      +'?token=qgzhdd47v5b7xv4e', { method:'GET', signal: ctrl.signal })
-    .then(function(r){
-      clearTimeout(timeout);
-      callback(r.ok || r.status < 500);
-    })
-    .catch(function(){
-      clearTimeout(timeout);
-      callback(false);
-    });
-  }catch(e){
-    if(timeout) clearTimeout(timeout);
-    callback(false);
-  }
+  // No consultar UltraMsg desde el celular. Solo usar estado del navegador.
+  callback(navigator.onLine !== false);
 }
+
 
 var _vyv_timer = null;
 function verificarYEnviar(){
-  // DESACTIVADO: ver nota en procesarCola(). El frontend ya no reintenta
-  // el envío de reportes pendientes; la Cloud Function es la única
-  // responsable. Esto neutraliza también el setInterval de 30s, el
-  // listener 'online', 'visibilitychange' y el chequeo al cargar la app,
-  // ya que todos invocan esta misma función.
-  return;
   // Debounce: múltiples triggers en <2s se colapsan en uno solo
   if(_vyv_timer) clearTimeout(_vyv_timer);
   _vyv_timer = setTimeout(function(){
@@ -8295,10 +6731,6 @@ function confirmarEnvio(){
       rango:     (_dist !== null && _dist <= 80) ? 'dentro' : 'fuera'
     };
   }
-  // FIX: trazabilidad de la fuente y momento de captura del GPS, para que
-  // el reporte refleje exactamente cuándo y cómo se obtuvo la ubicación.
-  var _gpsSource     = (la && lo) ? (_gpsSourceForReport || 'fresh') : 'none';
-  var _gpsCapturedAt = (la && lo) ? (_gpsCapturedAtForReport || new Date().toISOString()) : null;
   // Observaciones — prioridad: coObs > regObs > medObs
   var _obs = (document.getElementById('coObs') ||{}).value  ||
              (document.getElementById('regObs')||{}).value  ||
@@ -8345,10 +6777,10 @@ function confirmarEnvio(){
       intermitente: checks.intermitente || false,
       aforo_bph:    parseFloat((document.getElementById('regAforo')||{}).value)||null
     },
+    // Estado del pozo en Nivel de Guardia (independiente de Estable/Inestable)
+    estadoPozo: estadoPozo || '',
     // GPS estructurado
     gps: _gpsObj,
-    gpsCapturedAt: _gpsCapturedAt,
-    gpsSource:     _gpsSource,
     // Observaciones
     observaciones: _obs,
     obs:           _obs
@@ -8449,10 +6881,6 @@ function ccVerificar(){
     return;
   }
   if(rRetry && fbDB){
-    console.warn('[WA_WRITE_TRACE] ccVerificar() va a forzar pending — reportId:', rRetry.id,
-      '| whatsappStatus ANTES (local):', rRetry.whatsappStatus,
-      '| whatsappSent ANTES (local):', rRetry.whatsappSent,
-      '| stack:', (new Error()).stack);
     rRetry.whatsappStatus    = 'pending';
     rRetry.whatsappSent      = false;
     rRetry.whatsappDedupeKey = String(rRetry.id);
@@ -8473,8 +6901,6 @@ function filtrarHist(f, btn){
 
 function renderHistorial(){
   var arr = getHistorial();
-  // FIX rendimiento: nunca pintar más de 50 tarjetas de golpe (FASE 2)
-  if(arr.length > 50) arr = arr.slice(0, 50);
   var pendientes = getPendientes();
   if(histFiltro === 'alarmas'){
     arr = arr.filter(function(r){ return r.esAlarma; });
@@ -8488,16 +6914,13 @@ function renderHistorial(){
   // Badge cola
   var qBadge = '';
   if(pendientes.length){
-    var _qNoConf = pendientes.filter(function(r){ return !r.esAlarma && r.whatsappStatus !== 'sent' && r.whatsappSent !== true; });
-    var _verBtn = (fbDB && fbConnected && _qNoConf.length)
-      ? '<button onclick="reconciliarTodosPendientes(true)" title="Comparar con registro Firebase" style="flex-shrink:0;background:#3b82f6;color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:800;cursor:pointer">🔧 Verificar</button>'
-      : '';
     qBadge = '<div style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#78350f,#92400e);color:#fef3c7;'
       +'border-radius:12px;padding:12px 16px;margin-bottom:12px;font-size:13px;font-weight:700;">'
       +'<span style="font-size:20px">⏳</span>'
-      +'<div style="flex:1"><div>'+pendientes.length+' reporte'+(pendientes.length>1?'s':'')+' pendiente'+(pendientes.length>1?'s':'')+' de envío</div>'
+      +'<div><div>'+pendientes.length+' reporte'+(pendientes.length>1?'s':'')+' pendiente'+(pendientes.length>1?'s':'')+' de envío</div>'
       +'<div style="font-size:11px;opacity:.8;margin-top:2px">Se enviarán automáticamente cuando haya señal</div></div>'
-      +_verBtn+'</div>';
+      +'<button onclick="procesarCola()" style="margin-left:auto;background:#f59e0b;color:#fff;border:none;border-radius:8px;'
+      +'padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer">Enviar ya</button></div>';
   }
 
   if(countEl) countEl.textContent = arr.length ? arr.length+' reporte'+(arr.length===1?'':'s') : '';
@@ -8516,12 +6939,8 @@ function renderHistorial(){
       ? 'Último intento: '+new Date(r.ultimoIntento).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})
       : 'Sin intentos aún';
     // Estado visual
-    // FIX: derivar 'enviado' también desde whatsappStatus/whatsappSent,
-    // porque el campo 'estado' puede no haberse sincronizado localmente
-    // (p.ej. reportes de otro dispositivo recibidos vía escucharFirebase).
-    var _yaEnviadoUI = (r.estado === 'enviado' || r.whatsappStatus === 'sent' || r.whatsappSent === true);
     var estadoHTML = '';
-    if(_yaEnviadoUI){
+    if(r.estado==='enviado'){
       estadoHTML = '<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;'
         +'border-radius:50%;background:#16a34a;flex-shrink:0" title="Enviado">✓</span>';
     } else {
@@ -8543,11 +6962,6 @@ function renderHistorial(){
       +(r.otroDisp
         ? '<span style="font-size:10px;background:#dbeafe;color:#1d4ed8;border-radius:10px;padding:2px 8px;font-weight:700;margin-left:6px">📱 Otro dispositivo</span>'
         : '')
-      +(r.correccionPendiente
-        ? '<span style="font-size:10px;background:#d97706;color:#fff;border-radius:10px;padding:2px 8px;font-weight:700;margin-left:6px" title="Corrección sin sincronizar">⏳ Corrección pendiente</span>'
-        : r.edited
-          ? '<span style="font-size:10px;background:#3b82f6;color:#fff;border-radius:10px;padding:2px 8px;font-weight:700;margin-left:6px" title="Editado por '+escapeHTML(r.editedBy||'')+' — '+escapeHTML(r.editedAt||'')+'">✏️ Corregido</span>'
-          : '')
       +'</span>'
       +'<span class="hist-card-date">'+fechaStr+'</span>'
       +(r.esAlarma && r.msg
@@ -8559,60 +6973,10 @@ function renderHistorial(){
       +'</div>'
       +'<div class="hist-card-body">'
       +'<pre class="hist-msg">'+msgSafe+'</pre>'
-      +(r.editHistory && r.editHistory.length
-        ? (function(){
-            // Agrupar entradas por sesión de corrección (mismo usuario + misma fecha ~minuto)
-            // y mostrar cada sesión como un bloque separado
-            var bloques = [];
-            r.editHistory.forEach(function(eh){
-              var key = (eh.usuario||'?') + '|' + (eh.fecha||'').slice(0,16);
-              var found = false;
-              for(var b=0; b<bloques.length; b++){
-                if(bloques[b].key === key){ bloques[b].items.push(eh); found=true; break; }
-              }
-              if(!found) bloques.push({ key:key, usuario:eh.usuario||'?', fecha:eh.fecha||'', items:[eh] });
-            });
-            return bloques.map(function(bl){
-              var horaCorr = (function(){
-                try{
-                  var d=new Date(bl.fecha),h=d.getHours(),m=d.getMinutes(),ap=h>=12?'p.m.':'a.m.',h12=h%12||12;
-                  return (h12<10?'0':'')+h12+':'+(m<10?'0':'')+m+' '+ap;
-                }catch(e){ return bl.fecha.slice(11,16)||''; }
-              })();
-              var motivo = bl.items.find(function(i){ return i.campo==='motivo'; });
-              var cambioItems = bl.items.filter(function(i){ return i.campo!=='motivo'; });
-              var html2 = '<div style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:9px 11px;margin-bottom:8px;font-size:11px">';
-              html2 += '<div style="font-weight:800;color:#60a5fa;margin-bottom:4px">✏️ Corrección registrada</div>';
-              html2 += '<div style="color:var(--txt2);margin-bottom:6px">Corregido por <strong style=\"color:var(--txt)\">' + escapeHTML(bl.usuario) + '</strong> · ' + horaCorr + '</div>';
-              if(cambioItems.length){
-                html2 += '<div style="font-weight:700;color:var(--txt2);margin-bottom:3px">Cambios:</div>';
-                html2 += cambioItems.map(function(eh){
-                  var etiqueta = eh.label || eh.campo;
-                  var unidad   = eh.unidad ? ' ' + eh.unidad : '';
-                  var antes    = (eh.antes===undefined||eh.antes===null||eh.antes==='') ? '—' : String(eh.antes);
-                  var despues  = (eh.despues===undefined||eh.despues===null) ? '—' : String(eh.despues);
-                  return '<div style="padding:2px 0">• <strong>' + escapeHTML(etiqueta) + '</strong>: '
-                    + '<span style="text-decoration:line-through;opacity:.5">' + escapeHTML(antes) + unidad + '</span>'
-                    + ' → <span style="color:#4ade80;font-weight:800">' + escapeHTML(despues) + unidad + '</span>'
-                    + '</div>';
-                }).join('');
-              }
-              if(motivo && motivo.despues){
-                html2 += '<div style="margin-top:5px;color:var(--txt2)">📝 <em>' + escapeHTML(String(motivo.despues)) + '</em></div>';
-              }
-              html2 += '</div>';
-              return html2;
-            }).join('');
-          })()
-        : '')
       +'<div class="hist-actions">'
-      +(r.estado!=='enviado' && !r.whatsappSent && r.whatsappStatus!=='sent'
+      +(r.estado!=='enviado'
         ?'<button class="hist-resend" onclick="intentarEnviar('+r.id+')">📤 Enviar ahora</button>'
-          +(fbDB?'<button class="hist-resend" onclick="event.stopPropagation();reintentarEnvioPendiente('+r.id+')" style="background:#d97706;font-size:11px">🔄 Reintentar CF</button>':'')
         :'<button class="hist-resend" onclick="intentarEnviar('+r.id+')" style="background:#1e5caa">📤 Reenviar</button>')
-      +((!r.esAlarma && r.estado==='enviado' && _minutosDesdeEnvio(r) < 15)
-        ?'<button class="hist-resend" onclick="event.stopPropagation();abrirEditarReporte('+r.id+')" style="background:#3b82f6">✏️ Corregir reporte</button>'
-        :'')
       +((_puedeEliminar())?'<button class="hist-delete" onclick="event.stopPropagation();borrarReporte('+r.id+')" title="Borrar reporte">🗑</button>':'')
       +'</div></div></div>';
   }).join('');
@@ -9453,6 +7817,63 @@ function initMapChips(){ initMapaView(); }
 // ── Badge en ícono de historial ───────────────────
 
 
+// Arrancar badge y revisión periódica
+actualizarBadgeHistorial();
+setInterval(actualizarBadgeHistorial, 5000);
+
+// ══ PWA SERVICE WORKER ══
+var APP_VERSION = 'v5'; // Cambiar con cada actualización
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').then(function(reg){
+
+      // Verificar actualizaciones inmediatamente
+      reg.update();
+
+      // Cuando haya un nuevo SW esperando → forzar activación
+      reg.addEventListener('updatefound', function(){
+        var newWorker = reg.installing;
+        if(!newWorker) return;
+        newWorker.addEventListener('statechange', function(){
+          if(newWorker.state === 'installed' && navigator.serviceWorker.controller){
+            // Hay nueva versión — forzar recarga silenciosa
+            newWorker.postMessage({ type: 'SKIP_WAITING' });
+          }
+        });
+      });
+
+      // Background Sync
+      if('SyncManager' in window){
+        reg.sync.register('enviar-reportes-pendientes').catch(function(){});
+      }
+    }).catch(function(){});
+
+    // Cuando el SW tome control → recargar para usar versión nueva
+    var refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function(){
+      if(!refreshing){
+        refreshing = true;
+        window.location.reload();
+      }
+    });
+
+    // Escuchar mensajes del SW
+    navigator.serviceWorker.addEventListener('message', function(e){
+      if(e.data && e.data.type === 'PROCESAR_COLA'){
+        procesarCola();
+      }
+    });
+  });
+
+  // Verificar actualizaciones cada 5 minutos (útil para celulares que dejan la app abierta)
+  setInterval(function(){
+    navigator.serviceWorker.getRegistration().then(function(reg){
+      if(reg) reg.update();
+    });
+  }, 5 * 60 * 1000);
+}
+
 // ══ INSTALL BANNER ══
 var deferredPrompt=null;
 window.addEventListener('beforeinstallprompt',function(e){
@@ -9503,7 +7924,41 @@ var _cabPozoActual='';
 })();
 </script>
 
-<script src="./assets/js/alarm-audio.js"></script>
+<script>
+// ── Sonido de alarma para notificaciones ──────────────────
+var _alarmAudio = null;
+var ALARM_SRC = 'data:audio/mp3;base64,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';
+
+function initAlarmAudio() {
+  if (_alarmAudio) return;
+  try {
+    _alarmAudio = new Audio(ALARM_SRC);
+    _alarmAudio.volume = 1.0;
+  } catch(e) { console.warn('Audio no disponible:', e); }
+}
+
+function playAlarmSound() {
+  initAlarmAudio();
+  if (!_alarmAudio) return;
+  _alarmAudio.currentTime = 0;
+  _alarmAudio.play().catch(function(e){ console.warn('Alarma:', e); });
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'PLAY_ALARM') {
+      try {
+        var a = new Audio(e.data.src || ALARM_SRC);
+        a.volume = 1.0;
+        a.play().catch(function(){});
+      } catch(err){}
+    }
+  });
+}
+
+document.addEventListener('touchstart', function() { initAlarmAudio(); }, { once: true });
+document.addEventListener('click',      function() { initAlarmAudio(); }, { once: true });
+</script>
 
 <script>
 var _alarmAudio = null;
@@ -9525,8 +7980,8 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-document.addEventListener('touchstart', function() { if(typeof initAlarmAudio === 'function') initAlarmAudio(); }, { once: true });
-document.addEventListener('click',      function() { if(typeof initAlarmAudio === 'function') initAlarmAudio(); }, { once: true });
+document.addEventListener('touchstart', function() { initAlarmAudio(); }, { once: true });
+document.addEventListener('click', function() { initAlarmAudio(); }, { once: true });
 
 // ══ MONITOR DE INACTIVIDAD (2 horas) ══════════════════
 (function(){
@@ -9580,16 +8035,11 @@ document.addEventListener('click',      function() { if(typeof initAlarmAudio ==
   <div style="background:#fff;border-radius:20px 20px 0 0;padding:28px 20px 36px;width:100%;max-width:480px">
     <div style="font-size:36px;text-align:center;margin-bottom:10px">📍</div>
     <div style="font-size:17px;font-weight:700;color:#1e2761;text-align:center;margin-bottom:8px" id="gpsWarnTitulo">Fuera del rango del pozo</div>
-    <div id="gpsWarnBodyRadio">
-      <div style="font-size:13px;color:#6b7280;text-align:center;margin-bottom:6px">Estás a <strong id="gpsWarnDist">—</strong> de <strong id="gpsWarnPozo"></strong>.</div>
-      <div style="font-size:13px;color:#6b7280;text-align:center;margin-bottom:24px">Radio permitido: <strong>80 metros</strong>. ¿Enviar de todas formas?</div>
-    </div>
-    <div id="gpsWarnBodyNoGps" style="display:none">
-      <div style="font-size:13px;color:#6b7280;text-align:center;margin-bottom:24px">No se pudo obtener GPS.<br>Este reporte saldrá <strong>sin validación de ubicación</strong>.</div>
-    </div>
+    <div style="font-size:13px;color:#6b7280;text-align:center;margin-bottom:6px">Estás a <strong id="gpsWarnDist">—</strong> de <strong id="gpsWarnPozo"></strong>.</div>
+    <div style="font-size:13px;color:#6b7280;text-align:center;margin-bottom:24px">Radio permitido: <strong>80 metros</strong>. ¿Enviar de todas formas?</div>
     <div style="display:flex;gap:10px">
       <button onclick="document.getElementById('gpsWarnOverlay').style.display='none'" style="flex:1;padding:14px;border-radius:12px;border:1.5px solid #e5e7eb;background:#fff;color:#374151;font-size:14px;font-weight:600;cursor:pointer">✕ Cancelar</button>
-      <button onclick="_gpsWarnConfirmar()" id="gpsWarnConfirmBtn" style="flex:1;padding:14px;border-radius:12px;border:none;background:#1e40af;color:#fff;font-size:14px;font-weight:700;cursor:pointer">Enviar de todas formas</button>
+      <button onclick="document.getElementById('gpsWarnOverlay').style.display='none';if(window._gpsContinueCallback){var cb=window._gpsContinueCallback;window._gpsContinueCallback=null;cb();}else{_continuarEnvio();}" style="flex:1;padding:14px;border-radius:12px;border:none;background:#1e40af;color:#fff;font-size:14px;font-weight:700;cursor:pointer">Enviar de todas formas</button>
     </div>
   </div>
 </div>
@@ -9658,44 +8108,29 @@ function actualizarEnviarBtn(){
 }
 
 // Override mostrarConfirmacion for new modes
-// FIX QUIRÚRGICO: estos 3 modos (cab/estacion/nota) armaban el mensaje
-// de forma SÍNCRONA con (la?gpsLine():'') — si la era 0 (Android sin fix
-// aún), el mensaje se construía y el preview se abría INMEDIATAMENTE,
-// sin pasar nunca por la espera de GPS. Ahora los 3 pasan por
-// _esperarGPSReal() igual que el modo co/guardia — el preview no se
-// arma hasta tener GPS real o confirmación explícita de enviar sin GPS.
 var _origMC = window.mostrarConfirmacion;
 window.mostrarConfirmacion = function(){
   if(!REC){ showToast('⚠️ Selecciona tu nombre'); return; }
   if(modoRegistro==='cab'){
     if(!_cabSel){ showToast('⚠️ Selecciona un cabezal'); return; }
     W = _cabSel;
-    _esperarGPSReal(function(){
-      var obs=document.getElementById('cabObsText');
-      var msg='🔧 *REPORTE CABEZAL*\n🛢 '+_cabSel.replace('-',' ')+'\n👷 Recorredor: '+_recNom(REC)+'\n📅 '+now()+'\n══════════════════\n'+(obs&&obs.value.trim()?'📝 '+obs.value.trim()+'\n':'')+'\n'+gpsLine();
-      _abrirConfirmOverlay(msg);
-    });
-    return;
+    var obs=document.getElementById('cabObsText');
+    var msg='🔧 *REPORTE CABEZAL*\n🛢 '+_cabSel.replace('-',' ')+'\n👷 '+REC+'\n📅 '+now()+'\n══════════════════\n'+(obs&&obs.value.trim()?'📝 '+obs.value.trim()+'\n':'')+(la?'\n'+gpsLine():'');
+    _abrirConfirmOverlay(msg); return;
   }
   if(modoRegistro==='estacion'){
     if(!_estSel){ showToast('⚠️ Selecciona una estación'); return; }
     W = _estSel;
-    _esperarGPSReal(function(){
-      var obs2=document.getElementById('estObsText');
-      var msg2='🏭 *REPORTE ESTACIÓN*\n'+_estSel.replace('-',' ')+'\n👷 Recorredor: '+_recNom(REC)+'\n📅 '+now()+'\n══════════════════\n'+(obs2&&obs2.value.trim()?'📝 '+obs2.value.trim()+'\n':'')+'\n'+gpsLine();
-      _abrirConfirmOverlay(msg2);
-    });
-    return;
+    var obs2=document.getElementById('estObsText');
+    var msg2='🏭 *REPORTE ESTACIÓN*\n'+_estSel.replace('-',' ')+'\n👷 '+REC+'\n📅 '+now()+'\n══════════════════\n'+(obs2&&obs2.value.trim()?'📝 '+obs2.value.trim()+'\n':'')+(la?'\n'+gpsLine():'');
+    _abrirConfirmOverlay(msg2); return;
   }
   if(modoRegistro==='nota'){
     var nt=document.getElementById('notaLibreText');
     if(!nt||!nt.value.trim()){ showToast('⚠️ Escribe una nota'); return; }
     W='NOTA';
-    _esperarGPSReal(function(){
-      var msg3='📝 *NOTA DE CAMPO*\n👷 Recorredor: '+_recNom(REC)+'\n📅 '+now()+'\n══════════════════\n'+nt.value.trim()+'\n'+gpsLine();
-      _abrirConfirmOverlay(msg3);
-    });
-    return;
+    var msg3='📝 *NOTA DE CAMPO*\n👷 '+REC+'\n📅 '+now()+'\n══════════════════\n'+nt.value.trim()+(la?'\n'+gpsLine():'');
+    _abrirConfirmOverlay(msg3); return;
   }
   // co / guardia → original flow with GPS check
   if(!W||W==='???'){ showToast('⚠️ Selecciona un pozo'); return; }
@@ -9715,13 +8150,6 @@ function _abrirConfirmOverlay(msg){
       if(wt) wt.textContent='Fuera del rango del '+(esCab?'cabezal':'estación');
       if(wd) wd.textContent=dt;
       if(wp) wp.textContent=W.replace('-',' ').replace('Estacion','Estación');
-      // FIX: este es el caso "fuera de radio" (GPS válido) — asegurar que
-      // se muestre ese cuerpo y NO el de "sin GPS" (que exige PIN), por si
-      // quedó visible de una interacción anterior en la misma sesión.
-      var _wgR = document.getElementById('gpsWarnBodyRadio');
-      var _wgN = document.getElementById('gpsWarnBodyNoGps');
-      if(_wgR) _wgR.style.display = 'block';
-      if(_wgN) _wgN.style.display = 'none';
       if(wo){
         wo.style.display='flex';
         window._gpsContinueCallback=function(){ _doAbrirConfirmOverlay(msg); };
@@ -10180,7 +8608,106 @@ function ubiFiltrar(){ /* replaced by filter buttons */ }
 </script>
 </div>
 
-<script src="./assets/js/android-fix.js"></script>
+<script>
+// ══ ANDROID: teclado virtual, textarea, viewport ════════════
+(function(){
+  var isAndroid = /android/i.test(navigator.userAgent);
+  var isChrome  = /chrome/i.test(navigator.userAgent);
+
+  // ── Scroll al textarea activo cuando el teclado sube ───────
+  function scrollToActive(){
+    var el = document.activeElement;
+    if(!el || (el.tagName!=='TEXTAREA' && el.tagName!=='INPUT')) return;
+    console.log('[ANDROID] scrollToActive:', el.id||el.tagName);
+    try{ el.scrollIntoView({behavior:'smooth', block:'center'}); }catch(e){}
+  }
+
+  // ── visualViewport API (Android Chrome ≥ 56) ───────────────
+  // Más confiable que window.resize para detectar teclado
+  if(window.visualViewport){
+    var lastVVH = window.visualViewport.height;
+    window.visualViewport.addEventListener('resize', function(){
+      var newH = window.visualViewport.height;
+      var diff = lastVVH - newH;
+      lastVVH = newH;
+      if(diff > 100){
+        // Teclado subió
+        console.log('[ANDROID] teclado ABIERTO, altura reducida:', Math.round(diff)+'px');
+        setTimeout(scrollToActive, 200);
+      } else if(diff < -100){
+        // Teclado bajó
+        console.log('[ANDROID] teclado CERRADO, altura restaurada');
+        setTimeout(function(){
+          try{ window.scrollTo(0, 0); }catch(e){}
+        }, 100);
+      }
+    });
+    console.log('[ANDROID] visualViewport API activa');
+  } else {
+    // Fallback: window.resize (menos preciso en Android)
+    var lastWH = window.innerHeight;
+    window.addEventListener('resize', function(){
+      var newH = window.innerHeight;
+      var diff = lastWH - newH;
+      lastWH = newH;
+      console.log('[ANDROID] resize: diff='+Math.round(diff)+'px innerH='+newH);
+      if(diff > 100){ setTimeout(scrollToActive, 200); }
+    });
+  }
+
+  // ── Focus/blur logging en todos los textareas ──────────────
+  function attachTextareaListeners(ta){
+    if(!ta || ta._androidFixed) return;
+    ta._androidFixed = true;
+    ta.addEventListener('focus', function(){
+      console.log('[ANDROID] FOCUS textarea:', this.id||'?', 'val len:', this.value.length);
+      // Quitar pointer-events:none si quedó bloqueado
+      if(getComputedStyle(this).pointerEvents === 'none'){
+        console.warn('[ANDROID] textarea tenía pointer-events:none — corrigiendo');
+        this.style.pointerEvents = 'auto';
+      }
+      setTimeout(function(){ try{ ta.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){} }, 300);
+    });
+    ta.addEventListener('blur', function(){
+      console.log('[ANDROID] BLUR textarea:', this.id||'?');
+    });
+    ta.addEventListener('input', function(){
+      console.log('[ANDROID] INPUT textarea:', this.id||'?', 'chars:', this.value.length);
+    });
+  }
+
+  // Aplicar a los textareas existentes
+  function attachAll(){
+    document.querySelectorAll('textarea, input[type="text"]').forEach(attachTextareaListeners);
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', attachAll);
+  } else {
+    attachAll();
+  }
+
+  // MutationObserver para elementos dinámicos
+  if(typeof MutationObserver !== 'undefined'){
+    var _obs = new MutationObserver(function(muts){
+      muts.forEach(function(m){
+        m.addedNodes.forEach(function(n){
+          if(!n.querySelectorAll) return;
+          n.querySelectorAll('textarea, input[type="text"]').forEach(attachTextareaListeners);
+        });
+      });
+    });
+    if(document.body){
+      _obs.observe(document.body, {childList:true, subtree:true});
+    } else {
+      document.addEventListener('DOMContentLoaded', function(){
+        _obs.observe(document.body, {childList:true, subtree:true});
+      });
+    }
+  }
+
+  console.log('[ANDROID] keyboard fix instalado. isAndroid='+isAndroid+' visualViewport='+(!!window.visualViewport));
+})();
+// ═════════════════════════════════════════════════════════════
+</script>
 </body>
 </html>
-<!-- index-cache-bust -->
