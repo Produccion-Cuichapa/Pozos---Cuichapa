@@ -252,19 +252,93 @@ window.addEventListener('unhandledrejection', function(e){
 
   <div class="pk-body">
 
-    <!-- RECORREDORES -->
-    <div class="pk-section-hd">
-      <div class="pk-ball" style="background:#dcfce7">🚶</div>
-      <div class="pk-info"><div class="pk-info-name">Recorredores</div><div class="pk-info-sub">Toca tu nombre para entrar</div></div>
+    <!-- PRODUCCIÓN -->
+    <!-- Ing. Calderon — acceso individual arriba de todo -->
+    <button class="pk-row" onclick="ppToggle('calderon')">
+      <div class="pk-ball" style="background:linear-gradient(135deg,#1e3a5f,#1e5caa)">
+        <span style="font-size:18px;color:#f0c040">👔</span>
+      </div>
+      <div class="pk-info"><div class="pk-info-name" style="color:#1e3a5f">Ing. Calderón</div><div class="pk-info-sub">Acceso directivo</div></div>
+      <span class="pk-chev" id="pp-arrow-calderon">›</span>
+    </button>
+    <div class="pk-divider"></div>
+    <div class="pk-cards" id="pp-body-calderon">
+      <div class="pk-card" onclick="selProfile('Ing. Calderon','calderon','auth')"><div class="pk-card-ico">👔</div><div class="pk-card-nm">Ing. Calderón</div><div class="pk-card-lk">🔒 clave</div></div>
     </div>
-    <div class="pk-cards open" id="pp-body-rec">
+    <button class="pk-row" onclick="ppToggle('prod')">
+      <div class="pk-ball" style="background:#fef9c3">🛢</div>
+      <div class="pk-info"><div class="pk-info-name">Producción</div><div class="pk-info-sub">Súper, Ingenieros, Almacén</div></div>
+      <span class="pk-chev" id="pp-arrow-prod">›</span>
+    </button>
+    <div class="pk-divider"></div>
+    <div class="pk-cards" id="pp-body-prod">
+      <div class="pk-card" onclick="selProfile('Superintendente','super','auth')"><div class="pk-card-ico">⭐</div><div class="pk-card-nm">Superin-tendente</div><div class="pk-card-lk">🔒 clave</div></div>
+      <div class="pk-card" onclick="selProfile('Jefe','jefe','auth')"><div class="pk-card-ico">👷</div><div class="pk-card-nm">Jefe Ing.</div><div class="pk-card-lk">🔒 clave</div></div>
+      <div class="pk-card" onclick="selProfile('Ing. Ductos','ductos','auth')"><div class="pk-card-ico">🔧</div><div class="pk-card-nm">Ing. Ductos</div><div class="pk-card-lk">🔒 clave</div></div>
+      <div class="pk-card" onclick="selProfile('Almacenista','almacenista','auth')"><div class="pk-card-ico">📦</div><div class="pk-card-nm">Alma-cenista</div><div class="pk-card-lk">🔒 clave</div></div>
+      <div class="pk-card" onclick="selProfile('Ing. Jorge Gill','gill','auth')"><div class="pk-card-ico">🏗️</div><div class="pk-card-nm">Ing. Gill</div><div class="pk-card-lk">🔒 clave</div></div>
+      <div class="pk-card" onclick="selProfile('Ing. Eiran','eiran','auth')"><div class="pk-card-ico">📐</div><div class="pk-card-nm">Ing. Eiran</div><div class="pk-card-lk">🔒 clave</div></div>
+    </div>
+
+    <!-- RECORREDORES -->
+    <button class="pk-row" onclick="ppToggle('rec')">
+      <div class="pk-ball" style="background:#dcfce7">🚶</div>
+      <div class="pk-info"><div class="pk-info-name">Recorredores</div><div class="pk-info-sub">Manrique, Cirilo, Juan Carlos, Jose, Luis</div></div>
+      <span class="pk-chev" id="pp-arrow-rec">›</span>
+    </button>
+    <div class="pk-divider"></div>
+    <div class="pk-cards" id="pp-body-rec">
       <div class="pk-card" id="pk-rec-m" onclick="selProfile('Manrique','m','rec')"><div class="pk-card-ico">🌊</div><div class="pk-card-nm">Manrique</div><div class="pk-card-lk">🔒 clave</div></div>
+      <div class="pk-card" id="pk-rec-c" onclick="selProfile('Cirilo','c','rec')" style="display:none"><div class="pk-card-ico">⛏️</div><div class="pk-card-nm">Cirilo</div><div class="pk-card-lk">🔒 clave</div></div>
       <div class="pk-card" id="pk-rec-jc" onclick="selProfile('Juan Carlos','jc','rec')"><div class="pk-card-ico">🦺</div><div class="pk-card-nm">Juan Carlos</div><div class="pk-card-lk">🔒 clave</div></div>
       <div class="pk-card" id="pk-rec-j" onclick="selProfile('Jose','j','rec')"><div class="pk-card-ico">🛢️</div><div class="pk-card-nm">Jose</div><div class="pk-card-lk">🔒 clave</div></div>
       <div class="pk-card" id="pk-rec-l" onclick="selProfile('Luis','l','rec')"><div class="pk-card-ico">🚧</div><div class="pk-card-nm">Luis</div><div class="pk-card-lk">🔒 clave</div></div>
     </div>
 
-<div id="pkCacheBar" style="background:#fef3c7;padding:8px 16px;font-size:11px;color:#92400e;display:flex;align-items:center;justify-content:space-between;gap:8px">
+    <!-- OPERADORES -->
+    <button class="pk-row" onclick="ppToggle('op')">
+      <div class="pk-ball" style="background:#dbeafe">⚙️</div>
+      <div class="pk-info"><div class="pk-info-name">Operadores</div><div class="pk-info-sub">5 operadores de campo</div></div>
+      <span class="pk-chev" id="pp-arrow-op">›</span>
+    </button>
+    <div class="pk-divider"></div>
+    <div class="pk-cards" id="pp-body-op">
+      <div class="pk-card" onclick="selProfile('Operador 1','op1','auth')"><div class="pk-card-ico">⚙️</div><div class="pk-card-nm">Operador 1</div><div class="pk-card-lk">🔒 clave</div></div>
+      <div class="pk-card" onclick="selProfile('Operador 2','op2','auth')"><div class="pk-card-ico">⚙️</div><div class="pk-card-nm">Operador 2</div><div class="pk-card-lk">🔒 clave</div></div>
+      <div class="pk-card" onclick="selProfile('Operador 3','op3','auth')"><div class="pk-card-ico">⚙️</div><div class="pk-card-nm">Operador 3</div><div class="pk-card-lk">🔒 clave</div></div>
+      <div class="pk-card" onclick="selProfile('Operador 4','op4','auth')"><div class="pk-card-ico">⚙️</div><div class="pk-card-nm">Operador 4</div><div class="pk-card-lk">🔒 clave</div></div>
+      <div class="pk-card" onclick="selProfile('Operador 5','op5','auth')"><div class="pk-card-ico">⚙️</div><div class="pk-card-nm">Operador 5</div><div class="pk-card-lk">🔒 clave</div></div>
+    </div>
+
+    <!-- SEGURIDAD -->
+    <button class="pk-row" onclick="ppToggle('seg')">
+      <div class="pk-ball" style="background:#fee2e2">🛡️</div>
+      <div class="pk-info"><div class="pk-info-name">Seguridad</div><div class="pk-info-sub">García, Ocote, Cano</div></div>
+      <span class="pk-chev" id="pp-arrow-seg">›</span>
+    </button>
+    <div class="pk-divider"></div>
+    <div class="pk-cards" id="pp-body-seg">
+      <div class="pk-card" onclick="selProfile('Ing. Jorge Garcia','garcia','auth')"><div class="pk-card-ico">🛡️</div><div class="pk-card-nm">Ing. García</div><div class="pk-card-lk">🔒 clave</div></div>
+      <div class="pk-card" onclick="selProfile('Ing. Ocote','ocote','auth')"><div class="pk-card-ico">🛡️</div><div class="pk-card-nm">Ing. Ocote</div><div class="pk-card-lk">🔒 clave</div></div>
+      <div class="pk-card" onclick="selProfile('Ing. Cano','cano','auth')"><div class="pk-card-ico">🛡️</div><div class="pk-card-nm">Ing. Cano</div><div class="pk-card-lk">🔒 clave</div></div>
+    </div>
+
+    <!-- INVITADO -->
+    <button class="pk-row" onclick="ppToggle('inv')">
+      <div class="pk-ball" style="background:#f3f4f6">👤</div>
+      <div class="pk-info"><div class="pk-info-name">Invitado</div><div class="pk-info-sub">Acceso temporal de consulta</div></div>
+      <span class="pk-chev" id="pp-arrow-inv">›</span>
+    </button>
+    <div class="pk-divider"></div>
+    <div class="pk-cards" id="pp-body-inv">
+      <div class="pk-card" onclick="selProfile('Invitado','invitado','guest')">
+        <div class="pk-card-ico">👤</div>
+        <div class="pk-card-nm">Invitado</div>
+        <div class="pk-card-lk" style="color:#22c55e">✓ Acceso directo</div>
+      </div>
+    </div>
+
+    <div id="pkCacheBar" style="background:#fef3c7;padding:8px 16px;font-size:11px;color:#92400e;display:flex;align-items:center;justify-content:space-between;gap:8px">
   <span>Si tienes problemas para ver usuarios, el caché puede estar desactualizado.</span>
   <button onclick="(function(){var del=typeof caches!=='undefined'?caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k);}));}).then(function(){return true;}):Promise.resolve();if(navigator.serviceWorker){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.unregister();});del.then(function(){location.reload(true);});});}else{del.then(function(){location.reload(true);});}})()" style="background:#b45309;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">Actualizar</button>
 </div>
@@ -299,8 +373,16 @@ var fotosAlarma = [];
   function t(){var d=new Date(),e=document.getElementById('ppClk');if(e)e.textContent=d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}
   t();setInterval(t,1000);
 })();
-// ppToggle eliminado — solo una sección de recorredores
-
+function ppToggle(id){
+  ['calderon','prod','rec','op','seg','inv'].forEach(function(s){
+    document.getElementById('pp-body-'+s).classList.remove('open');
+    document.getElementById('pp-body-'+s).previousElementSibling.classList.remove('open');
+  });
+  var body=document.getElementById('pp-body-'+id);
+  var row=body.previousElementSibling;
+  body.classList.add('open');
+  if(row)row.classList.add('open');
+}
 </script>
 
 <!-- Status bar permisos -->
@@ -1696,6 +1778,12 @@ var fotosAlarma = [];
   </div>
 </div>
 
+<!-- Login auth (produccion/seguridad/operadores) - solo contraseña -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div class="login-icon" id="loginIcon">🔒</div>
+    <div class="login-title" id="loginTitle">Acceso Restringido</div>
+    <div class="login-sub" id="loginSub">Ingresa tu contraseña</div>
     <input type="hidden" id="loginUser">
     <div class="login-field" style="position:relative">
       <label>Contraseña</label>
@@ -2116,9 +2204,44 @@ window.addEventListener('load', function(){
 });
 
 // ── Selector de perfil ───────────────────────────
+var loginCurrentTheme = '';
+var loginCurrentNombre = '';
 
 function selProfile(nombre, theme, tipo){
-  // Solo recorredores
+  if(theme === 'invitado'){
+    loggedIn=true; loggedUser='invitado'; loggedTheme='invitado';
+    var sb=document.querySelector('.sidebar');if(sb){sb.classList.add('sidebar-unlocked');document.body.classList.add('sidebar-visible');}
+    aplicarPermisos('invitado');
+    switchView('visitas');
+    return;
+  }
+  if(tipo === 'auth'){
+    loginCurrentTheme = theme;
+    loginCurrentNombre = nombre;
+    // Set icon and title in the login overlay
+    var icons = {
+      super:'⭐', jefe:'👷', ductos:'🔧', almacenista:'📦',
+      gill:'🏗️', op1:'⚙️', op2:'⚙️', op3:'⚙️', op4:'⚙️', op5:'⚙️',
+      garcia:'🛡️', ocote:'🛡️', cano:'🛡️'
+    };
+    var ic = document.getElementById('loginIcon');
+    var ti = document.getElementById('loginTitle');
+    var su = document.getElementById('loginSub');
+    if(ic) ic.textContent = icons[theme] || '🔒';
+    if(ti) ti.textContent = nombre;
+    if(su) su.textContent = 'Ingresa tu contraseña';
+    // For auth profiles, open the shared loginOverlay (no target view needed yet)
+    loginTarget = 'visitas'; // default, will be changed by requireLogin if needed
+    // Determine default view based on permissions
+    var perms = PERMISOS_MAP[theme] || [];
+    loginTarget = perms[0] || 'mapa';
+    document.getElementById('loginPass').value='';
+    document.getElementById('loginErr').style.display='none';
+    document.getElementById('loginOverlay').classList.add('open');
+    setTimeout(function(){document.getElementById('loginPass').focus();},200);
+    return;
+  }
+  // Recorredor → pedir contraseña
   var key = nombre.replace(' ','');
   abrirRecLogin(key, theme);
 }
@@ -2854,7 +2977,7 @@ function resetFormulario(){
 var loginTarget='';
 var loggedIn=false
 var loggedTheme = '';;
-var loggedUser='';
+var loggedUser=''; // 'AntonioS' | 'JaimeG'
 
 function requireLogin(target){
   if(loggedIn){
@@ -2875,15 +2998,45 @@ function requireLogin(target){
 
 // Permisos por usuario (theme/rol)
 var PERMISOS_MAP = {
-  'm':  ['visitas','mapa'],
-  'c':  ['visitas','mapa'],
-  'jc': ['visitas','mapa'],
-  'j':  ['visitas','mapa'],
-  'l':  ['visitas','mapa'],
+  'm':           ['visitas','mapa'],
+  'c':           ['visitas','mapa'],
+  'jc':          ['visitas','mapa'],
+  'op1':         ['mapa'],
+  'op2':         ['mapa'],
+  'op3':         ['mapa'],
+  'op4':         ['mapa'],
+  'op5':         ['mapa'],
+  'super':       ['visitas','mapa','catalogo','historial','super','jefe','analisis','supervision'],
+  'jefe':        ['visitas','mapa','catalogo','historial','super','jefe','analisis','supervision'],
+  'ductos':      ['visitas','mapa','catalogo','historial','super','jefe','analisis','supervision'],
+  'almacenista': ['visitas','mapa','catalogo','historial','super','jefe','analisis','supervision'],
+  'gill':        ['visitas','mapa','catalogo','historial','super','jefe','analisis','supervision'],
+  'garcia':      ['visitas','mapa','catalogo','regactividad','supervision'],
+  'ocote':       ['visitas','mapa','catalogo','regactividad','supervision'],
+  'cano':        ['visitas','mapa','catalogo','regactividad','supervision'],
+  'invitado':    [],
+  'eiran':       ['visitas','mapa','catalogo','historial','super','jefe','analisis','supervision'],
+  'calderon':    ['visitas','mapa','catalogo','historial','super','jefe','analisis','regactividad','supervision'],
 };
 
 // Usuarios auth (produccion, seguridad, operadores)
-var AUTH_USERS = {}; // eliminado: solo recorredores
+var AUTH_USERS = {
+  'AntonioS':    {p:'Mexico',       theme:'super'},
+  'JaimeG':      {p:'Venezuela',    theme:'jefe'},
+  'IngDuctos':   {p:'Ductos2024',   theme:'ductos'},
+  'Almacenista': {p:'Bodega2024',   theme:'almacenista'},
+  'JorgeGill':   {p:'Gill2024',     theme:'gill'},
+  'Operador1':   {p:'Op1Campo',     theme:'op1'},
+  'Operador2':   {p:'Op2Campo',     theme:'op2'},
+  'Operador3':   {p:'Op3Campo',     theme:'op3'},
+  'Operador4':   {p:'Op4Campo',     theme:'op4'},
+  'Operador5':   {p:'Op5Campo',     theme:'op5'},
+  'JorgeGarcia': {p:'Garcia2024',   theme:'garcia'},
+  'IngOcote':    {p:'Ocote2024',    theme:'ocote'},
+  'IngCano':     {p:'Cano2024',     theme:'cano'},
+  'IngEiran':    {p:'Eiran2024',    theme:'eiran'},
+  'IngCalderon': {p:'Calderon2024', theme:'calderon'},
+};
 
 function aplicarPermisos(theme){
   var perms = PERMISOS_MAP[theme] || [];
@@ -2903,7 +3056,38 @@ function aplicarPermisos(theme){
   });
 }
 
-function doLogin(){ /* eliminado: sin usuarios de producción */ }
+function doLogin(){
+  var p = document.getElementById('loginPass').value;
+  var theme = loginCurrentTheme || '';
+  var found = null;
+  Object.keys(AUTH_USERS).forEach(function(k){
+    if(AUTH_USERS[k].theme === theme) found = AUTH_USERS[k];
+  });
+  if(found && p === found.p){
+    loggedIn=true; loggedUser=found.theme; loggedTheme=found.theme;
+    sesionGuardar(found.theme, null);
+    var sb=document.querySelector('.sidebar');if(sb){sb.classList.add('sidebar-unlocked');document.body.classList.add('sidebar-visible');}
+    document.getElementById('loginOverlay').classList.remove('open');
+    aplicarPermisos(found.theme);
+    switchView(loginTarget);
+    mostrarBtnHistorialCentral();
+    sesionIniciarTimer();
+  } else {
+    document.getElementById('loginErr').textContent='Contrasena incorrecta';
+    document.getElementById('loginErr').style.display='block';
+    document.getElementById('loginPass').value='';
+    document.getElementById('loginPass').focus();
+  }
+}
+
+// ══ LOGIN RECORREDORES ══════════════════════════
+var REC_MAP = {
+  'Manrique':   { nombre:'Manrique',   pass:'Canada',    theme:'m'  },
+  'Cirilo':     { nombre:'Cirilo',      pass:'Brasil',    theme:'c',  status:'inactive' },
+  'JuanCarlos': { nombre:'Juan Carlos', pass:'JCYNL041084', theme:'jc' },
+  'Jose':       { nombre:'Jose',        pass:'Mexico',    theme:'j'  },
+  'Luis':       { nombre:'Luis',        pass:'Carlos1903', theme:'l'  }
+};
 
 function abrirRecLogin(nombre, theme){
   var ov = document.getElementById('recLoginOverlay');
@@ -2960,8 +3144,10 @@ function selBNTipo(tipo){
   var others={kimray:'coKimray',camco:'coConico',starpack:'coStarpack'};
   Object.keys(others).forEach(function(k){if(k!==tipo){var el=document.getElementById(others[k]);if(el)el.value='';}});
 }
-function closeLogin(){ /* loginOverlay eliminado */ }
-
+function closeLogin(){
+  document.getElementById('loginOverlay').classList.remove('open');
+  loginTarget='';
+}
 
 // ── Toast notification ─────────────────────────────────────────────
 var toastTimer = null;
@@ -3695,7 +3881,18 @@ function sesionBorrar(){
 function sesionRestaurar(){
   var s = sesionLeer();
   if(!s) return false;
-  // Restaurar sesión de recorredor (única rama)
+  // Restaurar sesión de producción
+  if(s.theme && !s.rec){
+    loggedIn=true; loggedUser=s.theme; loggedTheme=s.theme;
+    var sb=document.querySelector('.sidebar');
+    if(sb){sb.classList.add('sidebar-unlocked');document.body.classList.add('sidebar-visible');}
+    aplicarPermisos(s.theme);
+    switchView('visitas');
+    mostrarBtnHistorialCentral();
+    sesionIniciarTimer();
+    return true;
+  }
+  // Restaurar sesión de recorredor
   if(s.theme && s.rec){
     mostrarFormRecorredor(s.rec, s.theme);
     mostrarBtnHistorialCentral();
@@ -3847,10 +4044,11 @@ var _supDropOpen = false;
 
 // ── Recorredores ──────────────────────────────────────────
 var SUP_RECORREDORES = [
-  {key:'m',  nombre:'Manrique',    ico:'🌊'},
-  {key:'jc', nombre:'Juan Carlos', ico:'🦺'},
-  {key:'j',  nombre:'Jose',        ico:'🛢️'},
-  {key:'l',  nombre:'Luis',        ico:'🚧'}
+  {key:'m',  nombre:'Manrique',   ico:'🌊'},
+  {key:'c',  nombre:'Cirilo',     ico:'⛏️'},
+  {key:'jc', nombre:'Juan Carlos',ico:'🦺'},
+  {key:'j',  nombre:'Jose',       ico:'🛢️'},
+  {key:'l',  nombre:'Luis',       ico:'🚧'}
 ];
 function supGetRecStatus(key){
   try{ return localStorage.getItem('rec_status_'+key)||'alta'; }catch(e){ return 'alta'; }
