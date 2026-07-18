@@ -55,6 +55,18 @@
   line-height: 1.4;
 }
 
+/* Checkmark visual via CSS — sin IDs extra */
+.nivel-act-card.nivel-act-sel .nivel-act-check::after {
+  content: '\2713';
+  font-size: 16px;
+  font-weight: 900;
+  color: #fff;
+}
+.nivel-act-card.nivel-act-sel .nivel-act-check {
+  background: var(--accent2);
+  border-color: var(--accent2);
+}
+
 /* ── Control Operativo / Estado del Pozo — Nivel de Guardia ── */
 .nivel-ep-btn {
   flex: 1;
@@ -961,6 +973,47 @@ function ppToggle(id){
   </div>
   <textarea id="medObs" placeholder="Observaciones..." style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--surface2);color:var(--txt);resize:none;height:64px;font-family:'Inter',sans-serif"></textarea>
 
+  <!-- ══ REGISTRO DE ACTIVIDADES — dentro de card-guardia ══ -->
+  <div style="margin-top:18px">
+    <div class="step-label" style="margin-bottom:12px;font-size:13px;font-weight:800;color:var(--txt2);letter-spacing:.6px;text-transform:uppercase">Registro de Actividades</div>
+
+    <div class="nivel-act-card" id="nivel-card-trabajo" onclick="toggleChk('trabajo')">
+      <div class="nivel-act-check"></div>
+      <div class="nivel-act-ico">🔨</div>
+      <div class="nivel-act-info">
+        <div class="nivel-act-title">Trabajo</div>
+        <div class="nivel-act-desc">Se realizó trabajo en el pozo</div>
+      </div>
+    </div>
+
+    <div class="nivel-act-card" id="nivel-card-drenar" onclick="toggleChk('drenar')">
+      <div class="nivel-act-check"></div>
+      <div class="nivel-act-ico">💧</div>
+      <div class="nivel-act-info">
+        <div class="nivel-act-title">Drenar / Barrido</div>
+        <div class="nivel-act-desc">Drenado o barrido de líquidos</div>
+      </div>
+    </div>
+
+    <div class="nivel-act-card" id="nivel-card-aforo" onclick="toggleChk('aforo')">
+      <div class="nivel-act-check"></div>
+      <div class="nivel-act-ico">📏</div>
+      <div class="nivel-act-info">
+        <div class="nivel-act-title">Aforo / Proyección</div>
+        <div class="nivel-act-desc">Medición de producción</div>
+      </div>
+    </div>
+
+    <div class="nivel-act-card" id="nivel-card-intermitente" onclick="toggleChk('intermitente')">
+      <div class="nivel-act-check"></div>
+      <div class="nivel-act-ico">🔄</div>
+      <div class="nivel-act-info">
+        <div class="nivel-act-title">Intermitente</div>
+        <div class="nivel-act-desc">Aporte intermitente</div>
+      </div>
+    </div>
+  </div>
+
   <!-- ══ CONTROL OPERATIVO — ESTADO DEL POZO (nuevo, independiente) ══ -->
   <div class="step-card" style="margin-top:0;border-top:2px solid var(--border)">
     <div class="step-label">Control Operativo</div>
@@ -1100,7 +1153,7 @@ function ppToggle(id){
     <div class="step-label">Registro de Actividades</div>
 
     <!-- Tarjetas grandes seleccionables — reutilizan toggleChk() existente -->
-    <div class="nivel-act-card" id="nivel-card-trabajo" onclick="toggleChk('trabajo')">
+    <div class="nivel-act-card" onclick="toggleChk('trabajo')">
       <div class="nivel-act-check" id="icon-trabajo"></div>
       <div class="nivel-act-ico">🔨</div>
       <div class="nivel-act-info">
@@ -1109,7 +1162,7 @@ function ppToggle(id){
       </div>
     </div>
 
-    <div class="nivel-act-card" id="nivel-card-drenar" onclick="toggleChk('drenar')">
+    <div class="nivel-act-card" onclick="toggleChk('drenar')">
       <div class="nivel-act-check" id="icon-drenar"></div>
       <div class="nivel-act-ico">💧</div>
       <div class="nivel-act-info">
@@ -1118,7 +1171,7 @@ function ppToggle(id){
       </div>
     </div>
 
-    <div class="nivel-act-card" id="nivel-card-aforo" onclick="toggleChk('aforo')">
+    <div class="nivel-act-card" onclick="toggleChk('aforo')">
       <div class="nivel-act-check" id="icon-aforo"></div>
       <div class="nivel-act-ico">📏</div>
       <div class="nivel-act-info">
@@ -1131,7 +1184,7 @@ function ppToggle(id){
       <input class="big-input" type="number" id="regAforo" placeholder="" step="0.1">
     </div>
 
-    <div class="nivel-act-card" id="nivel-card-intermitente" onclick="toggleChk('intermitente')">
+    <div class="nivel-act-card" onclick="toggleChk('intermitente')">
       <div class="nivel-act-check" id="icon-intermitente"></div>
       <div class="nivel-act-ico">🔄</div>
       <div class="nivel-act-info">
