@@ -3603,7 +3603,7 @@ function hcCargar(){
 
   if(typeof fbDB !== 'undefined' && fbDB){
     if(statusEl) statusEl.textContent = '🔄 Sincronizando todos los dispositivos...';
-    fbDB.ref('reportes').orderByChild('fecha').limitToLast(300).once('value', function(snap){
+    fbDB.ref('reportes').orderByChild('fecha').limitToLast(20).once('value', function(snap){
       try{
         var localIds={};
         locales.forEach(function(r){ if(r.id) localIds[r.id]=true; });
@@ -5528,7 +5528,7 @@ function escucharFirebase(){
   try{ fbDB.ref('reportes').off('value'); }catch(e){}
 
   var _fbReportesInit = false;
-  fbDB.ref('reportes').orderByChild('fecha').on('value', function(snapshot){
+  fbDB.ref('reportes').orderByChild('fecha').limitToLast(20).on('value', function(snapshot){
     actualizarSyncBar('conectado');
     if(_fbReportesInit){
       // Find the newest report to show who sent it
@@ -5575,6 +5575,9 @@ function escucharFirebase(){
     // Ordenar por fecha descendente
     var merged = Object.values(localMap);
     merged.sort(function(a,b){ return new Date(b.fecha)-new Date(a.fecha); });
+    if (merged.length > 20) {
+      merged = merged.slice(0, 20);
+    }
     saveHistorial(merged);
     renderHistorial();
     actualizarBadgeHistorial();
