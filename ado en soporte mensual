@@ -1,0 +1,40 @@
+[33m1c4fc4e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Quitar conteo por observaciones en soporte mensual
+[33m8511bb4[m Quitar recalculo pesado en soporte mensual
+[33me587209[m Contar registro solo por palomitas y restaurar soporte
+[33m14e4003[m Actualizar valores visibles de formulas inferiores soporte
+[33ma4435d8[m Forzar recalculo de formulas en soporte mensual
+[33mfecf808[m Quitar recalculo pesado en soporte mensual
+[33m89250b9[m Actualizar valores visibles de formulas inferiores soporte
+[33m82328d8[m Agregar reglas por observaciones al soporte mensual
+[33m0de99aa[m Detectar registro por palomitas en soporte mensual
+[33m0746686[m Agregar registro trabajo drenar aforo intermitente al soporte
+[33m4d6a4f1[m Usar fecha del mensaje en soporte mensual
+[33m72d7c4f[m Agregar Nivel al soporte mensual
+[33m7c25a96[m Crear celdas faltantes en soporte mensual
+[33m0f0052c[m Actualizar cache de formulas Super sin borrarlas
+[33m3e494b2[m Conservar formulas de totales en soporte mensual
+[33m67e996c[m Corregir total Super del soporte mensual
+[33med2615f[m Generar solo Super en soporte mensual
+[33m0933dee[m Reconstruir soporte mensual sin romper formulas
+[33mcd0e41f[m Filtrar estrictamente reportes para soporte mensual
+[33me5f4e69[m Usar mapa fijo de pozos para soporte mensual
+[33m8779618[m Corregir lectura de fechas en soporte mensual
+[33m08ae3ac[m Reforzar mapa de pozos para soporte mensual
+[33m1d36729[m Extraer pozo directo de texto para soporte mensual
+[33mc14ef98[m Reforzar deteccion de pozos en soporte mensual
+[33mbe5077d[m Mejorar deteccion de pozos en soporte mensual
+[33mf7a75ee[m Respetar formulas y llenar solo filas de pozos en soporte
+[33m18bcf7f[m Generar soporte sin romper formato y llenar Super Nivel
+[33mf30b3c3[m Limpiar formulas compartidas de plantilla soporte
+[33ma257bee[m Llenar Super y Nivel en soporte mensual
+[33m3dd3146[m Generar fechas correctas segun mes del soporte
+[33m4fb249c[m Corregir primer dia del soporte mensual
+[33ma58702d[m Corregir dia inicial en fechas de soporte mensual
+[33mfac0d00[m Cambiar fechas reales de soporte mensual segun mes elegido
+[33m8d58b82[m Reemplazar mes en todos los XML del soporte mensual
+[33m9978648[m Reforzar cambio de mes en soporte mensual
+[33mf7aeb37[m Usar selector mensual en soporte y actualizar mes automaticamente
+[33m64ce4e0[m Cambiar mes automaticamente en soporte mensual
+[33ma72199e[m Usar plantilla limpia directa para soporte mensual
+[33m9dbc166[m Descargar soporte mensual directo desde plantilla limpia
+[33me48f824[m Limpiar soporte y actualizar fechas por rango consultado

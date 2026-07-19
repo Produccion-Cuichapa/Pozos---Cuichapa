@@ -1,0 +1,767 @@
+===== ARCHIVOS ADMIN =====
+admin/css/admin_backup_antes_limpieza_20260713_025633.css
+admin/css/admin_backup_centro_alarmas_20260713_233434.css
+admin/css/admin_backup_cierre_fase1_20260710_0501.css
+admin/css/admin_backup_comparador_20260710_1749.css
+admin/css/admin_backup_dashboard_compacto_20260710_0112.css
+admin/css/admin_backup_diagnostico_pozo_20260710_1636.css
+admin/css/admin_backup_expediente_pozo_20260711_1929.css
+admin/css/admin_backup_fix_vistas_pozos_20260712_1721.css
+admin/css/admin_backup_graficas_alarmas_20260716_182020.css
+admin/css/admin_backup_graficas_en_pozos_20260717_000213.css
+admin/css/admin_backup_inspector_navegacion_20260710_1451.css
+admin/css/admin_backup_inspector_operativo_20260710_0548.css
+admin/css/admin_backup_inspector_tabs_20260710_1516.css
+admin/css/admin_backup_limpieza_definitiva_20260713_0233.css
+admin/css/admin_backup_mapa_operativo_20260712_1628.css
+admin/css/admin_backup_modulo_graficas_20260716_224004.css
+admin/css/admin_backup_modulo_pozos_20260711_1744.css
+admin/css/admin_backup_motor_riesgo_20260713_0137.css
+admin/css/admin_backup_prioridades_20260712_1804.css
+admin/css/admin_backup_quitar_ultimos_20260713_0148.css
+admin/css/admin_backup_reportes_pro_20260710_0150.css
+admin/css/admin_backup_tendencias_operativas_20260716_190555.css
+admin/css/admin_backup_tendencias_semanales_20260716_191450.css
+admin/css/admin_backup_timeline_pozo_20260710_1604.css
+admin/css/admin.css
+admin/index_backup_antes_limpieza_20260713_025633.html
+admin/index_backup_btn_pdf_20260708_1519.html
+admin/index_backup_busqueda_definitiva_20260716_225848.html
+admin/index_backup_centro_alarmas_20260713_233434.html
+admin/index_backup_cierre_fase1_20260710_0501.html
+admin/index_backup_comparador_20260710_1749.html
+admin/index_backup_exceljs_20260704_0017.html
+admin/index_backup_expediente_pozo_20260711_1929.html
+admin/index_backup_exportaciones_20260703_2348.html
+admin/index_backup_filtros_pro_20260710_0150.html
+admin/index_backup_fix_vistas_pozos_20260712_1721.html
+admin/index_backup_graficas_alarmas_20260716_182020.html
+admin/index_backup_graficas_en_pozos_20260717_000213.html
+admin/index_backup_inspector_navegacion_20260710_1451.html
+admin/index_backup_inspector_operativo_20260710_0548.html
+admin/index_backup_inspector_tabs_20260710_1516.html
+admin/index_backup_limpieza_definitiva_20260713_0233.html
+admin/index_backup_mapa_operativo_20260712_1628.html
+admin/index_backup_modulo_graficas_20260716_224004.html
+admin/index_backup_modulo_pozos_20260711_1744.html
+admin/index_backup_motor_riesgo_20260713_0137.html
+admin/index_backup_panel_graficas_20260717_153933.html
+admin/index_backup_prioridades_20260712_1804.html
+admin/index_backup_quitar_ultimos_20260713_0148.html
+admin/index_backup_selector_luis_20260707_2239.html
+admin/index_backup_tendencias_operativas_20260716_190555.html
+admin/index_backup_tendencias_semanales_20260716_191450.html
+admin/index_backup_timeline_pozo_20260710_1604.html
+admin/index_backup_vinculo_adminpozos_20260716_233943.html
+admin/index.html
+admin/js/alarmas_backup_centro_alarmas_20260713_233434.js
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js
+admin/js/alarmas_backup_ver_20260703_2308.js
+admin/js/alarmas.js
+admin/js/app_backup_graficas_en_pozos_20260717_000213.js
+admin/js/app_backup_modulo_graficas_20260716_224004.js
+admin/js/app_backup_modulo_pozos_20260711_1744.js
+admin/js/app.js
+admin/js/auth.js
+admin/js/config.js
+admin/js/dashboard_backup_20260703_2234.js
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js
+admin/js/dashboard_backup_antes_limpieza_20260713_025633.js
+admin/js/dashboard_backup_cierre_fase1_20260710_0501.js
+admin/js/dashboard_backup_control_20260703_2253.js
+admin/js/dashboard_backup_estado_recorredores_20260710_0057.js
+admin/js/dashboard_backup_industrial_20260710_0010.js
+admin/js/dashboard_backup_limpieza_definitiva_20260713_0233.js
+admin/js/dashboard_backup_pending_hoy_20260710_0021.js
+admin/js/dashboard_backup_resumen_ejecutivo_20260710_0050.js
+admin/js/dashboard_backup_whatsapp_20260703_2246.js
+admin/js/dashboard.js
+admin/js/exportaciones_backup_20260704_0000.js
+admin/js/exportaciones_backup_borde_obs_20260705_0149.js
+admin/js/exportaciones_backup_btn_pdf_20260708_1519.js
+admin/js/exportaciones_backup_center_all_niveles_20260705_2022.js
+admin/js/exportaciones_backup_clasificacion_20260704_2154.js
+admin/js/exportaciones_backup_clone_images_20260707_0015.js
+admin/js/exportaciones_backup_clone_sheets_20260707_0000.js
+admin/js/exportaciones_backup_columnas_20260704_1737.js
+admin/js/exportaciones_backup_csv_20260704_0017.js
+admin/js/exportaciones_backup_diario_por_dia_20260704_1749.js
+admin/js/exportaciones_backup_download_fix_20260705_0230.js
+admin/js/exportaciones_backup_error_visible_20260704_1836.js
+admin/js/exportaciones_backup_filtro_luis_20260707_2248.js
+admin/js/exportaciones_backup_fix_notas_obs_area_20260706_1923.js
+admin/js/exportaciones_backup_fix_pagesetup_20260705_0227.js
+admin/js/exportaciones_backup_isnivel_20260704_2113.js
+admin/js/exportaciones_backup_limpia_gps_texto_20260705_2027.js
+admin/js/exportaciones_backup_limpia_presion_nombre_20260705_1953.js
+admin/js/exportaciones_backup_limpia_rango_final_20260705_2032.js
+admin/js/exportaciones_backup_merge_notas_definitivo_20260706_2324.js
+admin/js/exportaciones_backup_multidias_20260706_2351.js
+admin/js/exportaciones_backup_multidias_partes_20260707_2207.js
+admin/js/exportaciones_backup_multidias_sin_arrastre_20260707_2141.js
+admin/js/exportaciones_backup_nombre_obs_20260704_1832.js
+admin/js/exportaciones_backup_nombres_completos_20260707_2220.js
+admin/js/exportaciones_backup_no_merge_obs_icon_20260705_0124.js
+admin/js/exportaciones_backup_no_reconstruir_20260704_1800.js
+admin/js/exportaciones_backup_nota_a_observaciones_20260705_0135.js
+admin/js/exportaciones_backup_nota_izq_90_20260706_2225.js
+admin/js/exportaciones_backup_nota_limpia_final_20260705_0141.js
+admin/js/exportaciones_backup_nota_merge_EN_20260705_0137.js
+admin/js/exportaciones_backup_nota_merge_fix_20260705_0146.js
+admin/js/exportaciones_backup_notas_estrang_20260705_0117.js
+admin/js/exportaciones_backup_nota_sin_merge_20260706_2243.js
+admin/js/exportaciones_backup_obs_55_fit_20260706_1713.js
+admin/js/exportaciones_backup_obs_col_N_20260706_2335.js
+admin/js/exportaciones_backup_obs_style_20260705_0156.js
+admin/js/exportaciones_backup_obs_visual_final_20260706_1850.js
+admin/js/exportaciones_backup_obs_wrap_20260704_1721.js
+admin/js/exportaciones_backup_pagesetup_20260705_0225.js
+admin/js/exportaciones_backup_pdf_no_excel_20260708_1530.js
+admin/js/exportaciones_backup_print_final_20260705_0238.js
+admin/js/exportaciones_backup_print_fit_width_20260705_0235.js
+admin/js/exportaciones_backup_print_lexmark_20260708_0037.js
+admin/js/exportaciones_backup_quitar_merge_nota_20260705_0201.js
+admin/js/exportaciones_backup_quitar_p_obs_20260706_2215.js
+admin/js/exportaciones_backup_regla_ft_nivel_20260716_041907.js
+admin/js/exportaciones_backup_regla_ft_nivel_20260716_041910.js
+admin/js/exportaciones_backup_reglas_notas_niveles_20260705_0132.js
+admin/js/exportaciones_backup_respeta_obs_20260705_0153.js
+admin/js/exportaciones_backup_rows_fix_20260704_1839.js
+admin/js/exportaciones_backup_soporte_regla_nivel_ft_20260716_152849.js
+admin/js/exportaciones_backup_texto_izquierda_20260706_2233.js
+admin/js/exportaciones.js
+admin/js/exportar.js
+admin/js/firebase.js
+admin/js/firebase-upv-admin.js
+admin/js/graficas_backup_busqueda_definitiva_20260716_225848.js
+admin/js/graficas_backup_graficas_en_pozos_20260717_000213.js
+admin/js/graficas_backup_lista_pozos_20260716_225046.js
+admin/js/graficas_backup_reemplazo_total_20260716_232719.js
+admin/js/graficas_backup_vinculo_adminpozos_20260716_233943.js
+admin/js/graficas.js
+admin/js/graficas-pozos_backup_centimetros_20260717_163121.js
+admin/js/graficas-pozos_backup_tiempo_real_20260717_160817.js
+admin/js/graficas-pozos.js
+admin/js/pozos_backup_click_graficas_20260717_151307.js
+admin/js/pozos_backup_expediente_pozo_20260711_1929.js
+admin/js/pozos_backup_fix_vistas_pozos_20260712_1721.js
+admin/js/pozos_backup_graficas_en_pozos_20260717_000213.js
+admin/js/pozos_backup_mapa_operativo_20260712_1628.js
+admin/js/pozos_backup_motor_riesgo_20260713_0137.js
+admin/js/pozos_backup_prioridades_20260712_1804.js
+admin/js/pozos_backup_prioridades_mapa_uniforme_20260712_2334.js
+admin/js/pozos.js
+admin/js/reportes_backup_filtros_pro_20260710_0150.js
+admin/js/reportes_backup_inspector_navegacion_20260710_1451.js
+admin/js/reportes_backup_ver_20260703_2308.js
+admin/js/reportes.js
+admin/js/ui_backup_comparador_20260710_1749.js
+admin/js/ui_backup_detail_20260703_2304.js
+admin/js/ui_backup_diagnostico_pozo_20260710_1636.js
+admin/js/ui_backup_expediente_pozo_20260711_1929.js
+admin/js/ui_backup_fix_diagnostico_tabs_20260711_1947.js
+admin/js/ui_backup_fix_expediente_tabs_20260711_1941.js
+admin/js/ui_backup_fix_timeline_oculto_20260710_1615.js
+admin/js/ui_backup_inspector_navegacion_20260710_1451.js
+admin/js/ui_backup_inspector_operativo_20260710_0548.js
+admin/js/ui_backup_inspector_tabs_20260710_1516.js
+admin/js/ui_backup_modulo_graficas_20260716_224004.js
+admin/js/ui_backup_modulo_pozos_20260711_1744.js
+admin/js/ui_backup_parse_msg_20260703_2312.js
+admin/js/ui_backup_photo_note_20260703_2318.js
+admin/js/ui_backup_tendencias_operativas_20260716_190555.js
+admin/js/ui_backup_tendencias_semanales_20260716_191450.js
+admin/js/ui_backup_timeline_pozo_20260710_1604.js
+admin/js/ui.js
+admin/js/upv-admin.js
+admin/js/utils_backup_fecha_local_20260705_2012.js
+admin/js/utils_backup_fecha_local_20260705_2015.js
+admin/js/utils_backup_gps_20260703_2244.js
+admin/js/utils_backup_parse_clean_20260703_2318.js
+admin/js/utils_backup_parse_msg_20260703_2312.js
+admin/js/utils_backup_ymd_local_20260705_2022.js
+admin/js/utils.js
+
+===== CSS CARGADOS EN INDEX =====
+7:  <link rel="stylesheet" href="./css/admin.css?v=1784302815">
+
+===== MENÚ / NAVEGACIÓN =====
+6:  <title>Admin | Pozos Cuichapa</title>
+19:  <script src="./js/dashboard.js" defer></script>
+20:  <script src="./js/reportes.js" defer></script>
+21:  <script src="./js/alarmas.js" defer></script>
+23:  <script src="./js/exportaciones.js" defer></script>
+24:  <script src="./js/pozos.js?v=1784304567" defer></script>
+25:  <script src="./js/graficas-pozos.js?v=1784305910" defer></script>
+38:      <h1>Plataforma Pozos Cuichapa</h1>
+39:      <p>Centro de control administrativo para reportes, alarmas y operación de campo.</p>
+53:    <aside class="sidebar">
+57:          <strong>Pozos Cuichapa</strong>
+62:      <nav class="side-nav">
+63:        <button class="nav-btn active" data-view="dashboard">Dashboard</button>
+64:        <button class="nav-btn" data-view="reportes">Reportes</button>
+65:        <button class="nav-btn" data-view="pozos">Pozos</button>
+66:        <button class="nav-btn" data-view="alarmas">Alarmas</button>
+67:        <button class="nav-btn" data-view="exportaciones">Exportaciones</button>
+68:        <button class="nav-btn" data-view="upv">UPV</button>
+69:      </nav>
+80:          <h1 id="viewTitle">Dashboard</h1>
+86:      <section id="dashboardView" class="view">
+87:        <div id="dashboardLoading" class="dashboard-loading">
+88:          <div class="dashboard-loader-ring"></div>
+92:            <span>Consultando reportes, alarmas y estado del sistema...</span>
+124:            <span>Reportes hoy</span>
+125:            <strong id="kpiReportesHoy">0</strong>
+128:            <span>Alarmas hoy</span>
+129:            <strong id="kpiAlarmasHoy">0</strong>
+141:        <div class="dashboard-grid">
+144:              <h2>Últimos reportes</h2>
+145:              <button class="mini-btn" data-jump="reportes">Ver todos</button>
+147:            <div id="ultimosReportes" class="list"></div>
+152:              <h2>Últimas alarmas</h2>
+153:              <button class="mini-btn" data-jump="alarmas">Ver todas</button>
+155:            <div id="ultimasAlarmas" class="list"></div>
+160:      <section id="reportesView" class="view hidden">
+178:        <div id="reportesControlPanel" class="reports-control-panel">
+210:            <b id="reportesResultado">0</b>
+211:            <span id="reportesResultadoTexto">reportes mostrados</span>
+231:            <tbody id="reportesTable"></tbody>
+236:      <section id="pozosView" class="view hidden">
+240:            <span>Pozos registrados</span>
+286:                Pozos ordenados por nivel estimado de atención.
+361:            <span id="wellResultCount">0 pozos</span>
+448:                  No hay pozos con coordenadas para los filtros actuales.
+469:            <span id="wellMapVisibleCount">0 pozos visibles</span>
+486:                <th>Reportes</th>
+487:                <th>Alarmas</th>
+498:      <section id="alarmasView" class="view hidden">
+502:            <span>Alarmas hoy</span>
+528:            <small>Entre alarmas activas</small>
+541:              <b>Analítica de alarmas</b>
+558:                  <h3>Alarmas por día</h3>
+573:                  <h3>Alarmas por tipo</h3>
+586:                  <h3>Pozos con recurrencia</h3>
+587:                  <span>Mayor cantidad de alarmas</span>
+600:                  <span>Alarmas atendidas o cerradas</span>
+617:              <h2>Alarmas que requieren revisión</h2>
+698:            <tbody id="alarmasTable"></tbody>
+703:      <section id="exportacionesView" class="view hidden">
+706:            <h2>Reportes automáticos</h2>
+763:            Conectando a Pozos-UPV...
+769:            <span>Total de reportes</span>
+774:            <span>Reportes hoy</span>
+795:                  Reportes acumulados en Firebase UPV
+831:                <strong>pozos-upv</strong>
+836:                <strong>/upvReportesPrueba</strong>
+850:              <h2>Últimos reportes UPV</h2>
+859:            Aún no hay reportes UPV disponibles.
+885:  <!-- INSPECTOR OPERATIVO DE REPORTES -->
+917:    <div class="report-inspector-navigation">
+920:              class="inspector-nav-btn">
+931:              class="inspector-nav-btn">
+936:    <nav id="reportInspectorTabs"
+981:    </nav>
+
+===== DASHBOARD =====
+admin/index.html:9:  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js?v=1784301243" defer></script>
+admin/index.html:10:  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js" defer></script>
+admin/index.html:11:  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js" defer></script>
+admin/index.html:19:  <script src="./js/dashboard.js" defer></script>
+admin/index.html:21:  <script src="./js/alarmas.js" defer></script>
+admin/index.html:39:      <p>Centro de control administrativo para reportes, alarmas y operación de campo.</p>
+admin/index.html:63:        <button class="nav-btn active" data-view="dashboard">Dashboard</button>
+admin/index.html:66:        <button class="nav-btn" data-view="alarmas">Alarmas</button>
+admin/index.html:80:          <h1 id="viewTitle">Dashboard</h1>
+admin/index.html:81:          <p id="viewSubtitle">Resumen operativo en tiempo real.</p>
+admin/index.html:83:        <div id="connStatus" class="conn-pill">Conectando...</div>
+admin/index.html:86:      <section id="dashboardView" class="view">
+admin/index.html:87:        <div id="dashboardLoading" class="dashboard-loading">
+admin/index.html:88:          <div class="dashboard-loader-ring"></div>
+admin/index.html:92:            <span>Consultando reportes, alarmas y estado del sistema...</span>
+admin/index.html:124:            <span>Reportes hoy</span>
+admin/index.html:128:            <span>Alarmas hoy</span>
+admin/index.html:129:            <strong id="kpiAlarmasHoy">0</strong>
+admin/index.html:132:            <span>Pendientes WhatsApp</span>
+admin/index.html:133:            <strong id="kpiPendientes">0</strong>
+admin/index.html:141:        <div class="dashboard-grid">
+admin/index.html:152:              <h2>Últimas alarmas</h2>
+admin/index.html:153:              <button class="mini-btn" data-jump="alarmas">Ver todas</button>
+admin/index.html:155:            <div id="ultimasAlarmas" class="list"></div>
+admin/index.html:197:              Pendientes
+admin/index.html:224:                <th>Estatus</th>
+admin/index.html:254:            <small>Último estatus conocido</small>
+admin/index.html:266:            <small>Último estatus conocido</small>
+admin/index.html:272:            <small>Pendientes del recorrido</small>
+admin/index.html:332:            <select id="wellStatusFilter">
+admin/index.html:487:                <th>Alarmas</th>
+admin/index.html:498:      <section id="alarmasView" class="view hidden">
+admin/index.html:502:            <span>Alarmas hoy</span>
+admin/index.html:528:            <small>Entre alarmas activas</small>
+admin/index.html:541:              <b>Analítica de alarmas</b>
+admin/index.html:558:                  <h3>Alarmas por día</h3>
+admin/index.html:573:                  <h3>Alarmas por tipo</h3>
+admin/index.html:587:                  <span>Mayor cantidad de alarmas</span>
+admin/index.html:600:                  <span>Alarmas atendidas o cerradas</span>
+admin/index.html:617:              <h2>Alarmas que requieren revisión</h2>
+admin/index.html:698:            <tbody id="alarmasTable"></tbody>
+admin/index.html:725:              <div id="diarioStatus" class="export-status"></div>
+admin/index.html:733:              <div id="soporteStatus" class="export-status"></div>
+admin/index.html:741:              <div id="historialStatus" class="export-status"></div>
+admin/index.html:761:          <div id="upvConnectionStatus"
+admin/index.html:774:            <span>Reportes hoy</span>
+admin/index.html:857:          <div id="upvEmptyState"
+admin/index.html:858:               class="empty-state hidden">
+admin/index.html:943:        Resumen
+admin/js/alarmas_backup_centro_alarmas_20260713_233434.js:1:window.AdminAlarmas = {
+admin/js/alarmas_backup_centro_alarmas_20260713_233434.js:13:      AdminExport.csv('alarmas_pozos_cuichapa.csv', this.filtered());
+admin/js/alarmas_backup_centro_alarmas_20260713_233434.js:23:    return window.AdminFirebase.alarmas.filter(row => {
+admin/js/alarmas_backup_centro_alarmas_20260713_233434.js:38:    const body = document.getElementById('alarmasTable');
+admin/js/alarmas_backup_centro_alarmas_20260713_233434.js:41:      body.innerHTML = `<tr><td colspan="8">Sin alarmas con esos filtros.</td></tr>`;
+admin/js/alarmas_backup_centro_alarmas_20260713_233434.js:46:      const st = row.whatsappStatus || row.estado || '';
+admin/js/alarmas_backup_centro_alarmas_20260713_233434.js:54:          <td>${u.statusBadge(st)}</td>
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:1:window.AdminAlarmas = {
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:54:  rawStatus(row){
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:58:      row.statusGestion ||
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:59:      row.workflowStatus ||
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:65:  statusData(row){
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:66:    const raw = this.rawStatus(row);
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:306:      window.AdminFirebase.alarmas || []
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:309:      _alarmStatus: this.statusData(row),
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:329:    const statusFilter =
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:354:        statusFilter &&
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:355:        row._alarmStatus.key !== statusFilter
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:374:            row._alarmStatus.label,
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:388:  statusBadge(status){
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:391:        alarm-state-badge
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:392:        alarm-state-${status.key}
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:395:        ${AdminUtils.escapeHtml(status.label)}
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:421:      row._alarmStatus.key === 'new'
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:425:      row._alarmStatus.key === 'review'
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:430:        row._alarmStatus.key
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:474:          row._alarmStatus.key
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:519:          <b>Sin alarmas pendientes</b>
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:591:        'alarmasTable'
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:601:              <b>Sin alarmas con esos filtros</b>
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:615:        row.whatsappStatus ||
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:657:            ${this.statusBadge(
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:658:              row._alarmStatus
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:678:            ${AdminUtils.statusBadge(
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:722:              window.AdminFirebase.alarmas ||
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:783:        'No hay alarmas para exportar.'
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:815:        row._alarmStatus.label,
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:818:        row.whatsappStatus ||
+admin/js/alarmas_backup_graficas_alarmas_20260716_182020.js:843:      `alarmas_${AdminUtils.ymd(
+admin/js/alarmas_backup_ver_20260703_2308.js:1:window.AdminAlarmas = {
+admin/js/alarmas_backup_ver_20260703_2308.js:13:      AdminExport.csv('alarmas_pozos_cuichapa.csv', this.filtered());
+admin/js/alarmas_backup_ver_20260703_2308.js:23:    return window.AdminFirebase.alarmas.filter(row => {
+admin/js/alarmas_backup_ver_20260703_2308.js:38:    const body = document.getElementById('alarmasTable');
+admin/js/alarmas_backup_ver_20260703_2308.js:41:      body.innerHTML = `<tr><td colspan="8">Sin alarmas con esos filtros.</td></tr>`;
+admin/js/alarmas_backup_ver_20260703_2308.js:46:      const st = row.whatsappStatus || row.estado || '';
+admin/js/alarmas_backup_ver_20260703_2308.js:54:          <td>${u.statusBadge(st)}</td>
+admin/js/alarmas.js:1:window.AdminAlarmas = {
+admin/js/alarmas.js:54:  rawStatus(row){
+admin/js/alarmas.js:58:      row.statusGestion ||
+admin/js/alarmas.js:59:      row.workflowStatus ||
+admin/js/alarmas.js:65:  statusData(row){
+admin/js/alarmas.js:66:    const raw = this.rawStatus(row);
+admin/js/alarmas.js:306:      window.AdminFirebase.alarmas || []
+admin/js/alarmas.js:309:      _alarmStatus: this.statusData(row),
+admin/js/alarmas.js:329:    const statusFilter =
+admin/js/alarmas.js:354:        statusFilter &&
+admin/js/alarmas.js:355:        row._alarmStatus.key !== statusFilter
+admin/js/alarmas.js:374:            row._alarmStatus.label,
+admin/js/alarmas.js:388:  statusBadge(status){
+admin/js/alarmas.js:391:        alarm-state-badge
+admin/js/alarmas.js:392:        alarm-state-${status.key}
+admin/js/alarmas.js:395:        ${AdminUtils.escapeHtml(status.label)}
+admin/js/alarmas.js:514:               `${day.total} alarmas`
+admin/js/alarmas.js:732:          row._alarmStatus.key
+admin/js/alarmas.js:761:          'Todavía no hay alarmas cerradas con tiempo calculable.'
+admin/js/alarmas.js:837:      row._alarmStatus.key === 'new'
+admin/js/alarmas.js:841:      row._alarmStatus.key === 'review'
+admin/js/alarmas.js:846:        row._alarmStatus.key
+admin/js/alarmas.js:890:          row._alarmStatus.key
+admin/js/alarmas.js:935:          <b>Sin alarmas pendientes</b>
+admin/js/alarmas.js:1007:        'alarmasTable'
+admin/js/alarmas.js:1017:              <b>Sin alarmas con esos filtros</b>
+admin/js/alarmas.js:1031:        row.whatsappStatus ||
+admin/js/alarmas.js:1073:            ${this.statusBadge(
+admin/js/alarmas.js:1074:              row._alarmStatus
+admin/js/alarmas.js:1094:            ${AdminUtils.statusBadge(
+admin/js/alarmas.js:1138:              window.AdminFirebase.alarmas ||
+admin/js/alarmas.js:1200:        'No hay alarmas para exportar.'
+admin/js/alarmas.js:1232:        row._alarmStatus.label,
+admin/js/alarmas.js:1235:        row.whatsappStatus ||
+admin/js/alarmas.js:1260:      `alarmas_${AdminUtils.ymd(
+admin/js/app_backup_graficas_en_pozos_20260717_000213.js:41:    AdminAlarmas.init();
+admin/js/app_backup_graficas_en_pozos_20260717_000213.js:53:    AdminDashboard.render();
+admin/js/app_backup_graficas_en_pozos_20260717_000213.js:56:    AdminAlarmas.render();
+admin/js/app_backup_modulo_graficas_20260716_224004.js:41:    AdminAlarmas.init();
+admin/js/app_backup_modulo_graficas_20260716_224004.js:53:    AdminDashboard.render();
+admin/js/app_backup_modulo_graficas_20260716_224004.js:56:    AdminAlarmas.render();
+admin/js/app_backup_modulo_pozos_20260711_1744.js:40:    AdminAlarmas.init();
+admin/js/app_backup_modulo_pozos_20260711_1744.js:50:    AdminDashboard.render();
+admin/js/app_backup_modulo_pozos_20260711_1744.js:52:    AdminAlarmas.render();
+admin/js/app.js:41:    AdminAlarmas.init();
+admin/js/app.js:61:    AdminDashboard.render();
+admin/js/app.js:64:    AdminAlarmas.render();
+admin/js/config.js:29:    alarmas: '/alarmas'
+admin/js/config.js:34:    alarmas: 1000
+admin/js/dashboard_backup_20260703_2234.js:1:window.AdminDashboard = {
+admin/js/dashboard_backup_20260703_2234.js:4:    const a = window.AdminFirebase.alarmas;
+admin/js/dashboard_backup_20260703_2234.js:8:    document.getElementById('kpiAlarmasHoy').textContent = a.filter(x => u.sameToday(x)).length;
+admin/js/dashboard_backup_20260703_2234.js:9:    document.getElementById('kpiPendientes').textContent = r.filter(x => {
+admin/js/dashboard_backup_20260703_2234.js:10:      const st = String(x.whatsappStatus || x.estado || '').toLowerCase();
+admin/js/dashboard_backup_20260703_2234.js:16:    this.renderList('ultimasAlarmas', a.slice(0, 8), 'alarma');
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:1:window.AdminDashboard = {
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:6:    const a = window.AdminFirebase.alarmas || [];
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:10:    const alarmasHoy = a.filter(x => u.sameToday(x));
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:12:    // Pendientes WhatsApp: contar SOLO los de hoy.
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:13:    // Los pendientes históricos fueron pruebas y no deben ensuciar el dashboard.
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:14:    const pendientes = reportesHoy.filter(x => {
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:15:      const st = String(x.whatsappStatus || x.estado || '').toLowerCase();
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:27:    this.setText('kpiAlarmasHoy', alarmasHoy.length);
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:28:    this.setText('kpiPendientes', pendientes.length);
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:33:      alarmasHoy: alarmasHoy.length,
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:34:      pendientes: pendientes.length,
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:38:    this.injectExtraDashboard({
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:46:    this.renderWhatsappStatus(reportesHoy);
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:48:    this.renderCentroControl(reportesHoy, alarmasHoy, r, a);
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:50:    this.renderList('ultimasAlarmas', a.slice(0, 10), 'alarma');
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:58:  applyKpiHealth(stats){
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:60:      ['kpiReportesHoy', stats.reportesHoy >= 50 ? 'ok' : stats.reportesHoy >= 20 ? 'warn' : 'danger'],
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:61:      ['kpiAlarmasHoy', stats.alarmasHoy === 0 ? 'ok' : stats.alarmasHoy <= 2 ? 'warn' : 'danger'],
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:62:      ['kpiPendientes', stats.pendientes <= 5 ? 'ok' : stats.pendientes <= 25 ? 'warn' : 'danger'],
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:66:    map.forEach(([id, state]) => {
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:70:      card.classList.add('kpi-' + state);
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:74:  injectExtraDashboard(stats){
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:111:    this.setText('kpiActivos', stats.activos);
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:112:    this.setText('kpiSinGps', stats.sinGps);
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:113:    this.setText('kpiFotosHoy', stats.fotosHoy);
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:114:    this.setText('kpiEstado', stats.sinGps > 0 ? 'REVISAR' : 'OK');
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:120:      sinGpsCard.classList.add(stats.sinGps === 0 ? 'kpi-ok' : stats.sinGps <= 3 ? 'kpi-warn' : 'kpi-danger');
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:126:      estadoCard.classList.add(stats.sinGps === 0 ? 'kpi-ok' : 'kpi-warn');
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:139:    const pendientes = Math.max(0, totalPozos - visitados);
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:172:            <div class="executive-progress-stats">
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:179:                <span>Pendientes</span>
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:210:    this.setText('executivePending', pendientes);
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:252:      ultimo.whatsappStatus || ultimo.estado || ''
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:260:    const estatusPozo =
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:261:      ultimo.co?.estatus ||
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:262:      ultimo.estatus ||
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:293:          estatusPozo
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:294:            ? `<span class="latest-badge neutral">${u.escapeHtml(estatusPozo)}</span>`
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:351:      const status = row.whatsappStatus || row.estado || '';
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:360:            · ${u.escapeHtml(status || '-')}
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:368:  renderWhatsappStatus(rows){
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:378:            <div><b id="waPending">0</b><span>Pendientes</span></div>
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:397:      const st = String(r.whatsappStatus || r.estado || '').toLowerCase();
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:479:        <div class="rec-card rec-card-industrial rec-status-${nivel.className}">
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:483:                <span class="rec-status-dot"></span>
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:485:                <span class="rec-state-label">${nivel.label}</span>
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:511:  renderCentroControl(reportesHoy, alarmasHoy, reportesTodos, alarmasTodas){
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:515:      document.querySelector('.dashboard-grid').insertAdjacentHTML('beforebegin', `
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:530:            <div><span>Pendientes estimados</span><b id="opsPendientes">0</b></div>
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:556:    const pendientesCampo = Math.max(0, this.EXPECTED_WELLS - visitados);
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:562:    this.setText('opsPendientes', pendientesCampo);
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:567:    // Salud WhatsApp: solo pendientes de hoy.
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:568:    const pendientesWa = reportesHoy.filter(x => {
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:569:      const st = String(x.whatsappStatus || x.estado || '').toLowerCase();
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:577:      waChip.className = 'health-chip ' + (pendientesWa <= 5 ? 'ok' : pendientesWa <= 25 ? 'warn' : 'danger');
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:578:      waChip.textContent = pendientesWa <= 5 ? 'WhatsApp OK' : `WhatsApp ${pendientesWa} pendientes`;
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:606:          <div class="status-dot"></div>
+admin/js/dashboard_backup_analitica_diaria_20260710_0105.js:631:      ...alarmasTodas.slice(0,10).map(x => ({ kind:'alarma', row:x }))
+admin/js/dashboard_backup_antes_limpieza_20260713_025633.js:1:window.AdminDashboard = {
+admin/js/dashboard_backup_antes_limpieza_20260713_025633.js:3:  lastDashboardUpdate: 0,
+admin/js/dashboard_backup_antes_limpieza_20260713_025633.js:10:    this.setLoadingState(true);
+admin/js/dashboard_backup_antes_limpieza_20260713_025633.js:13:    const a = window.AdminFirebase.alarmas || [];
+admin/js/dashboard_backup_antes_limpieza_20260713_025633.js:17:    const alarmasHoy = a.filter(x => u.sameToday(x));
+admin/js/dashboard_backup_antes_limpieza_20260713_025633.js:19:    // Pendientes WhatsApp: contar SOLO los de hoy.
+admin/js/dashboard_backup_antes_limpieza_20260713_025633.js:20:    // Los pendientes históricos fueron pruebas y no deben ensuciar el dashboard.
+admin/js/dashboard_backup_antes_limpieza_20260713_025633.js:21:    const pendientes = reportesHoy.filter(x => {
+admin/js/dashboard_backup_antes_limpieza_20260713_025633.js:22:      const st = String(x.whatsappStatus || x.estado || '').toLowerCase();
+admin/js/dashboard_backup_antes_limpieza_20260713_025633.js:34:    this.setText('kpiAlarmasHoy', alarmasHoy.length);
+admin/js/dashboard_backup_antes_limpieza_20260713_025633.js:35:    this.setText('kpiPendientes', pendientes.length);
+admin/js/dashboard_backup_antes_limpieza_20260713_025633.js:40:      alarmasHoy: alarmasHoy.length,
+
+===== ESTRUCTURA PRINCIPAL DEL INDEX =====
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin | Pozos Cuichapa</title>
+  <link rel="stylesheet" href="./css/admin.css?v=1784302815">
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js?v=1784301243" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js" defer></script>
+
+  <script src="../config.js" defer></script>
+<script src="./js/config.js" defer></script>
+  <script src="./js/utils.js" defer></script>
+  <script src="./js/firebase.js" defer></script>
+  <script src="./js/auth.js" defer></script>
+  <script src="./js/ui.js" defer></script>
+  <script src="./js/dashboard.js" defer></script>
+  <script src="./js/reportes.js" defer></script>
+  <script src="./js/alarmas.js" defer></script>
+  <script src="./js/exportar.js" defer></script>
+  <script src="./js/exportaciones.js" defer></script>
+  <script src="./js/pozos.js?v=1784304567" defer></script>
+  <script src="./js/graficas-pozos.js?v=1784305910" defer></script>
+<script src="./js/firebase-upv-admin.js" defer></script>
+  <script src="./js/upv-admin.js" defer></script>
+  <script src="./js/app.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+</head>
+
+<body>
+  <section id="loginView" class="login-view">
+    <div class="login-card">
+      <div class="login-logo">
+        <span>PC</span>
+      </div>
+      <h1>Plataforma Pozos Cuichapa</h1>
+      <p>Centro de control administrativo para reportes, alarmas y operación de campo.</p>
+
+      <label for="loginUser">Usuario</label>
+      <input id="loginUser" autocomplete="username" placeholder="Ej. Admin">
+
+      <label for="loginPass">Contraseña</label>
+      <input id="loginPass" type="password" autocomplete="current-password" placeholder="Contraseña">
+
+      <button id="loginBtn" class="primary-btn">Entrar</button>
+      <div id="loginError" class="form-error"></div>
+    </div>
+  </section>
+
+  <section id="appView" class="shell hidden">
+    <aside class="sidebar">
+      <div class="side-brand">
+        <div class="brand-mark">PC</div>
+        <div>
+          <strong>Pozos Cuichapa</strong>
+          <span>Admin v2</span>
+        </div>
+      </div>
+
+      <nav class="side-nav">
+        <button class="nav-btn active" data-view="dashboard">Dashboard</button>
+        <button class="nav-btn" data-view="reportes">Reportes</button>
+        <button class="nav-btn" data-view="pozos">Pozos</button>
+        <button class="nav-btn" data-view="alarmas">Alarmas</button>
+        <button class="nav-btn" data-view="exportaciones">Exportaciones</button>
+        <button class="nav-btn" data-view="upv">UPV</button>
+      </nav>
+
+      <div class="side-footer">
+        <div id="sessionUser" class="session-user"></div>
+        <button id="logoutBtn" class="ghost-btn">Cerrar sesión</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="main-header">
+        <div>
+          <h1 id="viewTitle">Dashboard</h1>
+          <p id="viewSubtitle">Resumen operativo en tiempo real.</p>
+        </div>
+        <div id="connStatus" class="conn-pill">Conectando...</div>
+      </header>
+
+      <section id="dashboardView" class="view">
+        <div id="dashboardLoading" class="dashboard-loading">
+          <div class="dashboard-loader-ring"></div>
+
+          <div>
+            <b>Sincronizando datos operativos</b>
+            <span>Consultando reportes, alarmas y estado del sistema...</span>
+          </div>
+        </div>
+
+        <header id="operationsHeader" class="operations-header">
+          <div class="operations-identity">
+            <span class="operations-eyebrow">CENTRO DIGITAL DE OPERACIONES</span>
+            <h1>Campo Cuichapa</h1>
+            <p>Supervisión y monitoreo de producción en tiempo real</p>
+          </div>
+
+          <div class="operations-clock">
+            <span id="operationsWeekday">—</span>
+            <b id="operationsDate">—</b>
+            <strong id="operationsTime">--:--:--</strong>
+
+            <div class="operations-sync">
+              <i id="operationsSyncDot"></i>
+
+              <span>
+                <b id="operationsSyncLabel">Sincronizando</b>
+                <small id="operationsSyncAgo">Esperando datos...</small>
+              </span>
+            </div>
+          </div>
+        </header>
+
+        <div id="operationsIncidentBanner"
+             class="operations-incident-banner hidden">
+        </div>
+        <div class="kpi-grid">
+          <article class="kpi-card">
+            <span>Reportes hoy</span>
+            <strong id="kpiReportesHoy">0</strong>
+          </article>
+          <article class="kpi-card">
+            <span>Alarmas hoy</span>
+            <strong id="kpiAlarmasHoy">0</strong>
+          </article>
+          <article class="kpi-card">
+            <span>Pendientes WhatsApp</span>
+            <strong id="kpiPendientes">0</strong>
+          </article>
+          <article class="kpi-card">
+            <span>Total cargado</span>
+            <strong id="kpiTotal">0</strong>
+          </article>
+        </div>
+
+        <div class="dashboard-grid">
+          <article class="panel">
+            <div class="panel-head">
+              <h2>Últimos reportes</h2>
+              <button class="mini-btn" data-jump="reportes">Ver todos</button>
+            </div>
+            <div id="ultimosReportes" class="list"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <h2>Últimas alarmas</h2>
+              <button class="mini-btn" data-jump="alarmas">Ver todas</button>
+            </div>
+            <div id="ultimasAlarmas" class="list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="reportesView" class="view hidden">
+        <div class="toolbar">
+          <input id="repDesde" type="date">
+          <input id="repHasta" type="date">
+          <input id="repBuscar" placeholder="Buscar pozo, recorredor, observación...">
+          <select id="repModo">
+            <option value="">Todos los modos</option>
+            <option value="co">CO</option>
+            <option value="guardia">Guardia / Nivel</option>
+            <option value="nivel">Nivel</option>
+            <option value="nota">Nota</option>
+            <option value="cabezal">Cabezal</option>
+            <option value="estacion">Estación</option>
+          </select>
+          <button id="repLimpiar" class="ghost-btn">Limpiar</button>
+          <button id="repExportar" class="primary-btn">Exportar CSV</button>
+        </div>
+
+        <div id="reportesControlPanel" class="reports-control-panel">
+          <div class="reports-quick-filters">
+            <button type="button" class="report-quick active" data-report-filter="all">
+              Todos
+            </button>
+
+            <button type="button" class="report-quick" data-report-filter="today">
+              Hoy
+            </button>
+
+            <button type="button" class="report-quick" data-report-filter="photos">
+              Con fotos
+            </button>
+
+            <button type="button" class="report-quick" data-report-filter="no-gps">
+              Sin GPS
+            </button>
+
+            <button type="button" class="report-quick" data-report-filter="pending">
+              Pendientes
+            </button>
+
+            <button type="button" class="report-quick" data-report-filter="notes">
+              Notas
+            </button>
+
+            <button type="button" class="report-quick" data-report-filter="levels">
+              Niveles
+            </button>
+          </div>
+
+          <div class="reports-result-summary">
+            <b id="reportesResultado">0</b>
+            <span id="reportesResultadoTexto">reportes mostrados</span>
+          </div>
+        </div>
+
+        <div class="table-card reports-table-card">
+          <table class="reports-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Recorredor</th>
+                <th>Modo</th>
+                <th>Pozo/Lugar</th>
+                <th>Estatus</th>
+                <th>WhatsApp</th>
+                <th>GPS</th>
+                <th>Observaciones</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="reportesTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="pozosView" class="view hidden">
+
+        <div class="wells-overview">
+          <article class="well-overview-card overview-total">
+            <span>Pozos registrados</span>
+            <strong id="wellKpiTotal">0</strong>
+            <small>Catálogo operativo</small>
+          </article>
+
+          <article class="well-overview-card overview-visited">
+            <span>Visitados hoy</span>
+            <strong id="wellKpiVisited">0</strong>
+            <small id="wellKpiVisitedPct">0% del campo</small>
+          </article>
+
+          <article class="well-overview-card overview-operating">
+            <span>Operando</span>
+            <strong id="wellKpiOperating">0</strong>
+            <small>Último estatus conocido</small>
+          </article>
+
+          <article class="well-overview-card overview-intermittent">
+            <span>Intermitentes</span>
+            <strong id="wellKpiIntermittent">0</strong>
+            <small>Seguimiento operativo</small>
+          </article>
+
+          <article class="well-overview-card overview-closed">
+            <span>Cerrados</span>
+            <strong id="wellKpiClosed">0</strong>
+            <small>Último estatus conocido</small>
+          </article>
+
+          <article class="well-overview-card overview-pending">
+            <span>Sin visita hoy</span>
+            <strong id="wellKpiPending">0</strong>
+            <small>Pendientes del recorrido</small>
+          </article>
+        </div>
+
+        <section class="well-priority-center">
+          <div class="well-priority-header">
+            <div>
+              <span class="well-priority-eyebrow">
+                SUPERVISIÓN OPERATIVA

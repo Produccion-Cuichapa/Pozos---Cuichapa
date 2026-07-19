@@ -1,0 +1,224 @@
+/* ==========================================================
+   CUICHAPA CONTROL
+   PRODUCCIÓN V2
+   ========================================================== */
+
+/* Fondo general */
+
+#pozosView{
+    background:#f4f7fb;
+    padding:28px;
+}
+
+/* ---------- NUEVO GRID SUPERIOR ---------- */
+
+#pozosView .production-layout{
+
+    display:grid;
+
+    grid-template-columns:
+        340px
+        minmax(420px,1fr)
+        320px;
+
+    gap:22px;
+
+    align-items:start;
+
+    margin-bottom:26px;
+
+}
+
+/* ---------- TARJETAS ---------- */
+
+#pozosView .cc-card{
+
+    background:#fff;
+
+    border-radius:18px;
+
+    border:1px solid #dfe8ef;
+
+    box-shadow:
+        0 12px 30px rgba(18,42,71,.08);
+
+    padding:22px;
+
+}
+
+/* ---------- RESUMEN ---------- */
+
+.production-summary h3{
+
+    margin:0 0 18px;
+
+    color:#0f2740;
+
+    font-size:18px;
+
+}
+
+.production-summary .metric{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:12px 0;
+
+    border-bottom:1px solid #edf2f7;
+
+}
+
+.production-summary .metric:last-child{
+
+    border-bottom:none;
+
+}
+
+.production-summary .metric b{
+
+    color:#0b5bd3;
+
+}
+
+/* ---------- PRIORIDADES ---------- */
+
+.priority-list{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:14px;
+
+}
+
+.priority-card{
+
+    background:#fff;
+
+    border-radius:14px;
+
+    border:1px solid #e4ebf2;
+
+    padding:18px;
+
+    border-left:6px solid #2d6cdf;
+
+}
+
+.priority-card.alta{
+    border-left-color:#e04545;
+}
+
+.priority-card.media{
+    border-left-color:#e8a100;
+}
+
+.priority-card.baja{
+    border-left-color:#2d6cdf;
+}
+
+.priority-card.sininfo{
+    border-left-color:#7f62ff;
+}
+
+/* ---------- FILTROS ---------- */
+
+.production-filters{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:12px;
+
+}
+
+.production-filters input,
+.production-filters select{
+
+    width:100%;
+
+    height:46px;
+
+    border-radius:10px;
+
+    border:1px solid #d9e4ef;
+
+    background:#fff;
+
+    padding:0 14px;
+
+}
+
+.production-filters button{
+
+    height:46px;
+
+    border-radius:10px;
+
+    border:none;
+
+    background:#2d6cdf;
+
+    color:#fff;
+
+    font-weight:700;
+
+}
+
+/* ---------- TARJETAS DE POZOS ---------- */
+
+#wellsCardsView{
+
+    margin-top:20px;
+
+}
+
+#wellsCardsView .well-card{
+
+    background:#fff;
+
+    border-radius:18px;
+
+    border:1px solid #e2eaf2;
+
+    box-shadow:
+
+        0 10px 26px rgba(18,42,71,.08);
+
+}
+
+/* ---------- TABLA ---------- */
+
+#wellsTableView{
+
+    background:#fff;
+
+    border-radius:18px;
+
+    border:1px solid #dfe7ef;
+
+    box-shadow:
+
+        0 10px 26px rgba(18,42,71,.08);
+
+}
+
+/* ---------- MAPA ---------- */
+
+#wellsMapView{
+
+    border-radius:18px;
+
+    overflow:hidden;
+
+    box-shadow:
+
+        0 10px 26px rgba(18,42,71,.08);
+
+}

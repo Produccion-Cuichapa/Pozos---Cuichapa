@@ -1,0 +1,711 @@
+/* ==========================================================
+   PRODUCCIÓN — DISEÑO OPERATIVO DEFINITIVO
+   ========================================================== */
+
+#pozosView {
+  --prod-bg: #f4f7fb;
+  --prod-card: #ffffff;
+  --prod-text: #12243a;
+  --prod-muted: #718096;
+  --prod-line: #dfe7ef;
+  --prod-blue: #1769e0;
+  --prod-blue-dark: #0d4fae;
+  --prod-green: #15935f;
+  --prod-yellow: #d99b0b;
+  --prod-red: #db4545;
+  --prod-purple: #7358d9;
+  --prod-shadow:
+    0 8px 25px rgba(24, 52, 80, .08);
+
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+
+  padding: 12px 0 32px !important;
+
+  background: var(--prod-bg) !important;
+  color: var(--prod-text) !important;
+}
+
+#pozosView,
+#pozosView * {
+  box-sizing: border-box;
+}
+
+/* ==========================================================
+   GRID PRINCIPAL REAL
+   ========================================================== */
+
+#pozosView .production-operational-layout {
+  display: grid !important;
+
+  grid-template-columns:
+    minmax(230px, .72fr)
+    minmax(520px, 2fr)
+    minmax(260px, .82fr);
+
+  gap: 16px !important;
+  align-items: stretch !important;
+
+  margin: 0 0 18px !important;
+}
+
+#pozosView .production-summary-panel,
+#pozosView .production-priority-panel,
+#pozosView .production-filter-panel {
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+
+  overflow: hidden !important;
+
+  background: var(--prod-card) !important;
+  border: 1px solid var(--prod-line) !important;
+  border-radius: 16px !important;
+
+  box-shadow: var(--prod-shadow) !important;
+}
+
+/* ==========================================================
+   ENCABEZADOS
+   ========================================================== */
+
+#pozosView .prod-panel-heading {
+  display: flex !important;
+  min-height: 58px !important;
+
+  align-items: center !important;
+
+  margin: 0 !important;
+  padding: 14px 16px !important;
+
+  background: #fff !important;
+  border-bottom: 1px solid #e8eef4 !important;
+}
+
+#pozosView .prod-panel-heading h2 {
+  margin: 0 !important;
+
+  color: var(--prod-text) !important;
+
+  font-size: 16px !important;
+  font-weight: 820 !important;
+  line-height: 1.2 !important;
+}
+
+#pozosView .prod-panel-heading p {
+  margin: 4px 0 0 !important;
+
+  color: var(--prod-muted) !important;
+
+  font-size: 10px !important;
+  line-height: 1.35 !important;
+}
+
+/* El encabezado viejo de prioridades queda oculto porque
+   ahora existe el encabezado limpio superior. */
+
+#pozosView .production-priority-panel
+> .well-priority-header {
+  display: none !important;
+}
+
+/* ==========================================================
+   RESUMEN OPERATIVO VERTICAL
+   ========================================================== */
+
+#pozosView .production-summary-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+}
+
+#pozosView .production-summary-panel
+.well-overview-card {
+  position: relative !important;
+
+  display: grid !important;
+  min-height: 57px !important;
+
+  grid-template-columns:
+    34px
+    minmax(0, 1fr)
+    auto !important;
+
+  gap: 10px !important;
+  align-items: center !important;
+
+  margin: 0 14px !important;
+  padding: 9px 0 !important;
+
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom:
+    1px solid #edf1f5 !important;
+  border-radius: 0 !important;
+
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+#pozosView .production-summary-panel
+.well-overview-card:last-child {
+  border-bottom: 0 !important;
+}
+
+#pozosView .production-summary-panel
+.well-overview-card::before {
+  content: "" !important;
+
+  position: static !important;
+
+  width: 32px !important;
+  height: 32px !important;
+
+  grid-column: 1 !important;
+  grid-row: 1 / 3 !important;
+
+  transform: none !important;
+
+  border-radius: 9px !important;
+
+  background: #eaf3ff !important;
+}
+
+#pozosView .production-summary-panel
+.well-overview-card::after {
+  position: absolute !important;
+
+  left: 10px !important;
+  top: 50% !important;
+
+  z-index: 2 !important;
+
+  transform: translateY(-50%) !important;
+
+  font-size: 13px !important;
+  font-weight: 900 !important;
+}
+
+#pozosView .production-summary-panel
+.overview-total::after {
+  content: "●";
+  color: var(--prod-blue);
+}
+
+#pozosView .production-summary-panel
+.overview-visited::after {
+  content: "✓";
+  color: var(--prod-blue);
+}
+
+#pozosView .production-summary-panel
+.overview-operating::before {
+  background: #e8f8f0 !important;
+}
+
+#pozosView .production-summary-panel
+.overview-operating::after {
+  content: "↗";
+  color: var(--prod-green);
+}
+
+#pozosView .production-summary-panel
+.overview-intermittent::before {
+  background: #fff2e7 !important;
+}
+
+#pozosView .production-summary-panel
+.overview-intermittent::after {
+  content: "↝";
+  color: #e77925;
+}
+
+#pozosView .production-summary-panel
+.overview-closed::before {
+  background: #fdecec !important;
+}
+
+#pozosView .production-summary-panel
+.overview-closed::after {
+  content: "■";
+  color: var(--prod-red);
+}
+
+#pozosView .production-summary-panel
+.overview-pending::before {
+  background: #f1edff !important;
+}
+
+#pozosView .production-summary-panel
+.overview-pending::after {
+  content: "○";
+  color: var(--prod-purple);
+}
+
+#pozosView .production-summary-panel
+.well-overview-card span {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+
+  margin: 0 !important;
+
+  color: #304d70 !important;
+
+  font-size: 10px !important;
+  font-weight: 720 !important;
+}
+
+#pozosView .production-summary-panel
+.well-overview-card strong {
+  grid-column: 3 !important;
+  grid-row: 1 / 3 !important;
+
+  margin: 0 !important;
+
+  color: var(--prod-text) !important;
+
+  font-size: 20px !important;
+  font-weight: 850 !important;
+}
+
+#pozosView .production-summary-panel
+.well-overview-card small {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+
+  margin: 0 !important;
+
+  color: #97a5b3 !important;
+
+  font-size: 8px !important;
+}
+
+/* ==========================================================
+   PRIORIDADES
+   ========================================================== */
+
+#pozosView .production-priority-panel {
+  padding-bottom: 13px !important;
+}
+
+#pozosView .production-priority-panel
+.well-priority-summary {
+  display: none !important;
+}
+
+#pozosView .production-priority-panel
+.well-priority-list {
+  display: grid !important;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr)) !important;
+
+  gap: 9px !important;
+
+  max-height: 342px !important;
+  overflow-y: auto !important;
+
+  margin: 13px !important;
+  padding: 0 4px 0 0 !important;
+}
+
+#pozosView .well-priority-card {
+  position: relative !important;
+
+  display: grid !important;
+  min-width: 0 !important;
+  min-height: 116px !important;
+
+  grid-template-columns:
+    42px
+    minmax(0, 1fr) !important;
+
+  gap: 10px !important;
+  align-items: start !important;
+
+  padding: 12px !important;
+
+  background: #fff !important;
+
+  border:
+    1px solid #e1e8ef !important;
+  border-left:
+    4px solid var(--prod-yellow) !important;
+  border-radius: 11px !important;
+
+  box-shadow: none !important;
+}
+
+#pozosView .well-priority-card.priority-critical {
+  border-left-color:
+    var(--prod-red) !important;
+}
+
+#pozosView .well-priority-card.priority-warning {
+  border-left-color:
+    var(--prod-yellow) !important;
+}
+
+#pozosView .well-priority-rank {
+  display: grid !important;
+
+  width: 39px !important;
+  height: 39px !important;
+
+  place-items: center !important;
+
+  background: #fff0f0 !important;
+  color: var(--prod-red) !important;
+
+  border:
+    1px solid #fac4c4 !important;
+  border-radius: 9px !important;
+
+  font-size: 15px !important;
+  font-weight: 850 !important;
+}
+
+#pozosView .priority-warning
+.well-priority-rank {
+  background: #fff7e4 !important;
+  color: var(--prod-yellow) !important;
+
+  border-color: #efd58f !important;
+}
+
+#pozosView .well-priority-main {
+  min-width: 0 !important;
+}
+
+#pozosView .well-priority-title {
+  display: flex !important;
+
+  gap: 5px !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+}
+
+#pozosView .well-priority-title b {
+  color: var(--prod-text) !important;
+
+  font-size: 11px !important;
+  font-weight: 820 !important;
+}
+
+#pozosView .well-priority-title span {
+  padding: 3px 6px !important;
+
+  background: #fff0f0 !important;
+  color: var(--prod-red) !important;
+
+  border-radius: 999px !important;
+
+  font-size: 7px !important;
+  font-weight: 820 !important;
+}
+
+#pozosView .priority-warning
+.well-priority-title span {
+  background: #fff7e4 !important;
+  color: #a87500 !important;
+}
+
+#pozosView .well-priority-main p {
+  margin: 6px 0 2px !important;
+
+  overflow: hidden !important;
+
+  color: #64778b !important;
+
+  font-size: 8px !important;
+
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+#pozosView .well-priority-main small {
+  color: #97a5b3 !important;
+
+  font-size: 7px !important;
+}
+
+#pozosView .well-priority-open {
+  position: absolute !important;
+
+  right: 9px !important;
+  bottom: 9px !important;
+
+  min-height: 28px !important;
+  padding: 0 10px !important;
+
+  background: #edf4ff !important;
+  color: var(--prod-blue-dark) !important;
+
+  border:
+    1px solid #c9dbef !important;
+  border-radius: 7px !important;
+
+  font-size: 8px !important;
+  font-weight: 800 !important;
+}
+
+/* ==========================================================
+   FILTROS
+   ========================================================== */
+
+#pozosView .production-filter-panel {
+  display: flex !important;
+
+  gap: 9px !important;
+  flex-direction: column !important;
+
+  padding: 0 14px 14px !important;
+}
+
+#pozosView .production-filter-panel
+.prod-panel-heading {
+  margin: 0 -14px 3px !important;
+}
+
+#pozosView .production-filter-panel
+input,
+
+#pozosView .production-filter-panel
+select {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 40px !important;
+
+  padding: 0 11px !important;
+
+  background: #f8fafc !important;
+  color: var(--prod-text) !important;
+
+  border:
+    1px solid #d9e3ed !important;
+  border-radius: 9px !important;
+
+  font-size: 10px !important;
+}
+
+#pozosView .production-filter-panel
+#wellClearFilters {
+  width: 100% !important;
+  min-height: 37px !important;
+
+  background: #fff !important;
+  color: var(--prod-blue-dark) !important;
+
+  border:
+    1px solid #cbdbe9 !important;
+  border-radius: 9px !important;
+
+  font-size: 9px !important;
+  font-weight: 800 !important;
+}
+
+#pozosView .production-filter-panel
+#wellResultCount {
+  display: block !important;
+
+  margin-top: auto !important;
+
+  color: var(--prod-text) !important;
+
+  font-size: 12px !important;
+  font-weight: 850 !important;
+}
+
+#pozosView .production-filter-panel
+.well-view-switch,
+
+#pozosView .production-filter-panel
+.wells-view-switch,
+
+#pozosView .production-filter-panel
+.well-view-selector {
+  display: grid !important;
+  width: 100% !important;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr)) !important;
+
+  gap: 5px !important;
+}
+
+#pozosView .production-filter-panel
+.well-view-btn {
+  min-height: 32px !important;
+  padding: 0 6px !important;
+
+  background: #fff !important;
+  color: #536b84 !important;
+
+  border:
+    1px solid #d6e1ec !important;
+  border-radius: 7px !important;
+
+  font-size: 8px !important;
+  font-weight: 780 !important;
+}
+
+#pozosView .production-filter-panel
+.well-view-btn.active {
+  background: var(--prod-blue) !important;
+  color: #fff !important;
+
+  border-color:
+    var(--prod-blue) !important;
+}
+
+/* Contenedores internos originalmente horizontales */
+
+#pozosView .production-filter-panel > div:not(.prod-panel-heading),
+#pozosView .production-filter-panel .toolbar,
+#pozosView .production-filter-panel .filters {
+  display: flex !important;
+
+  width: 100% !important;
+
+  gap: 8px !important;
+  flex-direction: column !important;
+}
+
+/* ==========================================================
+   TARJETAS, MAPA Y TABLA DEBAJO
+   ========================================================== */
+
+#pozosView #wellsCardsView,
+#pozosView #wellsMapView,
+#pozosView #wellsTableView {
+  width: 100% !important;
+  margin-top: 0 !important;
+}
+
+#pozosView .wells-grid {
+  display: grid !important;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr)) !important;
+
+  gap: 14px !important;
+}
+
+#pozosView .well-card {
+  background: #fff !important;
+
+  border:
+    1px solid var(--prod-line) !important;
+  border-radius: 15px !important;
+
+  box-shadow: var(--prod-shadow) !important;
+}
+
+#pozosView .well-card-header {
+  background:
+    linear-gradient(
+      135deg,
+      #f8fbff,
+      #eff5fc
+    ) !important;
+
+  border-bottom:
+    1px solid #e2eaf2 !important;
+}
+
+#pozosView .well-card-data > div {
+  background: #f8fafc !important;
+
+  border:
+    1px solid #e5ecf3 !important;
+  border-radius: 9px !important;
+}
+
+#pozosView .well-card-latest {
+  background: #f7faff !important;
+
+  border:
+    1px solid #e0eaf4 !important;
+  border-radius: 10px !important;
+}
+
+#pozosView .well-card-footer {
+  background: #fff !important;
+
+  border-top:
+    1px solid #edf1f5 !important;
+}
+
+#pozosView .wells-map-view,
+#pozosView .wells-table-card {
+  overflow: hidden !important;
+
+  background: #fff !important;
+
+  border:
+    1px solid var(--prod-line) !important;
+  border-radius: 16px !important;
+
+  box-shadow: var(--prod-shadow) !important;
+}
+
+/* ==========================================================
+   RESPONSIVE
+   ========================================================== */
+
+@media (max-width: 1350px) {
+  #pozosView .production-operational-layout {
+    grid-template-columns:
+      minmax(220px, .8fr)
+      minmax(470px, 1.8fr);
+  }
+
+  #pozosView .production-filter-panel {
+    grid-column: 1 / -1 !important;
+
+    display: grid !important;
+
+    grid-template-columns:
+      repeat(4, minmax(0, 1fr)) !important;
+
+    align-items: center !important;
+  }
+
+  #pozosView .production-filter-panel
+  .prod-panel-heading {
+    grid-column: 1 / -1 !important;
+  }
+
+  #pozosView .wells-grid {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 900px) {
+  #pozosView .production-operational-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  #pozosView .production-filter-panel {
+    grid-column: auto !important;
+    display: flex !important;
+  }
+
+  #pozosView .production-priority-panel
+  .well-priority-list {
+    grid-template-columns: 1fr !important;
+  }
+
+  #pozosView .wells-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 600px) {
+  #pozosView .wells-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

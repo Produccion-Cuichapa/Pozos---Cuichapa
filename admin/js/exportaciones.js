@@ -111,8 +111,43 @@ window.AdminExportaciones = {
 
   isFT(r){
     const p = this.parsed(r);
-    const fluye = String(r.co?.fluye || p.fluye || '').toUpperCase();
-    return fluye.includes('FT') || fluye.includes('FRAC');
+    const fluye = String(
+      r.co?.fluye ||
+      r.fluye ||
+      p.fluye ||
+      ''
+    ).toUpperCase();
+
+    return (
+      fluye === 'FT' ||
+      fluye.includes('FRAC TANK')
+    );
+  },
+
+  hasNivelFracTank(r){
+    const msg = String(
+      r.msg ||
+      r.mensaje ||
+      r.message ||
+      r.texto ||
+      ''
+    );
+
+    const tieneBloque =
+      /NIVEL\s+(?:DE\s+)?FRAC\s*TANK/i.test(msg);
+
+    const nivel = String(
+      this.nivelCm(r) || ''
+    ).trim();
+
+    /*
+     * Turno 1 solamente:
+     * 1. Reporte de visita.
+     * 2. Fluye a FT.
+     * 3. Incluye bloque NIVEL FRAC TANK.
+     * 4. Tiene un CTM real.
+     */
+    return tieneBloque && nivel !== '';
   },
 
   isPozoReal(r){
@@ -370,7 +405,16 @@ window.AdminExportaciones = {
 
       const nivelRows = rows.filter(r => {
         const tipo = this.tipoReporte(r);
-        return tipo === 'NIVEL_GUARDIA' || (tipo === 'VISITA' && this.isFT(r));
+
+        if(tipo === 'NIVEL_GUARDIA'){
+          return true;
+        }
+
+        return (
+          tipo === 'VISITA' &&
+          this.isFT(r) &&
+          this.hasNivelFracTank(r)
+        );
       });
 
       const grupos = {1:[],2:[],3:[]};
@@ -806,18 +850,26 @@ window.AdminExportaciones = {
         const addrAforo = colName(colAforo) + row;
         const addrInter = colName(colInter) + row;
 
-        const fluye = String(r.co?.fluye || r.fluye || '').toUpperCase();
+        const fluye = String(
+          r.co?.fluye ||
+          r.fluye ||
+          this.parsed(r)?.fluye ||
+          ''
+        ).toUpperCase();
 
         const esFT =
           fluye === 'FT' ||
           /FLUYE\s*:\s*FT\b/i.test(msg) ||
           /FLUYE\s+FT\b/i.test(msg);
 
+        const tieneNivelFracTank =
+          this.hasNivelFracTank(r);
+
         if(esVisita){
           superCeldas[addrSuper] = (superCeldas[addrSuper] || 0) + 1;
           superTotales[colSuper] = (superTotales[colSuper] || 0) + 1;
 
-          if(esFT){
+          if(esFT && tieneNivelFracTank){
             nivelCeldas[addrNivel] = (nivelCeldas[addrNivel] || 0) + 1;
             nivelTotales[colNivel] = (nivelTotales[colNivel] || 0) + 1;
           }

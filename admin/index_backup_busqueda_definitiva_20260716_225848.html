@@ -1,0 +1,1122 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin | Pozos Cuichapa</title>
+  <link rel="stylesheet" href="./css/admin.css?v=1784242308">
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js" defer></script>
+
+  <script src="../config.js" defer></script>
+<script src="./js/config.js" defer></script>
+  <script src="./js/utils.js" defer></script>
+  <script src="./js/firebase.js" defer></script>
+  <script src="./js/auth.js" defer></script>
+  <script src="./js/ui.js" defer></script>
+  <script src="./js/dashboard.js" defer></script>
+  <script src="./js/reportes.js" defer></script>
+  <script src="./js/alarmas.js" defer></script>
+  <script src="./js/exportar.js" defer></script>
+  <script src="./js/exportaciones.js" defer></script>
+  <script src="./js/pozos.js" defer></script>
+  <script src="./js/graficas.js" defer></script>
+<script src="./js/firebase-upv-admin.js" defer></script>
+  <script src="./js/upv-admin.js" defer></script>
+  <script src="./js/app.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+</head>
+
+<body>
+  <section id="loginView" class="login-view">
+    <div class="login-card">
+      <div class="login-logo">
+        <span>PC</span>
+      </div>
+      <h1>Plataforma Pozos Cuichapa</h1>
+      <p>Centro de control administrativo para reportes, alarmas y operación de campo.</p>
+
+      <label for="loginUser">Usuario</label>
+      <input id="loginUser" autocomplete="username" placeholder="Ej. Admin">
+
+      <label for="loginPass">Contraseña</label>
+      <input id="loginPass" type="password" autocomplete="current-password" placeholder="Contraseña">
+
+      <button id="loginBtn" class="primary-btn">Entrar</button>
+      <div id="loginError" class="form-error"></div>
+    </div>
+  </section>
+
+  <section id="appView" class="shell hidden">
+    <aside class="sidebar">
+      <div class="side-brand">
+        <div class="brand-mark">PC</div>
+        <div>
+          <strong>Pozos Cuichapa</strong>
+          <span>Admin v2</span>
+        </div>
+      </div>
+
+      <nav class="side-nav">
+        <button class="nav-btn active" data-view="dashboard">Dashboard</button>
+        <button class="nav-btn" data-view="reportes">Reportes</button>
+        <button class="nav-btn" data-view="pozos">Pozos</button>
+        <button class="nav-btn" data-view="alarmas">Alarmas</button>
+        <button class="nav-btn" data-view="graficas">Gráficas</button>
+        <button class="nav-btn" data-view="exportaciones">Exportaciones</button>
+        <button class="nav-btn" data-view="upv">UPV</button>
+      </nav>
+
+      <div class="side-footer">
+        <div id="sessionUser" class="session-user"></div>
+        <button id="logoutBtn" class="ghost-btn">Cerrar sesión</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="main-header">
+        <div>
+          <h1 id="viewTitle">Dashboard</h1>
+          <p id="viewSubtitle">Resumen operativo en tiempo real.</p>
+        </div>
+        <div id="connStatus" class="conn-pill">Conectando...</div>
+      </header>
+
+      <section id="dashboardView" class="view">
+        <div id="dashboardLoading" class="dashboard-loading">
+          <div class="dashboard-loader-ring"></div>
+
+          <div>
+            <b>Sincronizando datos operativos</b>
+            <span>Consultando reportes, alarmas y estado del sistema...</span>
+          </div>
+        </div>
+
+        <header id="operationsHeader" class="operations-header">
+          <div class="operations-identity">
+            <span class="operations-eyebrow">CENTRO DIGITAL DE OPERACIONES</span>
+            <h1>Campo Cuichapa</h1>
+            <p>Supervisión y monitoreo de producción en tiempo real</p>
+          </div>
+
+          <div class="operations-clock">
+            <span id="operationsWeekday">—</span>
+            <b id="operationsDate">—</b>
+            <strong id="operationsTime">--:--:--</strong>
+
+            <div class="operations-sync">
+              <i id="operationsSyncDot"></i>
+
+              <span>
+                <b id="operationsSyncLabel">Sincronizando</b>
+                <small id="operationsSyncAgo">Esperando datos...</small>
+              </span>
+            </div>
+          </div>
+        </header>
+
+        <div id="operationsIncidentBanner"
+             class="operations-incident-banner hidden">
+        </div>
+        <div class="kpi-grid">
+          <article class="kpi-card">
+            <span>Reportes hoy</span>
+            <strong id="kpiReportesHoy">0</strong>
+          </article>
+          <article class="kpi-card">
+            <span>Alarmas hoy</span>
+            <strong id="kpiAlarmasHoy">0</strong>
+          </article>
+          <article class="kpi-card">
+            <span>Pendientes WhatsApp</span>
+            <strong id="kpiPendientes">0</strong>
+          </article>
+          <article class="kpi-card">
+            <span>Total cargado</span>
+            <strong id="kpiTotal">0</strong>
+          </article>
+        </div>
+
+        <div class="dashboard-grid">
+          <article class="panel">
+            <div class="panel-head">
+              <h2>Últimos reportes</h2>
+              <button class="mini-btn" data-jump="reportes">Ver todos</button>
+            </div>
+            <div id="ultimosReportes" class="list"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <h2>Últimas alarmas</h2>
+              <button class="mini-btn" data-jump="alarmas">Ver todas</button>
+            </div>
+            <div id="ultimasAlarmas" class="list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="reportesView" class="view hidden">
+        <div class="toolbar">
+          <input id="repDesde" type="date">
+          <input id="repHasta" type="date">
+          <input id="repBuscar" placeholder="Buscar pozo, recorredor, observación...">
+          <select id="repModo">
+            <option value="">Todos los modos</option>
+            <option value="co">CO</option>
+            <option value="guardia">Guardia / Nivel</option>
+            <option value="nivel">Nivel</option>
+            <option value="nota">Nota</option>
+            <option value="cabezal">Cabezal</option>
+            <option value="estacion">Estación</option>
+          </select>
+          <button id="repLimpiar" class="ghost-btn">Limpiar</button>
+          <button id="repExportar" class="primary-btn">Exportar CSV</button>
+        </div>
+
+        <div id="reportesControlPanel" class="reports-control-panel">
+          <div class="reports-quick-filters">
+            <button type="button" class="report-quick active" data-report-filter="all">
+              Todos
+            </button>
+
+            <button type="button" class="report-quick" data-report-filter="today">
+              Hoy
+            </button>
+
+            <button type="button" class="report-quick" data-report-filter="photos">
+              Con fotos
+            </button>
+
+            <button type="button" class="report-quick" data-report-filter="no-gps">
+              Sin GPS
+            </button>
+
+            <button type="button" class="report-quick" data-report-filter="pending">
+              Pendientes
+            </button>
+
+            <button type="button" class="report-quick" data-report-filter="notes">
+              Notas
+            </button>
+
+            <button type="button" class="report-quick" data-report-filter="levels">
+              Niveles
+            </button>
+          </div>
+
+          <div class="reports-result-summary">
+            <b id="reportesResultado">0</b>
+            <span id="reportesResultadoTexto">reportes mostrados</span>
+          </div>
+        </div>
+
+        <div class="table-card reports-table-card">
+          <table class="reports-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Recorredor</th>
+                <th>Modo</th>
+                <th>Pozo/Lugar</th>
+                <th>Estatus</th>
+                <th>WhatsApp</th>
+                <th>GPS</th>
+                <th>Observaciones</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="reportesTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="pozosView" class="view hidden">
+
+        <div class="wells-overview">
+          <article class="well-overview-card overview-total">
+            <span>Pozos registrados</span>
+            <strong id="wellKpiTotal">0</strong>
+            <small>Catálogo operativo</small>
+          </article>
+
+          <article class="well-overview-card overview-visited">
+            <span>Visitados hoy</span>
+            <strong id="wellKpiVisited">0</strong>
+            <small id="wellKpiVisitedPct">0% del campo</small>
+          </article>
+
+          <article class="well-overview-card overview-operating">
+            <span>Operando</span>
+            <strong id="wellKpiOperating">0</strong>
+            <small>Último estatus conocido</small>
+          </article>
+
+          <article class="well-overview-card overview-intermittent">
+            <span>Intermitentes</span>
+            <strong id="wellKpiIntermittent">0</strong>
+            <small>Seguimiento operativo</small>
+          </article>
+
+          <article class="well-overview-card overview-closed">
+            <span>Cerrados</span>
+            <strong id="wellKpiClosed">0</strong>
+            <small>Último estatus conocido</small>
+          </article>
+
+          <article class="well-overview-card overview-pending">
+            <span>Sin visita hoy</span>
+            <strong id="wellKpiPending">0</strong>
+            <small>Pendientes del recorrido</small>
+          </article>
+        </div>
+
+        <section class="well-priority-center">
+          <div class="well-priority-header">
+            <div>
+              <span class="well-priority-eyebrow">
+                SUPERVISIÓN OPERATIVA
+              </span>
+
+              <h2>Prioridades del campo</h2>
+
+              <p>
+                Pozos ordenados por nivel estimado de atención.
+              </p>
+            </div>
+
+            <button id="wellShowAllPriorities"
+                    type="button"
+                    class="well-priority-all-btn">
+              Ver todos los prioritarios
+            </button>
+          </div>
+
+          <div class="well-priority-summary">
+            <article class="priority-summary-critical">
+              <span>Atención alta</span>
+              <strong id="wellPriorityCritical">0</strong>
+            </article>
+
+            <article class="priority-summary-warning">
+              <span>Vigilancia</span>
+              <strong id="wellPriorityWarning">0</strong>
+            </article>
+
+            <article class="priority-summary-overdue">
+              <span>Sin visita &gt; 24 h</span>
+              <strong id="wellPriorityOverdue">0</strong>
+            </article>
+
+            <article class="priority-summary-no-data">
+              <span>Sin información</span>
+              <strong id="wellPriorityNoData">0</strong>
+            </article>
+          </div>
+
+          <div id="wellPriorityList"
+               class="well-priority-list">
+          </div>
+        </section>
+
+        <section class="panel wells-control-panel">
+          <div class="wells-control-main">
+            <input
+              id="wellSearch"
+              type="search"
+              placeholder="Buscar pozo o recorredor..."
+              autocomplete="off">
+
+            <select id="wellStatusFilter">
+              <option value="all">Todos los estados</option>
+              <option value="visited">Visitados hoy</option>
+              <option value="pending">Sin visita hoy</option>
+              <option value="operating">Operando</option>
+              <option value="intermittent">Intermitentes</option>
+              <option value="closed">Cerrados</option>
+              <option value="attention">Requieren atención</option>
+              <option value="gps">Con GPS</option>
+              <option value="no-gps">Sin GPS</option>
+            </select>
+
+            <select id="wellSapFilter">
+              <option value="all">Todos los SAP</option>
+              <option value="BM">BM</option>
+              <option value="BN">BN</option>
+              <option value="FY">FY</option>
+              <option value="none">Sin SAP</option>
+            </select>
+
+            <button
+              id="wellClearFilters"
+              type="button"
+              class="ghost-btn">
+              Limpiar
+            </button>
+          </div>
+
+          <div class="wells-control-side">
+            <span id="wellResultCount">0 pozos</span>
+
+            <div class="well-view-switch">
+              <button
+                type="button"
+                class="well-view-btn active"
+                data-well-view="cards">
+                Tarjetas
+              </button>
+
+              <button
+                type="button"
+                class="well-view-btn"
+                data-well-view="table">
+                Tabla
+              </button>
+
+              <button
+                type="button"
+                class="well-view-btn"
+                data-well-view="map">
+                Mapa
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <div id="wellsCardsView" class="wells-grid"></div>
+
+        <section id="wellsMapView"
+                 class="wells-map-view hidden">
+
+          <div class="wells-map-toolbar">
+            <div>
+              <span class="wells-map-eyebrow">
+                MAPA OPERATIVO
+              </span>
+
+              <h2>Campo Cuichapa</h2>
+
+              <p>
+                Estado consolidado conforme al último reporte disponible.
+              </p>
+            </div>
+
+            <div class="wells-map-legend">
+              <span class="legend-operating">
+                <i></i> Operando
+              </span>
+
+              <span class="legend-warning">
+                <i></i> Vigilancia
+              </span>
+
+              <span class="legend-intermittent">
+                <i></i> Intermitente
+              </span>
+
+              <span class="legend-closed">
+                <i></i> Cerrado
+              </span>
+
+              <span class="legend-pending">
+                <i></i> Sin visita
+              </span>
+
+              <span class="legend-unknown">
+                <i></i> Sin información
+              </span>
+            </div>
+          </div>
+
+          <div class="wells-map-layout">
+            <div id="wellsOperationalMap"
+                 class="wells-operational-map">
+
+              <div class="wells-map-background">
+                <div class="map-grid-lines"></div>
+
+                <span class="map-orientation-north">N</span>
+
+                <div id="wellsMapMarkers"
+                     class="wells-map-markers">
+                </div>
+
+                <div id="wellsMapEmpty"
+                     class="wells-map-empty hidden">
+                  No hay pozos con coordenadas para los filtros actuales.
+                </div>
+              </div>
+            </div>
+
+            <aside id="wellMapInspector"
+                   class="well-map-inspector">
+
+              <div class="well-map-inspector-empty">
+                <div class="well-map-empty-icon">⌖</div>
+
+                <b>Selecciona un pozo</b>
+
+                <span>
+                  Presiona un marcador para consultar su estado operativo.
+                </span>
+              </div>
+            </aside>
+          </div>
+
+          <div class="wells-map-footer">
+            <span id="wellMapVisibleCount">0 pozos visibles</span>
+            <span id="wellMapMissingCount">0 sin coordenadas</span>
+          </div>
+        </section>
+
+        <div id="wellsTableView"
+             class="table-card wells-table-card hidden">
+          <table class="wells-table">
+            <thead>
+              <tr>
+                <th>Pozo</th>
+                <th>Estado</th>
+                <th>SAP</th>
+                <th>Fluye</th>
+                <th>Última visita</th>
+                <th>Recorredor</th>
+                <th>GPS</th>
+                <th>Reportes</th>
+                <th>Alarmas</th>
+                <th>Riesgo</th>
+                <th></th>
+              </tr>
+            </thead>
+
+            <tbody id="wellsTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="alarmasView" class="view hidden">
+
+        <div class="alarm-kpi-grid">
+          <article class="alarm-kpi-card alarm-kpi-today">
+            <span>Alarmas hoy</span>
+            <strong id="alarmKpiToday">0</strong>
+            <small>Eventos registrados</small>
+          </article>
+
+          <article class="alarm-kpi-card alarm-kpi-active">
+            <span>Activas</span>
+            <strong id="alarmKpiActive">0</strong>
+            <small>Nuevas o sin atender</small>
+          </article>
+
+          <article class="alarm-kpi-card alarm-kpi-review">
+            <span>En revisión</span>
+            <strong id="alarmKpiReview">0</strong>
+            <small>Seguimiento iniciado</small>
+          </article>
+
+          <article class="alarm-kpi-card alarm-kpi-resolved">
+            <span>Atendidas / cerradas</span>
+            <strong id="alarmKpiResolved">0</strong>
+            <small>Eventos gestionados</small>
+          </article>
+
+          <article class="alarm-kpi-card alarm-kpi-age">
+            <span>Mayor antigüedad</span>
+            <strong id="alarmKpiOldest">—</strong>
+            <small>Entre alarmas activas</small>
+          </article>
+        </div>
+
+        <details id="alarmAnalyticsPanel"
+                 class="alarm-analytics-panel">
+
+          <summary>
+            <div>
+              <span class="alarm-analytics-eyebrow">
+                ANÁLISIS OPERATIVO
+              </span>
+
+              <b>Analítica de alarmas</b>
+
+              <small>
+                Tendencias, recurrencia y tiempos de atención.
+              </small>
+            </div>
+
+            <span class="alarm-analytics-toggle">
+              Ver gráficas
+            </span>
+          </summary>
+
+          <div class="alarm-analytics-content">
+
+            <article class="alarm-chart-card">
+              <div class="alarm-chart-head">
+                <div>
+                  <h3>Alarmas por día</h3>
+                  <span>Últimos 7 días</span>
+                </div>
+
+                <strong id="alarmChartWeekTotal">0</strong>
+              </div>
+
+              <div id="alarmDailyChart"
+                   class="alarm-bar-chart alarm-daily-chart">
+              </div>
+            </article>
+
+            <article class="alarm-chart-card">
+              <div class="alarm-chart-head">
+                <div>
+                  <h3>Alarmas por tipo</h3>
+                  <span>Categorías principales</span>
+                </div>
+              </div>
+
+              <div id="alarmTypeChart"
+                   class="alarm-ranking-chart">
+              </div>
+            </article>
+
+            <article class="alarm-chart-card">
+              <div class="alarm-chart-head">
+                <div>
+                  <h3>Pozos con recurrencia</h3>
+                  <span>Mayor cantidad de alarmas</span>
+                </div>
+              </div>
+
+              <div id="alarmWellChart"
+                   class="alarm-ranking-chart">
+              </div>
+            </article>
+
+            <article class="alarm-chart-card">
+              <div class="alarm-chart-head">
+                <div>
+                  <h3>Tiempo de atención</h3>
+                  <span>Alarmas atendidas o cerradas</span>
+                </div>
+              </div>
+
+              <div id="alarmResolutionChart"
+                   class="alarm-resolution-chart">
+              </div>
+            </article>
+
+          </div>
+        </details>
+
+        <section id="alarmPriorityPanel"
+                 class="alarm-priority-panel">
+          <div class="alarm-priority-head">
+            <div>
+              <span>ATENCIÓN OPERATIVA</span>
+              <h2>Alarmas que requieren revisión</h2>
+              <p>
+                Ordenadas por prioridad y antigüedad.
+              </p>
+            </div>
+
+            <span id="alarmPriorityCount"
+                  class="alarm-priority-count">
+              0 eventos
+            </span>
+          </div>
+
+          <div id="alarmPriorityList"
+               class="alarm-priority-list">
+          </div>
+        </section>
+
+        <section class="panel alarm-control-panel">
+          <div class="alarm-control-main">
+            <input id="almDesde" type="date">
+
+            <input id="almHasta" type="date">
+
+            <input id="almBuscar"
+                   type="search"
+                   placeholder="Buscar tipo, pozo, usuario o mensaje..."
+                   autocomplete="off">
+
+            <select id="almEstado">
+              <option value="">Todos los estados</option>
+              <option value="new">Nuevas</option>
+              <option value="review">En revisión</option>
+              <option value="resolved">Atendidas</option>
+              <option value="closed">Cerradas</option>
+            </select>
+
+            <select id="almPrioridad">
+              <option value="">Todas las prioridades</option>
+              <option value="critical">Crítica</option>
+              <option value="high">Alta</option>
+              <option value="medium">Media</option>
+              <option value="low">Baja</option>
+            </select>
+
+            <button id="almLimpiar"
+                    class="ghost-btn"
+                    type="button">
+              Limpiar
+            </button>
+
+            <button id="almExportar"
+                    class="primary-btn"
+                    type="button">
+              Exportar CSV
+            </button>
+          </div>
+
+          <div class="alarm-result-summary">
+            <strong id="alarmResultCount">0</strong>
+            <span>resultados</span>
+          </div>
+        </section>
+
+        <div class="table-card alarm-table-card">
+          <table class="alarm-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Pozo/Lugar</th>
+                <th>Tipo</th>
+                <th>Prioridad</th>
+                <th>Estado</th>
+                <th>Usuario</th>
+                <th>Antigüedad</th>
+                <th>WhatsApp</th>
+                <th>Mensaje</th>
+                <th></th>
+              </tr>
+            </thead>
+
+            <tbody id="alarmasTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="graficasView" class="view hidden">
+
+        <section class="charts-selector-panel">
+          <div class="charts-selector-heading">
+            <div>
+              <span>ANÁLISIS OPERATIVO</span>
+              <h2>Tendencias por pozo</h2>
+              <p>
+                Consulta semanal de PTP, PTR, LDD, LBN y nivel de Frac Tank.
+              </p>
+            </div>
+
+            <div id="chartsSelectedSummary"
+                 class="charts-selected-summary">
+              Selecciona un pozo
+            </div>
+          </div>
+
+          <div class="charts-selector-controls">
+            <input id="chartsWellSearch"
+                   type="search"
+                   placeholder="Buscar pozo..."
+                   autocomplete="off">
+
+            <select id="chartsWellFilter">
+              <option value="all" selected>Todos con historial</option>
+              <option value="today">Visitados hoy</option>
+              <option value="pressure">Con mediciones de presión</option>
+              <option value="ft">Con nivel Frac Tank</option>
+            </select>
+
+            <button id="chartsClearSelection"
+                    type="button"
+                    class="ghost-btn">
+              Limpiar
+            </button>
+          </div>
+
+          <div class="charts-well-layout">
+            <aside class="charts-well-sidebar">
+              <div class="charts-well-sidebar-head">
+                <span>POZOS DISPONIBLES</span>
+                <b id="chartsWellCount">0</b>
+              </div>
+
+              <div id="chartsWellList"
+                   class="charts-well-list">
+              </div>
+            </aside>
+
+            <div class="charts-analysis-area">
+
+              <div id="chartsEmptyState"
+                   class="charts-empty-state">
+                <div>📈</div>
+                <b>Selecciona un pozo</b>
+                <span>
+                  Elige un pozo de la lista para consultar sus tendencias.
+                </span>
+              </div>
+
+              <div id="chartsDashboard"
+                   class="hidden">
+
+                <header class="charts-well-header">
+                  <div>
+                    <span>EXPEDIENTE GRÁFICO</span>
+                    <h2 id="chartsWellTitle">Pozo —</h2>
+                    <p id="chartsWellLastActivity">
+                      Sin actividad disponible
+                    </p>
+                  </div>
+
+                  <button id="chartsOpenWell"
+                          type="button"
+                          class="primary-btn">
+                    Abrir expediente
+                  </button>
+                </header>
+
+                <div class="charts-week-toolbar">
+                  <div id="chartsWeekButtons"
+                       class="charts-week-buttons">
+
+                    <button type="button"
+                            class="charts-week-btn active"
+                            data-charts-week="0">
+                      Semana actual
+                    </button>
+
+                    <button type="button"
+                            class="charts-week-btn"
+                            data-charts-week="1">
+                      Semana anterior
+                    </button>
+
+                    <button type="button"
+                            class="charts-week-btn"
+                            data-charts-week="2">
+                      Hace 2 semanas
+                    </button>
+
+                    <button type="button"
+                            class="charts-week-btn"
+                            data-charts-week="3">
+                      Hace 3 semanas
+                    </button>
+                  </div>
+
+                  <strong id="chartsWeekRange">—</strong>
+                </div>
+
+                <div id="chartsCards"
+                     class="charts-cards-grid">
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section id="exportacionesView" class="view hidden">
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Reportes automáticos</h2>
+            <span class="muted">Plantillas oficiales Excel</span>
+          </div>
+
+          <div class="export-grid">
+            <article class="export-card">
+              <h3>Diario por recorredor</h3>
+              <p>Genera el formato diario usando la plantilla oficial.</p>
+              <select id="expRecorredor">
+                <option value="">Seleccionar recorredor</option>
+                <option>Manrique</option>
+                <option>Juan Carlos</option>
+                  <option>Luis Carlos</option>
+                <option>Cirilo</option>
+              </select>
+              <input id="expDesde" type="date">
+              <input id="expHasta" type="date">
+              <button id="btnDiarioPreview" class="primary-btn">Preparar diario Excel</button>
+              <button id="btnDiarioPDF" class="primary-btn">Preparar diario PDF</button>
+              <div id="diarioStatus" class="export-status"></div>
+            </article>
+
+            <article class="export-card">
+              <h3>Soporte mensual</h3>
+              <p>Consolidado por pozo: visitas, nivel, trabajo, drenar, aforo e intermitente.</p>
+              <input id="supMes" type="month">
+              <button id="btnSoportePreview" class="primary-btn">Preparar soporte</button>
+              <div id="soporteStatus" class="export-status"></div>
+            </article>
+
+            <article class="export-card">
+              <h3>Historial por pozo</h3>
+              <p>Reporte adicional propuesto para revisar la evolución de un pozo.</p>
+              <input id="histPozo" placeholder="Ej. 131 o C-131">
+              <button id="btnHistorialPreview" class="primary-btn">Preparar historial</button>
+              <div id="historialStatus" class="export-status"></div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+
+      <section id="upvView" class="view hidden">
+        <div class="upv-admin-header">
+          <div>
+            <span class="upv-admin-eyebrow">
+              UNIDADES DE PRODUCCIÓN Y VOLUMEN
+            </span>
+            <h2>Centro de control UPV</h2>
+            <p>
+              Información recibida desde PETROSMART,
+              ATO e IPEP.
+            </p>
+          </div>
+
+          <div id="upvConnectionStatus"
+               class="conn-pill">
+            Conectando a Pozos-UPV...
+          </div>
+        </div>
+
+        <div class="upv-kpi-grid">
+          <article class="upv-kpi-card">
+            <span>Total de reportes</span>
+            <strong id="upvKpiTotal">0</strong>
+          </article>
+
+          <article class="upv-kpi-card">
+            <span>Reportes hoy</span>
+            <strong id="upvKpiHoy">0</strong>
+          </article>
+
+          <article class="upv-kpi-card">
+            <span>Cargas</span>
+            <strong id="upvKpiCargas">0</strong>
+          </article>
+
+          <article class="upv-kpi-card">
+            <span>Descargas</span>
+            <strong id="upvKpiDescargas">0</strong>
+          </article>
+        </div>
+
+        <div class="upv-admin-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Actividad por empresa</h2>
+                <span class="muted">
+                  Reportes acumulados en Firebase UPV
+                </span>
+              </div>
+            </div>
+
+            <div class="upv-company-list">
+              <article class="upv-company-card petrosmart">
+                <span>PETROSMART</span>
+                <strong id="upvEmpresaPetrosmart">0</strong>
+              </article>
+
+              <article class="upv-company-card ato">
+                <span>ATO</span>
+                <strong id="upvEmpresaAto">0</strong>
+              </article>
+
+              <article class="upv-company-card ipep">
+                <span>IPEP</span>
+                <strong id="upvEmpresaIpep">0</strong>
+              </article>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Estado del módulo</h2>
+                <span class="muted">
+                  Proyecto Firebase independiente
+                </span>
+              </div>
+            </div>
+
+            <div class="upv-system-info">
+              <div>
+                <span>Proyecto</span>
+                <strong>pozos-upv</strong>
+              </div>
+
+              <div>
+                <span>Ruta activa</span>
+                <strong>/upvReportesPrueba</strong>
+              </div>
+
+              <div>
+                <span>Aplicación Firebase</span>
+                <strong>upvAdminApp</strong>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <section class="panel upv-recent-panel">
+          <div class="panel-head">
+            <div>
+              <h2>Últimos reportes UPV</h2>
+              <span class="muted">
+                Los 20 registros más recientes
+              </span>
+            </div>
+          </div>
+
+          <div id="upvEmptyState"
+               class="empty-state hidden">
+            Aún no hay reportes UPV disponibles.
+          </div>
+
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Empresa</th>
+                  <th>Unidad</th>
+                  <th>Operación</th>
+                  <th>Origen</th>
+                  <th>Cantidad</th>
+                  <th>Fotos</th>
+                </tr>
+              </thead>
+
+              <tbody id="upvRecentTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+    </main>
+  </section>
+
+  <!-- INSPECTOR OPERATIVO DE REPORTES -->
+  <div id="reportInspectorRail"
+       class="report-inspector-rail"
+       aria-hidden="true">
+  </div>
+
+  <aside id="reportInspector"
+         class="report-inspector"
+         aria-hidden="true"
+         aria-labelledby="reportInspectorTitle">
+
+    <header class="report-inspector-header">
+      <div class="report-inspector-heading">
+        <span class="report-inspector-eyebrow">
+          INSPECTOR OPERATIVO
+        </span>
+
+        <h2 id="reportInspectorTitle">
+          Detalle de reporte
+        </h2>
+
+        <p id="reportInspectorSubtitle"></p>
+      </div>
+
+      <button id="reportInspectorClose"
+              type="button"
+              class="report-inspector-close"
+              aria-label="Cerrar inspector">
+        ✕
+      </button>
+    </header>
+
+    <div class="report-inspector-navigation">
+      <button id="reportInspectorPrev"
+              type="button"
+              class="inspector-nav-btn">
+        ← Anterior
+      </button>
+
+      <span id="reportInspectorPosition"
+            class="inspector-position">
+        Reporte 0 de 0
+      </span>
+
+      <button id="reportInspectorNext"
+              type="button"
+              class="inspector-nav-btn">
+        Siguiente →
+      </button>
+    </div>
+
+    <nav id="reportInspectorTabs"
+         class="report-inspector-tabs"
+         aria-label="Secciones del reporte">
+
+      <button type="button"
+              class="inspector-tab active"
+              data-inspector-tab="summary">
+        Resumen
+      </button>
+
+      <button type="button"
+              class="inspector-tab"
+              data-inspector-tab="operation">
+        Operación
+      </button>
+
+      <button type="button"
+              class="inspector-tab"
+              data-inspector-tab="evidence">
+        Evidencias
+        <span id="inspectorEvidenceCount"
+              class="inspector-tab-count">0</span>
+      </button>
+
+      <button type="button"
+              class="inspector-tab"
+              data-inspector-tab="history">
+        Historial
+        <span id="inspectorHistoryCount"
+              class="inspector-tab-count">0</span>
+      </button>
+
+      <button type="button"
+              class="inspector-tab"
+              data-inspector-tab="compare">
+        Comparar
+      </button>
+
+      <button type="button"
+              class="inspector-tab"
+              data-inspector-tab="corrections">
+        Correcciones
+        <span id="inspectorCorrectionsCount"
+              class="inspector-tab-count">0</span>
+      </button>
+    </nav>
+
+    <div id="reportInspectorBody"
+         class="report-inspector-body">
+    </div>
+  </aside>
+
+  <dialog id="detailDialog">
+    <div class="dialog-head">
+      <div>
+        <h2 id="detailTitle">Detalle</h2>
+        <p id="detailSubtitle"></p>
+      </div>
+      <button id="detailClose" class="icon-btn">✕</button>
+    </div>
+    <div id="detailBody" class="detail-body"></div>
+  </dialog>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+</body>
+</html>

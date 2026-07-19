@@ -1,0 +1,421 @@
+/* ==========================================================
+   CUICHAPA CONTROL — TEMA GLOBAL UNIFICADO
+   Referencia visual: módulo Inicio
+   ========================================================== */
+
+:root{
+  --cc-bg:#f3f6fa;
+  --cc-card:#ffffff;
+  --cc-navy:#0d2f51;
+  --cc-navy-2:#143d68;
+  --cc-blue:#356fe8;
+  --cc-blue-dark:#2257c7;
+  --cc-green:#43a96e;
+  --cc-red:#eb5a5e;
+  --cc-yellow:#f1ad2f;
+  --cc-purple:#7a65dc;
+  --cc-text:#132944;
+  --cc-muted:#71839a;
+  --cc-border:#dce5ee;
+  --cc-shadow:0 9px 26px rgba(25,54,83,.08);
+  --cc-radius:14px;
+}
+
+/* ==========================================================
+   ESTRUCTURA GENERAL
+   ========================================================== */
+
+html,
+body{
+  background:var(--cc-bg);
+}
+
+.app-shell,
+.main,
+.content,
+.app-main{
+  background:var(--cc-bg);
+}
+
+.view{
+  color:var(--cc-text);
+}
+
+.view:not(#dashboardView){
+  width:min(100%,1450px);
+  margin:0 auto;
+  padding:28px 28px 40px;
+}
+
+/* ==========================================================
+   SIDEBAR — MISMO ESTILO DE INICIO
+   ========================================================== */
+
+.sidebar{
+  background:
+    radial-gradient(
+      circle at 35% 4%,
+      rgba(67,127,208,.18),
+      transparent 28%
+    ),
+    linear-gradient(
+      180deg,
+      #061f39 0%,
+      #0a3155 58%,
+      #082744 100%
+    );
+}
+
+.sidebar .brand{
+  color:#fff;
+}
+
+.sidebar .brand-copy b{
+  color:#fff;
+}
+
+.sidebar .brand-copy small{
+  color:rgba(255,255,255,.62);
+}
+
+.sidebar .nav-btn{
+  color:#b7c6d8;
+  border:1px solid transparent;
+  border-left:3px solid transparent;
+  border-radius:10px;
+}
+
+.sidebar .nav-btn:hover{
+  background:rgba(255,255,255,.07);
+  color:#fff;
+}
+
+.sidebar .nav-btn.active{
+  background:
+    linear-gradient(
+      90deg,
+      rgba(55,108,211,.82),
+      rgba(65,87,173,.72)
+    );
+  border-color:rgba(121,163,255,.3);
+  border-left-color:#73a0ff;
+  color:#fff;
+}
+
+.sidebar .nav-icon{
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.07);
+}
+
+/* ==========================================================
+   ENCABEZADOS
+   ========================================================== */
+
+.main-header{
+  color:var(--cc-text);
+  border-bottom:1px solid var(--cc-border);
+}
+
+.main-header h1,
+.view h1,
+.view h2,
+.view h3{
+  color:var(--cc-text);
+}
+
+.muted,
+.view p,
+.view small{
+  color:var(--cc-muted);
+}
+
+/* ==========================================================
+   PANELES Y TARJETAS
+   ========================================================== */
+
+.view .panel,
+.view .card,
+.view [class*="-card"],
+.view [class*="-panel"]{
+  border-color:var(--cc-border);
+}
+
+.view:not(#dashboardView) .panel{
+  background:var(--cc-card);
+  border:1px solid var(--cc-border);
+  border-radius:var(--cc-radius);
+  box-shadow:var(--cc-shadow);
+}
+
+.view:not(#dashboardView) .panel-head{
+  border-bottom:1px solid #e8eef4;
+}
+
+.view:not(#dashboardView) .panel-head h2{
+  color:var(--cc-text);
+}
+
+/* ==========================================================
+   INPUTS, SELECTS Y FILTROS
+   ========================================================== */
+
+.view:not(#dashboardView) input,
+.view:not(#dashboardView) select,
+.view:not(#dashboardView) textarea{
+  background:#fff;
+  color:var(--cc-text);
+  border:1px solid #d6e1ec;
+  border-radius:9px;
+  outline:none;
+}
+
+.view:not(#dashboardView) input::placeholder,
+.view:not(#dashboardView) textarea::placeholder{
+  color:#98a7b7;
+}
+
+.view:not(#dashboardView) input:focus,
+.view:not(#dashboardView) select:focus,
+.view:not(#dashboardView) textarea:focus{
+  border-color:var(--cc-blue);
+  box-shadow:0 0 0 3px rgba(53,111,232,.11);
+}
+
+.view:not(#dashboardView) .toolbar,
+.view:not(#dashboardView) .filters,
+.view:not(#dashboardView) [class*="filter-panel"],
+.view:not(#dashboardView) [class*="control-panel"]{
+  background:var(--cc-card);
+  border:1px solid var(--cc-border);
+  border-radius:12px;
+  box-shadow:var(--cc-shadow);
+}
+
+/* ==========================================================
+   BOTONES
+   ========================================================== */
+
+.view:not(#dashboardView) button,
+.view:not(#dashboardView) .btn{
+  border-radius:9px;
+}
+
+.view:not(#dashboardView) .primary-btn,
+.view:not(#dashboardView) button[class*="primary"],
+.view:not(#dashboardView) button[class*="export"],
+.view:not(#dashboardView) button[class*="open"],
+.view:not(#dashboardView) button[class*="view"]{
+  background:var(--cc-blue);
+  color:#fff;
+  border-color:var(--cc-blue);
+}
+
+.view:not(#dashboardView) .primary-btn:hover,
+.view:not(#dashboardView) button[class*="primary"]:hover,
+.view:not(#dashboardView) button[class*="export"]:hover,
+.view:not(#dashboardView) button[class*="open"]:hover,
+.view:not(#dashboardView) button[class*="view"]:hover{
+  background:var(--cc-blue-dark);
+  border-color:var(--cc-blue-dark);
+}
+
+.view:not(#dashboardView) .ghost-btn,
+.view:not(#dashboardView) button[class*="ghost"],
+.view:not(#dashboardView) button[class*="clear"]{
+  background:#f7f9fc;
+  color:#49637d;
+  border:1px solid #d4dfeb;
+}
+
+/* ==========================================================
+   TABLAS
+   ========================================================== */
+
+.view:not(#dashboardView) [class*="table-card"],
+.view:not(#dashboardView) [class*="table-wrap"],
+.view:not(#dashboardView) [class*="table-container"]{
+  background:#fff;
+  border:1px solid var(--cc-border);
+  border-radius:13px;
+  box-shadow:var(--cc-shadow);
+  overflow:auto;
+}
+
+.view:not(#dashboardView) table{
+  background:#fff;
+  color:var(--cc-text);
+}
+
+.view:not(#dashboardView) thead th{
+  background:var(--cc-navy);
+  color:#fff;
+  border-color:transparent;
+}
+
+.view:not(#dashboardView) tbody td{
+  background:#fff;
+  color:#526a82;
+  border-bottom:1px solid #edf1f5;
+}
+
+.view:not(#dashboardView) tbody tr:hover td{
+  background:#f5f9fe;
+}
+
+/* ==========================================================
+   BADGES
+   ========================================================== */
+
+.view:not(#dashboardView) .badge,
+.view:not(#dashboardView) [class*="badge"],
+.view:not(#dashboardView) [class*="pill"]{
+  border-radius:999px;
+}
+
+.view:not(#dashboardView) [class*="success"],
+.view:not(#dashboardView) [class*="operating"],
+.view:not(#dashboardView) [class*="sent"]{
+  background:#eaf8f1;
+  color:#237d54;
+  border-color:#bce3cf;
+}
+
+.view:not(#dashboardView) [class*="warning"],
+.view:not(#dashboardView) [class*="pending"]{
+  background:#fff7e5;
+  color:#986b00;
+  border-color:#ecd799;
+}
+
+.view:not(#dashboardView) [class*="danger"],
+.view:not(#dashboardView) [class*="closed"]{
+  background:#fff0f0;
+  color:#b44242;
+  border-color:#efc1c1;
+}
+
+/* ==========================================================
+   REPORTES
+   ========================================================== */
+
+#reportesView .reportes-v2-hero{
+  box-shadow:0 14px 32px rgba(24,56,92,.17);
+}
+
+#reportesView .toolbar,
+#reportesView .reports-toolbar,
+#reportesView .report-filters{
+  background:#fff;
+}
+
+/* ==========================================================
+   PRODUCCIÓN
+   ========================================================== */
+
+#pozosView{
+  background:transparent;
+}
+
+#pozosView .well-overview-card,
+#pozosView .well-priority-center,
+#pozosView .wells-control-panel,
+#pozosView .well-card,
+#pozosView .wells-map-view,
+#pozosView .wells-table-card{
+  background:#fff;
+  border-color:var(--cc-border);
+  box-shadow:var(--cc-shadow);
+}
+
+#pozosView .well-card-header{
+  background:
+    linear-gradient(
+      135deg,
+      #fbfdff,
+      #f1f6fb
+    );
+}
+
+#pozosView .well-card-data > div,
+#pozosView .well-card-latest,
+#pozosView .well-priority-summary article,
+#pozosView .well-priority-card{
+  background:#f8fafc;
+  border-color:#e3ebf2;
+}
+
+/* ==========================================================
+   ALERTAS
+   ========================================================== */
+
+#alarmasView .panel,
+#alertasView .panel,
+#alarmasView [class*="-card"],
+#alertasView [class*="-card"]{
+  background:#fff;
+  color:var(--cc-text);
+}
+
+/* ==========================================================
+   DOCUMENTOS / EXPORTACIONES
+   ========================================================== */
+
+#exportacionesView .export-card,
+#documentosView .export-card,
+#exportacionesView .panel,
+#documentosView .panel{
+  background:#fff;
+  border:1px solid var(--cc-border);
+  box-shadow:var(--cc-shadow);
+}
+
+/* ==========================================================
+   UPV ADMIN
+   ========================================================== */
+
+#upvView .panel,
+#upvAdminView .panel,
+#upvView [class*="-card"],
+#upvAdminView [class*="-card"]{
+  background:#fff;
+  border-color:var(--cc-border);
+  box-shadow:var(--cc-shadow);
+}
+
+/* ==========================================================
+   RENDIMIENTO
+   ========================================================== */
+
+/* Reduce animaciones costosas en vistas con muchas filas. */
+
+#reportesView tbody tr,
+#pozosView .well-card,
+#pozosView .well-priority-card,
+#alarmasView tbody tr{
+  transition:none !important;
+}
+
+/* El navegador evita pintar elementos lejanos. */
+
+#pozosView .well-card,
+#reportesView tbody tr,
+#alarmasView tbody tr{
+  content-visibility:auto;
+  contain-intrinsic-size:60px;
+}
+
+/* ==========================================================
+   RESPONSIVE
+   ========================================================== */
+
+@media(max-width:900px){
+  .view:not(#dashboardView){
+    padding:20px 14px 30px;
+  }
+}
+
+@media(max-width:600px){
+  .view:not(#dashboardView){
+    padding:14px 10px 24px;
+  }
+}

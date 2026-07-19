@@ -1,0 +1,314 @@
+/* ==========================================================
+   SIDEBAR GLOBAL
+   Copiado automáticamente del diseño real de Reportes.
+   No altera módulos ni funcionalidad.
+   ========================================================== */
+
+/* =========================================================
+   BARRA LATERAL — MISMA QUE INICIO
+   ========================================================= */
+
+html body .sidebar {
+width: 180px !important;
+  min-width: 180px !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+
+  border-right:
+    1px solid rgba(255, 255, 255, 0.055) !important;
+
+  background:
+    radial-gradient(
+      circle at 35% 5%,
+      rgba(26, 103, 171, 0.16),
+      transparent 27%
+    ),
+    linear-gradient(
+      180deg,
+      #041d34 0%,
+      #052947 54%,
+      #062540 100%
+    ) !important;
+
+  box-shadow:
+    8px 0 30px rgba(4, 29, 52, 0.06) !important;
+}
+
+/* Marca vertical */
+
+html body
+.sidebar .brand {
+display: flex !important;
+  min-height: 214px !important;
+
+  padding: 27px 14px 22px !important;
+
+  flex-direction: column !important;
+  align-items: center !important;
+
+  border-bottom:
+    1px solid rgba(255, 255, 255, 0.055) !important;
+
+  text-align: center !important;
+}
+
+html body
+.sidebar .brand-mark > * {
+display: none !important;
+}
+
+html body
+.sidebar .brand-mark {
+position: relative !important;
+
+  display: grid !important;
+  width: 78px !important;
+  height: 78px !important;
+
+  margin: 0 auto 15px !important;
+  place-items: center !important;
+
+  overflow: hidden !important;
+
+  border:
+    1px solid rgba(255, 255, 255, 0.13) !important;
+  border-radius: 15px !important;
+
+  background:
+    linear-gradient(
+      145deg,
+      #277fe2 0%,
+      #1763b4 54%,
+      #10477f 100%
+    ) !important;
+
+  box-shadow:
+    0 12px 27px rgba(0, 0, 0, 0.21),
+    inset 0 1px rgba(255, 255, 255, 0.15) !important;
+
+  color: transparent !important;
+  font-size: 0 !important;
+}
+
+html body
+.sidebar .brand-mark::before {
+content: "CC" !important;
+
+  color: #ffffff !important;
+  font-size: 37px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  letter-spacing: -0.095em !important;
+}
+
+html body
+.sidebar .brand-mark::after {
+content: "" !important;
+
+  position: absolute !important;
+  right: -24px !important;
+  bottom: -24px !important;
+
+  width: 67px !important;
+  height: 67px !important;
+
+  border:
+    1px solid rgba(255, 255, 255, 0.11) !important;
+  border-radius: 50% !important;
+}
+
+html body
+.sidebar .brand-copy {
+display: flex !important;
+  width: 100% !important;
+
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+html body
+.sidebar .brand-copy b {
+max-width: 145px !important;
+
+  color: #ffffff !important;
+  font-size: 17px !important;
+  font-weight: 820 !important;
+  line-height: 1.08 !important;
+
+  text-align: center !important;
+  text-transform: uppercase !important;
+}
+
+html body
+.sidebar .brand-copy small {
+max-width: 145px !important;
+  margin-top: 9px !important;
+
+  color: rgba(235, 243, 249, 0.76) !important;
+  font-size: 10px !important;
+  line-height: 1.35 !important;
+  text-align: center !important;
+}
+
+/* Navegación */
+
+html body
+.sidebar .nav {
+display: flex !important;
+  gap: 5px !important;
+  flex-direction: column !important;
+  padding: 18px 0 !important;
+}
+
+html body
+.sidebar .nav-btn {
+display: grid !important;
+
+  width: calc(100% - 20px) !important;
+  min-height: 53px !important;
+
+  grid-template-columns: 35px minmax(0, 1fr) !important;
+  gap: 9px !important;
+  align-items: center !important;
+
+  margin: 0 10px !important;
+  padding: 0 10px !important;
+
+  border: 1px solid transparent !important;
+  border-left: 3px solid transparent !important;
+  border-radius: 9px !important;
+
+  background: transparent !important;
+  color: rgba(231, 240, 247, 0.82) !important;
+
+  font-size: 12px !important;
+  font-weight: 690 !important;
+  text-align: left !important;
+}
+
+html body
+.sidebar .nav-btn:hover {
+border-color:
+    rgba(255, 255, 255, 0.07) !important;
+
+  background:
+    rgba(255, 255, 255, 0.055) !important;
+
+  color: #ffffff !important;
+}
+
+html body
+.sidebar .nav-btn.active {
+border-color:
+    rgba(76, 143, 245, 0.28) !important;
+
+  border-left-color:
+    #5b91f4 !important;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(50, 104, 174, 0.73),
+      rgba(35, 78, 130, 0.55)
+    ) !important;
+
+  color: #ffffff !important;
+}
+
+html body
+.sidebar .nav-icon {
+display: grid !important;
+  width: 31px !important;
+  height: 31px !important;
+  place-items: center !important;
+
+  border:
+    1px solid rgba(255, 255, 255, 0.055) !important;
+  border-radius: 9px !important;
+
+  background:
+    rgba(255, 255, 255, 0.045) !important;
+
+  color: inherit !important;
+}
+
+/* Pie lateral */
+
+html body
+.sidebar-footer {
+margin-top: auto !important;
+  padding: 18px 17px 20px !important;
+
+  border-top:
+    1px solid rgba(255, 255, 255, 0.065) !important;
+}
+
+html body
+.sidebar-footer,
+html body
+.sidebar-footer span,
+html body
+.sidebar-footer small {
+color:
+    rgba(224, 235, 243, 0.69) !important;
+}
+
+html body
+.sidebar-footer button {
+width: 100% !important;
+  min-height: 43px !important;
+  margin-top: 13px !important;
+
+  border:
+    1px solid rgba(255, 255, 255, 0.10) !important;
+  border-radius: 10px !important;
+
+  background:
+    rgba(255, 255, 255, 0.025) !important;
+
+  color:
+    rgba(232, 240, 247, 0.80) !important;
+}
+
+html body
+  .sidebar {
+width: 78px !important;
+    min-width: 78px !important;
+}
+
+html body
+  .sidebar .brand {
+min-height: 105px !important;
+    padding: 15px 7px !important;
+}
+
+html body
+  .sidebar .brand-mark {
+width: 53px !important;
+    height: 53px !important;
+    margin-bottom: 0 !important;
+}
+
+html body
+  .sidebar .brand-mark::before {
+font-size: 23px !important;
+}
+
+html body
+  .sidebar .brand-copy {
+display: none !important;
+}
+
+html body
+  .sidebar .nav-btn {
+width: calc(100% - 12px) !important;
+
+    grid-template-columns: 1fr !important;
+
+    margin: 0 6px !important;
+    padding: 0 !important;
+    justify-items: center !important;
+
+    font-size: 0 !important;
+}

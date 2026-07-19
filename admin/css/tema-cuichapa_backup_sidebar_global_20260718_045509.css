@@ -1,0 +1,792 @@
+/* ==========================================================
+   CUICHAPA CONTROL — TEMA GLOBAL UNIFICADO
+   Blanco + azul marino
+   No modifica estructura ni funcionalidad
+   ========================================================== */
+
+:root {
+  --cc-shell-bg: #f3f6fa;
+  --cc-surface: #ffffff;
+  --cc-navy: #092744;
+  --cc-navy-deep: #061e36;
+  --cc-navy-light: #143f6c;
+  --cc-blue: #356fe8;
+  --cc-blue-hover: #2559c7;
+  --cc-blue-soft: #edf4ff;
+  --cc-text: #132943;
+  --cc-muted: #71839a;
+  --cc-border: #dce5ee;
+  --cc-green: #43a96e;
+  --cc-red: #e85a60;
+  --cc-yellow: #edae35;
+  --cc-shadow: 0 9px 26px rgba(25, 54, 83, .08);
+  --cc-radius: 14px;
+}
+
+/* ==========================================================
+   ESTRUCTURA GENERAL
+   ========================================================== */
+
+html,
+body,
+.app-shell,
+.main,
+.content,
+.app-main {
+  background: var(--cc-shell-bg) !important;
+}
+
+.main,
+.content,
+.app-main {
+  min-width: 0;
+}
+
+.view {
+  color: var(--cc-text);
+}
+
+/*
+ * Se conservan las dimensiones propias de Inicio.
+ * El resto mantiene un ancho uniforme.
+ */
+
+#reportesView,
+#pozosView,
+#alarmasView,
+#alertasView,
+#exportacionesView,
+#documentosView,
+#upvView,
+#upvAdminView,
+#configuracionView,
+#correccionesView {
+  width: min(100%, 1450px);
+  max-width: 1450px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ==========================================================
+   BARRA LATERAL
+   ========================================================== */
+
+.sidebar {
+  background:
+    radial-gradient(
+      circle at 32% 4%,
+      rgba(72, 133, 211, .19),
+      transparent 28%
+    ),
+    linear-gradient(
+      180deg,
+      var(--cc-navy-deep) 0%,
+      #0a3155 57%,
+      var(--cc-navy) 100%
+    ) !important;
+
+  color: #ffffff !important;
+  border-right: 1px solid rgba(255,255,255,.07) !important;
+}
+
+.sidebar .brand,
+.sidebar .brand-copy,
+.sidebar .brand-copy b,
+.sidebar .brand-title {
+  color: #ffffff !important;
+}
+
+.sidebar .brand-copy small,
+.sidebar .brand-subtitle {
+  color: rgba(225, 236, 248, .67) !important;
+}
+
+.sidebar .brand-mark {
+  color: #ffffff !important;
+
+  background:
+    linear-gradient(
+      145deg,
+      #5d9af4,
+      #2d64b7
+    ) !important;
+
+  border: 1px solid rgba(255,255,255,.17) !important;
+
+  box-shadow:
+    0 9px 22px rgba(27, 89, 165, .31) !important;
+}
+
+.sidebar .nav {
+  background: transparent !important;
+}
+
+.sidebar .nav-btn {
+  color: #bdcada !important;
+
+  background: transparent !important;
+
+  border: 1px solid transparent !important;
+  border-left: 3px solid transparent !important;
+  border-radius: 10px !important;
+
+  transition:
+    background .14s ease,
+    color .14s ease,
+    border-color .14s ease !important;
+}
+
+.sidebar .nav-btn:hover {
+  color: #ffffff !important;
+
+  background:
+    rgba(255,255,255,.065) !important;
+
+  border-color:
+    rgba(255,255,255,.055) !important;
+}
+
+.sidebar .nav-btn.active {
+  color: #ffffff !important;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(50, 105, 213, .88),
+      rgba(59, 79, 169, .75)
+    ) !important;
+
+  border-color:
+    rgba(121, 164, 255, .33) !important;
+
+  border-left-color:
+    #77a5ff !important;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.035),
+    0 6px 14px rgba(4, 20, 39, .13) !important;
+}
+
+.sidebar .nav-icon {
+  color: inherit !important;
+
+  background:
+    rgba(255,255,255,.055) !important;
+
+  border:
+    1px solid rgba(255,255,255,.075) !important;
+}
+
+.sidebar .nav-btn.active .nav-icon {
+  background:
+    rgba(255,255,255,.12) !important;
+
+  border-color:
+    rgba(255,255,255,.17) !important;
+}
+
+.sidebar-footer,
+.sidebar .user-area {
+  color: rgba(225, 236, 248, .68) !important;
+
+  border-top:
+    1px solid rgba(255,255,255,.1) !important;
+}
+
+.sidebar .logout-btn,
+.sidebar button[class*="logout"],
+.sidebar button[class*="session"] {
+  color: #dce7f3 !important;
+
+  background:
+    rgba(3, 19, 35, .25) !important;
+
+  border:
+    1px solid rgba(157, 186, 218, .19) !important;
+}
+
+/* ==========================================================
+   ENCABEZADO GENERAL
+   ========================================================== */
+
+.main-header {
+  color: var(--cc-text) !important;
+
+  background: transparent !important;
+
+  border-bottom:
+    1px solid var(--cc-border) !important;
+}
+
+.main-header h1,
+.main-header h2,
+.main-header strong {
+  color: var(--cc-text) !important;
+}
+
+.main-header p,
+.main-header span:not(.firebase-status),
+.main-header small {
+  color: var(--cc-muted) !important;
+}
+
+.firebase-status,
+.firebase-connected,
+[class*="firebase-connected"] {
+  background:
+    rgba(16, 74, 65, .06) !important;
+
+  color:
+    #3aa66d !important;
+
+  border-color:
+    rgba(51, 156, 103, .45) !important;
+}
+
+/* ==========================================================
+   PANELES COMUNES
+   ========================================================== */
+
+#reportesView .panel,
+#pozosView .panel,
+#alarmasView .panel,
+#alertasView .panel,
+#exportacionesView .panel,
+#documentosView .panel,
+#upvView .panel,
+#upvAdminView .panel,
+#configuracionView .panel,
+#correccionesView .panel {
+  background: var(--cc-surface) !important;
+
+  border:
+    1px solid var(--cc-border) !important;
+
+  border-radius:
+    var(--cc-radius) !important;
+
+  box-shadow:
+    var(--cc-shadow) !important;
+}
+
+.panel-head {
+  border-bottom:
+    1px solid #e8eef4 !important;
+}
+
+.panel-head h2,
+.panel-head h3 {
+  color:
+    var(--cc-text) !important;
+}
+
+.panel-head .muted,
+.panel-head p {
+  color:
+    var(--cc-muted) !important;
+}
+
+/* ==========================================================
+   CAMPOS Y FILTROS
+   ========================================================== */
+
+#reportesView input,
+#reportesView select,
+#reportesView textarea,
+#pozosView input,
+#pozosView select,
+#pozosView textarea,
+#alarmasView input,
+#alarmasView select,
+#alarmasView textarea,
+#alertasView input,
+#alertasView select,
+#alertasView textarea,
+#exportacionesView input,
+#exportacionesView select,
+#documentosView input,
+#documentosView select,
+#upvView input,
+#upvView select,
+#upvView textarea,
+#upvAdminView input,
+#upvAdminView select,
+#upvAdminView textarea {
+  background:
+    #ffffff !important;
+
+  color:
+    var(--cc-text) !important;
+
+  border:
+    1px solid #d6e1ec !important;
+
+  border-radius:
+    9px !important;
+
+  outline: none !important;
+}
+
+#reportesView input:focus,
+#reportesView select:focus,
+#reportesView textarea:focus,
+#pozosView input:focus,
+#pozosView select:focus,
+#pozosView textarea:focus,
+#alarmasView input:focus,
+#alarmasView select:focus,
+#alarmasView textarea:focus,
+#alertasView input:focus,
+#alertasView select:focus,
+#alertasView textarea:focus,
+#exportacionesView input:focus,
+#exportacionesView select:focus,
+#documentosView input:focus,
+#documentosView select:focus,
+#upvView input:focus,
+#upvView select:focus,
+#upvView textarea:focus {
+  border-color:
+    var(--cc-blue) !important;
+
+  box-shadow:
+    0 0 0 3px rgba(53,111,232,.11) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #98a7b7 !important;
+}
+
+/* ==========================================================
+   BOTONES
+   ========================================================== */
+
+.primary-btn,
+button[class*="primary"],
+button[class*="export"],
+button[class*="open"],
+button[class*="view"],
+button[class*="prepare"],
+button[class*="download"] {
+  background:
+    var(--cc-blue) !important;
+
+  color:
+    #ffffff !important;
+
+  border-color:
+    var(--cc-blue) !important;
+
+  border-radius:
+    9px !important;
+}
+
+.primary-btn:hover,
+button[class*="primary"]:hover,
+button[class*="export"]:hover,
+button[class*="open"]:hover,
+button[class*="view"]:hover,
+button[class*="prepare"]:hover,
+button[class*="download"]:hover {
+  background:
+    var(--cc-blue-hover) !important;
+
+  border-color:
+    var(--cc-blue-hover) !important;
+}
+
+.ghost-btn,
+button[class*="ghost"],
+button[class*="clear"] {
+  background:
+    #f7f9fc !important;
+
+  color:
+    #49637d !important;
+
+  border:
+    1px solid #d4dfeb !important;
+
+  border-radius:
+    9px !important;
+}
+
+/* ==========================================================
+   TABLAS
+   ========================================================== */
+
+#reportesView table,
+#pozosView table,
+#alarmasView table,
+#alertasView table,
+#exportacionesView table,
+#documentosView table,
+#upvView table,
+#upvAdminView table {
+  background:
+    #ffffff !important;
+
+  color:
+    var(--cc-text) !important;
+}
+
+#reportesView thead th,
+#pozosView thead th,
+#alarmasView thead th,
+#alertasView thead th,
+#exportacionesView thead th,
+#documentosView thead th,
+#upvView thead th,
+#upvAdminView thead th {
+  background:
+    var(--cc-navy) !important;
+
+  color:
+    #ffffff !important;
+
+  border-color:
+    transparent !important;
+}
+
+#reportesView tbody td,
+#pozosView tbody td,
+#alarmasView tbody td,
+#alertasView tbody td,
+#exportacionesView tbody td,
+#documentosView tbody td,
+#upvView tbody td,
+#upvAdminView tbody td {
+  background:
+    #ffffff !important;
+
+  color:
+    #536b82 !important;
+
+  border-bottom:
+    1px solid #edf1f5 !important;
+}
+
+#reportesView tbody tr:hover td,
+#pozosView tbody tr:hover td,
+#alarmasView tbody tr:hover td,
+#alertasView tbody tr:hover td,
+#exportacionesView tbody tr:hover td,
+#documentosView tbody tr:hover td,
+#upvView tbody tr:hover td,
+#upvAdminView tbody tr:hover td {
+  background:
+    #f5f9fe !important;
+}
+
+/* ==========================================================
+   PRODUCCIÓN
+   ========================================================== */
+
+#pozosView .well-overview-card,
+#pozosView .well-priority-center,
+#pozosView .wells-control-panel,
+#pozosView .well-card,
+#pozosView .wells-table-card,
+#pozosView .wells-map-view {
+  background:
+    #ffffff !important;
+
+  border-color:
+    var(--cc-border) !important;
+
+  box-shadow:
+    var(--cc-shadow) !important;
+}
+
+#pozosView .well-card-header {
+  background:
+    linear-gradient(
+      135deg,
+      #fbfdff,
+      #f1f6fb
+    ) !important;
+}
+
+#pozosView .well-card-data > div,
+#pozosView .well-card-latest,
+#pozosView .well-priority-summary article,
+#pozosView .well-priority-card {
+  background:
+    #f8fafc !important;
+
+  border-color:
+    #e3ebf2 !important;
+}
+
+/* ==========================================================
+   ALERTAS
+   ========================================================== */
+
+#alarmasView [class*="alarm-card"],
+#alertasView [class*="alarm-card"],
+#alarmasView [class*="priority-item"],
+#alertasView [class*="priority-item"] {
+  background:
+    #ffffff !important;
+
+  color:
+    var(--cc-text) !important;
+
+  border-color:
+    var(--cc-border) !important;
+
+  box-shadow:
+    var(--cc-shadow) !important;
+}
+
+/* ==========================================================
+   DOCUMENTOS
+   ========================================================== */
+
+#exportacionesView .export-card,
+#documentosView .export-card,
+#exportacionesView [class*="document-card"],
+#documentosView [class*="document-card"] {
+  background:
+    #ffffff !important;
+
+  color:
+    var(--cc-text) !important;
+
+  border:
+    1px solid var(--cc-border) !important;
+
+  box-shadow:
+    var(--cc-shadow) !important;
+}
+
+/* ==========================================================
+   UPV
+   ========================================================== */
+
+#upvView [class*="upv-card"],
+#upvAdminView [class*="upv-card"],
+#upvView [class*="operation-card"],
+#upvAdminView [class*="operation-card"] {
+  background:
+    #ffffff !important;
+
+  color:
+    var(--cc-text) !important;
+
+  border-color:
+    var(--cc-border) !important;
+
+  box-shadow:
+    var(--cc-shadow) !important;
+}
+
+/* ==========================================================
+   BADGES
+   ========================================================== */
+
+.badge,
+[class*="badge"],
+[class*="pill"] {
+  border-radius:
+    999px !important;
+}
+
+[class*="success"],
+[class*="operating"],
+[class*="sent"] {
+  background:
+    #eaf8f1 !important;
+
+  color:
+    #237d54 !important;
+
+  border-color:
+    #bce3cf !important;
+}
+
+[class*="warning"],
+[class*="pending"] {
+  background:
+    #fff7e5 !important;
+
+  color:
+    #986b00 !important;
+
+  border-color:
+    #ecd799 !important;
+}
+
+[class*="danger"],
+[class*="closed"] {
+  background:
+    #fff0f0 !important;
+
+  color:
+    #b44242 !important;
+
+  border-color:
+    #efc1c1 !important;
+}
+
+/* ==========================================================
+   RENDIMIENTO
+   ========================================================== */
+
+#pozosView .well-card,
+#reportesView tbody tr,
+#alarmasView tbody tr,
+#alertasView tbody tr {
+  transition: none !important;
+}
+
+/*
+ * Solo se aplica a tarjetas de pozo.
+ * No se aplica a filas de tabla para evitar saltos visuales.
+ */
+
+#pozosView .well-card {
+  content-visibility:
+    auto;
+
+  contain-intrinsic-size:
+    320px;
+}
+
+/* ==========================================================
+   RESPONSIVE
+   ========================================================== */
+
+@media (max-width: 900px) {
+  #reportesView,
+  #pozosView,
+  #alarmasView,
+  #alertasView,
+  #exportacionesView,
+  #documentosView,
+  #upvView,
+  #upvAdminView {
+    width: 100%;
+  }
+}
+
+/* ==========================================================
+   CORRECCIÓN FINAL DE SHELL GLOBAL
+   Barra lateral idéntica a Inicio
+   ========================================================== */
+
+/* Marca siempre blanca */
+
+body .sidebar .brand,
+body .sidebar .brand *,
+body .sidebar .brand-copy,
+body .sidebar .brand-copy *,
+body .sidebar .brand-title,
+body .sidebar .brand-name {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+body .sidebar .brand-copy small,
+body .sidebar .brand-subtitle {
+  color: rgba(225, 236, 248, .68) !important;
+}
+
+/* Logo */
+
+body .sidebar .brand-mark {
+  color: #ffffff !important;
+  background:
+    linear-gradient(
+      145deg,
+      #5d9af4,
+      #2c63b6
+    ) !important;
+}
+
+/* Navegación */
+
+body .sidebar .nav-btn,
+body .sidebar .nav-btn span,
+body .sidebar .nav-btn b {
+  color: #bdcada !important;
+}
+
+body .sidebar .nav-btn:hover,
+body .sidebar .nav-btn:hover span,
+body .sidebar .nav-btn.active,
+body .sidebar .nav-btn.active span,
+body .sidebar .nav-btn.active b {
+  color: #ffffff !important;
+}
+
+/* Pie lateral */
+
+body .sidebar-footer,
+body .sidebar-footer *,
+body .sidebar .user-area,
+body .sidebar .user-area * {
+  color: rgba(225, 236, 248, .72) !important;
+}
+
+/* Botón cerrar sesión igual que Inicio */
+
+body .sidebar .logout-btn,
+body .sidebar button[class*="logout"],
+body .sidebar button[class*="session"] {
+  background: rgba(3, 19, 35, .28) !important;
+  color: #dce7f3 !important;
+
+  border:
+    1px solid rgba(157, 186, 218, .20) !important;
+
+  box-shadow: none !important;
+}
+
+body .sidebar .logout-btn:hover,
+body .sidebar button[class*="logout"]:hover,
+body .sidebar button[class*="session"]:hover {
+  background: rgba(255, 255, 255, .07) !important;
+  color: #ffffff !important;
+}
+
+/* ==========================================================
+   QUITAR ENCABEZADOS ANTIGUOS DUPLICADOS
+   Cada módulo conservará su hero moderno.
+   ========================================================== */
+
+body:has(#pozosView:not(.hidden)) .main-header,
+body:has(#reportesView:not(.hidden)) .main-header,
+body:has(#alarmasView:not(.hidden)) .main-header,
+body:has(#alertasView:not(.hidden)) .main-header,
+body:has(#exportacionesView:not(.hidden)) .main-header,
+body:has(#documentosView:not(.hidden)) .main-header,
+body:has(#upvView:not(.hidden)) .main-header,
+body:has(#upvAdminView:not(.hidden)) .main-header {
+  display: none !important;
+}
+
+/* Inicio conserva su encabezado propio */
+
+body:has(#dashboardView:not(.hidden)) .main-header {
+  display: none !important;
+}
+
+/* Evitar espacio vacío cuando se oculta el encabezado */
+
+body:has(#pozosView:not(.hidden)) .main,
+body:has(#reportesView:not(.hidden)) .main,
+body:has(#alarmasView:not(.hidden)) .main,
+body:has(#alertasView:not(.hidden)) .main,
+body:has(#exportacionesView:not(.hidden)) .main,
+body:has(#documentosView:not(.hidden)) .main,
+body:has(#upvView:not(.hidden)) .main {
+  padding-top: 0 !important;
+}
+
+/* Producción inicia directamente con su hero */
+
+#pozosView {
+  padding-top: 28px !important;
+}

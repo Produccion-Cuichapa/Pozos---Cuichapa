@@ -1,0 +1,1327 @@
+/* ==========================================================
+   CUICHAPA CONTROL
+   PRODUCCIÓN — ESTILO VISUAL UNIFICADO
+
+   Alcance:
+   - Solo #pozosView
+   - No modifica estructura HTML
+   - No mueve elementos
+   - No altera JavaScript
+   ========================================================== */
+
+body:has(#pozosView:not(.hidden)) {
+  background: #f4f7fb !important;
+}
+
+body:has(#pozosView:not(.hidden)) .main,
+body:has(#pozosView:not(.hidden)) .content,
+body:has(#pozosView:not(.hidden)) .app-main {
+  background: #f4f7fb !important;
+}
+
+/* La cabecera global oscura anterior se oculta igual que
+   en los módulos modernos de Inicio y Reportes. */
+
+body:has(#pozosView:not(.hidden)) .main-header {
+  display: none !important;
+}
+
+/* ==========================================================
+   CONTENEDOR GENERAL
+   ========================================================== */
+
+#pozosView {
+  --prod-navy: #0d3159;
+  --prod-blue: #316ce8;
+  --prod-blue-dark: #1d53c9;
+  --prod-blue-soft: #edf4ff;
+
+  --prod-green: #2da76e;
+  --prod-green-soft: #eaf8f1;
+
+  --prod-yellow: #dfa320;
+  --prod-yellow-soft: #fff7e5;
+
+  --prod-red: #e05858;
+  --prod-red-soft: #fff0f0;
+
+  --prod-purple: #7661d8;
+  --prod-purple-soft: #f1efff;
+
+  --prod-bg: #f4f7fb;
+  --prod-card: #ffffff;
+  --prod-text: #142a43;
+  --prod-muted: #6f8298;
+  --prod-border: #dce6ef;
+
+  --prod-shadow:
+    0 8px 25px rgba(31, 58, 86, .08);
+
+  width: min(100%, 1420px) !important;
+  max-width: 1420px !important;
+
+  margin: 0 auto !important;
+  padding: 34px 28px 40px !important;
+
+  background: transparent !important;
+  color: var(--prod-text) !important;
+}
+
+#pozosView,
+#pozosView * {
+  box-sizing: border-box;
+}
+
+/* ==========================================================
+   ENCABEZADO VISUAL DE PRODUCCIÓN
+
+   No se inserta HTML nuevo.
+   Se crea visualmente con CSS sobre la vista.
+   ========================================================== */
+
+#pozosView::before {
+  content:
+    "PRODUCCIÓN DE CAMPO\A"
+    "Estado operativo de pozos";
+
+  display: block;
+  min-height: 108px;
+
+  margin-bottom: 16px;
+  padding: 24px 28px;
+
+  white-space: pre;
+
+  background:
+    radial-gradient(
+      circle at 74% 35%,
+      rgba(98, 165, 255, .25),
+      transparent 29%
+    ),
+    linear-gradient(
+      120deg,
+      #143960 0%,
+      #24569d 58%,
+      #154077 100%
+    );
+
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 16px;
+
+  box-shadow:
+    0 14px 32px rgba(24, 56, 92, .18);
+
+  color: #ffffff;
+
+  font-size: 25px;
+  font-weight: 850;
+  line-height: 1.85;
+  letter-spacing: -.02em;
+}
+
+#pozosView::after {
+  content:
+    "Consulta, seguimiento y priorización operativa del Campo Cuichapa.";
+
+  position: absolute;
+  z-index: 1;
+
+  margin-top: -92px;
+  margin-left: 29px;
+
+  color: rgba(255, 255, 255, .82);
+
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* El contenedor necesita contexto para el texto auxiliar. */
+
+#pozosView {
+  position: relative !important;
+}
+
+/* Primera línea pequeña del hero */
+
+#pozosView::before {
+  text-indent: 0;
+}
+
+/* ==========================================================
+   RESUMEN OPERATIVO
+   ========================================================== */
+
+#pozosView .wells-overview {
+  display: grid !important;
+
+  grid-template-columns:
+    repeat(6, minmax(0, 1fr)) !important;
+
+  gap: 11px !important;
+
+  margin: 0 0 16px !important;
+}
+
+#pozosView .well-overview-card {
+  position: relative !important;
+
+  display: flex !important;
+  min-width: 0 !important;
+  min-height: 100px !important;
+
+  flex-direction: column !important;
+  justify-content: center !important;
+
+  margin: 0 !important;
+  padding: 17px 15px 15px 60px !important;
+
+  overflow: hidden !important;
+
+  background: var(--prod-card) !important;
+
+  border: 1px solid var(--prod-border) !important;
+  border-radius: 13px !important;
+
+  box-shadow: var(--prod-shadow) !important;
+
+  transition:
+    transform .16s ease,
+    box-shadow .16s ease,
+    border-color .16s ease !important;
+}
+
+#pozosView .well-overview-card:hover {
+  transform: translateY(-2px) !important;
+
+  border-color: #b9cee4 !important;
+
+  box-shadow:
+    0 13px 29px rgba(31, 58, 86, .12) !important;
+}
+
+/* Sustituye la antigua barra vertical oscura por un ícono. */
+
+#pozosView .well-overview-card::before {
+  content: "" !important;
+
+  position: absolute !important;
+  left: 15px !important;
+  top: 50% !important;
+
+  width: 34px !important;
+  height: 34px !important;
+
+  transform: translateY(-50%) !important;
+
+  border-radius: 10px !important;
+
+  background: var(--prod-blue-soft) !important;
+}
+
+#pozosView .well-overview-card::after {
+  position: absolute !important;
+
+  left: 26px !important;
+  top: 50% !important;
+
+  z-index: 2 !important;
+
+  transform: translateY(-50%) !important;
+
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+}
+
+#pozosView .overview-total::after {
+  content: "●";
+  color: var(--prod-blue);
+}
+
+#pozosView .overview-visited::after {
+  content: "✓";
+  color: var(--prod-blue);
+}
+
+#pozosView .overview-operating::before {
+  background: var(--prod-green-soft) !important;
+}
+
+#pozosView .overview-operating::after {
+  content: "↗";
+  color: var(--prod-green);
+}
+
+#pozosView .overview-intermittent::before {
+  background: var(--prod-yellow-soft) !important;
+}
+
+#pozosView .overview-intermittent::after {
+  content: "↝";
+  color: var(--prod-yellow);
+}
+
+#pozosView .overview-closed::before {
+  background: var(--prod-red-soft) !important;
+}
+
+#pozosView .overview-closed::after {
+  content: "■";
+  color: var(--prod-red);
+}
+
+#pozosView .overview-pending::before {
+  background: var(--prod-purple-soft) !important;
+}
+
+#pozosView .overview-pending::after {
+  content: "○";
+  color: var(--prod-purple);
+}
+
+#pozosView .well-overview-card span {
+  margin: 0 0 3px !important;
+
+  color: var(--prod-muted) !important;
+
+  font-size: 10px !important;
+  font-weight: 720 !important;
+  line-height: 1.25 !important;
+}
+
+#pozosView .well-overview-card strong {
+  margin: 0 !important;
+
+  color: var(--prod-text) !important;
+
+  font-size: 23px !important;
+  font-weight: 850 !important;
+  line-height: 1.05 !important;
+}
+
+#pozosView .well-overview-card small {
+  margin-top: 5px !important;
+
+  color: #91a0b0 !important;
+
+  font-size: 8px !important;
+  line-height: 1.25 !important;
+}
+
+/* ==========================================================
+   CENTRO DE PRIORIDADES
+   ========================================================== */
+
+#pozosView .well-priority-center {
+  margin: 0 0 16px !important;
+  padding: 20px !important;
+
+  background: var(--prod-card) !important;
+
+  border: 1px solid var(--prod-border) !important;
+  border-radius: 15px !important;
+
+  box-shadow: var(--prod-shadow) !important;
+}
+
+#pozosView .well-priority-header {
+  display: flex !important;
+
+  gap: 18px !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+
+  margin: 0 0 16px !important;
+  padding: 0 !important;
+}
+
+#pozosView .well-priority-eyebrow {
+  display: block !important;
+
+  margin-bottom: 4px !important;
+
+  color: var(--prod-green) !important;
+
+  font-size: 9px !important;
+  font-weight: 850 !important;
+  letter-spacing: .12em !important;
+}
+
+#pozosView .well-priority-header h2 {
+  margin: 0 !important;
+
+  color: var(--prod-text) !important;
+
+  font-size: 18px !important;
+  font-weight: 830 !important;
+  line-height: 1.2 !important;
+}
+
+#pozosView .well-priority-header p {
+  margin: 5px 0 0 !important;
+
+  color: var(--prod-muted) !important;
+
+  font-size: 10px !important;
+  line-height: 1.35 !important;
+}
+
+#pozosView .well-priority-all-btn {
+  min-height: 36px !important;
+  padding: 0 13px !important;
+
+  background: #f5f9ff !important;
+  color: var(--prod-blue-dark) !important;
+
+  border: 1px solid #bfd3e8 !important;
+  border-radius: 9px !important;
+
+  font-size: 9px !important;
+  font-weight: 800 !important;
+
+  transition:
+    background .16s ease,
+    color .16s ease,
+    border-color .16s ease !important;
+}
+
+#pozosView .well-priority-all-btn:hover {
+  background: var(--prod-blue) !important;
+  color: #fff !important;
+
+  border-color: var(--prod-blue) !important;
+}
+
+/* Contadores de prioridades */
+
+#pozosView .well-priority-summary {
+  display: grid !important;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr)) !important;
+
+  gap: 9px !important;
+
+  margin: 0 0 13px !important;
+}
+
+#pozosView .well-priority-summary article {
+  position: relative !important;
+
+  min-width: 0 !important;
+
+  padding: 11px 12px 11px 16px !important;
+
+  background: #f8fafc !important;
+
+  border: 1px solid #e3eaf1 !important;
+  border-radius: 10px !important;
+
+  box-shadow: none !important;
+}
+
+#pozosView .well-priority-summary article::before {
+  content: "" !important;
+
+  position: absolute !important;
+  left: 0 !important;
+  top: 10px !important;
+  bottom: 10px !important;
+
+  width: 4px !important;
+
+  border-radius: 0 4px 4px 0 !important;
+}
+
+#pozosView .priority-summary-critical::before {
+  background: var(--prod-red) !important;
+}
+
+#pozosView .priority-summary-warning::before {
+  background: var(--prod-yellow) !important;
+}
+
+#pozosView .priority-summary-overdue::before {
+  background: var(--prod-blue) !important;
+}
+
+#pozosView .priority-summary-no-data::before {
+  background: var(--prod-purple) !important;
+}
+
+#pozosView .well-priority-summary span {
+  display: block !important;
+
+  color: var(--prod-muted) !important;
+
+  font-size: 9px !important;
+  font-weight: 680 !important;
+}
+
+#pozosView .well-priority-summary strong {
+  display: block !important;
+
+  margin-top: 3px !important;
+
+  color: var(--prod-text) !important;
+
+  font-size: 18px !important;
+  font-weight: 840 !important;
+}
+
+/* Lista prioritaria */
+
+#pozosView .well-priority-list {
+  display: grid !important;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr)) !important;
+
+  gap: 9px !important;
+
+  max-height: 250px !important;
+  overflow-y: auto !important;
+
+  margin: 0 !important;
+  padding: 0 4px 0 0 !important;
+}
+
+#pozosView .well-priority-card {
+  position: relative !important;
+
+  display: grid !important;
+  min-width: 0 !important;
+  min-height: 102px !important;
+
+  grid-template-columns:
+    39px minmax(0, 1fr) !important;
+
+  gap: 9px !important;
+  align-items: start !important;
+
+  padding: 11px !important;
+
+  background: #fff !important;
+
+  border: 1px solid #e1e9f0 !important;
+  border-left: 4px solid var(--prod-yellow) !important;
+  border-radius: 10px !important;
+
+  box-shadow: none !important;
+}
+
+#pozosView .well-priority-card.priority-critical {
+  border-left-color: var(--prod-red) !important;
+}
+
+#pozosView .well-priority-card.priority-warning {
+  border-left-color: var(--prod-yellow) !important;
+}
+
+#pozosView .well-priority-card.priority-overdue {
+  border-left-color: var(--prod-blue) !important;
+}
+
+#pozosView .well-priority-card.priority-no-data {
+  border-left-color: var(--prod-purple) !important;
+}
+
+#pozosView .well-priority-rank {
+  display: grid !important;
+
+  width: 36px !important;
+  height: 36px !important;
+
+  place-items: center !important;
+
+  background: var(--prod-red-soft) !important;
+  color: var(--prod-red) !important;
+
+  border: 1px solid #f5c3c3 !important;
+  border-radius: 9px !important;
+
+  font-size: 12px !important;
+  font-weight: 850 !important;
+}
+
+#pozosView .priority-warning .well-priority-rank {
+  background: var(--prod-yellow-soft) !important;
+  color: #b57f00 !important;
+
+  border-color: #ead28d !important;
+}
+
+#pozosView .well-priority-main {
+  min-width: 0 !important;
+}
+
+#pozosView .well-priority-title {
+  display: flex !important;
+
+  gap: 5px !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+}
+
+#pozosView .well-priority-title b {
+  color: var(--prod-text) !important;
+
+  font-size: 10px !important;
+  font-weight: 820 !important;
+}
+
+#pozosView .well-priority-title span {
+  padding: 2px 6px !important;
+
+  background: var(--prod-red-soft) !important;
+  color: var(--prod-red) !important;
+
+  border-radius: 999px !important;
+
+  font-size: 6px !important;
+  font-weight: 800 !important;
+}
+
+#pozosView .priority-warning
+.well-priority-title span {
+  background: var(--prod-yellow-soft) !important;
+  color: #a87700 !important;
+}
+
+#pozosView .well-priority-main p {
+  margin: 5px 0 2px !important;
+
+  overflow: hidden !important;
+
+  color: var(--prod-muted) !important;
+
+  font-size: 7px !important;
+  line-height: 1.35 !important;
+
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+#pozosView .well-priority-main small {
+  color: #96a4b2 !important;
+
+  font-size: 7px !important;
+}
+
+#pozosView .well-priority-open {
+  position: absolute !important;
+
+  right: 8px !important;
+  bottom: 8px !important;
+
+  min-height: 26px !important;
+  padding: 0 9px !important;
+
+  background: var(--prod-blue-soft) !important;
+  color: var(--prod-blue-dark) !important;
+
+  border: 1px solid #cadbef !important;
+  border-radius: 7px !important;
+
+  font-size: 7px !important;
+  font-weight: 800 !important;
+}
+
+#pozosView .well-priority-open:hover {
+  background: var(--prod-blue) !important;
+  color: #fff !important;
+
+  border-color: var(--prod-blue) !important;
+}
+
+/* ==========================================================
+   FILTROS Y SELECTOR DE VISTA
+   ========================================================== */
+
+#pozosView .wells-control-panel {
+  display: grid !important;
+
+  grid-template-columns:
+    minmax(0, 1fr) auto !important;
+
+  gap: 18px !important;
+  align-items: center !important;
+
+  margin: 0 0 16px !important;
+  padding: 13px !important;
+
+  background: var(--prod-card) !important;
+
+  border: 1px solid var(--prod-border) !important;
+  border-radius: 13px !important;
+
+  box-shadow: var(--prod-shadow) !important;
+}
+
+#pozosView .wells-control-main {
+  display: grid !important;
+
+  grid-template-columns:
+    minmax(230px, 1.5fr)
+    minmax(155px, .8fr)
+    minmax(135px, .65fr)
+    auto !important;
+
+  gap: 8px !important;
+  align-items: center !important;
+}
+
+#pozosView .wells-control-main input,
+#pozosView .wells-control-main select {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 40px !important;
+
+  padding: 0 12px !important;
+
+  background: #fbfcfe !important;
+  color: var(--prod-text) !important;
+
+  border: 1px solid #d7e1eb !important;
+  border-radius: 9px !important;
+
+  font-size: 10px !important;
+
+  outline: none !important;
+
+  transition:
+    border-color .16s ease,
+    box-shadow .16s ease,
+    background .16s ease !important;
+}
+
+#pozosView .wells-control-main input::placeholder {
+  color: #98a7b6 !important;
+}
+
+#pozosView .wells-control-main input:focus,
+#pozosView .wells-control-main select:focus {
+  background: #fff !important;
+
+  border-color: var(--prod-blue) !important;
+
+  box-shadow:
+    0 0 0 3px rgba(49, 108, 232, .11) !important;
+}
+
+#pozosView #wellClearFilters {
+  min-height: 40px !important;
+  padding: 0 14px !important;
+
+  background: #f7f9fc !important;
+  color: #49627c !important;
+
+  border: 1px solid #d3deea !important;
+  border-radius: 9px !important;
+
+  font-size: 10px !important;
+  font-weight: 780 !important;
+}
+
+#pozosView #wellClearFilters:hover {
+  background: var(--prod-blue-soft) !important;
+  color: var(--prod-blue-dark) !important;
+
+  border-color: #bad0ea !important;
+}
+
+#pozosView .wells-control-side {
+  display: flex !important;
+
+  gap: 12px !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+#pozosView #wellResultCount {
+  color: var(--prod-text) !important;
+
+  font-size: 11px !important;
+  font-weight: 820 !important;
+
+  white-space: nowrap !important;
+}
+
+#pozosView .well-view-switch {
+  display: grid !important;
+
+  grid-template-columns:
+    repeat(3, minmax(55px, 1fr)) !important;
+
+  gap: 4px !important;
+
+  padding: 3px !important;
+
+  background: #f1f5f9 !important;
+
+  border: 1px solid #dce5ee !important;
+  border-radius: 9px !important;
+}
+
+#pozosView .well-view-btn {
+  min-height: 31px !important;
+  padding: 0 8px !important;
+
+  background: transparent !important;
+  color: #60758b !important;
+
+  border: 0 !important;
+  border-radius: 7px !important;
+
+  font-size: 8px !important;
+  font-weight: 780 !important;
+}
+
+#pozosView .well-view-btn:hover {
+  background: #fff !important;
+  color: var(--prod-blue-dark) !important;
+}
+
+#pozosView .well-view-btn.active {
+  background: var(--prod-blue) !important;
+  color: #fff !important;
+
+  box-shadow:
+    0 4px 11px rgba(49, 108, 232, .22) !important;
+}
+
+/* ==========================================================
+   TARJETAS DE POZOS
+   ========================================================== */
+
+#pozosView #wellsCardsView {
+  margin: 0 !important;
+}
+
+#pozosView .wells-grid {
+  display: grid !important;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr)) !important;
+
+  gap: 13px !important;
+}
+
+#pozosView .well-card {
+  position: relative !important;
+
+  min-width: 0 !important;
+  overflow: hidden !important;
+
+  background: var(--prod-card) !important;
+
+  border: 1px solid var(--prod-border) !important;
+  border-radius: 14px !important;
+
+  box-shadow: var(--prod-shadow) !important;
+
+  transition:
+    transform .16s ease,
+    box-shadow .16s ease,
+    border-color .16s ease !important;
+}
+
+#pozosView .well-card:hover {
+  transform: translateY(-2px) !important;
+
+  border-color: #bad0e4 !important;
+
+  box-shadow:
+    0 13px 30px rgba(31, 58, 86, .12) !important;
+}
+
+/* Conserva la codificación de estado,
+   pero con una línea delgada y limpia. */
+
+#pozosView .well-card::before {
+  width: 4px !important;
+}
+
+#pozosView .well-card-header {
+  min-height: 78px !important;
+  padding: 15px 15px 12px !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fbfdff,
+      #f1f6fb
+    ) !important;
+
+  border-bottom: 1px solid #e4ebf2 !important;
+}
+
+#pozosView .well-card-header > div > span {
+  color: #7c8fa3 !important;
+
+  font-size: 7px !important;
+  font-weight: 820 !important;
+  letter-spacing: .12em !important;
+}
+
+#pozosView .well-card-header h3 {
+  margin-top: 4px !important;
+
+  color: var(--prod-text) !important;
+
+  font-size: 22px !important;
+  font-weight: 850 !important;
+}
+
+#pozosView .well-status-badge {
+  background: #f2f5f8 !important;
+  color: #607387 !important;
+
+  border: 1px solid #dce4ec !important;
+}
+
+#pozosView .well-status-operating {
+  background: var(--prod-green-soft) !important;
+  color: #187b51 !important;
+
+  border-color: #bce5d0 !important;
+}
+
+#pozosView .well-status-warning,
+#pozosView .well-status-pending {
+  background: var(--prod-yellow-soft) !important;
+  color: #9b7000 !important;
+
+  border-color: #ebd799 !important;
+}
+
+#pozosView .well-status-closed {
+  background: var(--prod-red-soft) !important;
+  color: #b53e3e !important;
+
+  border-color: #efc0c0 !important;
+}
+
+#pozosView .well-card-data {
+  display: grid !important;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr)) !important;
+
+  gap: 8px !important;
+
+  padding: 13px 14px !important;
+}
+
+#pozosView .well-card-data > div {
+  min-width: 0 !important;
+  min-height: 48px !important;
+
+  padding: 9px !important;
+
+  background: #f8fafc !important;
+
+  border: 1px solid #e6edf3 !important;
+  border-radius: 8px !important;
+}
+
+#pozosView .well-card-data span {
+  color: #8494a5 !important;
+
+  font-size: 7px !important;
+  font-weight: 700 !important;
+}
+
+#pozosView .well-card-data b {
+  color: var(--prod-text) !important;
+
+  font-size: 10px !important;
+  font-weight: 800 !important;
+}
+
+#pozosView .well-data-ok {
+  color: var(--prod-green) !important;
+}
+
+#pozosView .well-data-danger {
+  color: var(--prod-red) !important;
+}
+
+#pozosView .well-card-latest {
+  min-height: 75px !important;
+
+  margin: 0 14px 12px !important;
+  padding: 11px !important;
+
+  background: #f7faff !important;
+
+  border: 1px solid #e0eaf4 !important;
+  border-radius: 9px !important;
+}
+
+#pozosView .well-card-latest span {
+  color: #8494a5 !important;
+
+  font-size: 7px !important;
+}
+
+#pozosView .well-card-latest b {
+  color: var(--prod-text) !important;
+
+  font-size: 9px !important;
+}
+
+#pozosView .well-card-latest small {
+  color: #96a4b2 !important;
+
+  font-size: 7px !important;
+}
+
+#pozosView .well-card-footer {
+  display: flex !important;
+
+  gap: 6px !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+
+  padding: 11px 14px 13px !important;
+
+  background: #fff !important;
+
+  border-top: 1px solid #edf1f5 !important;
+}
+
+#pozosView .well-card-footer > span {
+  color: #7d8ea0 !important;
+
+  font-size: 7px !important;
+  font-weight: 700 !important;
+}
+
+#pozosView .well-card-footer > div {
+  display: flex !important;
+  gap: 5px !important;
+}
+
+#pozosView .well-map-btn,
+#pozosView .well-open-btn,
+#pozosView .well-chart-btn {
+  min-height: 31px !important;
+  padding: 0 10px !important;
+
+  border-radius: 8px !important;
+
+  font-size: 7px !important;
+  font-weight: 800 !important;
+}
+
+#pozosView .well-map-btn,
+#pozosView .well-chart-btn {
+  background: #f7f9fc !important;
+  color: #4e6881 !important;
+
+  border: 1px solid #d5e0eb !important;
+}
+
+#pozosView .well-map-btn:hover,
+#pozosView .well-chart-btn:hover {
+  background: var(--prod-blue-soft) !important;
+  color: var(--prod-blue-dark) !important;
+
+  border-color: #bdd1e8 !important;
+}
+
+#pozosView .well-open-btn {
+  background: var(--prod-blue) !important;
+  color: #fff !important;
+
+  border: 1px solid var(--prod-blue) !important;
+
+  box-shadow:
+    0 4px 10px rgba(49, 108, 232, .19) !important;
+}
+
+#pozosView .well-open-btn:hover {
+  background: var(--prod-blue-dark) !important;
+  color: #fff !important;
+
+  border-color: var(--prod-blue-dark) !important;
+}
+
+#pozosView .well-open-btn:disabled,
+#pozosView .well-map-btn:disabled,
+#pozosView .well-chart-btn:disabled {
+  opacity: .45 !important;
+  box-shadow: none !important;
+}
+
+/* ==========================================================
+   TABLA
+   ========================================================== */
+
+#pozosView .wells-table-card {
+  overflow: auto !important;
+
+  margin: 0 !important;
+
+  background: #fff !important;
+
+  border: 1px solid var(--prod-border) !important;
+  border-radius: 14px !important;
+
+  box-shadow: var(--prod-shadow) !important;
+}
+
+#pozosView .wells-table {
+  width: 100% !important;
+
+  border-collapse: collapse !important;
+  background: #fff !important;
+}
+
+#pozosView .wells-table thead th {
+  padding: 12px 11px !important;
+
+  background: var(--prod-navy) !important;
+  color: #fff !important;
+
+  border: 0 !important;
+
+  font-size: 8px !important;
+  font-weight: 800 !important;
+  letter-spacing: .055em !important;
+}
+
+#pozosView .wells-table tbody td {
+  padding: 11px !important;
+
+  background: #fff !important;
+  color: #566d84 !important;
+
+  border-bottom: 1px solid #edf1f5 !important;
+
+  font-size: 9px !important;
+}
+
+#pozosView .wells-table tbody tr:hover td {
+  background: #f5f9fe !important;
+}
+
+/* ==========================================================
+   MAPA
+   ========================================================== */
+
+#pozosView .wells-map-view {
+  overflow: hidden !important;
+
+  margin: 0 !important;
+
+  background: #fff !important;
+
+  border: 1px solid var(--prod-border) !important;
+  border-radius: 14px !important;
+
+  box-shadow: var(--prod-shadow) !important;
+}
+
+#pozosView .wells-map-toolbar {
+  padding: 18px 20px !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f9fcff,
+      #eef5fc
+    ) !important;
+
+  border-bottom: 1px solid var(--prod-border) !important;
+}
+
+#pozosView .wells-map-eyebrow {
+  color: var(--prod-green) !important;
+}
+
+#pozosView .wells-map-toolbar h2 {
+  color: var(--prod-text) !important;
+}
+
+#pozosView .wells-map-toolbar p {
+  color: var(--prod-muted) !important;
+}
+
+#pozosView .well-map-inspector {
+  background: #fff !important;
+
+  border-left: 1px solid var(--prod-border) !important;
+}
+
+#pozosView .wells-map-footer {
+  background: #f8fafc !important;
+  color: var(--prod-muted) !important;
+
+  border-top: 1px solid var(--prod-border) !important;
+}
+
+/* ==========================================================
+   SCROLLBARS
+   ========================================================== */
+
+#pozosView * {
+  scrollbar-width: thin;
+  scrollbar-color: #b9c9d8 #edf2f7;
+}
+
+#pozosView *::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+#pozosView *::-webkit-scrollbar-track {
+  background: #edf2f7;
+}
+
+#pozosView *::-webkit-scrollbar-thumb {
+  background: #b9c9d8;
+  border-radius: 999px;
+}
+
+/* ==========================================================
+   SIDEBAR: MISMO ESTILO DE INICIO Y REPORTES
+   ========================================================== */
+
+body:has(#pozosView:not(.hidden)) .sidebar {
+  background:
+    radial-gradient(
+      circle at 35% 5%,
+      rgba(39, 111, 188, .16),
+      transparent 28%
+    ),
+    linear-gradient(
+      180deg,
+      #061f38 0%,
+      #082e50 58%,
+      #082846 100%
+    ) !important;
+}
+
+body:has(#pozosView:not(.hidden))
+.sidebar .nav-btn.active {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(50, 103, 209, .83),
+      rgba(53, 77, 160, .75)
+    ) !important;
+
+  color: #fff !important;
+
+  border-color:
+    rgba(116, 161, 255, .34) !important;
+  border-left-color:
+    #78a4ff !important;
+}
+
+/* ==========================================================
+   RESPONSIVE
+   ========================================================== */
+
+@media (max-width: 1380px) {
+  #pozosView .wells-overview {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  #pozosView .wells-grid {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 1050px) {
+  #pozosView {
+    padding:
+      24px 18px 34px !important;
+  }
+
+  #pozosView .well-priority-list {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  #pozosView .wells-control-panel {
+    grid-template-columns: 1fr !important;
+  }
+
+  #pozosView .wells-control-side {
+    justify-content: space-between !important;
+  }
+
+  #pozosView .wells-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  #pozosView {
+    padding:
+      18px 12px 28px !important;
+  }
+
+  #pozosView::before {
+    min-height: 105px;
+    padding: 21px 20px;
+
+    font-size: 21px;
+  }
+
+  #pozosView::after {
+    margin-left: 21px;
+  }
+
+  #pozosView .wells-overview {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  #pozosView .well-priority-summary {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  #pozosView .well-priority-list {
+    grid-template-columns: 1fr !important;
+  }
+
+  #pozosView .wells-control-main {
+    grid-template-columns: 1fr !important;
+  }
+
+  #pozosView .wells-control-side {
+    align-items: stretch !important;
+    flex-direction: column !important;
+  }
+
+  #pozosView .well-view-switch {
+    width: 100% !important;
+  }
+
+  #pozosView .wells-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 470px) {
+  #pozosView .wells-overview {
+    grid-template-columns: 1fr !important;
+  }
+
+  #pozosView .well-priority-header {
+    align-items: stretch !important;
+    flex-direction: column !important;
+  }
+
+  #pozosView .well-priority-all-btn {
+    width: 100% !important;
+  }
+}

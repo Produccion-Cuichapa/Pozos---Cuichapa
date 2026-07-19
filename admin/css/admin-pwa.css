@@ -1,0 +1,202 @@
+.admin-pwa-tools{
+  position:fixed;
+  right:18px;
+  bottom:18px;
+  z-index:99990;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:6px;
+  border:1px solid rgba(96,165,250,.22);
+  border-radius:13px;
+  background:rgba(7,24,44,.92);
+  box-shadow:0 10px 28px rgba(0,0,0,.28);
+  backdrop-filter:blur(14px);
+}
+
+.admin-pwa-version{
+  display:inline-flex;
+  align-items:center;
+  min-height:31px;
+  padding:0 9px;
+  border:1px solid rgba(96,165,250,.12);
+  border-radius:9px;
+  background:rgba(23,55,89,.45);
+  color:#a9c8ea;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.02em;
+  white-space:nowrap;
+}
+
+.admin-pwa-menu-toggle{
+  width:33px;
+  height:33px;
+  padding:0;
+  border:1px solid rgba(96,165,250,.25);
+  border-radius:9px;
+  background:rgba(18,48,80,.72);
+  color:#c8ddf4;
+  font:inherit;
+  font-size:15px;
+  cursor:pointer;
+  transition:
+    background .15s ease,
+    border-color .15s ease,
+    transform .15s ease;
+}
+
+.admin-pwa-menu-toggle:hover,
+.admin-pwa-tools.menu-open .admin-pwa-menu-toggle{
+  border-color:rgba(96,165,250,.65);
+  background:rgba(38,91,151,.74);
+  transform:translateY(-1px);
+}
+
+.admin-pwa-menu{
+  position:absolute;
+  right:0;
+  bottom:calc(100% + 8px);
+  display:flex;
+  flex-direction:column;
+  min-width:154px;
+  gap:6px;
+  padding:7px;
+  border:1px solid rgba(96,165,250,.22);
+  border-radius:12px;
+  background:rgba(7,24,44,.97);
+  box-shadow:0 14px 34px rgba(0,0,0,.35);
+  backdrop-filter:blur(16px);
+}
+
+.admin-pwa-menu[hidden]{
+  display:none !important;
+}
+
+.admin-pwa-button{
+  width:100%;
+  min-height:36px;
+  padding:0 12px;
+  border:1px solid rgba(96,165,250,.22);
+  border-radius:9px;
+  background:#185a9d;
+  color:#fff;
+  font:inherit;
+  font-size:11px;
+  font-weight:800;
+  text-align:left;
+  cursor:pointer;
+  transition:
+    background .15s ease,
+    border-color .15s ease;
+}
+
+.admin-pwa-button:hover{
+  border-color:#60a5fa;
+  background:#216db9;
+}
+
+.admin-pwa-button.secondary{
+  background:rgba(26,60,96,.80);
+  color:#d3e6fa;
+}
+
+.admin-pwa-button.secondary:hover{
+  background:rgba(37,83,130,.95);
+}
+
+.admin-pwa-button[hidden]{
+  display:none !important;
+}
+
+.admin-pwa-toast{
+  position:fixed;
+  right:18px;
+  bottom:72px;
+  z-index:99999;
+  width:min(390px, calc(100vw - 36px));
+  padding:17px;
+  border:1px solid rgba(96,165,250,.22);
+  border-radius:17px;
+  background:#082f5f;
+  color:#fff;
+  box-shadow:0 18px 46px rgba(4,30,64,.32);
+  transform:translateY(24px);
+  opacity:0;
+  pointer-events:none;
+  transition:
+    transform .22s ease,
+    opacity .22s ease;
+}
+
+.admin-pwa-toast.show{
+  transform:translateY(0);
+  opacity:1;
+  pointer-events:auto;
+}
+
+.admin-pwa-toast strong{
+  display:block;
+  margin-bottom:5px;
+  font-size:15px;
+}
+
+.admin-pwa-toast p{
+  margin:0 0 13px;
+  color:rgba(255,255,255,.82);
+  font-size:13px;
+  line-height:1.45;
+}
+
+.admin-pwa-toast-actions{
+  display:flex;
+  gap:8px;
+}
+
+.admin-pwa-toast button{
+  min-height:36px;
+  padding:0 13px;
+  border:0;
+  border-radius:9px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.admin-pwa-toast-update{
+  background:#fff;
+  color:#082f5f;
+}
+
+.admin-pwa-toast-later{
+  background:rgba(255,255,255,.14);
+  color:#fff;
+}
+
+@media(max-width:680px){
+  .admin-pwa-tools{
+    right:10px;
+    bottom:10px;
+  }
+
+  .admin-pwa-version{
+    max-width:116px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .admin-pwa-menu{
+    right:0;
+  }
+
+  .admin-pwa-toast{
+    right:10px;
+    bottom:62px;
+    width:calc(100vw - 20px);
+  }
+}
+
+@media(display-mode:standalone){
+  .admin-pwa-button[data-pwa-install]{
+    display:none !important;
+  }
+}

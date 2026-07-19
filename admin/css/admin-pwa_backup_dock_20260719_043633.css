@@ -1,0 +1,153 @@
+.admin-pwa-tools {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 99990;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid rgba(15, 45, 80, .12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .96);
+  box-shadow: 0 12px 34px rgba(8, 47, 95, .20);
+  backdrop-filter: blur(12px);
+}
+
+.admin-pwa-version {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 10px;
+  background: #edf4fb;
+  color: #245278;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+
+.admin-pwa-button {
+  min-height: 36px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 10px;
+  background: #0d4f91;
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform .15s ease,
+    background .15s ease;
+}
+
+.admin-pwa-button:hover {
+  background: #083d73;
+  transform: translateY(-1px);
+}
+
+.admin-pwa-button.secondary {
+  background: #e9f1f8;
+  color: #174c78;
+}
+
+.admin-pwa-button.secondary:hover {
+  background: #dce9f4;
+}
+
+.admin-pwa-button[hidden] {
+  display: none !important;
+}
+
+.admin-pwa-toast {
+  position: fixed;
+  right: 18px;
+  bottom: 82px;
+  z-index: 99999;
+  width: min(390px, calc(100vw - 36px));
+  padding: 17px;
+  border-radius: 17px;
+  background: #082f5f;
+  color: #fff;
+  box-shadow: 0 18px 46px rgba(4, 30, 64, .32);
+  transform: translateY(24px);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform .22s ease,
+    opacity .22s ease;
+}
+
+.admin-pwa-toast.show {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.admin-pwa-toast strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 15px;
+}
+
+.admin-pwa-toast p {
+  margin: 0 0 13px;
+  color: rgba(255, 255, 255, .82);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.admin-pwa-toast-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-pwa-toast button {
+  min-height: 36px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-pwa-toast-update {
+  background: #fff;
+  color: #082f5f;
+}
+
+.admin-pwa-toast-later {
+  background: rgba(255, 255, 255, .14);
+  color: #fff;
+}
+
+@media (max-width: 680px) {
+  .admin-pwa-tools {
+    right: 10px;
+    bottom: 10px;
+    max-width: calc(100vw - 20px);
+  }
+
+  .admin-pwa-version {
+    display: none;
+  }
+
+  .admin-pwa-button {
+    padding: 0 11px;
+  }
+
+  .admin-pwa-toast {
+    right: 10px;
+    bottom: 64px;
+    width: calc(100vw - 20px);
+  }
+}
+
+@media (display-mode: standalone) {
+  .admin-pwa-button[data-pwa-install] {
+    display: none !important;
+  }
+}
