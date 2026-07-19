@@ -217,10 +217,7 @@ window.addEventListener('unhandledrejection', function(e){
 
   <div class="sidebar-divider"></div>
 
-  <!-- Supervisión -->
-  <div class="sidebar-icon sidebar-locked" id="icon-supervision" data-tip="Supervisión" onclick="sidebarNav('supervision')" style="display:none;align-items:center;justify-content:center">
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><circle cx="19" cy="8" r="2"/><path d="M21 14c1.7.6 3 2 3 3.5"/></svg>
-  </div>
+
 
 
 </div>
@@ -2248,7 +2245,7 @@ function volverAlPicker(){
   var cpb = document.getElementById('changeProfileBtn');
   if(cpb) cpb.style.display = 'none';
   // Reset sidebar icons visibility
-  ['super','jefe','catalogo','mapa','historial','supervision'].forEach(function(v){
+  ['super','jefe','catalogo','mapa','historial'].forEach(function(v){
     var ic = document.getElementById('icon-'+v);
     if(ic){
       ic.classList.add('sidebar-locked');
@@ -2956,13 +2953,13 @@ var PERMISOS_MAP = {
   'jc':          ['visitas','mapa'],
   'j':           ['visitas','mapa'],
   'l':           ['visitas','mapa'],
-  'super':       ['visitas','mapa','catalogo','historial','super','jefe','analisis','supervision'],
-  'jefe':        ['visitas','mapa','catalogo','historial','super','jefe','analisis','supervision'],
-  'ductos':      ['visitas','mapa','catalogo','historial','super','jefe','analisis','supervision'],
-  'almacenista': ['visitas','mapa','catalogo','historial','super','jefe','analisis','supervision'],
-  'gill':        ['visitas','mapa','catalogo','historial','super','jefe','analisis','supervision'],
-  'eiran':       ['visitas','mapa','catalogo','historial','super','jefe','analisis','supervision'],
-  'calderon':    ['visitas','mapa','catalogo','historial','super','jefe','analisis','regactividad','supervision'],
+  'super':       ['visitas','mapa','catalogo','historial','super','jefe','analisis'],
+  'jefe':        ['visitas','mapa','catalogo','historial','super','jefe','analisis'],
+  'ductos':      ['visitas','mapa','catalogo','historial','super','jefe','analisis'],
+  'almacenista': ['visitas','mapa','catalogo','historial','super','jefe','analisis'],
+  'gill':        ['visitas','mapa','catalogo','historial','super','jefe','analisis'],
+  'eiran':       ['visitas','mapa','catalogo','historial','super','jefe','analisis'],
+  'calderon':    ['visitas','mapa','catalogo','historial','super','jefe','analisis','regactividad'],
 };
 
 // Usuarios auth (produccion, seguridad, operadores)
@@ -2978,7 +2975,7 @@ var AUTH_USERS = {
 
 function aplicarPermisos(theme){
   var perms = PERMISOS_MAP[theme] || [];
-  var allViews = ['super','jefe','catalogo','mapa','historial','analisis','regactividad','supervision'];
+  var allViews = ['super','jefe','catalogo','mapa','historial','analisis','regactividad'];
   allViews.forEach(function(v){
     var ic = document.getElementById('icon-'+v);
     if(!ic) return;
@@ -3135,8 +3132,7 @@ function sidebarNav(dest){
     abrirVistaAlarma();
   } else if(dest === 'ubipozos'){
     abrirUbiMapa();
-  } else if(dest === 'supervision'){
-    abrirSupervision();
+
   } else {
     switchView(dest);
   }
@@ -3199,10 +3195,7 @@ function switchView(id){
   } else if(id==='jefe'){
     var ic=document.getElementById('icon-jefe');
     if(ic) ic.classList.add('active');
-  } else if(id==='supervision'){
-    var ic=document.getElementById('icon-supervision');
-    if(ic) ic.classList.add('active');
-    renderSupervision();
+
   }
   // Auto-diagnóstico: forzar visibilidad de la vista activa
   try{
@@ -5627,7 +5620,7 @@ function guardarReporte(reporte){
   for(var i=0;i<arr.length;i++){ if(arr[i].id===reporte.id){ idx=i; break; } }
   if(idx >= 0) arr[idx] = reporte;
   else arr.unshift(reporte);
-  if(arr.length > 500) arr = arr.slice(0, 500);
+  if(arr.length > 20) arr = arr.slice(0, 20); // máximo 20 reportes en historial local
   saveHistorial(arr);
   // Sincronizar a Firebase si hay señal
   if(fbDB) guardarEnFirebase(reporte);
@@ -6892,6 +6885,7 @@ function filtrarHist(f, btn){
 
 function renderHistorial(){
   var arr = getHistorial();
+  if(arr.length > 20) arr = arr.slice(0, 20); // mostrar solo los últimos 20 reportes
   var pendientes = getPendientes();
   if(histFiltro === 'alarmas'){
     arr = arr.filter(function(r){ return r.esAlarma; });
