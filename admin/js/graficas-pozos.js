@@ -46,9 +46,6 @@ window.AdminGraficas = {
       }
     });
 
-    console.info(
-      '✅ AdminGraficas inicializado correctamente'
-    );
   },
 
   open(row){
@@ -167,8 +164,141 @@ window.AdminGraficas = {
     this.render();
   },
 
+  /*
+   * Genera una firma ligera únicamente con los datos
+   * correspondientes al pozo que tiene abierta la gráfica.
+   *
+   * El temporizador sigue revisando cada 5 segundos, pero
+   * buildRows() solo se ejecuta cuando esta firma cambia.
+   */
+  liveDataSignature(){
+    const activeWell = String(this.activeWell || '');
+
+    if(!activeWell){
+      return '';
+    }
+
+    const reports =
+      window.AdminFirebase?.reportes || [];
+
+    const alarms =
+      window.AdminFirebase?.alarmas || [];
+
+    const parts = [
+      activeWell,
+      String(reports.length),
+      String(alarms.length)
+    ];
+
+    const getTime = item =>
+      window.AdminUtils &&
+      typeof AdminUtils.getTime === 'function'
+        ? AdminUtils.getTime(item)
+        : (
+            item?.timestamp ||
+            item?.createdAt ||
+            item?.fechaHora ||
+            ''
+          );
+
+    for(const report of reports){
+      const reportWell =
+        window.AdminPozos &&
+        typeof AdminPozos.reportWell === 'function'
+          ? AdminPozos.reportWell(report)
+          : (
+              report?.pozo ||
+              report?.nombrePozo ||
+              report?.well ||
+              ''
+            );
+
+      if(String(reportWell) !== activeWell){
+        continue;
+      }
+
+      parts.push(
+        'R',
+        String(
+          report?.id ||
+          report?._id ||
+          report?.key ||
+          report?.firebaseKey ||
+          ''
+        ),
+        String(getTime(report) || ''),
+        String(
+          report?.msg ||
+          report?.mensaje ||
+          report?.message ||
+          report?.texto ||
+          ''
+        ),
+        String(
+          report?.estadoPozo ||
+          report?.estatus ||
+          report?.whatsappStatus ||
+          ''
+        ),
+        JSON.stringify(report?.co || {}),
+        JSON.stringify(report?.nivel || {}),
+        JSON.stringify(report?.checks || {})
+      );
+    }
+
+    for(const alarm of alarms){
+      const alarmWell =
+        window.AdminPozos &&
+        typeof AdminPozos.alarmWell === 'function'
+          ? AdminPozos.alarmWell(alarm)
+          : (
+              alarm?.pozo ||
+              alarm?.nombrePozo ||
+              alarm?.well ||
+              ''
+            );
+
+      if(String(alarmWell) !== activeWell){
+        continue;
+      }
+
+      parts.push(
+        'A',
+        String(
+          alarm?.id ||
+          alarm?._id ||
+          alarm?.key ||
+          alarm?.firebaseKey ||
+          ''
+        ),
+        String(getTime(alarm) || ''),
+        String(
+          alarm?.msg ||
+          alarm?.mensaje ||
+          alarm?.descripcion ||
+          alarm?.tipo ||
+          ''
+        ),
+        String(
+          alarm?.estatus ||
+          alarm?.status ||
+          ''
+        )
+      );
+    }
+
+    return parts.join('\\u001f');
+  },
+
   startLiveRefresh(){
     this.stopLiveRefresh();
+
+    /*
+     * Guardamos la fotografía lógica inicial. Así, el
+     * primer ciclo no reconstruye si nada ha cambiado.
+     */
+    this.lastLiveSignature =
+      this.liveDataSignature();
 
     this.refreshTimer = window.setInterval(
       () => {
@@ -184,6 +314,19 @@ window.AdminGraficas = {
           return;
         }
 
+        const nextSignature =
+          this.liveDataSignature();
+
+        if(
+          nextSignature ===
+          this.lastLiveSignature
+        ){
+          return;
+        }
+
+        this.lastLiveSignature =
+          nextSignature;
+
         this.refreshLiveRow();
       },
       5000
@@ -195,6 +338,8 @@ window.AdminGraficas = {
       window.clearInterval(this.refreshTimer);
       this.refreshTimer = null;
     }
+
+    this.lastLiveSignature = '';
   },
 
   reportText(report){
