@@ -1,3 +1,5 @@
+const __parseMsgCache = new WeakMap();
+
 window.AdminUtils = {
   escapeHtml(value){
     return String(value ?? '')
@@ -157,6 +159,22 @@ window.AdminUtils = {
   parseMsg(row){
     const msg = String(row?.msg || row?.mensaje || '');
 
+    /*
+     * Caché por objeto con validación del contenido.
+     * Si una corrección cambia msg/mensaje en el mismo
+     * objeto, el reporte se vuelve a analizar.
+     */
+    if(
+      row &&
+      typeof row === 'object'
+    ){
+      const cached = __parseMsgCache.get(row);
+
+      if(cached && cached.msg === msg){
+        return cached.parsed;
+      }
+    }
+
     const clean = (v) => String(v || '').replace(/\*/g,'').trim();
 
     const getLine = (label) => {
@@ -193,22 +211,63 @@ window.AdminUtils = {
     const evidenceMatch = msg.match(/Evidencia:\s*(\d+)/i);
     const evidenceCount = evidenceMatch ? Number(evidenceMatch[1]) : 0;
 
-    return {
+    const parsed = {
       estatus: getLine("Estatus"),
       fluye: getLine("Fluye"),
       sap: getLine("SAP"),
-      estrangulador: getBetween("Estrangulador:", ["SAP:", "PTP:", "TR#VUELTA:", "Pozo aportando"]),
+      estrangulador: getBetween(
+        "Estrangulador:",
+        [
+          "TP #Vueltas:",
+          "TP #VUELTAS:",
+          "TP#Vueltas:",
+          "TP#VUELTAS:",
+          "TP Vueltas:",
+          "TP VUELTAS:",
+          "SAP:",
+          "PTP:",
+          "TR#VUELTA:",
+          "Pozo aportando"
+        ]
+      ),
       ptp: getPressure("PTP"),
       ldd: getPressure("LDD"),
       ptr: getPressure("PTR"),
       lbn: getPressure("LBN"),
       epm: getLine("EPM"),
       carrera: getLine("Carrera"),
-      trVuelta: getLine("TR#VUELTA"),
+      /*
+       * Compatibilidad:
+       * - formato actual: TP #Vueltas: 5
+       * - formato antiguo: TR#VUELTA: 5
+       */
+      tpVueltas:
+        getLine("TP #Vueltas") ||
+        getLine("TP#Vueltas") ||
+        getLine("TP VUELTAS") ||
+        getLine("TP#VUELTAS") ||
+        getLine("TR#VUELTA"),
+
+      trVuelta:
+        getLine("TR#VUELTA") ||
+        getLine("TP #Vueltas") ||
+        getLine("TP#Vueltas"),
       gps,
       maps,
       evidenceCount
     };
+
+    if(
+      row &&
+      typeof row === 'object'
+    ){
+      __parseMsgCache.set(row, {
+        msg,
+        parsed
+      });
+    }
+
+    return parsed;
   },
 
   flatten(obj, prefix='', out={}){
