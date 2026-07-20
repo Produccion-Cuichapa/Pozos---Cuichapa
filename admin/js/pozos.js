@@ -359,26 +359,356 @@ window.AdminPozos = {
       : null;
   },
 
+  normalizeSap(value){
+    const raw = String(value || '')
+      .trim()
+      .toUpperCase()
+      .replace(/[.\s_-]+/g, '');
+
+    if(!raw) return '';
+
+    if(
+      raw === 'BM' ||
+      raw.includes('BOMBEO MECANICO') ||
+      raw.includes('BOMBEOMECANICO')
+    ){
+      return 'BM';
+    }
+
+    if(
+      raw === 'BN' ||
+      raw.includes('BOMBEO NEUMATICO') ||
+      raw.includes('BOMBEONEUMATICO')
+    ){
+      return 'BN';
+    }
+
+    if(
+      raw === 'FY' ||
+      raw === 'FLUYENTE' ||
+      raw.includes('FLUYE NATURAL') ||
+      raw.includes('FLUYENATURAL')
+    ){
+      return 'FY';
+    }
+
+    return String(value || '')
+      .trim()
+      .toUpperCase();
+  },
+
+  latestSap(reports){
+    if(!Array.isArray(reports)){
+      return '';
+    }
+
+    /*
+     * wellReports ya viene ordenado del reporte más reciente
+     * al más antiguo. Se toma el primer SAP válido encontrado.
+     */
+    for(const report of reports){
+      const value = this.normalizeSap(
+        this.field(report, 'sap')
+      );
+
+      if(value){
+        return value;
+      }
+    }
+
+    /*
+     * Respaldo para reportes donde SAP solamente quedó
+     * escrito dentro del mensaje.
+     */
+    for(const report of reports){
+      const message = String(
+        report?.msg ||
+        report?.mensaje ||
+        report?.message ||
+        report?.texto ||
+        ''
+      );
+
+      const match = message.match(
+        /\bSAP\s*[:=-]?\s*(BM|BN|FY|BOMBEO\s+MEC[AÁ]NICO|BOMBEO\s+NEUM[AÁ]TICO|FLUYENTE)\b/i
+      );
+
+      if(match){
+        const value = this.normalizeSap(match[1]);
+
+        if(value){
+          return value;
+        }
+      }
+    }
+
+    return '';
+  },
+
+  normalizeWellState(value){
+    const raw = String(value || '')
+      .trim()
+      .toUpperCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[._-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if(!raw){
+      return '';
+    }
+
+    if(
+      raw === 'ABIERTO' ||
+      raw === 'ABIERTA' ||
+      raw === 'OPERANDO' ||
+      raw === 'OPERATIVO' ||
+      raw === 'EN OPERACION'
+    ){
+      return 'ABIERTO';
+    }
+
+    if(
+      raw === 'CERRADO' ||
+      raw === 'CERRADA' ||
+      raw === 'FUERA DE OPERACION'
+    ){
+      return 'CERRADO';
+    }
+
+    if(
+      raw === 'INTERMITENTE' ||
+      raw === 'INTERMITENCIA'
+    ){
+      return 'INTERMITENTE';
+    }
+
+    return '';
+  },
+
+  reportWellState(report){
+    if(!report){
+      return '';
+    }
+
+    const parsed = (() => {
+      try{
+        return (
+          window.AdminUtils &&
+          typeof AdminUtils.parseMsg === 'function'
+        )
+          ? AdminUtils.parseMsg(report) || {}
+          : {};
+      }catch(error){
+        return {};
+      }
+    })();
+
+    const co = report.co || {};
+
+    /*
+     * Se revisan todos los nombres de campo utilizados
+     * históricamente por la aplicación.
+     */
+    const candidates = [
+      report.estadoPozo,
+      report.estado_pozo,
+      report.estado,
+      report.estatusPozo,
+      report.estatus_pozo,
+      co.estadoPozo,
+      co.estado_pozo,
+      co.estado,
+      co.estatusPozo,
+      parsed.estadoPozo,
+      parsed.estado_pozo,
+      parsed.estado,
+      parsed.estatusPozo
+    ];
+
+    for(const candidate of candidates){
+      const state = this.normalizeWellState(candidate);
+
+      if(state){
+        return state;
+      }
+    }
+
+    /*
+     * También se utiliza this.field(), porque ya es el
+     * lector oficial empleado por el módulo Pozos.
+     */
+    for(const fieldName of [
+      'estadoPozo',
+      'estado_pozo',
+      'estado',
+      'estatusPozo'
+    ]){
+      const state = this.normalizeWellState(
+        this.field(report, fieldName)
+      );
+
+      if(state){
+        return state;
+      }
+    }
+
+    /*
+     * Respaldo para reportes donde el estado solamente
+     * quedó escrito dentro del mensaje de WhatsApp.
+     */
+    const message = String(
+      report.msg ||
+      report.mensaje ||
+      report.message ||
+      report.texto ||
+      ''
+    );
+
+    const labeledMatch = message.match(
+      /(?:ESTADO(?:\s+DEL)?\s+POZO|ESTATUS(?:\s+DEL)?\s+POZO)\s*[:=-]?\s*(ABIERTO|CERRADO|INTERMITENTE)\b/i
+    );
+
+    if(labeledMatch){
+      return this.normalizeWellState(
+        labeledMatch[1]
+      );
+    }
+
+    /*
+     * Respaldo adicional para el bloque nuevo de selección:
+     * ✅ ABIERTO / ✅ CERRADO / ✅ INTERMITENTE
+     */
+    const checkedMatch = message.match(
+      /(?:✅|☑️?|✔️?)\s*(ABIERTO|CERRADO|INTERMITENTE)\b/i
+    );
+
+    if(checkedMatch){
+      return this.normalizeWellState(
+        checkedMatch[1]
+      );
+    }
+
+    return '';
+  },
+
+  latestWellStateData(reports){
+    if(!Array.isArray(reports)){
+      return {
+        value: '',
+        report: null
+      };
+    }
+
+    /*
+     * wellReports está ordenado del más reciente al más
+     * antiguo. Por eso el primer estado encontrado es el
+     * último estado válido conocido del pozo.
+     */
+    for(const report of reports){
+      const value = this.reportWellState(report);
+
+      if(value){
+        return {
+          value,
+          report
+        };
+      }
+    }
+
+    return {
+      value: '',
+      report: null
+    };
+  },
+
+  historicalStatus(stateData, latest, visitedToday){
+    const value = stateData?.value || '';
+
+    if(value === 'ABIERTO'){
+      return {
+        key: 'operating',
+        label: 'Abierto'
+      };
+    }
+
+    if(value === 'CERRADO'){
+      return {
+        key: 'closed',
+        label: 'Cerrado'
+      };
+    }
+
+    if(value === 'INTERMITENTE'){
+      return {
+        key: 'intermittent',
+        label: 'Intermitente'
+      };
+    }
+
+    /*
+     * Si nunca se ha registrado un estado explícito,
+     * se conserva la lógica anterior del sistema.
+     */
+    return this.operationalStatus(
+      latest,
+      visitedToday
+    );
+  },
+
   buildRows(){
     const reports = window.AdminFirebase.reportes || [];
     const alarms = window.AdminFirebase.alarmas || [];
     const today = this.todayKey();
 
-    return this.catalog().map(well => {
-      const wellReports = reports
-        .filter(report =>
-          this.reportWell(report) === well
-        )
-        .sort(
-          (a, b) =>
-            AdminUtils.getTime(b) -
-            AdminUtils.getTime(a)
-        );
+    /*
+     * =====================================================
+     * OPTIMIZACIÓN DE RENDIMIENTO
+     * -----------------------------------------------------
+     * Antes:
+     *   Cada pozo recorría TODOS los reportes y alarmas.
+     *
+     * Ahora:
+     *   Se construyen índices una sola vez y cada pozo
+     *   consulta únicamente su arreglo correspondiente.
+     * =====================================================
+     */
 
-      const wellAlarms = alarms
-        .filter(alarm =>
-          this.alarmWell(alarm) === well
-        );
+    const reportIndex = Object.create(null);
+
+    for(const report of reports){
+      const well = this.reportWell(report);
+
+      if(!well) continue;
+
+      (reportIndex[well] ||= []).push(report);
+    }
+
+    for(const well in reportIndex){
+      reportIndex[well].sort(
+        (a,b)=>
+          AdminUtils.getTime(b)-
+          AdminUtils.getTime(a)
+      );
+    }
+
+    const alarmIndex = Object.create(null);
+
+    for(const alarm of alarms){
+      const well = this.alarmWell(alarm);
+
+      if(!well) continue;
+
+      (alarmIndex[well] ||= []).push(alarm);
+    }
+
+    return this.catalog().map(well => {
+      const wellReports =
+        reportIndex[well] || [];
+
+      const wellAlarms =
+        alarmIndex[well] || [];
 
       const latest = this.latestReport(wellReports);
 
@@ -386,10 +716,15 @@ window.AdminPozos = {
         this.rowDate(report) === today
       );
 
-      const status = this.operationalStatus(
-        latest,
-        visitedToday
-      );
+      const stateData =
+        this.latestWellStateData(wellReports);
+
+      const status =
+        this.historicalStatus(
+          stateData,
+          latest,
+          visitedToday
+        );
 
       return {
         well,
@@ -398,8 +733,20 @@ window.AdminPozos = {
         alarms: wellAlarms,
         visitedToday,
         status,
+
+        /*
+         * Estado explícito más reciente del historial.
+         */
+        estadoPozo: stateData.value,
+        estadoPozoReport: stateData.report,
+
+        /*
+         * Se conserva el estatus operativo tradicional
+         * para no afectar otras funciones del expediente.
+         */
         estatus: this.field(latest, 'estatus'),
-        sap: this.field(latest, 'sap'),
+
+        sap: this.latestSap(wellReports),
         fluye: this.field(latest, 'fluye'),
         person: latest
           ? AdminUtils.personText(latest)
@@ -429,15 +776,22 @@ window.AdminPozos = {
       document.getElementById('wellStatusFilter')
         ?.value || 'all';
 
-    const sapFilter =
+    const sapFilterRaw =
       document.getElementById('wellSapFilter')
         ?.value || 'all';
+
+    const sapFilter =
+      sapFilterRaw === 'all'
+        ? 'all'
+        : this.normalizeSap(sapFilterRaw);
 
     return this.rows.filter(row => {
       if(search){
         const haystack = [
           row.well,
           row.person,
+          row.estadoPozo,
+          row.status?.label,
           row.estatus,
           row.sap,
           row.fluye
@@ -1734,6 +2088,8 @@ window.AdminPozos = {
 
   render(){
     this.rows = this.buildRows();
+
+
 
     const filtered = this.filteredRows();
 
