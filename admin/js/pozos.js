@@ -4,14 +4,21 @@ window.AdminPozos = {
   selectedMapWell: null,
 
   init(){
+    /*
+     * Los filtros trabajan sobre this.rows, que ya contiene
+     * los datos construidos desde Firebase.
+     *
+     * No es necesario ejecutar buildRows() al escribir cada
+     * letra o cambiar una opción.
+     */
     document.getElementById('wellSearch')
-      ?.addEventListener('input', () => this.render());
+      ?.addEventListener('input', () => this.renderView());
 
     document.getElementById('wellStatusFilter')
-      ?.addEventListener('change', () => this.render());
+      ?.addEventListener('change', () => this.renderView());
 
     document.getElementById('wellSapFilter')
-      ?.addEventListener('change', () => this.render());
+      ?.addEventListener('change', () => this.renderView());
 
     document.getElementById('wellClearFilters')
       ?.addEventListener('click', () => {
@@ -23,7 +30,7 @@ window.AdminPozos = {
         if(status) status.value = 'all';
         if(sap) sap.value = 'all';
 
-        this.render();
+        this.renderView();
       });
 
     this.bindPriorityActions();
@@ -1343,7 +1350,7 @@ window.AdminPozos = {
         }
 
         this.viewMode = 'table';
-        this.render();
+        this.renderView();
       });
   },
 
@@ -2086,11 +2093,14 @@ window.AdminPozos = {
       });
   },
 
-  render(){
-    this.rows = this.buildRows();
-
-
-
+  /*
+   * Redibuja la interfaz utilizando las filas que ya están
+   * construidas en memoria.
+   *
+   * Este método se utiliza para búsquedas, filtros y cambios
+   * visuales que no requieren volver a procesar Firebase.
+   */
+  renderView(){
     const filtered = this.filteredRows();
 
     this.renderKpis();
@@ -2105,10 +2115,26 @@ window.AdminPozos = {
     this.renderTable(filtered);
     this.renderMap(filtered);
     this.applyViewMode();
+  },
+
+  /*
+   * Refresco completo de datos.
+   *
+   * Se conserva AdminPozos.render() como método público para
+   * mantener compatibilidad con app.js y con las actualizaciones
+   * procedentes de Firebase.
+   */
+  render(){
+    this.rows = this.buildRows();
+
+    this.renderView();
 
     /*
-     * Si el panel de gráficas está abierto,
-     * actualizarlo con los reportes recién recibidos.
+     * Si el panel de gráficas está abierto, actualizarlo con
+     * los reportes recién recibidos.
+     *
+     * Esta operación solo se ejecuta durante un refresco real
+     * de datos, no al escribir o cambiar filtros.
      */
     if(
       window.AdminGraficas &&
