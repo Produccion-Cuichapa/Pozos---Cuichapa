@@ -5,7 +5,31 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
-      "functions/**"
+      "functions/**",
+
+      "**/backups/**",
+      "**/*backup*",
+      "**/*_backup_*",
+      "**/*_roto_*",
+      "**/*estado_roto*",
+
+      "auditoria*",
+      "**/auditoria*",
+
+      "database.rules*",
+      "*.py",
+
+      "README*",
+
+      "**/*.log",
+
+      "templates/*backup*",
+      "templates/*BACKUP*",
+
+      "plan_*",
+      "respaldo_*",
+
+      "*.txt"
     ],
     "rewrites": [
       {
