@@ -1,4 +1,29 @@
 window.AdminGraficas = {
+
+  /*
+   * BALANCE DE FRAC TANK DIARIO
+   *
+   * Valores fijos cargados manualmente.
+   * No se calculan con reportes.
+   * No se guardan ni sincronizan con Firebase.
+   */
+  balanceFracTankDiario: {
+    '172': 104,
+    '106D': 453,
+    '505': 0,
+    '179': 45,
+    '401': 0,
+    '107': 147,
+    '19': 54,
+    '601': 600,
+    '201': 0,
+    '376': 34,
+    '385': 13,
+    '602': 0,
+    '139': 69,
+    '352': 384,
+    '603': 23
+  },
   row: null,
   weekOffset: 0,
   dateFrom: '',
@@ -927,6 +952,84 @@ window.AdminGraficas = {
     `;
   },
 
+  balanceFracTankCard(){
+    const well = String(
+      this.row?.well || ''
+    )
+      .trim()
+      .toUpperCase()
+      .replace(/^POZO\s+/i, '')
+      .replace(/^C[-\s]*/i, '');
+
+    const catalogo =
+      this.balanceFracTankDiario || {};
+
+    if(
+      !Object.prototype.hasOwnProperty.call(
+        catalogo,
+        well
+      )
+    ){
+      return '';
+    }
+
+    const balance = catalogo[well];
+
+    return `
+      <article class="well-charts-balance-daily">
+
+        <div class="well-charts-balance-main">
+
+          <div class="well-charts-balance-icon"
+               aria-hidden="true">
+            FT
+          </div>
+
+          <div class="well-charts-balance-copy">
+
+            <span class="well-charts-balance-kicker">
+              BALANCE FIJO
+            </span>
+
+            <h3>
+              Balance de Frac Tank Diario
+            </h3>
+
+            <p>
+              Valor fijo cargado manualmente.
+              No se calcula desde los reportes.
+            </p>
+
+          </div>
+
+        </div>
+
+        <div class="well-charts-balance-values">
+
+          <div class="well-charts-balance-value">
+            <span>POZO</span>
+            <b>${well}</b>
+          </div>
+
+          <div class="
+            well-charts-balance-value
+            well-charts-balance-value-primary
+          ">
+            <span>BLS/DÍA</span>
+            <b>${this.formatNumber(balance)}</b>
+            <small>bbl/día</small>
+          </div>
+
+        </div>
+
+        <div class="well-charts-balance-badge">
+          ✓ Actualización manual
+        </div>
+
+      </article>
+    `;
+  },
+
   card(field, label, unit, category){
     const points = this.points(field);
     const stats = this.stats(points);
@@ -1093,8 +1196,12 @@ window.AdminGraficas = {
         'Volumen Frac Tank',
         'bbl',
         'VOLUMEN'
-      )
-    ].join('');
+      ),
+
+      this.balanceFracTankCard()
+    ]
+      .filter(Boolean)
+      .join('');
   }
 };
 
