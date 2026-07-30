@@ -507,11 +507,62 @@ window.AdminReportes = {
         ?.value
         .toLowerCase() || '';
 
-    const source = (window.AdminFirebase.reportes || []).filter(row =>
-      window.CatalogoPozos?.existe(
+    const source = (window.AdminFirebase.reportes || []).filter(row => {
+      const modeData = this.normalizedMode(row);
+
+      let rawRecordText = '';
+
+      try{
+        rawRecordText = JSON.stringify(row);
+      }catch(error){
+        rawRecordText = [
+          row?.msg,
+          row?.mensaje,
+          row?.observaciones,
+          row?.obs,
+          row?.descripcion,
+          row?.texto
+        ]
+          .filter(Boolean)
+          .join(' ');
+      }
+
+      const identityText = [
+        modeData.key,
+        AdminUtils.modeText(row),
+        row?.modo,
+        row?.tipo,
+        row?.tipoReporte,
+        AdminUtils.placeText(row),
+        row?.pozo,
+        row?.lugar,
+        rawRecordText.slice(0, 800)
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      const esReporteEspecial =
+        modeData.key === 'nota' ||
+        modeData.key === 'cabezal' ||
+        modeData.key === 'estacion' ||
+        modeData.key === 'nivel' ||
+        /nota\s+de\s+campo/i.test(identityText) ||
+        /reporte\s+cabezal/i.test(identityText) ||
+        /estaci[oó]n/i.test(identityText) ||
+        /niveles?\s+de\s+guardia/i.test(identityText);
+
+      // El catálogo se exige únicamente para reportes normales de pozo.
+      // Notas, cabezales, estaciones y niveles pueden usar ubicaciones
+      // que no coinciden literalmente con una clave del catálogo.
+      if(esReporteEspecial){
+        return true;
+      }
+
+      return window.CatalogoPozos?.existe(
         AdminUtils.placeText(row)
-      )
-    );
+      );
+    });
 
     /*
      * Reconoce búsquedas exactas de pozo:

@@ -361,7 +361,22 @@ window.AdminExportaciones = {
     box.textContent = 'Generando Excel por día desde plantilla oficial...';
 
     const allRows = (AdminFirebase.reportes || []).filter(r => {
-      if(!window.CatalogoPozos?.existe(AdminUtils.placeText(r))) return false;
+      const tipo = this.tipoReporte(r);
+      const esReporteEspecial =
+        tipo === 'NOTA' ||
+        tipo === 'CABEZAL' ||
+        tipo === 'ESTACION' ||
+        tipo === 'NIVEL_GUARDIA';
+
+      // El catálogo se exige únicamente para reportes normales de visita.
+      // Notas, cabezales, estaciones y guardias pueden usar ubicaciones
+      // que no corresponden literalmente a una clave del catálogo.
+      if(
+        !esReporteEspecial &&
+        !window.CatalogoPozos?.existe(AdminUtils.placeText(r))
+      ){
+        return false;
+      }
 
       const ymd = this.ymdFromRow(r);
       const persona = String(AdminUtils.personText(r) || '').trim().toLowerCase();
