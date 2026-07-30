@@ -303,7 +303,8 @@ window.AdminGraficas = {
      * - Tiene CTM válido.
      */
     const hasLevelBlock =
-      /NIVEL\s+(?:DE\s+)?FRAC\s*TANK/i
+      
+/NIVEL\s+(?:DE\s+)?(?:FRAC\s*TANK|PRESA\s*MET[ÁA]LICA)/i
         .test(message);
 
     return isFt && hasLevelBlock;

@@ -153,26 +153,8 @@ window.AdminPozos = {
   },
 
   catalog(){
-    const set = new Set();
-
-    if(Array.isArray(window.WELLS_ALL)){
-      window.WELLS_ALL.forEach(well => {
-        const key = this.normalizeWell(well);
-        if(key) set.add(key);
-      });
-    }
-
-    (window.AdminFirebase.reportes || [])
-      .forEach(report => {
-        const key = this.normalizeWell(
-          AdminUtils.placeText(report)
-        );
-
-        if(key) set.add(key);
-      });
-
-    return Array.from(set)
-      .sort((a, b) => this.wellSort(a, b));
+    if(!window.CatalogoPozos || !Array.isArray(window.CatalogoPozos.ids)) return [];
+    return [...window.CatalogoPozos.ids].sort((a,b) => this.wellSort(a,b));
   },
 
   reportWell(report){
@@ -687,7 +669,7 @@ window.AdminPozos = {
     for(const report of reports){
       const well = this.reportWell(report);
 
-      if(!well) continue;
+      if(!well || !window.CatalogoPozos?.existe(well)) continue;
 
       (reportIndex[well] ||= []).push(report);
     }
@@ -705,7 +687,7 @@ window.AdminPozos = {
     for(const alarm of alarms){
       const well = this.alarmWell(alarm);
 
-      if(!well) continue;
+      if(!well || !window.CatalogoPozos?.existe(well)) continue;
 
       (alarmIndex[well] ||= []).push(alarm);
     }

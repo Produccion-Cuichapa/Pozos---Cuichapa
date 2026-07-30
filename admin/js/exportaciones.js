@@ -134,7 +134,8 @@ window.AdminExportaciones = {
     );
 
     const tieneBloque =
-      /NIVEL\s+(?:DE\s+)?FRAC\s*TANK/i.test(msg);
+      
+/NIVEL\s+(?:DE\s+)?(?:FRAC\s*TANK|PRESA\s*MET[ÁA]LICA)/i.test(msg);
 
     const nivel = String(
       this.nivelCm(r) || ''
@@ -360,6 +361,8 @@ window.AdminExportaciones = {
     box.textContent = 'Generando Excel por día desde plantilla oficial...';
 
     const allRows = (AdminFirebase.reportes || []).filter(r => {
+      if(!window.CatalogoPozos?.existe(AdminUtils.placeText(r))) return false;
+
       const ymd = this.ymdFromRow(r);
       const persona = String(AdminUtils.personText(r) || '').trim().toLowerCase();
       const elegido = String(rec || '').trim().toLowerCase();
@@ -813,7 +816,9 @@ window.AdminExportaciones = {
         interTotales[colInter] = 0;
       }
 
-      (AdminFirebase.reportes || []).forEach(r => {
+      (AdminFirebase.reportes || []).filter(r =>
+        window.CatalogoPozos?.existe(AdminUtils.placeText(r))
+      ).forEach(r => {
         const texto = [
           r.msg, r.mensaje, r.message, r.texto,
           r.whatsappText, r.raw, JSON.stringify(r)

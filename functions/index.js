@@ -508,3 +508,9 @@ exports.retryFailedWhatsApp = functions
     }
     return null;
   });
+
+// ══════════════════════════════════════════════════════════════
+// IA Cuichapa
+// ══════════════════════════════════════════════════════════════
+exports.iaCuichapaChat =
+  require('./ia/chat-function').iaCuichapaChat;

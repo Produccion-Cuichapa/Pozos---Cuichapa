@@ -519,7 +519,8 @@ window.AdminGraficas = {
       /FLUYE\s*[:=-]?\s*FT\b/i.test(text);
 
     const hasFracTank =
-      /NIVEL\s+(?:DE\s+)?FRAC\s*TANK/i
+      
+/NIVEL\s+(?:DE\s+)?(?:FRAC\s*TANK|PRESA\s*MET[ÁA]LICA)/i
         .test(text);
 
     return fluyeFt && hasFracTank;
@@ -1089,9 +1090,9 @@ window.AdminGraficas = {
 
       this.card(
         'bls',
-        'Nivel Frac Tank',
+        'Volumen Frac Tank',
         'bbl',
-        'NIVEL'
+        'VOLUMEN'
       )
     ].join('');
   }

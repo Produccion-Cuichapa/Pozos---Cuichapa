@@ -35,7 +35,10 @@ window.AdminFirebase = {
     const paths = window.ADMIN_CONFIG.paths;
     const limits = window.ADMIN_CONFIG.limits;
 
-    this.db.ref(paths.reportes).limitToLast(limits.reportes).on('value', snap => {
+    // Cargar el historial completo para que los filtros busquen
+    // sobre todos los reportes. reportes.js mantiene el renderizado
+    // incremental de 100 registros para conservar el rendimiento.
+    this.db.ref(paths.reportes).on('value', snap => {
       this.reportes = this.snapshotToArray(snap.val());
       window.AdminApp.render();
     });

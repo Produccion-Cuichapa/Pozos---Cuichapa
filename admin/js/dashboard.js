@@ -16,11 +16,35 @@ window.AdminDashboard = {
     const reportesHoy = r.filter(x => u.sameToday(x));
     const alarmasHoy = a.filter(x => u.sameToday(x));
 
-    // Pendientes WhatsApp: contar SOLO los de hoy.
-    // Los pendientes históricos fueron pruebas y no deben ensuciar el dashboard.
+    // Pendientes WhatsApp:
+    // contar únicamente envíos recientes que todavía no tienen confirmación.
+    // Esto evita mostrar como pendientes reportes antiguos que sí llegaron
+    // al grupo, pero conservaron un estado local desactualizado.
+    const ahora = Date.now();
+    const limitePendienteMs = 15 * 60 * 1000;
+
     const pendientes = reportesHoy.filter(x => {
-      const st = String(x.whatsappStatus || x.estado || '').toLowerCase();
-      return st.includes('pending') || st.includes('pendiente');
+      const st = String(x.whatsappStatus || '').toLowerCase().trim();
+
+      const esEstadoPendiente =
+        st === 'pending' ||
+        st === 'pendiente' ||
+        st === 'queued' ||
+        st === 'retry';
+
+      if(!esEstadoPendiente) return false;
+
+      const fechaReporte = u.dateObj(x);
+      const timestamp = fechaReporte instanceof Date
+        ? fechaReporte.getTime()
+        : NaN;
+
+      if(!Number.isFinite(timestamp)) return false;
+
+      const antiguedad = ahora - timestamp;
+
+      return antiguedad >= 0 &&
+             antiguedad <= limitePendienteMs;
     });
 
     const sinGps = reportesHoy.filter(x => !u.hasGps(x));
@@ -304,7 +328,6 @@ window.AdminDashboard = {
     const map = [
       ['kpiReportesHoy', stats.reportesHoy >= 50 ? 'ok' : stats.reportesHoy >= 20 ? 'warn' : 'danger'],
       ['kpiAlarmasHoy', stats.alarmasHoy === 0 ? 'ok' : stats.alarmasHoy <= 2 ? 'warn' : 'danger'],
-      ['kpiPendientes', stats.pendientes <= 5 ? 'ok' : stats.pendientes <= 25 ? 'warn' : 'danger'],
       ['kpiTotal', 'ok']
     ];
 

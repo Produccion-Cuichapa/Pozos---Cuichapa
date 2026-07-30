@@ -15,20 +15,25 @@
 
   <script src="../config.js" defer></script>
 <script src="./js/config.js" defer></script>
-  <script src="./js/utils.js" defer></script>
+  <script src="./js/utils.js?v=1784566076" defer></script>
   <script src="./js/firebase.js" defer></script>
   <script src="./js/auth.js" defer></script>
-  <script src="./js/ui.js?v=1784397821" defer></script>
+  <script src="./js/ui.js?v=1784566076" defer></script>
   <script src="./js/dashboard.js?v=1784312497" defer></script>
 <script src="./js/reportes.js" defer></script>
   <script src="./js/reportes-v2.js?v=1784314540" defer></script>
   <script src="./js/alarmas.js" defer></script>
   <script src="./js/exportar.js" defer></script>
   <script src="./js/exportaciones.js" defer></script>
-  <script src="./js/pozos.js?v=2026.07.19.045207" defer></script>
-  <script src="./js/graficas-pozos.js?v=1784407088" defer></script>
+  <script src="./js/catalogo-pozos.js?v=1" defer></script>
+  <script src="./js/dashboard-mensual.js?v=1784664016" defer></script>
+  <script src="./js/dashboard-indicador.js?v=12" defer></script>
+  <script src="./js/pozos.js?v=1784567781" defer></script>
+  <script src="./js/graficas-pozos.js?v=1784567781" defer></script>
 <script src="./js/firebase-upv-admin.js" defer></script>
   <script src="./js/upv-admin.js" defer></script>
+  <script src="./js/config-center.js?v=1784657401" defer></script>
+
   <script src="./js/app.js?v=1784307160" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <link rel="stylesheet" href="./css/produccion-v2.css?v=1784347568">
@@ -53,6 +58,11 @@
   <link rel="apple-touch-icon"
         sizes="180x180"
         href="./icons/apple-touch-icon.png?v=1784400459">
+
+  <link rel="stylesheet" href="./css/config-center.css?v=1784657401">
+
+  <link rel="stylesheet" href="./css/dashboard-mensual.css?v=1784664016">
+  <link rel="stylesheet" href="./css/ia-cuichapa.css?v=20260723">
 </head>
 
 <body>
@@ -128,6 +138,11 @@
           <span class="nav-label">Alertas</span>
         </button>
 
+        <button class="nav-btn" data-view="ia">
+          <span class="nav-icon" aria-hidden="true">🤖</span>
+          <span class="nav-label">IA Cuichapa</span>
+        </button>
+
         <button class="nav-btn" data-view="exportaciones">
           <span class="nav-icon" aria-hidden="true">▣</span>
           <span class="nav-label">Documentos</span>
@@ -136,6 +151,11 @@
         <button class="nav-btn" data-view="upv">
           <span class="nav-icon" aria-hidden="true">↔</span>
           <span class="nav-label">UPV</span>
+        </button>
+
+        <button class="nav-btn" data-view="configuracion">
+          <span class="nav-icon" aria-hidden="true">⚙</span>
+          <span class="nav-label">Configuración</span>
         </button>
       </nav>
 
@@ -823,7 +843,67 @@
         </div>
       </section>
 
-      <section id="exportacionesView" class="view hidden">
+      
+      
+      <section id="iaView" class="view hidden">
+        <div class="panel">
+
+          <div class="panel-head">
+            <h2>🤖 IA Cuichapa</h2>
+            <span class="muted">
+              Centro inteligente de análisis operativo
+            </span>
+          </div>
+
+          <div class="ia-home">
+
+            <h1>¿Qué deseas analizar hoy?</h1>
+
+            <p class="muted">
+              Consulta producción, recorridos, reportes, alarmas y comportamiento histórico del campo.
+            </p>
+
+            <div class="ia-grid">
+
+              <button class="ia-card">📈 Indicadores</button>
+
+              <button class="ia-card">🛢 Producción</button>
+
+              <button class="ia-card">🚨 Alarmas</button>
+
+              <button class="ia-card">👷 Recorredores</button>
+
+              <button class="ia-card">📄 Reportes</button>
+
+              <button class="ia-card">🔎 Buscar pozo</button>
+
+              <button class="ia-card">📊 Tendencias</button>
+
+              <button class="ia-card">🧠 Diagnóstico IA</button>
+
+            </div>
+
+            <div class="ia-chat-box">
+
+              <input
+                id="iaPrompt"
+                type="text"
+                placeholder="Escribe una pregunta...">
+
+              <button id="iaSend">
+                Preguntar
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+
+
+<section id="exportacionesView" class="view hidden">
         <div class="panel">
           <div class="panel-head">
             <h2>Documentos operativos</h2>
@@ -1000,6 +1080,610 @@
             </table>
           </div>
         </section>
+      </section>
+
+    
+      <section id="configuracionView" class="view hidden">
+        <div class="config-center">
+
+          <header class="config-hero">
+            <div class="config-hero-copy">
+              <span class="config-eyebrow">
+                ADMINISTRACIÓN DEL SISTEMA
+              </span>
+
+              <h2>Centro de Configuración</h2>
+
+              <p>
+                Parámetros operativos, GPS, fotografías,
+                sincronización, WhatsApp, mantenimiento y
+                control de versiones desde una sola pantalla.
+              </p>
+            </div>
+
+            
+            <div class="config-state">
+              <div class="config-state-head">
+                <span>Estado</span>
+                <strong id="configStateTitle">
+                  Esperando Firebase
+                </strong>
+              </div>
+
+              <small id="configStateSubtitle">
+                Consultando configuración
+              </small>
+
+              <div class="config-state-details">
+                <div>
+                  <span>Usuario</span>
+                  <b id="configStateUser">—</b>
+                </div>
+
+                <div>
+                  <span>Último cambio</span>
+                  <b id="configStateUpdated">—</b>
+                </div>
+
+                <div>
+                  <span>Versión</span>
+                  <b id="configStateVersion">—</b>
+                </div>
+              </div>
+            </div>
+
+          </header>
+
+          
+          <div class="config-system-strip">
+            <div class="config-system-strip-icon">✓</div>
+
+            <div class="config-system-strip-copy">
+              <strong>Sistema operativo</strong>
+              <span>
+                Configuración sincronizada con Firebase.
+                Los parámetros todavía se aplican de forma controlada.
+              </span>
+            </div>
+
+            <span class="config-system-strip-badge">
+              CONECTADO
+            </span>
+          </div>
+
+
+          
+          <nav
+            class="config-category-nav"
+            aria-label="Categorías de configuración">
+
+            <button
+              type="button"
+              class="config-category-btn active"
+              data-config-section="all">
+              General
+            </button>
+
+            <button
+              type="button"
+              class="config-category-btn"
+              data-config-section="gps">
+              GPS
+            </button>
+
+            <button
+              type="button"
+              class="config-category-btn"
+              data-config-section="modules">
+              Módulos
+            </button>
+
+            <button
+              type="button"
+              class="config-category-btn"
+              data-config-section="sync">
+              Sincronización
+            </button>
+
+            <button
+              type="button"
+              class="config-category-btn"
+              data-config-section="whatsapp">
+              WhatsApp
+            </button>
+
+            <button
+              type="button"
+              class="config-category-btn"
+              data-config-section="maintenance">
+              PWA y mantenimiento
+            </button>
+
+            <button
+              type="button"
+              class="config-category-btn"
+              data-config-section="audit">
+              Auditoría
+            </button>
+          </nav>
+
+          <div class="config-grid">
+
+            <article class="config-card" data-config-card="general">
+              <header class="config-card-head">
+                <h3>Operación de campo</h3>
+                <p>
+                  Límites generales para reportes y evidencias.
+                </p>
+              </header>
+
+              <div class="config-card-body config-fields-2">
+                <div class="config-field">
+                  <label for="cfgRadioGps">
+                    Radio GPS general (metros)
+                  </label>
+                  <input
+                    id="cfgRadioGps"
+                    type="number"
+                    min="20"
+                    max="500"
+                    step="5">
+                  <span class="config-help">
+                    Valor actual de respaldo: 80 metros.
+                  </span>
+                </div>
+
+                <div class="config-field">
+                  <label for="cfgHistorialVisible">
+                    Reportes visibles en historial
+                  </label>
+                  <input
+                    id="cfgHistorialVisible"
+                    type="number"
+                    min="5"
+                    max="200"
+                    step="5">
+                  <span class="config-help">
+                    Valor actual de respaldo: 20.
+                  </span>
+                </div>
+
+                <div class="config-field">
+                  <label for="cfgMaxFotos">
+                    Máximo de fotografías
+                  </label>
+                  <input
+                    id="cfgMaxFotos"
+                    type="number"
+                    min="0"
+                    max="10"
+                    step="1">
+                </div>
+
+                <div class="config-field">
+                  <label for="cfgCorreccionMinutos">
+                    Ventana de corrección (minutos)
+                  </label>
+                  <input
+                    id="cfgCorreccionMinutos"
+                    type="number"
+                    min="0"
+                    max="1440"
+                    step="5">
+                </div>
+              </div>
+            </article>
+
+            <article class="config-card" data-config-card="gps">
+              <header class="config-card-head">
+                <h3>GPS y geocerca</h3>
+                <p>
+                  Control de tiempos, precisión y validaciones.
+                </p>
+              </header>
+
+              <div class="config-card-body config-fields-2">
+                <div class="config-field">
+                  <label for="cfgGpsAndroid">
+                    Timeout Android (ms)
+                  </label>
+                  <input
+                    id="cfgGpsAndroid"
+                    type="number"
+                    min="5000"
+                    max="120000"
+                    step="1000">
+                </div>
+
+                <div class="config-field">
+                  <label for="cfgGpsIos">
+                    Timeout iPhone (ms)
+                  </label>
+                  <input
+                    id="cfgGpsIos"
+                    type="number"
+                    min="3000"
+                    max="60000"
+                    step="1000">
+                </div>
+
+                <div class="config-field">
+                  <label for="cfgGpsPrecision">
+                    Precisión máxima aceptada (m)
+                  </label>
+                  <input
+                    id="cfgGpsPrecision"
+                    type="number"
+                    min="5"
+                    max="500"
+                    step="5">
+                </div>
+              </div>
+
+              <div class="config-card-body config-switch-list">
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Segunda lectura automática</strong>
+                    <span>
+                      Repetir la medición antes de marcar fuera de radio.
+                    </span>
+                  </div>
+
+                  <label class="config-toggle">
+                    <input
+                      id="cfgGpsSegundaLectura"
+                      type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Foto obligatoria fuera del radio</strong>
+                    <span>
+                      Solicitar evidencia cuando la ubicación no coincida.
+                    </span>
+                  </div>
+
+                  <label class="config-toggle">
+                    <input
+                      id="cfgGpsFotoFuera"
+                      type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Justificación fuera del radio</strong>
+                    <span>
+                      Registrar el motivo antes de enviar.
+                    </span>
+                  </div>
+
+                  <label class="config-toggle">
+                    <input
+                      id="cfgGpsJustificacion"
+                      type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+              </div>
+            </article>
+
+            <article class="config-card" data-config-card="modules">
+              <header class="config-card-head">
+                <h3>Módulos de campo</h3>
+                <p>
+                  Disponibilidad de funciones para los recorredores.
+                </p>
+              </header>
+
+              <div class="config-card-body config-switch-list">
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Control Operativo</strong>
+                    <span>Captura técnica de pozos.</span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgModuloCo" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Nivel de Guardia</strong>
+                    <span>Niveles y registros operativos.</span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgModuloNivel" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Alarmas</strong>
+                    <span>Eventos e incidencias desde campo.</span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgModuloAlarmas" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Historial</strong>
+                    <span>Consulta de reportes recientes.</span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgModuloHistorial" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Correcciones</strong>
+                    <span>Edición controlada de reportes.</span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgModuloCorrecciones" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Fotografías</strong>
+                    <span>Evidencia fotográfica.</span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgModuloFotos" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+              </div>
+            </article>
+
+            <article class="config-card" data-config-card="sync">
+              <header class="config-card-head">
+                <h3>Sincronización</h3>
+                <p>
+                  Continuidad del servicio con señal débil.
+                </p>
+              </header>
+
+              <div class="config-card-body config-switch-list">
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Sincronizar al recuperar señal</strong>
+                    <span>
+                      Enviar automáticamente los reportes pendientes.
+                    </span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgSyncSenal" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Reintentos automáticos</strong>
+                    <span>
+                      Reprocesar fallas temporales.
+                    </span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgSyncReintentos" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Reconciliar pendientes</strong>
+                    <span>
+                      Verificar reportes atorados sin duplicar WhatsApp.
+                    </span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgSyncReconciliar" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+              </div>
+            </article>
+
+            <article class="config-card" data-config-card="whatsapp">
+              <header class="config-card-head">
+                <h3>WhatsApp</h3>
+                <p>
+                  Opciones operativas sin exponer tokens ni credenciales.
+                </p>
+              </header>
+
+              <div class="config-card-body">
+                <div class="config-field">
+                  <label for="cfgWhatsappEntorno">
+                    Entorno
+                  </label>
+
+                  <select id="cfgWhatsappEntorno">
+                    <option value="produccion">
+                      Producción
+                    </option>
+                    <option value="pruebas">
+                      Pruebas
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="config-card-body config-switch-list">
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Mensajes</strong>
+                    <span>Envío del texto operativo.</span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgWhatsappMensajes" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Fotografías</strong>
+                    <span>Envío de evidencia adjunta.</span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgWhatsappFotos" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Alarmas</strong>
+                    <span>Envío de eventos críticos.</span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgWhatsappAlarmas" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Correcciones</strong>
+                    <span>Notificación de cambios de reportes.</span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgWhatsappCorrecciones" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+              </div>
+            </article>
+
+            <article class="config-card" data-config-card="maintenance">
+              <header class="config-card-head">
+                <h3>Mantenimiento y versiones</h3>
+                <p>
+                  Avisos controlados y actualización de la PWA.
+                </p>
+              </header>
+
+              <div class="config-card-body">
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Modo mantenimiento</strong>
+                    <span>
+                      Mantendrá disponible la captura offline.
+                    </span>
+                  </div>
+                  <label class="config-toggle">
+                    <input
+                      id="cfgMantenimientoActivo"
+                      type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-field">
+                  <label for="cfgMantenimientoMensaje">
+                    Mensaje de mantenimiento
+                  </label>
+                  <textarea
+                    id="cfgMantenimientoMensaje"
+                    placeholder="Ej. Se realizará una actualización. Puedes seguir capturando sin conexión."></textarea>
+                </div>
+
+                <div class="config-field">
+                  <label for="cfgVersionMinima">
+                    Versión mínima
+                  </label>
+                  <input
+                    id="cfgVersionMinima"
+                    type="text"
+                    placeholder="Ej. 2026.07.21.1">
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Aviso de actualización</strong>
+                    <span>
+                      Mostrar una nueva versión disponible.
+                    </span>
+                  </div>
+                  <label class="config-toggle">
+                    <input
+                      id="cfgAvisoActualizacion"
+                      type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+              </div>
+            </article>
+
+            <article class="config-card config-card-wide" data-config-card="audit">
+              <header class="config-card-head">
+                <h3>Bitácora de cambios</h3>
+                <p>
+                  Usuario, fecha y parámetros modificados.
+                </p>
+              </header>
+
+              <div class="config-card-body">
+                
+                <div
+                  id="configAuditList"
+                  class="config-audit-list">
+
+                  <div class="config-empty">
+                    Consultando bitácora...
+                  </div>
+                </div>
+
+              </div>
+            </article>
+
+          </div>
+
+          <footer class="config-actions">
+            <span
+              id="configSaveStatus"
+              class="config-save-status">
+              Sin cambios pendientes
+            </span>
+
+            <button
+              id="configReloadBtn"
+              type="button"
+              class="ghost-btn">
+              Recargar
+            </button>
+
+            <button
+              id="configDefaultsBtn"
+              type="button"
+              class="ghost-btn config-btn-danger">
+              Valores predeterminados
+            </button>
+
+            <button
+              id="configSaveBtn"
+              type="button"
+              class="primary-btn">
+              Guardar configuración
+            </button>
+          </footer>
+
+        </div>
       </section>
 
     </main>
@@ -1189,6 +1873,15 @@
     </section>
   </aside>
 
+  <script src="./js/ia-knowledge.js?v=20260723" defer></script>
+  <script src="./js/ia-engine.js?v=20260723" defer></script>
+  <script src="./js/ia-nlu.js?v=20260723" defer></script>
+  <script src="./js/ia-planner.js?v=20260723" defer></script>
+  <script src="./js/ia-reasoner.js?v=20260723" defer></script>
+  <script src="./js/ia-followup.js?v=20260723" defer></script>
+  <script src="./js/ia-proactive.js?v=20260723" defer></script>
+  <script src="./js/ia-context.js?v=20260723" defer></script>
+  <script src="./js/ia-cuichapa.js?v=20260723" defer></script>
   <script src="./js/dashboard-produccion.js?v=1784393750" defer></script>
   <script src="./js/login-v2.js?v=1784394705" defer></script>
   <script src="./js/admin-pwa.js?v=2026.07.19.045207" defer></script>

@@ -9,6 +9,14 @@ window.AdminUI = {
   inspectorSource: 'report',
   inspectorWellContext: null,
 
+  /*
+   * FASE 2:
+   * Las pestañas pesadas se generan únicamente cuando
+   * el usuario las abre por primera vez.
+   */
+  lazyInspectorKey: '',
+  lazyInspectorLoaded: new Set(),
+
   init(){
     this.bindNav();
     this.bindDetail();
@@ -51,6 +59,7 @@ window.AdminUI = {
       reportes: ['Reportes', 'Consulta, filtros y exportación de reportes de campo.'],
       pozos: ['Pozos', 'Estado operativo consolidado del Campo Cuichapa.'],
       alarmas: ['Alarmas', 'Control y revisión de eventos de alarma.'],
+      ia: ['IA Cuichapa', 'Asistente inteligente para análisis operativo.'],
       exportaciones: ['Exportaciones', 'Generación automática de formatos Excel y reportes.'],
       upv: ['UPV', 'Centro de control de Unidades de Producción y Volumen.']
     };
@@ -135,6 +144,12 @@ window.AdminUI = {
 
     this.activeInspectorTab = selected;
 
+    /*
+     * Construye Historial, Comparar o Correcciones solamente
+     * cuando el usuario selecciona realmente esa pestaña.
+     */
+    this.ensureInspectorPanel(selected);
+
     document.querySelectorAll(
       '[data-inspector-tab]'
     ).forEach(btn => {
@@ -164,6 +179,294 @@ window.AdminUI = {
     });
 
     body.scrollTop = 0;
+  },
+
+  inspectorItemKey(item){
+    if(!item){
+      return '';
+    }
+
+    return String(
+      item.id ||
+      item.reportId ||
+      item.reporteId ||
+      AdminUtils.getTime(item) ||
+      ''
+    );
+  },
+
+  resetInspectorLazyState(item){
+    const key = this.inspectorItemKey(item);
+
+    if(key === this.lazyInspectorKey){
+      return;
+    }
+
+    this.lazyInspectorKey = key;
+    this.lazyInspectorLoaded = new Set();
+
+    /*
+     * Cada reporte nuevo abre en Resumen. Así no se dispara
+     * automáticamente una pestaña pesada que hubiera quedado
+     * seleccionada en el reporte anterior.
+     */
+    this.activeInspectorTab = 'summary';
+    this.timelineFilter = 'all';
+    this.comparisonBaseId = null;
+  },
+
+  inspectorLazyPlaceholder(tab, title){
+    return `
+      <section
+        class="inspector-lazy-panel inspector-lazy-${tab}"
+        data-inspector-panel="${tab}"
+        data-inspector-lazy="${tab}"
+        aria-busy="false">
+
+        <div class="inspector-lazy-message">
+          <strong>${AdminUtils.escapeHtml(title)}</strong>
+          <span>
+            Esta sección se cargará al abrir la pestaña.
+          </span>
+        </div>
+      </section>
+    `;
+  },
+
+  prepareInspectorLazyPanels(item){
+    const body = document.getElementById(
+      'reportInspectorBody'
+    );
+
+    if(!body){
+      return;
+    }
+
+    this.resetInspectorLazyState(item);
+
+    /*
+     * Elimina cualquier sección pesada que haya podido quedar
+     * generada por una apertura anterior.
+     */
+    body.querySelectorAll(
+      [
+        '.inspector-timeline-section',
+        '.inspector-history-section',
+        '.inspector-comparison-section',
+        '.inspector-corrections-section',
+        '[data-inspector-lazy]'
+      ].join(',')
+    ).forEach(section => section.remove());
+
+    const rawJson = body.querySelector(
+      ':scope > .raw-json'
+    );
+
+    const placeholders = [
+      this.inspectorLazyPlaceholder(
+        'history',
+        'Historial operativo'
+      ),
+      this.inspectorLazyPlaceholder(
+        'compare',
+        'Comparación de reportes'
+      ),
+      this.inspectorLazyPlaceholder(
+        'corrections',
+        'Correcciones registradas'
+      )
+    ].join('');
+
+    if(rawJson){
+      rawJson.insertAdjacentHTML(
+        'beforebegin',
+        placeholders
+      );
+    }else{
+      body.insertAdjacentHTML(
+        'beforeend',
+        placeholders
+      );
+    }
+
+    const historyEl = document.getElementById(
+      'inspectorHistoryCount'
+    );
+
+    const correctionsEl = document.getElementById(
+      'inspectorCorrectionsCount'
+    );
+
+    /*
+     * No calculamos todavía las cantidades porque eso obligaría
+     * a recorrer los datos antes de que se abra la pestaña.
+     */
+    if(historyEl){
+      historyEl.textContent = '…';
+    }
+
+    if(correctionsEl){
+      correctionsEl.textContent = '…';
+      correctionsEl.classList.remove('has-items');
+    }
+  },
+
+  ensureInspectorPanel(tab){
+    const lazyTabs = [
+      'history',
+      'compare',
+      'corrections'
+    ];
+
+    if(!lazyTabs.includes(tab)){
+      return;
+    }
+
+    const item = this.currentReportItem;
+
+    if(!item){
+      return;
+    }
+
+    const currentKey = this.inspectorItemKey(item);
+
+    if(currentKey !== this.lazyInspectorKey){
+      this.resetInspectorLazyState(item);
+    }
+
+    if(this.lazyInspectorLoaded.has(tab)){
+      return;
+    }
+
+    const body = document.getElementById(
+      'reportInspectorBody'
+    );
+
+    if(!body){
+      return;
+    }
+
+    const placeholder = body.querySelector(
+      `[data-inspector-lazy="${tab}"]`
+    );
+
+    if(!placeholder){
+      return;
+    }
+
+    placeholder.setAttribute('aria-busy', 'true');
+
+    /*
+     * Permitimos que el navegador pinte primero la pestaña activa
+     * y después ejecutamos la construcción pesada.
+     */
+    requestAnimationFrame(() => {
+      if(
+        !this.currentReportItem ||
+        this.inspectorItemKey(this.currentReportItem) !== currentKey
+      ){
+        return;
+      }
+
+      let html = '';
+
+      try{
+        if(tab === 'history'){
+          html = this.renderWellTimeline(item);
+        }
+
+        if(tab === 'compare'){
+          html = this.renderReportComparison(item);
+        }
+
+        if(tab === 'corrections'){
+          html = this.renderReportCorrections(item);
+        }
+
+        placeholder.insertAdjacentHTML(
+          'beforebegin',
+          html || `
+            <section
+              class="inspector-empty-section"
+              data-inspector-panel="${tab}">
+              <p>No hay información disponible.</p>
+            </section>
+          `
+        );
+
+        placeholder.remove();
+        this.lazyInspectorLoaded.add(tab);
+
+        if(tab === 'history'){
+          const historyCount =
+            this.timelineEvents(item).length;
+
+          const historyEl = document.getElementById(
+            'inspectorHistoryCount'
+          );
+
+          if(historyEl){
+            historyEl.textContent = historyCount;
+          }
+
+          this.bindWellTimeline();
+          this.bindInspectorHistory();
+        }
+
+        if(tab === 'compare'){
+          this.bindReportComparison();
+        }
+
+        if(tab === 'corrections'){
+          const correctionsCount =
+            this.reportCorrections(item).length;
+
+          const correctionsEl = document.getElementById(
+            'inspectorCorrectionsCount'
+          );
+
+          if(correctionsEl){
+            correctionsEl.textContent =
+              correctionsCount;
+
+            correctionsEl.classList.toggle(
+              'has-items',
+              correctionsCount > 0
+            );
+          }
+        }
+
+        /*
+         * La nueva sección debe quedar visible inmediatamente,
+         * porque fue insertada después de setInspectorTab().
+         */
+        body.querySelectorAll(
+          '[data-inspector-panel]'
+        ).forEach(section => {
+          section.classList.toggle(
+            'is-tab-active',
+            section.dataset.inspectorPanel === tab
+          );
+        });
+
+      }catch(error){
+        console.error(
+          `Error cargando pestaña ${tab}:`,
+          error
+        );
+
+        placeholder.removeAttribute('aria-busy');
+
+        placeholder.innerHTML = `
+          <div class="inspector-lazy-message">
+            <strong>No fue posible cargar esta sección</strong>
+            <span>
+              Cierra el inspector y vuelve a intentarlo.
+            </span>
+          </div>
+        `;
+      }
+    });
   },
 
   reportCorrections(item){
@@ -498,39 +801,11 @@ window.AdminUI = {
       rawJson.dataset.inspectorPanel = 'summary';
     }
 
-    const oldComparison = body.querySelector(
-      '.inspector-comparison-section'
-    );
-
-    const oldCorrections = body.querySelector(
-      '.inspector-corrections-section'
-    );
-
-    oldComparison?.remove();
-    oldCorrections?.remove();
-
-    const comparisonHtml =
-      this.renderReportComparison(item);
-
-    const correctionHtml =
-      this.renderReportCorrections(item);
-
-    if(rawJson){
-      rawJson.insertAdjacentHTML(
-        'beforebegin',
-        comparisonHtml
-      );
-
-      rawJson.insertAdjacentHTML(
-        'beforebegin',
-        correctionHtml
-      );
-    }else{
-      body.insertAdjacentHTML(
-        'beforeend',
-        comparisonHtml + correctionHtml
-      );
-    }
+    /*
+     * Historial, Comparar y Correcciones ya no se construyen aquí.
+     * Solo se colocan contenedores livianos.
+     */
+    this.prepareInspectorLazyPanels(item);
 
     const photos = []
       .concat(item.fotos || [])
@@ -543,12 +818,6 @@ window.AdminUI = {
     const evidenceCount =
       Number(item.nFotos || photos.length || 0) +
       (AdminUtils.hasGps(item) ? 1 : 0);
-
-    const historyCount =
-      this.timelineEvents(item).length;
-
-    const correctionsCount =
-      this.reportCorrections(item).length;
 
     const evidenceEl = document.getElementById(
       'inspectorEvidenceCount'
@@ -566,16 +835,17 @@ window.AdminUI = {
       evidenceEl.textContent = evidenceCount;
     }
 
-    if(historyEl){
-      historyEl.textContent = historyCount;
+    /*
+     * Los contadores de Historial y Correcciones se actualizan
+     * cuando cada pestaña se genera por primera vez.
+     */
+    if(historyEl && historyEl.textContent !== '…'){
+      historyEl.textContent = '…';
     }
 
-    if(correctionsEl){
-      correctionsEl.textContent = correctionsCount;
-      correctionsEl.classList.toggle(
-        'has-items',
-        correctionsCount > 0
-      );
+    if(correctionsEl && correctionsEl.textContent !== '…'){
+      correctionsEl.textContent = '…';
+      correctionsEl.classList.remove('has-items');
     }
 
     this.setInspectorTab(
@@ -2128,7 +2398,8 @@ window.AdminUI = {
       fluye.includes('FRAC TANK');
 
     const hasBlock =
-      /NIVEL\s+(?:DE\s+)?FRAC\s*TANK/i
+      
+/NIVEL\s+(?:DE\s+)?(?:FRAC\s*TANK|PRESA\s*MET[ÁA]LICA)/i
         .test(message);
 
     const hasCtm =
@@ -3073,6 +3344,31 @@ window.AdminUI = {
     this.resetInspectorSource();
   },
 
+  detailMessage(item){
+    const values = [
+      item?.msg,
+      item?.mensaje,
+      item?.message,
+      item?.texto,
+      item?.observaciones,
+      item?.obs,
+      item?.descripcion,
+      item?.nota,
+      item?.contenido,
+      item?.co?.observaciones,
+      item?.nivel?.observaciones
+    ];
+
+    for(const value of values){
+      const txt = String(value || '').trim();
+      if(txt){
+        return txt;
+      }
+    }
+
+    return '';
+  },
+
   openDetail(type, item){
     if(!item) return;
 
@@ -3118,6 +3414,132 @@ window.AdminUI = {
     const co = item.co || {};
     const nivel = item.nivel || {};
     const checks = item.checks || {};
+
+    /*
+     * Separación estricta de Estrangulador y TP #Vueltas.
+     * No permite que el número de vueltas sea interpretado
+     * como pulgadas del estrangulador.
+     */
+    const rawOperationalMessage = String(
+      item?.msg ||
+      item?.mensaje ||
+      item?.message ||
+      item?.texto ||
+      ''
+    );
+
+    const chokeMessageMatch =
+      rawOperationalMessage.match(
+        /Estrangulador\s*:\s*(.*?)(?=\s*-\s*TP\s*#?\s*Vueltas?\s*:|\s+TP\s*#?\s*Vueltas?\s*:|\s+SAP\s*:|\s+PTP\s*:|\s+TR\s*#?\s*Vuelta\s*:|\r?\n|$)/i
+      );
+
+    const tpTurnsMessageMatch =
+      rawOperationalMessage.match(
+        /\bTP\s*#?\s*Vueltas?\s*:\s*([0-9]+(?:[.,][0-9]+)?)/i
+      );
+
+    const normalizeChokeValue = value => {
+      const raw = String(value ?? '')
+        .replace(/\*/g, '')
+        .trim();
+
+      const normalized = raw
+        .toUpperCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if(
+        !normalized ||
+        normalized === '-' ||
+        normalized === '—' ||
+        normalized === '–' ||
+        normalized === 'N/A' ||
+        normalized === 'NA' ||
+        normalized.includes('SIN ESTRANGULADOR')
+      ){
+        return '-';
+      }
+
+      if(
+        normalized === 'FRANCO' ||
+        normalized.includes('A FRANCO') ||
+        normalized.includes('ABIERTO FRANCO')
+      ){
+        return 'Franco';
+      }
+
+      /*
+       * Solamente acepta un número perteneciente al propio
+       * segmento del Estrangulador.
+       */
+      const numericMatch = raw.match(
+        /([0-9]+(?:[.,][0-9]+)?)\s*(?:PULG|PULGADAS?|["”])?/i
+      );
+
+      if(numericMatch){
+        return numericMatch[1].replace(',', '.');
+      }
+
+      return '-';
+    };
+
+    const estranguladorDetailValue =
+      chokeMessageMatch
+        ? normalizeChokeValue(chokeMessageMatch[1])
+        : normalizeChokeValue(
+            co.estrangulador ??
+            item?.estrangulador ??
+            parsed.estrangulador
+          );
+
+    const tpVueltasDetailValue = (() => {
+      /*
+       * Se da prioridad al valor escrito explícitamente
+       * en el mensaje: TP #Vueltas: 5.
+       *
+       * Se usa una lista con find() para ignorar valores
+       * vacíos, guiones y campos antiguos sin contenido.
+       */
+      const candidates = [
+        tpTurnsMessageMatch
+          ? tpTurnsMessageMatch[1]
+          : '',
+        co.tpVueltas,
+        co.tpVuelta,
+        co.trVueltas,
+        co.trVuelta,
+        item?.tpVueltas,
+        item?.tpVuelta,
+        item?.trVueltas,
+        item?.trVuelta,
+        parsed.tpVueltas,
+        parsed.tpVuelta,
+        parsed.trVueltas,
+        parsed.trVuelta
+      ];
+
+      const candidate = candidates.find(value => {
+        const clean = String(value ?? '')
+          .trim();
+
+        return (
+          clean &&
+          clean !== '-' &&
+          clean !== '—' &&
+          clean !== '–'
+        );
+      }) || '';
+
+      const match = String(candidate).match(
+        /[0-9]+(?:[.,][0-9]+)?/
+      );
+
+      return match
+        ? match[0].replace(',', '.')
+        : '-';
+    })();
 
     const isWellExpedient =
       useInspector &&
@@ -3193,14 +3615,14 @@ window.AdminUI = {
           <div class="detail-box"><span>Estatus</span><b>${u.escapeHtml(co.estatus || item.estatus || parsed.estatus || '-')}</b></div>
           <div class="detail-box"><span>Fluye</span><b>${u.escapeHtml(co.fluye || item.fluye || parsed.fluye || '-')}</b></div>
           <div class="detail-box"><span>SAP</span><b>${u.escapeHtml(co.sap || item.sap || parsed.sap || '-')}</b></div>
-          <div class="detail-box"><span>Estrangulador (pulg)</span><b>${u.escapeHtml(detailNumber(co.estrangulador || item.estrangulador || parsed.estrangulador || '-'))}</b></div>
+          <div class="detail-box"><span>Estrangulador (pulg)</span><b>${u.escapeHtml(estranguladorDetailValue)}</b></div>
           <div class="detail-box"><span>PTP (kg/cm²)</span><b>${u.escapeHtml(detailNumber(co.ptp || item.ptp || parsed.ptp || '-'))}</b></div>
           <div class="detail-box"><span>LDD (kg/cm²)</span><b>${u.escapeHtml(detailNumber(co.ldd || item.ldd || parsed.ldd || '-'))}</b></div>
           <div class="detail-box"><span>PTR (kg/cm²)</span><b>${u.escapeHtml(detailNumber(co.ptr || item.ptr || parsed.ptr || '-'))}</b></div>
           <div class="detail-box"><span>EPM</span><b>${u.escapeHtml(detailNumber(co.epm || item.epm || parsed.epm || '-'))}</b></div>
           <div class="detail-box"><span>Carrera (pulg)</span><b>${u.escapeHtml(detailNumber(co.carrera || item.carrera || parsed.carrera || '-'))}</b></div>
           <div class="detail-box"><span>LBN (kg/cm²)</span><b>${u.escapeHtml(detailNumber(co.lbn || item.lbn || parsed.lbn || '-'))}</b></div>
-          <div class="detail-box"><span>TR / Vuelta</span><b>${u.escapeHtml(detailNumber(item.trVuelta || parsed.trVuelta || '-'))}</b></div>
+          <div class="detail-box"><span>TP / Vueltas</span><b>${u.escapeHtml(tpVueltasDetailValue)}</b></div>
         </div>
       </div>
 
@@ -3229,7 +3651,12 @@ window.AdminUI = {
 
       <div class="detail-section">
         <h3>Observaciones / Mensaje</h3>
-        <div class="obs-box">${u.escapeHtml(u.obsText(item) || '-')}</div>
+        <div class="obs-box">${
+  u.escapeHtml(
+    this.detailMessage(item) ||
+    'Sin observaciones registradas'
+  )
+}</div>
       </div>
 
       <div class="detail-section">
@@ -3245,7 +3672,14 @@ window.AdminUI = {
 
       ${useInspector ? this.renderOperationalDiagnosis(item) : ''}
 
-      ${useInspector ? this.renderWellTimeline(item) : ''}
+      ${
+        useInspector
+          ? this.inspectorLazyPlaceholder(
+              'history',
+              'Historial operativo'
+            )
+          : ''
+      }
 
       <details class="raw-json">
         <summary>Ver JSON completo</summary>
@@ -3271,8 +3705,10 @@ window.AdminUI = {
       this.highlightCurrentReportRow(item.id);
       this.bindInspectorHistory();
       this.prepareInspectorTabs(item);
-      this.bindWellTimeline();
-      this.bindReportComparison();
+      /*
+       * Los eventos del Timeline y Comparación se enlazan
+       * únicamente cuando se abre cada pestaña.
+       */
 
       requestAnimationFrame(() => {
         bodyEl.scrollTop = 0;

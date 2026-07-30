@@ -3603,7 +3603,7 @@ function hcCargar(){
 
   if(typeof fbDB !== 'undefined' && fbDB){
     if(statusEl) statusEl.textContent = '🔄 Sincronizando todos los dispositivos...';
-    fbDB.ref('reportes').orderByChild('fecha').limitToLast(300).once('value', function(snap){
+    fbDB.ref('reportes').orderByChild('fecha').limitToLast(20).once('value', function(snap){
       try{
         var localIds={};
         locales.forEach(function(r){ if(r.id) localIds[r.id]=true; });
@@ -5575,7 +5575,9 @@ function escucharFirebase(){
     // Ordenar por fecha descendente
     var merged = Object.values(localMap);
     merged.sort(function(a,b){ return new Date(b.fecha)-new Date(a.fecha); });
-    if(merged.length > 20) merged = merged.slice(0, 20);
+    if (merged.length > 20) {
+      merged = merged.slice(0, 20);
+    }
     saveHistorial(merged);
     renderHistorial();
     actualizarBadgeHistorial();

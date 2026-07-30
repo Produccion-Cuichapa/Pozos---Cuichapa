@@ -1,0 +1,523 @@
+/* =========================================================
+   RESUMEN MENSUAL — INICIO
+   ========================================================= */
+
+.monthly-support-panel {
+  overflow: hidden;
+  margin: 22px 0;
+  border: 1px solid #d7e1ed;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(15, 35, 61, .07);
+}
+
+.monthly-support-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding: 21px 24px;
+  border-bottom: 1px solid #e1e8f0;
+}
+
+.monthly-support-eyebrow {
+  display: block;
+  margin-bottom: 5px;
+  color: #4472a5;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .13em;
+}
+
+.monthly-support-head h2 {
+  margin: 0;
+  color: #10233d;
+  font-size: 20px;
+}
+
+.monthly-support-head p {
+  margin: 6px 0 0;
+  color: #697b90;
+  font-size: 12px;
+}
+
+.monthly-support-state {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  min-width: 205px;
+  padding: 11px 13px;
+  border: 1px solid #cfe3d7;
+  border-radius: 12px;
+  background: #f2faf5;
+}
+
+.monthly-support-live-dot {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #22a35a;
+  box-shadow: 0 0 0 5px rgba(34, 163, 90, .12);
+}
+
+.monthly-support-state strong,
+.monthly-support-state span {
+  display: block;
+}
+
+.monthly-support-state strong {
+  color: #21573a;
+  font-size: 11px;
+}
+
+.monthly-support-state span {
+  margin-top: 2px;
+  color: #668170;
+  font-size: 10px;
+}
+
+.monthly-support-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.monthly-support-table {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.monthly-support-table th {
+  padding: 13px 16px;
+  border-bottom: 1px solid #dde5ee;
+  background: #f5f8fc;
+  color: #64768b;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .055em;
+  text-align: center;
+}
+
+.monthly-support-table th:first-child {
+  width: 185px;
+  text-align: left;
+}
+
+.monthly-support-table td {
+  padding: 20px 16px;
+  border-right: 1px solid #e5ebf2;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.monthly-support-table td:last-child {
+  border-right: 0;
+}
+
+.monthly-support-table td:first-child {
+  text-align: left;
+}
+
+.monthly-support-table td:first-child strong {
+  display: block;
+  color: #12375e;
+  font-size: 16px;
+}
+
+.monthly-support-month-sub {
+  display: block;
+  margin-top: 4px;
+  color: #8190a1;
+  font-size: 10px;
+}
+
+.monthly-support-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  height: 44px;
+  padding: 0 10px;
+  border: 1px solid #d5e2f1;
+  border-radius: 12px;
+  background: #f1f6fc;
+  color: #154d88;
+  font-size: 21px;
+  font-weight: 900;
+}
+
+.monthly-support-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  padding: 11px 24px;
+  border-top: 1px solid #e2e9f1;
+  background: #fafbfd;
+  color: #75869a;
+  font-size: 10px;
+}
+
+@media (max-width: 800px) {
+  .monthly-support-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .monthly-support-state {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .monthly-support-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+
+/* =========================================================
+   FILTROS DE PERIODO
+   ========================================================= */
+
+.monthly-support-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  padding: 14px 24px;
+  border-bottom: 1px solid #e1e8f0;
+  background: #fbfcfe;
+}
+
+.monthly-support-period-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.monthly-support-period-btn {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid #d8e1eb;
+  border-radius: 10px;
+  background: #fff;
+  color: #5b6f85;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  transition: .18s ease;
+}
+
+.monthly-support-period-btn:hover {
+  border-color: #aac3df;
+  background: #f2f7fc;
+  color: #1e588f;
+}
+
+.monthly-support-period-btn.active {
+  border-color: #8db4de;
+  background: #e4f0fd;
+  color: #164f88;
+  box-shadow: 0 0 0 2px rgba(43, 105, 169, .08);
+}
+
+.monthly-support-custom-dates {
+  display: flex;
+  align-items: flex-end;
+  gap: 9px;
+}
+
+.monthly-support-custom-dates.hidden {
+  display: none;
+}
+
+.monthly-support-custom-dates label {
+  display: grid;
+  gap: 5px;
+}
+
+.monthly-support-custom-dates label span {
+  color: #66798e;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.monthly-support-custom-dates input {
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid #d4dfeb;
+  border-radius: 9px;
+  background: #fff;
+  color: #17324f;
+  font: inherit;
+  font-size: 11px;
+  outline: none;
+}
+
+.monthly-support-custom-dates input:focus {
+  border-color: #6e9ed0;
+  box-shadow: 0 0 0 3px rgba(52, 111, 173, .11);
+}
+
+.monthly-support-apply-btn {
+  min-height: 38px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 9px;
+  background: #174f88;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.monthly-support-apply-btn:hover {
+  background: #123f70;
+}
+
+.monthly-support-apply-btn:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
+@media (max-width: 900px) {
+  .monthly-support-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .monthly-support-custom-dates {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .monthly-support-custom-dates label {
+    flex: 1 1 150px;
+  }
+
+  .monthly-support-custom-dates input {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .monthly-support-apply-btn {
+    flex: 1 1 110px;
+  }
+}
+
+
+/*
+ * ==========================================================
+ * DESGLOSE_PLEGABLE_RECORREDORES_CSS_V1
+ * ==========================================================
+ */
+
+.monthly-worker-breakdown {
+  border-top: 1px solid #dbe5f1;
+  background: #f8fbff;
+}
+
+.monthly-worker-toggle {
+  width: 100%;
+  min-height: 68px;
+  padding: 16px 40px;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  color: #173e72;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.monthly-worker-toggle:hover {
+  background: #eef5fd;
+}
+
+.monthly-worker-toggle:focus-visible {
+  outline: 3px solid rgba(60, 130, 210, 0.28);
+  outline-offset: -3px;
+}
+
+.monthly-worker-toggle-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.monthly-worker-toggle-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e6f0fc;
+  color: #1e5795;
+  font-size: 19px;
+}
+
+.monthly-worker-count {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid #c8daf0;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #24568f;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.monthly-worker-toggle-arrow {
+  color: #587595;
+  font-size: 20px;
+  transition: transform 180ms ease;
+}
+
+.monthly-worker-content {
+  max-height: 900px;
+  overflow: hidden;
+  opacity: 1;
+  transition:
+    max-height 240ms ease,
+    opacity 180ms ease;
+}
+
+.monthly-worker-breakdown.is-collapsed
+.monthly-worker-content {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.monthly-worker-heading {
+  padding: 20px 40px 16px;
+  border-top: 1px solid #dce7f3;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.monthly-worker-heading > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.monthly-worker-heading strong {
+  color: #102f58;
+  font-size: 18px;
+}
+
+.monthly-worker-heading span {
+  color: #71829a;
+  font-size: 13px;
+}
+
+.monthly-worker-table-wrap {
+  padding: 0 40px 30px;
+  overflow-x: auto;
+}
+
+.monthly-worker-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border: 1px solid #d7e2ef;
+  border-radius: 15px;
+  background: #fff;
+}
+
+.monthly-worker-table th {
+  padding: 15px 16px;
+  border-bottom: 1px solid #d7e2ef;
+  background: #f2f6fb;
+  color: #5f7086;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.045em;
+  text-align: center;
+}
+
+.monthly-worker-table th:first-child {
+  text-align: left;
+}
+
+.monthly-worker-table td {
+  padding: 14px 12px;
+  border-right: 1px solid #e1e9f2;
+  border-bottom: 1px solid #e1e9f2;
+  color: #173e72;
+  font-size: 15px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.monthly-worker-table td:first-child {
+  color: #152f50;
+  font-size: 15px;
+  text-align: left;
+}
+
+.monthly-worker-table td:last-child,
+.monthly-worker-table th:last-child {
+  border-right: 0;
+}
+
+.monthly-worker-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.monthly-worker-table tbody tr:hover td {
+  background: #f8fbff;
+}
+
+@media (max-width: 760px) {
+  .monthly-worker-toggle {
+    min-height: 62px;
+    padding: 14px 20px;
+  }
+
+  .monthly-worker-heading {
+    padding: 18px 20px 14px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .monthly-worker-table-wrap {
+    padding: 0 20px 24px;
+  }
+
+  .monthly-worker-toggle-main {
+    gap: 8px;
+    font-size: 14px;
+  }
+
+  .monthly-worker-toggle-icon {
+    width: 31px;
+    height: 31px;
+  }
+}
+
