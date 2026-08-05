@@ -111,8 +111,44 @@ window.AdminExportaciones = {
 
   isFT(r){
     const p = this.parsed(r);
-    const fluye = String(r.co?.fluye || p.fluye || '').toUpperCase();
-    return fluye.includes('FT') || fluye.includes('FRAC');
+    const fluye = String(
+      r.co?.fluye ||
+      r.fluye ||
+      p.fluye ||
+      ''
+    ).toUpperCase();
+
+    return (
+      fluye === 'FT' ||
+      fluye.includes('FRAC TANK')
+    );
+  },
+
+  hasNivelFracTank(r){
+    const msg = String(
+      r.msg ||
+      r.mensaje ||
+      r.message ||
+      r.texto ||
+      ''
+    );
+
+    const tieneBloque =
+      
+/NIVEL\s+(?:DE\s+)?(?:FRAC\s*TANK|PRESA\s*MET[ÁA]LICA)/i.test(msg);
+
+    const nivel = String(
+      this.nivelCm(r) || ''
+    ).trim();
+
+    /*
+     * Turno 1 solamente:
+     * 1. Reporte de visita.
+     * 2. Fluye a FT.
+     * 3. Incluye bloque NIVEL FRAC TANK.
+     * 4. Tiene un CTM real.
+     */
+    return tieneBloque && nivel !== '';
   },
 
   isPozoReal(r){
@@ -255,7 +291,7 @@ window.AdminExportaciones = {
       .replace(/\*REPORTE CABEZAL\*/ig,'')
       .replace(/\*ESTACI[ÓO]N\*/ig,'')
       .replace(/Recorredor\s*:\s*[^\n]+/ig,'')
-      .replace(/Juan Carlos|Manrique|Cirilo/ig,'')
+      .replace(/Juan Carlos|Manrique/ig,'')
       .replace(/\d{2}\/\d{2}\/\d{4}\s+[^\n]+/ig,'')
       .replace(/GPS\s*:[^\n]+/ig,'')
       .replace(/https?:\/\/\S+/ig,'')
@@ -325,6 +361,23 @@ window.AdminExportaciones = {
     box.textContent = 'Generando Excel por día desde plantilla oficial...';
 
     const allRows = (AdminFirebase.reportes || []).filter(r => {
+      const tipo = this.tipoReporte(r);
+      const esReporteEspecial =
+        tipo === 'NOTA' ||
+        tipo === 'CABEZAL' ||
+        tipo === 'ESTACION' ||
+        tipo === 'NIVEL_GUARDIA';
+
+      // El catálogo se exige únicamente para reportes normales de visita.
+      // Notas, cabezales, estaciones y guardias pueden usar ubicaciones
+      // que no corresponden literalmente a una clave del catálogo.
+      if(
+        !esReporteEspecial &&
+        !window.CatalogoPozos?.existe(AdminUtils.placeText(r))
+      ){
+        return false;
+      }
+
       const ymd = this.ymdFromRow(r);
       const persona = String(AdminUtils.personText(r) || '').trim().toLowerCase();
       const elegido = String(rec || '').trim().toLowerCase();
@@ -335,8 +388,7 @@ window.AdminExportaciones = {
         elegido.includes(persona) ||
         (elegido.includes('luis') && persona.includes('luis')) ||
         (elegido.includes('juan') && persona.includes('juan')) ||
-        (elegido.includes('manrique') && persona.includes('manrique')) ||
-        (elegido.includes('cirilo') && persona.includes('cirilo'));
+        (elegido.includes('manrique') && persona.includes('manrique'));
 
       return matchRec && ymd >= desde && ymd <= hasta;
     }).sort((a,b) => new Date(a.fecha || a.timestamp || 0) - new Date(b.fecha || b.timestamp || 0));
@@ -370,7 +422,16 @@ window.AdminExportaciones = {
 
       const nivelRows = rows.filter(r => {
         const tipo = this.tipoReporte(r);
-        return tipo === 'NIVEL_GUARDIA' || (tipo === 'VISITA' && this.isFT(r));
+
+        if(tipo === 'NIVEL_GUARDIA'){
+          return true;
+        }
+
+        return (
+          tipo === 'VISITA' &&
+          this.isFT(r) &&
+          this.hasNivelFracTank(r)
+        );
       });
 
       const grupos = {1:[],2:[],3:[]};
@@ -433,8 +494,6 @@ window.AdminExportaciones = {
       );
 
       const mapaRecorredores = {
-        'cirilo': 'Cirilo Cancino Gómez',
-        'cirilo cancino': 'Cirilo Cancino Gómez',
         'manrique': 'Manrique Jiménez',
         'juan': 'Juan Carlos Flores',
         'juan carlos': 'Juan Carlos Flores',
@@ -769,7 +828,9 @@ window.AdminExportaciones = {
         interTotales[colInter] = 0;
       }
 
-      (AdminFirebase.reportes || []).forEach(r => {
+      (AdminFirebase.reportes || []).filter(r =>
+        window.CatalogoPozos?.existe(AdminUtils.placeText(r))
+      ).forEach(r => {
         const texto = [
           r.msg, r.mensaje, r.message, r.texto,
           r.whatsappText, r.raw, JSON.stringify(r)
@@ -806,18 +867,26 @@ window.AdminExportaciones = {
         const addrAforo = colName(colAforo) + row;
         const addrInter = colName(colInter) + row;
 
-        const fluye = String(r.co?.fluye || r.fluye || '').toUpperCase();
+        const fluye = String(
+          r.co?.fluye ||
+          r.fluye ||
+          this.parsed(r)?.fluye ||
+          ''
+        ).toUpperCase();
 
         const esFT =
           fluye === 'FT' ||
           /FLUYE\s*:\s*FT\b/i.test(msg) ||
           /FLUYE\s+FT\b/i.test(msg);
 
+        const tieneNivelFracTank =
+          this.hasNivelFracTank(r);
+
         if(esVisita){
           superCeldas[addrSuper] = (superCeldas[addrSuper] || 0) + 1;
           superTotales[colSuper] = (superTotales[colSuper] || 0) + 1;
 
-          if(esFT){
+          if(esFT && tieneNivelFracTank){
             nivelCeldas[addrNivel] = (nivelCeldas[addrNivel] || 0) + 1;
             nivelTotales[colNivel] = (nivelTotales[colNivel] || 0) + 1;
           }

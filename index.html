@@ -280,13 +280,13 @@ window.addEventListener('unhandledrejection', function(e){
     <!-- RECORREDORES -->
     <button class="pk-row" onclick="ppToggle('rec')">
       <div class="pk-ball" style="background:#dcfce7">🚶</div>
-      <div class="pk-info"><div class="pk-info-name">Recorredores</div><div class="pk-info-sub">Manrique, Cirilo, Juan Carlos, Jose, Luis</div></div>
+      <div class="pk-info"><div class="pk-info-name">Recorredores</div><div class="pk-info-sub">Manrique, Juan Carlos, Jose, Luis</div></div>
       <span class="pk-chev" id="pp-arrow-rec">›</span>
     </button>
     <div class="pk-divider"></div>
     <div class="pk-cards" id="pp-body-rec">
       <div class="pk-card" id="pk-rec-m" onclick="selProfile('Manrique','m','rec')"><div class="pk-card-ico">🌊</div><div class="pk-card-nm">Manrique</div><div class="pk-card-lk">🔒 clave</div></div>
-      <div class="pk-card" id="pk-rec-c" onclick="selProfile('Cirilo','c','rec')" style="display:none"><div class="pk-card-ico">⛏️</div><div class="pk-card-nm">Cirilo</div><div class="pk-card-lk">🔒 clave</div></div>
+
       <div class="pk-card" id="pk-rec-jc" onclick="selProfile('Juan Carlos','jc','rec')"><div class="pk-card-ico">🦺</div><div class="pk-card-nm">Juan Carlos</div><div class="pk-card-lk">🔒 clave</div></div>
       <div class="pk-card" id="pk-rec-j" onclick="selProfile('Jose','j','rec')"><div class="pk-card-ico">🛢️</div><div class="pk-card-nm">Jose</div><div class="pk-card-lk">🔒 clave</div></div>
       <div class="pk-card" id="pk-rec-l" onclick="selProfile('Luis','l','rec')"><div class="pk-card-ico">🚧</div><div class="pk-card-nm">Luis</div><div class="pk-card-lk">🔒 clave</div></div>
@@ -492,7 +492,6 @@ function ppToggle(id){
     </svg>
   </div>
 
-  <!-- CIRILO: Barba completa, lentes oscuros, radio en hombro -->
   <div class="char-c">
     <svg viewBox="0 0 110 200" xmlns="http://www.w3.org/2000/svg" width="110" height="200">
       <ellipse cx="55" cy="197" rx="28" ry="5" fill="rgba(0,0,0,.2)"/>
@@ -725,26 +724,6 @@ function ppToggle(id){
 <!-- Accesos rápidos: Programa + Historial Central -->
 <div id="quickAccessWrap" style="margin-bottom:14px;display:none">
 
-  <!-- PROGRAMA DEL DÍA -->
-  <div id="progBtnWrap" style="display:none;margin-bottom:10px">
-    <button onclick="abrirPrograma()"
-      style="width:100%;padding:0;background:linear-gradient(135deg,#1e3a8a,#2563eb);border:none;border-radius:18px;cursor:pointer;box-shadow:0 4px 20px rgba(37,99,235,.28);overflow:hidden;display:block">
-      <div style="display:flex;align-items:center;gap:0">
-        <!-- Ícono -->
-        <div style="width:72px;flex-shrink:0;background:rgba(0,0,0,.15);align-self:stretch;display:flex;align-items:center;justify-content:center">
-          <span style="font-size:30px">📋</span>
-        </div>
-        <!-- Texto -->
-        <div style="flex:1;padding:16px 14px;text-align:left">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:1.5px;color:#fff;line-height:1">PROGRAMA DEL DÍA</div>
-          <div id="progBadgeCount" style="font-size:13px;font-family:Inter,sans-serif;font-weight:600;color:rgba(255,255,255,.75);margin-top:4px">Sin pozos aún</div>
-        </div>
-        <!-- Flecha -->
-        <div style="padding:0 18px;color:rgba(255,255,255,.6);font-size:26px">›</div>
-      </div>
-    </button>
-  </div>
-
   <!-- HISTORIAL CENTRAL -->
   <div id="hcBtnWrap" style="display:none">
     <button onclick="abrirHistorialCentral()"
@@ -763,25 +742,9 @@ function ppToggle(id){
         <div style="padding:0 18px;color:var(--txt2);font-size:24px">›</div>
       </div>
     </button>
-        <div style="font-size:11px;color:var(--txt2);padding:8px 4px;border-radius:8px;background:var(--surface2);margin-top:6px;text-align:center">📊 Generación de Excel desactivada.<br>Los reportes se exportan desde Firebase/JSON.</div>
   </div>
 
-  <!-- DESCARGAR EXCEL (recorredor) -->
-  <div id="excelBtnWrap" style="display:none;margin-top:10px">
-    <button onclick="descargarExcelRecorredor()"
-      style="width:100%;padding:0;background:var(--surface2);border:1.5px solid #16a34a;border-radius:14px;cursor:pointer;overflow:hidden;display:block">
-      <div style="display:flex;align-items:center;gap:0">
-        <div style="width:56px;flex-shrink:0;background:rgba(22,163,74,.1);align-self:stretch;display:flex;align-items:center;justify-content:center">
-          <span style="font-size:24px">📥</span>
-        </div>
-        <div style="flex:1;padding:13px 14px;text-align:left">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:1.2px;color:#16a34a;line-height:1">MIS REPORTES EN EXCEL</div>
-          <div style="font-size:11px;font-family:Inter,sans-serif;font-weight:600;color:var(--txt2);margin-top:3px">Descargar historial completo</div>
-        </div>
-        <div style="padding:0 16px;color:#16a34a;font-size:22px">↓</div>
-      </div>
-    </button>
-  </div>
+
 
 </div>
 
@@ -902,14 +865,330 @@ function ppToggle(id){
       <span style="font-size:26px">🏭</span>
       <span style="font-size:12px;font-weight:800;margin-top:4px">Estaciones</span>
     </button>
-    <button class="mode-big-btn" id="modo-btn-nota" onclick="setModoReg('nota')" style="grid-column:1/-1">
+    <button class="mode-big-btn" id="modo-btn-nota" onclick="setModoReg('nota')">
       <span style="font-size:26px">📝</span>
       <span style="font-size:12px;font-weight:800;margin-top:4px">Nota de Campo</span>
+    </button>
+
+    <button class="mode-big-btn" id="modo-btn-muestras" onclick="setModoReg('muestras')">
+      <span style="font-size:26px">🧪</span>
+      <span style="font-size:12px;font-weight:800;margin-top:4px">Muestras</span>
+    </button>
+
+    <button class="mode-big-btn" id="modo-btn-aforo" onclick="setModoReg('aforo')" style="grid-column:1/-1">
+      <span style="font-size:26px">📈</span>
+      <span style="font-size:12px;font-weight:800;margin-top:4px">Aforo</span>
     </button>
   </div>
 
   <!-- CAB Quick Access -->
   
+
+
+<!-- ══ MUESTRAS ══ -->
+<div class="step-card"
+     id="card-muestras"
+     style="display:none;border:2.5px solid #7c3aed">
+
+  <div class="step-label" style="color:#7c3aed">
+    🧪 Muestras
+  </div>
+
+  <div style="font-size:12px;color:var(--txt2);margin-bottom:14px">
+    Selecciona uno o varios pozos del catálogo oficial.
+  </div>
+
+  <button type="button"
+          onclick="abrirSelectorMuestras()"
+          style="width:100%;padding:13px;border-radius:12px;border:2px solid #7c3aed;background:#f5f3ff;color:#5b21b6;font-weight:800;font-size:14px;cursor:pointer">
+    ＋ Seleccionar pozos
+  </button>
+
+  <div id="muestrasResumen"
+       style="margin-top:12px;padding:12px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);font-size:13px">
+    Ningún pozo seleccionado
+  </div>
+
+  <div id="muestrasSeleccionados"
+       style="display:flex;flex-wrap:wrap;gap:7px;margin-top:10px">
+  </div>
+
+  <div class="big-field-label" style="margin-top:18px;margin-bottom:8px">
+    Observaciones
+  </div>
+
+  <textarea id="muestrasObs"
+            rows="4"
+            placeholder="Observaciones sobre la toma de muestras..."
+            oninput="actualizarEnviarBtn()"
+            style="width:100%;box-sizing:border-box;padding:12px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface2);color:var(--txt);font-family:inherit;font-size:14px;resize:none">
+  </textarea>
+
+</div>
+
+<!-- Selector múltiple de pozos para Muestras -->
+<div id="muestrasSelectorOverlay"
+     style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.68);align-items:flex-end;justify-content:center">
+
+  <div style="width:100%;max-width:520px;max-height:86vh;background:var(--surface);border-radius:22px 22px 0 0;display:flex;flex-direction:column;overflow:hidden">
+
+    <div style="padding:18px;border-bottom:1px solid var(--border)">
+      <div style="font-size:17px;font-weight:900;color:var(--txt)">
+        🧪 Seleccionar pozos
+      </div>
+
+      <input id="muestrasBuscar"
+             type="search"
+             placeholder="Buscar pozo..."
+             oninput="renderSelectorMuestras(this.value)"
+             style="width:100%;box-sizing:border-box;margin-top:12px;padding:12px;border:1.5px solid var(--border);border-radius:11px;background:var(--surface2);color:var(--txt);font-size:14px">
+    </div>
+
+    <div id="muestrasLista"
+         style="padding:12px;overflow-y:auto;flex:1">
+    </div>
+
+    <div style="display:flex;gap:10px;padding:14px;border-top:1px solid var(--border)">
+      <button type="button"
+              onclick="cerrarSelectorMuestras()"
+              style="flex:1;padding:13px;border-radius:11px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt);font-weight:800">
+        Cancelar
+      </button>
+
+      <button type="button"
+              onclick="confirmarSelectorMuestras()"
+              style="flex:1;padding:13px;border-radius:11px;border:none;background:#7c3aed;color:#fff;font-weight:800">
+        Confirmar
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ AFORO / PROYECCIÓN ══ -->
+<div class="step-card"
+     id="card-aforo"
+     style="display:none;border:2.5px solid #0f766e">
+
+  <div class="step-label" style="color:#0f766e">
+    📈 Aforo / Proyección
+  </div>
+
+  <!-- DESTINO DEL FLUJO -->
+  <div class="big-field-label" style="margin-bottom:8px">
+    Fluye
+  </div>
+
+  <div style="display:flex;gap:8px;margin-bottom:18px">
+    <button type="button"
+            id="aforo-btn-ft"
+            onclick="selTipoAforo('ft',this)"
+            style="flex:1;padding:10px 6px;border-radius:11px;border:2px solid #0f766e;background:#0f766e;color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:Inter,sans-serif">
+      🪣 Frac Tank
+    </button>
+
+    <button type="button"
+            id="aforo-btn-pm"
+            onclick="selTipoAforo('pm',this)"
+            style="flex:1;padding:10px 6px;border-radius:11px;border:2px solid var(--border);background:var(--surface2);color:var(--txt);font-size:12px;font-weight:800;cursor:pointer;font-family:Inter,sans-serif">
+      🔩 Presa Metálica
+    </button>
+  </div>
+
+  <!-- NIVEL INICIAL -->
+  <div style="padding:14px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface2);margin-bottom:16px">
+
+    <div class="step-label" style="margin-bottom:10px">
+      Nivel inicial
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button type="button"
+              id="aforo-modo-auto"
+              onclick="selModoInicialAforo('automatico',this)"
+              style="flex:1;padding:10px;border-radius:10px;border:2px solid #0f766e;background:#0f766e;color:#fff;font-size:12px;font-weight:800;cursor:pointer">
+        Automático
+      </button>
+
+      <button type="button"
+              id="aforo-modo-manual"
+              onclick="selModoInicialAforo('manual',this)"
+              style="flex:1;padding:10px;border-radius:10px;border:2px solid var(--border);background:var(--surface);color:var(--txt);font-size:12px;font-weight:800;cursor:pointer">
+        Manual
+      </button>
+    </div>
+
+    <div id="aforoInicialInfo"
+         style="display:none;margin-bottom:12px;padding:10px;border-radius:10px;background:rgba(15,118,110,.08);color:#0f766e;font-size:12px;font-weight:700">
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:10px">
+      <div>
+        <div class="big-field-label">Hora inicial</div>
+        <input class="big-input"
+               type="time"
+               id="aforoHoraInicial"
+               oninput="calcularBPHAforo();actualizarEnviarBtn()">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px">
+      <div style="flex:1">
+        <div class="big-field-label">Centímetros</div>
+        <input class="big-input"
+               type="number"
+               id="aforoCmInicial"
+               step="0.1"
+               oninput="actualizarAforoDesdeCm('inicial')">
+      </div>
+
+      <div style="flex:1">
+        <div class="big-field-label">Barriles</div>
+        <input class="big-input"
+               type="number"
+               id="aforoBblInicial"
+               step="0.1"
+               readonly
+               style="opacity:.72">
+      </div>
+    </div>
+  </div>
+
+  <!-- NIVEL FINAL -->
+  <div style="padding:14px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface2);margin-bottom:16px">
+
+    <div class="step-label" style="margin-bottom:10px">
+      Nivel final
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button type="button"
+              id="aforo-final-auto"
+              onclick="selModoFinalAforo('automatico',this)"
+              style="flex:1;padding:10px;border-radius:10px;border:2px solid #0f766e;background:#0f766e;color:#fff;font-size:12px;font-weight:800;cursor:pointer">
+        Automático
+      </button>
+
+      <button type="button"
+              id="aforo-final-manual"
+              onclick="selModoFinalAforo('manual',this)"
+              style="flex:1;padding:10px;border-radius:10px;border:2px solid var(--border);background:var(--surface);color:var(--txt);font-size:12px;font-weight:800;cursor:pointer">
+        Manual
+      </button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:10px">
+      <div>
+        <div class="big-field-label">Hora final</div>
+        <input class="big-input"
+               type="time"
+               id="aforoHoraFinal"
+               readonly
+               oninput="calcularBPHAforo();actualizarEnviarBtn()"
+               style="opacity:.72">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px">
+      <div style="flex:1">
+        <div class="big-field-label">Centímetros</div>
+        <input class="big-input"
+               type="number"
+               id="aforoCmFinal"
+               step="0.1"
+               oninput="actualizarAforoDesdeCm('final')">
+      </div>
+
+      <div style="flex:1">
+        <div class="big-field-label">Barriles</div>
+        <input class="big-input"
+               type="number"
+               id="aforoBblFinal"
+               step="0.1"
+               readonly
+               style="opacity:.72">
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTADO BPH -->
+  <div style="padding:16px;border-radius:14px;background:rgba(15,118,110,.10);border:2px solid #0f766e;text-align:center">
+
+    <div style="font-size:12px;font-weight:800;color:#0f766e;letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px">
+      BPH
+    </div>
+
+    <input type="number"
+           id="aforoBPH"
+           readonly
+           placeholder="—"
+           style="width:100%;box-sizing:border-box;border:none;background:transparent;text-align:center;color:#0f766e;font-family:'Bebas Neue',sans-serif;font-size:38px;font-weight:800;outline:none">
+  </div>
+
+  <!-- MANIOBRA Y ESTADO — AFORO -->
+  <div
+    id="aforoOperacionPozo"
+    style="margin-top:18px;padding-top:18px;border-top:1.5px solid var(--border)">
+
+    <div class="big-field-label">
+      Apertura / Cierre del pozo
+    </div>
+
+    <div
+      id="aforoManiobraWrap"
+      style="display:flex;gap:10px;margin-bottom:18px">
+
+      <button
+        type="button"
+        class="big-status-btn blue"
+        onclick="selManiobraAforo(this,'Apertura')">
+        🔓<br>Apertura
+      </button>
+
+      <button
+        type="button"
+        class="big-status-btn amber"
+        onclick="selManiobraAforo(this,'Cierre')">
+        🔒<br>Cierre
+      </button>
+    </div>
+
+    <input type="hidden" id="aforoManiobra">
+
+    <div class="big-field-label">
+      Estado del pozo
+    </div>
+
+    <div
+      id="aforoEstadoWrap"
+      style="display:flex;gap:10px;margin-bottom:4px">
+
+      <button
+        type="button"
+        class="big-status-btn green"
+        onclick="selEstadoAforo(this,'Abierto')">
+        🟢<br>Abierto
+      </button>
+
+      <button
+        type="button"
+        class="big-status-btn red"
+        onclick="selEstadoAforo(this,'Cerrado')">
+        🔴<br>Cerrado
+      </button>
+
+      <button
+        type="button"
+        class="big-status-btn amber"
+        onclick="selEstadoAforo(this,'Intermitente')">
+        🟡<br>Intermitente
+      </button>
+    </div>
+
+    <input type="hidden" id="aforoEstado">
+  </div>
+
+</div>
 
 <!-- ══ NIVELES DE GUARDIA ══ -->
 <div class="step-card" id="card-guardia" style="display:none;border:2.5px solid var(--accent2)">
@@ -928,69 +1207,71 @@ function ppToggle(id){
       <input class="big-input" type="number" id="medBarriles" placeholder="" step="0.1" readonly style="opacity:.7">
     </div>
   </div>
-  <textarea id="medObs" placeholder="Observaciones..." style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--surface2);color:var(--txt);resize:none;height:64px;font-family:'Inter',sans-serif"></textarea>
 
-  <!-- ══ REGISTRO DE ACTIVIDADES — dentro de card-guardia ══ -->
-  <div style="margin-top:18px">
-    <div class="step-label" style="margin-bottom:12px;font-size:13px;font-weight:800;color:var(--txt2);letter-spacing:.6px;text-transform:uppercase">Registro de Actividades</div>
 
-    <div class="nivel-act-card" id="nivel-card-trabajo" onclick="toggleChk('trabajo')">
-      <div class="nivel-act-check"></div>
-      <div class="nivel-act-ico">🔨</div>
-      <div class="nivel-act-info">
-        <div class="nivel-act-title">Trabajo</div>
-        <div class="nivel-act-desc">Se realizó trabajo en el pozo</div>
-      </div>
+  <!-- MANIOBRA Y ESTADO — GUARDIA -->
+  <div
+    id="guardiaOperacionPozo"
+    style="margin-top:18px;padding-top:18px;border-top:1.5px solid var(--border)">
+
+    <div class="big-field-label">
+      Apertura / Cierre del pozo
     </div>
 
-    <div class="nivel-act-card" id="nivel-card-drenar" onclick="toggleChk('drenar')">
-      <div class="nivel-act-check"></div>
-      <div class="nivel-act-ico">💧</div>
-      <div class="nivel-act-info">
-        <div class="nivel-act-title">Drenar / Barrido</div>
-        <div class="nivel-act-desc">Drenado o barrido de líquidos</div>
-      </div>
+    <div
+      id="guardiaManiobraWrap"
+      style="display:flex;gap:10px;margin-bottom:18px">
+
+      <button
+        type="button"
+        class="big-status-btn blue"
+        onclick="selManiobraGuardia(this,'Apertura')">
+        🔓<br>Apertura
+      </button>
+
+      <button
+        type="button"
+        class="big-status-btn amber"
+        onclick="selManiobraGuardia(this,'Cierre')">
+        🔒<br>Cierre
+      </button>
     </div>
 
-    <div class="nivel-act-card" id="nivel-card-aforo" onclick="toggleChk('aforo')">
-      <div class="nivel-act-check"></div>
-      <div class="nivel-act-ico">📏</div>
-      <div class="nivel-act-info">
-        <div class="nivel-act-title">Aforo / Proyección</div>
-        <div class="nivel-act-desc">Medición de producción</div>
-      </div>
+    <input type="hidden" id="guardiaManiobra">
+
+    <div class="big-field-label">
+      Estado del pozo
     </div>
 
-    <div class="nivel-act-card" id="nivel-card-intermitente" onclick="toggleChk('intermitente')">
-      <div class="nivel-act-check"></div>
-      <div class="nivel-act-ico">🔄</div>
-      <div class="nivel-act-info">
-        <div class="nivel-act-title">Intermitente</div>
-        <div class="nivel-act-desc">Aporte intermitente</div>
-      </div>
+    <div
+      id="guardiaEstadoWrap"
+      style="display:flex;gap:10px;margin-bottom:4px">
+
+      <button
+        type="button"
+        class="big-status-btn green"
+        onclick="selEstadoGuardia(this,'Abierto')">
+        🟢<br>Abierto
+      </button>
+
+      <button
+        type="button"
+        class="big-status-btn red"
+        onclick="selEstadoGuardia(this,'Cerrado')">
+        🔴<br>Cerrado
+      </button>
+
+      <button
+        type="button"
+        class="big-status-btn amber"
+        onclick="selEstadoGuardia(this,'Intermitente')">
+        🟡<br>Intermitente
+      </button>
     </div>
+
+    <input type="hidden" id="guardiaEstado">
   </div>
 
-  <!-- ══ CONTROL OPERATIVO — ESTADO DEL POZO (nuevo, independiente) ══ -->
-  <div class="step-card" style="margin-top:0;border-top:2px solid var(--border)">
-    <div class="step-label">Control Operativo</div>
-    <div class="big-field-label" style="margin-bottom:12px">Estado del Pozo</div>
-    <div style="display:flex;gap:10px;margin-bottom:8px">
-      <button class="nivel-ep-btn" id="nivel-ep-abierto"
-              onclick="selNivelEstadoPozo(this,'Abierto')">
-        🟢<br><span>Abierto</span>
-      </button>
-      <button class="nivel-ep-btn" id="nivel-ep-cerrado"
-              onclick="selNivelEstadoPozo(this,'Cerrado')">
-        🔴<br><span>Cerrado</span>
-      </button>
-      <button class="nivel-ep-btn" id="nivel-ep-intermitente"
-              onclick="selNivelEstadoPozo(this,'Intermitente')">
-        🟡<br><span>Intermitente</span>
-      </button>
-    </div>
-    <input type="hidden" id="nivelEstadoPozo">
-  </div>
 
 </div>
 
@@ -1000,6 +1281,32 @@ function ppToggle(id){
   <!-- C.O. -->
   <div class="step-card">
     <div class="step-label">Control Operativo</div>
+
+    <!-- Maniobra realizada -->
+    <div class="big-field-label">Apertura / Cierre del pozo</div>
+
+    <div
+      id="coManiobraWrap"
+      style="display:flex;gap:10px;margin-bottom:18px">
+
+      <button
+        type="button"
+        id="btn-co-apertura"
+        class="big-status-btn blue"
+        onclick="selManiobraPozo(this,'Apertura')">
+        🔓<br>Apertura
+      </button>
+
+      <button
+        type="button"
+        id="btn-co-cierre"
+        class="big-status-btn amber"
+        onclick="selManiobraPozo(this,'Cierre')">
+        🔒<br>Cierre
+      </button>
+    </div>
+
+    <input type="hidden" id="coManiobra">
 
     <!-- Estatus -->
     <div class="big-field-label">Estado del pozo</div>
@@ -1011,20 +1318,24 @@ function ppToggle(id){
     <input type="hidden" id="coEstatus">
 
     <!-- Fluye -->
-    <div class="big-field-label">Fluye</div>
-    <div style="display:flex;gap:10px;margin-bottom:16px">
-      <button class="big-status-btn blue" onclick="selFluye(this,'FT')">🛢<br>FT</button>
-      <button class="big-status-btn blue" onclick="selFluye(this,'BSC')">⛽<br>BSC</button>
+    <div id="coFluyeWrap">
+      <div class="big-field-label">Fluye</div>
+      <div style="display:flex;gap:10px;margin-bottom:16px">
+        <button class="big-status-btn blue" onclick="selFluye(this,'FT')">🛢<br>FT</button>
+        <button class="big-status-btn blue" onclick="selFluye(this,'BSC')">⛽<br>BSC</button>
+      </div>
+      <input type="hidden" id="coFlujo">
     </div>
-    <input type="hidden" id="coFlujo">
 
     <!-- Estrangulador / Franco -->
-    <div class="big-field-label">Condición de flujo</div>
-    <div style="display:flex;gap:10px;margin-bottom:16px">
-      <button class="big-status-btn slate" id="btn-estrangulador" onclick="selFlujoTipo(this,'estrangulador')">🔩<br>Estrangulador</button>
-      <button class="big-status-btn slate" id="btn-franco"        onclick="selFlujoTipo(this,'franco')">⚙️<br>Franco</button>
+    <div id="coCondicionFlujoWrap">
+      <div class="big-field-label">Condición de flujo</div>
+      <div style="display:flex;gap:10px;margin-bottom:16px">
+        <button class="big-status-btn slate" id="btn-estrangulador" onclick="selFlujoTipo(this,'estrangulador')">🔩<br>Estrangulador</button>
+        <button class="big-status-btn slate" id="btn-franco" onclick="selFlujoTipo(this,'franco')">⚙️<br>Franco</button>
+      </div>
+      <input type="hidden" id="coFlujoTipo">
     </div>
-    <input type="hidden" id="coFlujoTipo">
 
     <div class="cond" id="cond-estrangulador">
       <div style="display:flex;gap:10px;margin-bottom:12px">
@@ -1037,13 +1348,15 @@ function ppToggle(id){
     </div>
 
     <!-- SAP -->
-    <div class="big-field-label">SAP</div>
-    <div style="display:flex;gap:10px;margin-bottom:16px">
-      <button class="big-status-btn slate" onclick="selSys(this,'BN')">BN</button>
-      <button class="big-status-btn slate" onclick="selSys(this,'BM')">BM</button>
-      <button class="big-status-btn slate" onclick="selSys(this,'FY')">FY</button>
+    <div id="coSapWrap">
+      <div class="big-field-label">SAP</div>
+      <div style="display:flex;gap:10px;margin-bottom:16px">
+        <button class="big-status-btn slate" onclick="selSys(this,'BN')">BN</button>
+        <button class="big-status-btn slate" onclick="selSys(this,'BM')">BM</button>
+        <button class="big-status-btn slate" onclick="selSys(this,'FY')">FY</button>
+      </div>
+      <input type="hidden" id="coSistema">
     </div>
-    <input type="hidden" id="coSistema">
 
     <div class="cond" id="cond-bnfy">
       <div style="display:flex;gap:10px;margin-bottom:10px">
@@ -1087,6 +1400,18 @@ function ppToggle(id){
         <div style="flex:1"><div class="big-field-label">Carrera (pulg) *</div><input class="big-input" type="number" id="coCarrera" placeholder="" step="1"></div>
       </div>
     </div>
+    <div id="coInyectorPtpWrap" style="display:none;margin-bottom:16px">
+      <div class="big-field-label">PTP kg/cm²</div>
+      <input
+        class="big-input"
+        type="text"
+        id="coInyPTP"
+        placeholder=""
+        inputmode="decimal"
+        step="any"
+        oninput="actualizarEnviarBtn()">
+    </div>
+
     <textarea id="coObs" placeholder="Observaciones..." autocomplete="off" autocorrect="off" autocapitalize="sentences" inputmode="text" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--surface2);color:var(--txt);resize:none;height:80px;font-family:'Inter',sans-serif;-webkit-user-select:text;user-select:text;touch-action:auto"></textarea>
   </div>
 
@@ -1619,7 +1944,6 @@ function ppToggle(id){
   <div style="display:flex;gap:6px;padding:0 14px 8px;overflow-x:auto;flex-shrink:0;scrollbar-width:none">
     <button onclick="hcFiltrarRec('todos')" id="hcfr-todos" style="flex-shrink:0;padding:6px 13px;border-radius:20px;border:2px solid #7c3aed;background:#7c3aed;color:#fff;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif">Todos</button>
     <button onclick="hcFiltrarRec('Manrique')" id="hcfr-Manrique" style="flex-shrink:0;padding:6px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif">Manrique</button>
-    <button onclick="hcFiltrarRec('Cirilo')" id="hcfr-Cirilo" style="flex-shrink:0;padding:6px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif">Cirilo</button>
     <button onclick="hcFiltrarRec('Juan Carlos')" id="hcfr-JuanCarlos" style="flex-shrink:0;padding:6px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif">Juan Carlos</button>
     <button onclick="hcFiltrarRec('Jose')" id="hcfr-Jose" style="flex-shrink:0;padding:6px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif">Jose</button>
     <button onclick="hcFiltrarRec('Luis')" id="hcfr-Luis" style="flex-shrink:0;padding:6px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt2);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif">Luis</button>
@@ -1924,11 +2248,7 @@ function ppToggle(id){
 <script>
 var W=location.hash.replace('#','')||'???';
 // ── Parche C-131 (garantiza presencia independiente de caché de config.js) ──
-if(typeof WELLS_ALL!=='undefined' && WELLS_ALL.indexOf('131')===-1){
-  var _i131=WELLS_ALL.indexOf('129');
-  if(_i131!==-1) WELLS_ALL.splice(_i131+1,0,'131');
-  else WELLS_ALL.push('131');
-}
+
 if(typeof WELL_COORDS_ALL!=='undefined' && !WELL_COORDS_ALL['131']){
   WELL_COORDS_ALL['131']={lat:17.942964,lon:-94.287442};
 }
@@ -2286,6 +2606,162 @@ function volverAlPicker(){
 }
 
 // ── Botones de estado grandes ─────────────────────
+
+/*
+ * Maniobra realizada en el pozo.
+ * Es independiente del estado actual:
+ * Abierto, Cerrado o Intermitente.
+ */
+
+/*
+ * Selector reutilizable para Maniobra y Estado
+ * en Guardia y Aforo.
+ */
+function selOpcionPozoModulo(btn, inputId, wrapId, valor){
+  var input = document.getElementById(inputId);
+  var wrap = document.getElementById(wrapId);
+
+  if(!input || !wrap || !btn){
+    return;
+  }
+
+  var yaSeleccionado =
+    input.value === valor &&
+    btn.classList.contains('active');
+
+  wrap
+    .querySelectorAll('.big-status-btn')
+    .forEach(function(elemento){
+      elemento.classList.remove(
+        'active',
+        'sel-a',
+        'sel-b',
+        'sel-c'
+      );
+    });
+
+  if(yaSeleccionado){
+    input.value = '';
+  }else{
+    input.value = valor;
+    btn.classList.add('active');
+
+    if(
+      valor === 'Apertura' ||
+      valor === 'Abierto'
+    ){
+      btn.classList.add('sel-a');
+
+    }else if(
+      valor === 'Cierre' ||
+      valor === 'Cerrado'
+    ){
+      btn.classList.add('sel-b');
+
+    }else{
+      btn.classList.add('sel-c');
+    }
+  }
+
+  if(typeof actualizarEnviarBtn === 'function'){
+    actualizarEnviarBtn();
+  }
+}
+
+function selManiobraGuardia(btn, valor){
+  selOpcionPozoModulo(
+    btn,
+    'guardiaManiobra',
+    'guardiaManiobraWrap',
+    valor
+  );
+}
+
+function selEstadoGuardia(btn, valor){
+  selOpcionPozoModulo(
+    btn,
+    'guardiaEstado',
+    'guardiaEstadoWrap',
+    valor
+  );
+}
+
+function selManiobraAforo(btn, valor){
+  selOpcionPozoModulo(
+    btn,
+    'aforoManiobra',
+    'aforoManiobraWrap',
+    valor
+  );
+}
+
+function selEstadoAforo(btn, valor){
+  selOpcionPozoModulo(
+    btn,
+    'aforoEstado',
+    'aforoEstadoWrap',
+    valor
+  );
+}
+
+function lineaManiobraEstado(maniobraId, estadoId){
+  var maniobra = v(maniobraId);
+  var estado = v(estadoId);
+  var texto = '';
+
+  if(maniobra === 'Apertura'){
+    texto += '🔓 Maniobra realizada: APERTURA\n';
+
+  }else if(maniobra === 'Cierre'){
+    texto += '🔒 Maniobra realizada: CIERRE\n';
+  }
+
+  if(estado){
+    texto += '📌 Estado actual: ' +
+      estado +
+      '\n';
+  }
+
+  return texto;
+}
+
+function selManiobraPozo(btn, valor){
+  var input = document.getElementById('coManiobra');
+  if(!input) return;
+
+  var yaSeleccionado =
+    input.value === valor &&
+    btn.classList.contains('active');
+
+  document
+    .querySelectorAll('#coManiobraWrap .big-status-btn')
+    .forEach(function(elemento){
+      elemento.classList.remove(
+        'active',
+        'sel-a',
+        'sel-b',
+        'sel-c'
+      );
+    });
+
+  if(yaSeleccionado){
+    input.value = '';
+  }else{
+    input.value = valor;
+    btn.classList.add('active');
+
+    if(valor === 'Apertura'){
+      btn.classList.add('sel-a');
+    }else{
+      btn.classList.add('sel-b');
+    }
+  }
+
+  if(typeof actualizarEnviarBtn === 'function'){
+    actualizarEnviarBtn();
+  }
+}
+
 function selBigStatus(btn, hiddenId, val){
   // Deselect siblings in same group
   var siblings = btn.parentElement.querySelectorAll('.big-status-btn');
@@ -2409,23 +2885,6 @@ function peraLinea(){
     if(peraState[k]) parts.push(map[k]+': '+(peraState[k]==='ok'?'✓':'✗'));
   });
   return parts.length ? '🛢 *Cond. de Pera*\n'+parts.map(function(p){ return (p.includes('✓')?'✅':'❌')+' '+p.replace(': ✓','').replace(': ✗',''); }).join('\n') : '';
-}
-
-function selNivelEstadoPozo(btn, val){
-  // Radio group: solo uno activo a la vez
-  // Botones del grupo Estado del Pozo en Nivel de Guardia
-  var btns=['nivel-ep-abierto','nivel-ep-cerrado','nivel-ep-intermitente'];
-  btns.forEach(function(id){
-    var b=document.getElementById(id);
-    if(!b) return;
-    b.classList.remove('nivel-ep-sel','nivel-ep-sel-green','nivel-ep-sel-red','nivel-ep-sel-amber');
-  });
-  if(btn.id==='nivel-ep-abierto')     btn.classList.add('nivel-ep-sel','nivel-ep-sel-green');
-  else if(btn.id==='nivel-ep-cerrado') btn.classList.add('nivel-ep-sel','nivel-ep-sel-red');
-  else                                 btn.classList.add('nivel-ep-sel','nivel-ep-sel-amber');
-  estadoPozo = val;
-  var hid=document.getElementById('nivelEstadoPozo');
-  if(hid) hid.value=val;
 }
 
 function selEstado(btn, val){
@@ -2634,6 +3093,7 @@ getCicloInfo = function(nombre){
 
 
 var msgPendiente = '';
+var _aforoPreviewAbierto = false;
 
 var _lastEnviarClick = 0;
 function mostrarConfirmacion(){
@@ -2711,12 +3171,15 @@ function _continuarEnvio(){
     var hr2=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
     // GPS en tiempo real del recorredor
     var gpsLinea2 = la ? gpsLine() : '';
-    var msg2='🌙 *NIVELES DE GUARDIA*\n🛢 Pozo: *C-'+W+'*\n👷 Recorredor: '+REC+'\n📅 '+now()+'\n'
+    var msg2='🌙 *NIVELES DE GUARDIA*\n🛢 Pozo: *C-'+W+'*\n👷 Recorredor: '+decorarRecorredorMensaje(REC)+'\n📅 '+now()+'\n'
       +'══════════════════\n'
+      +lineaManiobraEstado(
+        'guardiaManiobra',
+        'guardiaEstado'
+      )
       +(medBls?'🛢 Barriles: '+medBls+'\n':'')
       +(medCm?'📐 Centímetros: '+medCm+'\n':'')
       +'🕐 '+hr2+'\n'
-      +(v('medObs')?'📝 '+v('medObs')+'\n':'')
       +gpsLinea2
       +'_C-'+W+'_';
     if(fotos.length) msg2+='📸 Evidencia: '+fotos.length+' foto'+(fotos.length===1?'':'s')+'\n';
@@ -2736,10 +3199,55 @@ function _continuarEnvio(){
   }
 
   // ── MODO COMPLETO ──
-  var msg='📋 *REPORTE DE VISITA*\n🛢 Pozo: *C-'+W+'*\n👷 Recorredor: '+REC+'\n📅 '+now()+'\n';
+  var msg='📋 *REPORTE DE VISITA*\n🛢 Pozo: *C-'+W+'*\n👷 Recorredor: '+decorarRecorredorMensaje(REC)+'\n📅 '+now()+'\n';
   var ok=false;
   var est=v('coEstatus'),flu=v('coFlujo'),sis=v('coSistema');
-  if(est||flu||sis){
+  var maniobraPozo=v('coManiobra');
+
+  /*
+   * Los pozos inyectores únicamente requieren:
+   * estado, PTP y observaciones.
+   */
+  if(esPozoInyector(W)){
+    var ptpInyector = v('coInyPTP');
+
+    if(!est){
+      showToast(
+        '⚠️ Inyector: selecciona el estado del pozo'
+      );
+      return;
+    }
+
+    if(!ptpInyector){
+      showToast(
+        '⚠️ Inyector: captura la PTP'
+      );
+      return;
+    }
+
+    msg +=
+      '══════════════════\n' +
+      '🔧 *CONTROL OPERATIVO — INYECTOR*\n' +
+      (
+        maniobraPozo
+          ? (
+              maniobraPozo === 'Apertura'
+                ? '🔓 Maniobra realizada: APERTURA\n'
+                : '🔒 Maniobra realizada: CIERRE\n'
+            )
+          : ''
+      ) +
+      '📌 Estado actual: ' + est + '\n' +
+      '📊 PTP: ' + ptpInyector + ' kg/cm²\n' +
+      (
+        v('coObs')
+          ? '📝 ' + v('coObs') + '\n'
+          : ''
+      );
+
+    ok = true;
+
+  }else if(est||flu||sis){
     if(!est){showToast('⚠️ C.O.: Selecciona Estatus');return}
     if(!flu){showToast('⚠️ C.O.: Selecciona Fluye');return}
     if(!sis){showToast('⚠️ C.O.: Selecciona SAP');return}
@@ -2754,7 +3262,19 @@ function _continuarEnvio(){
     } else if(flujoTipo==='franco'){
       estrangLine = '⚙️ Franco - TP #Vueltas: '+(vueltasTP||'—')+'\n';
     }
-    msg+='══════════════════\n🔧 *CONTROL OPERATIVO*\n📌 Estatus: '+est+'\n💧 Fluye: '+flu+'\n'+estrangLine+'⚙️ SAP: '+sis+'\n'+d+'\n'+(v('coObs')?'📝 '+v('coObs')+'\n':'');ok=true;
+    msg+='══════════════════\n🔧 *CONTROL OPERATIVO*\n'
+      +(maniobraPozo
+        ? (maniobraPozo==='Apertura'
+            ? '🔓 Maniobra realizada: APERTURA\n'
+            : '🔒 Maniobra realizada: CIERRE\n')
+        : '')
+      +'📌 Estado actual: '+est+'\n'
+      +'💧 Fluye: '+flu+'\n'
+      +estrangLine
+      +'⚙️ SAP: '+sis+'\n'
+      +d+'\n'
+      +(v('coObs')?'📝 '+v('coObs')+'\n':'');
+    ok=true;
   }
   var medBls=v('medBarriles'),medCm=v('medCentimetros');
   if(medBls||medCm){
@@ -2763,7 +3283,7 @@ function _continuarEnvio(){
     msg+='══════════════════\n📏 *MEDICIÓN RÁPIDA*\n'
       +(medBls?'🛢 Barriles: '+medBls+'\n':'')
       +(medCm?'📐 Centímetros: '+medCm+'\n':'')
-      +'🕐 '+hr2+'\n'+(v('medObs')?'📝 '+v('medObs')+'\n':'');
+      +'🕐 '+hr2+'\n';
     ok=true;
   }
   var ctm=v('nivCTM'),bls=v('nivBLS');
@@ -2777,17 +3297,55 @@ function _continuarEnvio(){
   if(checks.trabajo||checks.drenar||checks.aforo||checks.intermitente){
     if(checks.aforo&&!v('regAforo')){showToast('⚠️ Falta cantidad de Aforo');return}
     var a=[];
-    a.push(checks.trabajo?'✅ Trabajo':'❌ Trabajo');
-    a.push(checks.drenar?'✅ Drenar':'❌ Drenar');
-    a.push(checks.aforo?'✅ Aforo/Proyección: '+v('regAforo')+' BPH':'❌ Aforo/Proyección');
-    a.push(checks.intermitente?'✅ Intermitente':'❌ Intermitente');
+
+    /*
+     * Mostrar únicamente las actividades seleccionadas.
+     * Las opciones no marcadas no aportan información
+     * y no deben aparecer con una tache.
+     */
+    if(checks.trabajo){
+      a.push('✅ Trabajo');
+    }
+
+    if(checks.drenar){
+      a.push('✅ Drenar / Barrido');
+    }
+
+    if(checks.aforo){
+      a.push(
+        '✅ Aforo/Proyección: ' +
+        v('regAforo') +
+        ' BPH'
+      );
+    }
+
+    if(checks.intermitente){
+      a.push('✅ Intermitente');
+    }
+
     var estado=v('regEstado');
     if(estado) a.push((estado.toLowerCase().includes('estable')&&!estado.toLowerCase().includes('inestable')?'✅':'❌')+' Estado del pozo: '+estado);
     msg+='══════════════════\n📋 *REGISTRO*\n'+a.join('\n')+'\n'+(peraMsg?peraMsg+'\n':'')+(v('regObs')?'📝 '+v('regObs')+'\n':'');ok=true;
   } else if(peraMsg){
     msg+='══════════════════\n'+peraMsg+'\n';ok=true;
   }
-  if(!ok){showToast('⚠️ Llena al menos un apartado antes de enviar');return}
+  /*
+   * AFORO / PROYECCIÓN utiliza su propio formulario,
+   * validación, mensaje y vista previa.
+   *
+   * No debe pasar por la validación general de CO,
+   * Nivel o Registro, porque esos campos dejan ok=false.
+   */
+  if(modoRegistro === 'aforo'){
+    confirmarEnvio();
+    return;
+  }
+
+  if(!ok){
+    showToast('⚠️ Llena al menos un apartado antes de enviar');
+    return;
+  }
+
   msg+='══════════════════\n'+gpsLine()+'\n';
   if(fotos.length) msg+='📸 Evidencia: '+fotos.length+' foto'+(fotos.length===1?'':'s')+'\n';
   // QR line removed
@@ -2815,6 +3373,7 @@ function cerrarConfirmacion(){
     ov.style.cssText = '';
   }
   msgPendiente = '';
+  _aforoPreviewAbierto = false;
 }
 
 
@@ -2833,11 +3392,10 @@ function resetFormulario(){
   if(wp){ wp.classList.add('show'); }
   // Limpiar campos C.O.
   var inputs = ['coEstatus','coFlujo','coFlujoTipo','coSistema',
-    'coTP','coLDD','coTR','coLBN','coKimray','coConico','coStarpack','coTrVuelta',
+    'coTP','coInyPTP','coLDD','coTR','coLBN','coKimray','coConico','coStarpack','coTrVuelta',
     'coPTR_bm','coPresion','coEmb','coCarrera','coObs',
-    'medBarriles','medCentimetros','medObs',
-    'regTrabajo','regDrenar','regAforo','regIntermitente','regObs',
-    'nivelEstadoPozo'];
+    'medBarriles','medCentimetros',
+    'regTrabajo','regDrenar','regAforo','regIntermitente','regObs'];
   inputs.forEach(function(id){
     var el = document.getElementById(id);
     if(el) el.value = '';
@@ -2845,14 +3403,6 @@ function resetFormulario(){
   // Limpiar botones de estado seleccionados
   document.querySelectorAll('.big-status-btn.active, .big-status-btn.sel-a, .big-status-btn.sel-b, .big-status-btn.sel-c, .alarm-opt.selected').forEach(function(b){
     b.classList.remove('active','sel-a','sel-b','sel-c','selected');
-  });
-  // Limpiar Estado del Pozo (Nivel de Guardia)
-  estadoPozo = '';
-  var nivelEpEl = document.getElementById('nivelEstadoPozo');
-  if(nivelEpEl) nivelEpEl.value = '';
-  ['nivel-ep-abierto','nivel-ep-cerrado','nivel-ep-intermitente'].forEach(function(id){
-    var b=document.getElementById(id);
-    if(b) b.classList.remove('nivel-ep-sel','nivel-ep-sel-green','nivel-ep-sel-red','nivel-ep-sel-amber');
   });
   // Limpiar tarjetas de actividades (visual)
   ['trabajo','drenar','aforo','intermitente'].forEach(function(k){
@@ -2893,6 +3443,24 @@ function resetFormulario(){
   // Limpiar nota de campo
   var nota = document.getElementById('notaLibreText');
   if(nota) nota.value = '';
+
+  // Limpiar Muestras
+  muestrasPozos = [];
+  muestrasPozosTemp = [];
+
+  var muestrasObsEl = document.getElementById('muestrasObs');
+  if(muestrasObsEl) muestrasObsEl.value = '';
+
+  var muestrasBuscarEl = document.getElementById('muestrasBuscar');
+  if(muestrasBuscarEl) muestrasBuscarEl.value = '';
+
+  var muestrasOverlayEl = document.getElementById('muestrasSelectorOverlay');
+  if(muestrasOverlayEl) muestrasOverlayEl.style.display = 'none';
+
+  if(typeof renderMuestrasSeleccionados === 'function'){
+    renderMuestrasSeleccionados();
+  }
+
   // Limpiar cabezales y estaciones (visual + variables)
   _cabSel = ''; _estSel = '';
   document.querySelectorAll('.cab-opt,.est-opt').forEach(function(b){
@@ -3018,7 +3586,6 @@ function doLogin(){
 // ══ LOGIN RECORREDORES ══════════════════════════
 var REC_MAP = {
   'Manrique':   { nombre:'Manrique',   pass:'Canada',    theme:'m'  },
-  'Cirilo':     { nombre:'Cirilo',      pass:'Brasil',    theme:'c',  status:'inactive' },
   'JuanCarlos': { nombre:'Juan Carlos', pass:'JCYNL041084', theme:'jc' },
   'Jose':       { nombre:'Jose',        pass:'Mexico',    theme:'j'  },
   'Luis':       { nombre:'Luis',        pass:'Carlos1903', theme:'l'  }
@@ -3273,11 +3840,11 @@ function abrirVistaAlarma(){
   if(sb){ sb.disabled = true; sb.style.opacity = '.45'; sb.style.pointerEvents = 'none'; }
 
   // Detectar si es recorredor:
-  // REC puede ser 'Manrique', 'Cirilo', 'Juan Carlos' (nombre corto de selRec)
+  // REC contiene el nombre corto seleccionado por el recorredor
   // loggedUser puede ser 'm', 'c', 'jc' (theme del login de recorredor)
   var RECS_SHORT = ['Manrique','Juan Carlos','Jose','Luis'];
   var RECS_THEMES = ['m','c','jc'];
-  var RECS_NOMBRES = {'m':'Manrique','c':'Cirilo','jc':'Juan Carlos','j':'Jose','l':'Luis'};
+  var RECS_NOMBRES = {'m':'Manrique','jc':'Juan Carlos','j':'Jose','l':'Luis'};
   var esRecorredor = RECS_SHORT.indexOf(REC) !== -1 || RECS_THEMES.indexOf(loggedUser) !== -1;
 
   // Subtítulo con usuario detectado
@@ -3410,7 +3977,7 @@ function enviarAlarma(){
   var _ov = document.getElementById('alarmConfirmOverlay'); if(_ov) _ov.style.display = 'none';
 
   // Detectar quien reporta automáticamente
-  var RECS = {'m':'Manrique','c':'Cirilo','jc':'Juan Carlos','j':'Jose','l':'Luis'};
+  var RECS = {'m':'Manrique','jc':'Juan Carlos','j':'Jose','l':'Luis'};
   var RECS_SHORT = ['Manrique','Juan Carlos','Jose','Luis'];
   var quien = REC || RECS[loggedUser] || loggedUser || 'Campo Cuichapa';
   var esRecorredor = RECS_SHORT.indexOf(REC) !== -1 || ['m','c','jc'].indexOf(loggedUser) !== -1;
@@ -3563,11 +4130,15 @@ function hcTipoReporte(r){
   if(r.modo==='cab')      return 'cab';
   if(r.modo==='estacion') return 'estacion';
   if(r.modo==='nota')     return 'nota';
+  if(r.modo==='muestras') return 'muestras';
+  if(r.modo==='aforo')    return 'aforo';
   if(!r.msg) return 'co';
   var m = r.msg;
   if(m.indexOf('GUARDIA')!=-1||m.indexOf('NOCTURNO')!=-1) return 'guardia';
   if(m.indexOf('CABEZAL')!=-1) return 'cab';
   if(m.indexOf('ESTACIÓN')!=-1||m.indexOf('ESTACION')!=-1) return 'estacion';
+  if(m.indexOf('MUESTRAS')!=-1) return 'muestras';
+  if(m.indexOf('AFORO / PROYECCIÓN')!=-1) return 'aforo';
   return 'co';
 }
 
@@ -3603,7 +4174,7 @@ function hcCargar(){
 
   if(typeof fbDB !== 'undefined' && fbDB){
     if(statusEl) statusEl.textContent = '🔄 Sincronizando todos los dispositivos...';
-    fbDB.ref('reportes').orderByChild('fecha').limitToLast(20).once('value', function(snap){
+    fbDB.ref('reportes').orderByChild('fecha').limitToLast(15).once('value', function(snap){
       try{
         var localIds={};
         locales.forEach(function(r){ if(r.id) localIds[r.id]=true; });
@@ -3644,7 +4215,7 @@ function hcFiltrar(f){
 
 function hcFiltrarRec(rec){
   HC_FILTRO_REC=rec;
-  var map={'todos':'todos','Manrique':'Manrique','Cirilo':'Cirilo','Juan Carlos':'JuanCarlos','otros':'otros'};
+  var map={'todos':'todos','Manrique':'Manrique','Juan Carlos':'JuanCarlos','otros':'otros'};
   Object.keys(map).forEach(function(k){
     var b=document.getElementById('hcfr-'+map[k]);
     if(!b) return;
@@ -3976,7 +4547,6 @@ var _supDropOpen = false;
 // ── Recorredores ──────────────────────────────────────────
 var SUP_RECORREDORES = [
   {key:'m',  nombre:'Manrique',   ico:'🌊'},
-  {key:'c',  nombre:'Cirilo',     ico:'⛏️'},
   {key:'jc', nombre:'Juan Carlos',ico:'🦺'},
   {key:'j',  nombre:'Jose',       ico:'🛢️'},
   {key:'l',  nombre:'Luis',       ico:'🚧'}
@@ -4171,129 +4741,6 @@ document.addEventListener('DOMContentLoaded',function(){
 // ─────────────────────────────────────────────────────────
 
 
-// ══ PROGRAMA DEL DÍA (Recorredor – asignado por supervisión) ═════
-function _progKey(){ return 'prog_asig_'+(typeof REC!=='undefined'?REC:'x')+'_'+new Date().toISOString().slice(0,10); }
-function _progGet(){ try{ return JSON.parse(localStorage.getItem(_progKey())||'[]'); }catch(e){ return []; } }
-
-
-function abrirPrograma(){
-  var m=document.getElementById('progModal'); if(!m) return;
-  m.style.display='flex';
-  var hoy=new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
-  var sub=document.getElementById('progSubtitle');
-  if(sub) sub.textContent=(typeof REC!=='undefined'?REC:'')+' · '+hoy.charAt(0).toUpperCase()+hoy.slice(1);
-  _progRenderLista();
-}
-function cerrarPrograma(){
-  var m=document.getElementById('progModal'); if(m) m.style.display='none';
-  _progActualizarBadge();
-}
-
-function progToggleHecho(idx){
-  var lista=_progGet();
-  if(lista[idx]) lista[idx].hecho=!lista[idx].hecho;
-  _progSave(lista);
-  _progRenderLista();
-  _progActualizarBadge();
-}
-function progEliminarPozo(idx){
-  var lista=_progGet();
-  lista.splice(idx,1);
-  _progSave(lista);
-  _progRenderLista();
-  _progActualizarBadge();
-}
-function progConfirmEliminar(idx, btn){
-  var card = btn ? btn.closest('.prog-card') : null;
-  if(!card) return;
-  var existing = card.querySelector('.prog-del-confirm');
-  if(existing){ existing.remove(); return; }
-  var div = document.createElement('div');
-  div.className = 'prog-del-confirm';
-  div.style.cssText = 'display:flex;gap:8px;align-items:center;padding:10px 14px;background:#fff1f2;border-top:1px solid #fecaca';
-  var lbl = document.createElement('span');
-  lbl.textContent = '¿Quitar este pozo?';
-  lbl.style.cssText = 'flex:1;font-size:12px;font-weight:700;color:#b91c1c';
-  var btnSi = document.createElement('button');
-  btnSi.textContent = 'Sí';
-  btnSi.style.cssText = 'padding:7px 14px;border-radius:9px;border:none;background:#dc2626;color:#fff;font-size:12px;font-weight:800;cursor:pointer';
-  btnSi.onclick = (function(i){ return function(){ progEliminarPozo(i); }; })(idx);
-  var btnNo = document.createElement('button');
-  btnNo.textContent = 'No';
-  btnNo.style.cssText = 'padding:7px 12px;border-radius:9px;border:1.5px solid #d1d5db;background:transparent;color:#6b7280;font-size:12px;font-weight:700;cursor:pointer';
-  btnNo.onclick = function(){ div.remove(); };
-  div.appendChild(lbl); div.appendChild(btnSi); div.appendChild(btnNo);
-  card.appendChild(div);
-}
-
-function _progRenderItem(item, i, isGeneral){
-  var hecho=item.hecho, ico=item.ico||'📋';
-  var nombre=item.tipo==='pozo'?'C-'+item.valor:(item.valor||item.label||'Actividad');
-  var hechoBy=item.hechoBy||'';
-  var toggleFn=isGeneral?'progToggleGeneral('+i+')':'progToggleHecho('+i+')';
-  return '<div style="display:flex;align-items:center;gap:0;background:var(--surface2);border:2px solid '+(hecho?'#16a34a':'var(--border)')+';border-radius:16px;margin-bottom:10px;overflow:hidden;min-height:68px">'
-    +'<button onclick="'+toggleFn+'" style="width:60px;flex-shrink:0;align-self:stretch;border:none;border-right:1.5px solid '+(hecho?'#16a34a':'var(--border)')+';background:'+(hecho?'#16a34a':'var(--surface)')+';cursor:pointer;display:flex;align-items:center;justify-content:center">'
-    +'<span style="font-size:22px">'+(hecho?'✅':'⬜')+'</span></button>'
-    +'<div style="flex:1;padding:12px">'
-    +'<div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">'+ico+'</span>'
-    +'<span style="font-size:17px;font-weight:900;color:'+(hecho?'#16a34a':'var(--txt)')+';'+(hecho?'text-decoration:line-through;opacity:.6':'')+';font-family:Bebas Neue,sans-serif;letter-spacing:1px">'+nombre+'</span></div>'
-    +(item.nota?'<div style="font-size:11px;color:var(--txt2);margin-top:3px">📝 '+item.nota+'</div>':'')
-    +'<div style="font-size:11px;font-weight:700;color:'+(hecho?'#16a34a':'#9ca3af')+';margin-top:3px">'
-    +(hecho?'✓ '+(hechoBy?'Marcado por '+hechoBy:'Completado'):'Pendiente')+'</div></div></div>';
-}
-
-function progToggleGeneral(idx){
-  var fecha=new Date().toISOString().slice(0,10);
-  var key='prog_asig_GENERAL_'+fecha;
-  var lista; try{ lista=JSON.parse(localStorage.getItem(key)||'[]'); }catch(e){ lista=[]; }
-  if(lista[idx]){ lista[idx].hecho=!lista[idx].hecho; lista[idx].hechoBy=lista[idx].hecho?(typeof REC!=='undefined'?REC:''):''; }
-  try{ localStorage.setItem(key, JSON.stringify(lista)); }catch(e){}
-  if(typeof fbSetConfig==='function') fbSetConfig('prog_asig/GENERAL/'+fecha, lista.length?lista:null);
-  _progRenderLista(); _progActualizarBadge();
-}
-
-function _progRenderLista(){
-  var el=document.getElementById('progLista'); if(!el) return;
-  var individual=_progGet();
-  var fecha=new Date().toISOString().slice(0,10);
-  var general=[]; try{ general=JSON.parse(localStorage.getItem('prog_asig_GENERAL_'+fecha)||'[]'); }catch(e){}
-  var total=individual.length+general.length;
-  var hechos=individual.filter(function(x){return x.hecho;}).length+general.filter(function(x){return x.hecho;}).length;
-  var pct=total?Math.round(hechos/total*100):0;
-  var bar=document.getElementById('progBarFill'); if(bar) bar.style.width=pct+'%';
-  var lbl=document.getElementById('progBarLabel');
-  if(lbl) lbl.textContent=total?(hechos+' de '+total+' actividades completadas'):'Sin actividades asignadas hoy';
-  if(!total){
-    el.innerHTML='<div style="text-align:center;padding:40px 20px"><div style="font-size:56px;margin-bottom:14px">📋</div><div style="font-size:18px;font-weight:700;color:var(--txt);margin-bottom:8px">Sin programa asignado</div><div style="font-size:14px;color:var(--txt2);line-height:1.5">Tu supervisor te asignará<br>las actividades del día</div></div>';
-    return;
-  }
-  var html='';
-  if(general.length){
-    html+='<div style="font-size:11px;font-weight:800;color:#7c3aed;letter-spacing:.8px;margin-bottom:8px">🌐 PROGRAMA GENERAL</div>';
-    html+=general.map(function(item,i){ return _progRenderItem(item,i,true); }).join('');
-  }
-  if(individual.length){
-    if(general.length) html+='<div style="font-size:11px;font-weight:800;color:var(--txt2);letter-spacing:.8px;margin:12px 0 8px">👤 MI PROGRAMA</div>';
-    html+=individual.map(function(item,i){ return _progRenderItem(item,i,false); }).join('');
-  }
-  el.innerHTML=html;
-}
-
-function _progActualizarBadge(){
-  var individual=_progGet();
-  var fecha=new Date().toISOString().slice(0,10);
-  var general=[]; try{ general=JSON.parse(localStorage.getItem('prog_asig_GENERAL_'+fecha)||'[]'); }catch(e){}
-  var total=individual.length+general.length;
-  var hechos=individual.filter(function(x){return x.hecho;}).length+general.filter(function(x){return x.hecho;}).length;
-  var badge=document.getElementById('progBadgeCount');
-  if(!badge) return;
-  if(!total){ badge.textContent='Sin programa hoy'; return; }
-  badge.textContent=hechos+'/'+total+(total===1?' actividad':' actividades');
-}
-
-document.addEventListener('DOMContentLoaded',function(){
-  if(typeof REC!=='undefined'&&REC) _progActualizarBadge();
-});
 // ══════════════════════════════════════════════════════════
 
 
@@ -4792,19 +5239,6 @@ function abrirEditarReporte(id){
   var r = getReporte(id);
   if(!r){ showToast('\u274c Reporte no encontrado'); return; }
   _editReporteId = id;
-  // Restaurar estadoPozo si es un reporte de guardia
-  if(r.estadoPozo){
-    estadoPozo = r.estadoPozo;
-    var nivelEpHid = document.getElementById('nivelEstadoPozo');
-    if(nivelEpHid) nivelEpHid.value = r.estadoPozo;
-    var idMap = {Abierto:'nivel-ep-abierto',Cerrado:'nivel-ep-cerrado',Intermitente:'nivel-ep-intermitente'};
-    var clsMap = {Abierto:'nivel-ep-sel-green',Cerrado:'nivel-ep-sel-red',Intermitente:'nivel-ep-sel-amber'};
-    var targetId = idMap[r.estadoPozo];
-    if(targetId){
-      var targetBtn = document.getElementById(targetId);
-      if(targetBtn) selNivelEstadoPozo(targetBtn, r.estadoPozo);
-    }
-  }
 
   var modal = document.getElementById('editReporteModal');
   if(!modal) return;
@@ -5269,14 +5703,16 @@ function solicitarPermisos(){
   }
 }
 
-// GPS continuo (watchPosition para mantenerlo actualizado)
+// GPS continuo compartido.
+// El watchPosition principal ya mantiene la, lo y ac actualizados.
+// Esta función solo refresca la interfaz y evita abrir otro GPS.
 function activarGPSContinuo(){
-  if(navigator.geolocation){
-    navigator.geolocation.watchPosition(
-      function(p){ la=p.coords.latitude; lo=p.coords.longitude; ac=Math.round(p.coords.accuracy); actualizarGPSbar(); },
-      function(){},
-      {enableHighAccuracy:true, maximumAge:5000, timeout:15000}
-    );
+  if(
+    Number.isFinite(la) &&
+    Number.isFinite(lo) &&
+    Number.isFinite(ac)
+  ){
+    actualizarGPSbar();
   }
 }
 
@@ -5421,65 +5857,219 @@ function enviarPushATodos(alarmaData){
 
 // Guardar reporte en Firebase
 function guardarEnFirebase(reporte){
-  if(!fbDB || !reporte.id) return;
-  try{
-    // No subir fotos a Firebase (muy pesadas) — solo metadata
-    var deviceName = typeof hcGetDeviceName === 'function' ? hcGetDeviceName() : '';
-    fbDB.ref('reportes/' + reporte.id).set({
-      // ── Identificación ────────────────────────────────────
-      id:            reporte.id,
-      fecha:         reporte.fecha,
-      hora:          reporte.hora          || null,
-      pozo:          reporte.pozo,
-      recorredor:    reporte.recorredor,
-      perfil:        reporte.perfil        || null,
-      modo:          reporte.modo          || 'co',
-      estado:        reporte.estado,
-      device:        deviceName,
-      nFotos:        (reporte.fotos||[]).length,
-      esAlarma:      reporte.esAlarma      || false,
-      tipoAlarma:    reporte.tipoAlarma    || null,
-      // ── Mensaje completo (mantener siempre) ───────────────
-      msg:           reporte.msg,
-      // ── Fotos reales para Cloud Function → UltraMsg ───────
-      // Antes solo se guardaba nFotos; ahora el servidor necesita la evidencia.
-      fotos:         reporte.fotos        || [],
-      // ── C.O. — campos estructurados ───────────────────────
-      estatus:       reporte.estatus       || null,
-      fluye:         reporte.fluye         || null,
-      sap:           reporte.sap           || null,
-      estrang:       reporte.estrang       || null,
-      ptp:           reporte.ptp           || null,
-      ldd:           reporte.ldd           || null,
-      ptr:           reporte.ptr           || null,
-      lbn:           reporte.lbn           || null,
-      epm:           reporte.epm           || null,
-      carrera:       reporte.carrera       || null,
-      // ── Nivel FT / Guardia ────────────────────────────────
-      nivel:         reporte.nivel         || null,
-      // Legacy flat (para código existente)
-      bls:           reporte.bls           || null,
-      ctm:           reporte.ctm           || null,
-      // ── Checks de registro ────────────────────────────────
-      checks:        reporte.checks        || null,
-      estadoPozo:    reporte.estadoPozo    || '',
-      // ── WhatsApp Cloud Function trigger ───────────────────
-      whatsappStatus:    reporte.whatsappStatus    || null,
-      whatsappSent:      reporte.whatsappSent      || false,
-      whatsappDedupeKey: reporte.whatsappDedupeKey || null,
-      // ── GPS estructurado ──────────────────────────────────
-      gps:           reporte.gps           || null,
-      // ── Observaciones ─────────────────────────────────────
-      observaciones: reporte.observaciones || null,
-      obs:           reporte.obs           || null,
-      // ── Control interno ───────────────────────────────────
-      ultimoIntento: reporte.ultimoIntento || null,
-      intentos:      reporte.intentos      || 0
-    }).catch(function(e){ console.warn('FB write:', e); });
-  } catch(e){}
+  if(!fbDB || !reporte || !reporte.id){
+    return Promise.resolve(false);
+  }
+
+  var reportId = String(reporte.id);
+  var reporteRef =
+    fbDB.ref('reportes/' + reportId);
+
+  var registryRef =
+    fbDB.ref(
+      'whatsappSentRegistry/' + reportId
+    );
+
+  var deviceName =
+    typeof hcGetDeviceName === 'function'
+      ? hcGetDeviceName()
+      : '';
+
+  /*
+   * Nunca confiar únicamente en la copia local para
+   * whatsappStatus. El Registry y el reporte remoto
+   * son la fuente de verdad para un envío confirmado.
+   */
+  return Promise.all([
+    registryRef.once('value'),
+    reporteRef.once('value')
+  ])
+  .then(function(resultados){
+    var registry =
+      resultados[0].val() || null;
+
+    var remoto =
+      resultados[1].val() || {};
+
+    var registryStatus = String(
+      registry && (
+        registry.status ||
+        registry.estado ||
+        registry.whatsappStatus
+      ) || ''
+    ).toLowerCase();
+
+    var remotoStatus = String(
+      remoto.whatsappStatus ||
+      ''
+    ).toLowerCase();
+
+    var registroEnviado =
+      registry === true ||
+      registryStatus === 'sent' ||
+      registryStatus === 'enviado' ||
+      registryStatus === 'success' ||
+      registryStatus === 'ok';
+
+    var remotoEnviado =
+      remotoStatus === 'sent' ||
+      remoto.whatsappSent === true;
+
+    var confirmado =
+      registroEnviado ||
+      remotoEnviado;
+
+    var payload = {
+      // Identificación
+      id:         reporte.id,
+      fecha:      reporte.fecha,
+      hora:       reporte.hora || null,
+      pozo:       reporte.pozo,
+      recorredor: reporte.recorredor,
+      perfil:     reporte.perfil || null,
+      modo:       reporte.modo || 'co',
+      estado:     confirmado
+        ? 'enviado'
+        : (
+            reporte.estado ||
+            remoto.estado ||
+            'pendiente'
+          ),
+      device:     deviceName,
+
+      nFotos:
+        Array.isArray(reporte.fotos)
+          ? reporte.fotos.length
+          : Number(
+              reporte.nFotos ||
+              remoto.nFotos ||
+              0
+            ),
+
+      esAlarma:
+        reporte.esAlarma || false,
+
+      tipoAlarma:
+        reporte.tipoAlarma || null,
+
+      msg:
+        reporte.msg ||
+        remoto.msg ||
+        null,
+
+      /*
+       * No volver a cargar Base64 si la Cloud Function
+       * ya archivó o limpió las evidencias.
+       */
+      fotos:
+        confirmado
+          ? (
+              remoto.fotos === undefined
+                ? null
+                : remoto.fotos
+            )
+          : (
+              reporte.fotos ||
+              remoto.fotos ||
+              []
+            ),
+
+      // Control Operativo
+      estatus: reporte.estatus || null,
+      fluye:   reporte.fluye || null,
+      sap:     reporte.sap || null,
+      estrang: reporte.estrang || null,
+      ptp:     reporte.ptp || null,
+      ldd:     reporte.ldd || null,
+      ptr:     reporte.ptr || null,
+      lbn:     reporte.lbn || null,
+      epm:     reporte.epm || null,
+      carrera: reporte.carrera || null,
+
+      // Nivel / Guardia
+      nivel: reporte.nivel || null,
+      bls:   reporte.bls || null,
+      ctm:   reporte.ctm || null,
+
+      // Actividades
+      checks:
+        reporte.checks || null,
+
+      estadoPozo:
+        reporte.estadoPozo || '',
+
+      // GPS
+      gps:
+        reporte.gps || null,
+
+      // Observaciones
+      observaciones:
+        reporte.observaciones || null,
+
+      obs:
+        reporte.obs || null,
+
+      // Control interno
+      ultimoIntento:
+        reporte.ultimoIntento ||
+        remoto.ultimoIntento ||
+        null,
+
+      intentos:
+        Number(
+          reporte.intentos ||
+          remoto.intentos ||
+          0
+        )
+    };
+
+    if(confirmado){
+      payload.whatsappStatus = 'sent';
+      payload.whatsappSent = true;
+      payload.whatsappSentAt =
+        remoto.whatsappSentAt ||
+        (
+          registry &&
+          registry.sentAt
+        ) ||
+        null;
+
+      payload.whatsappDedupeKey =
+        remoto.whatsappDedupeKey ||
+        reportId;
+
+    }else{
+      payload.whatsappStatus =
+        reporte.whatsappStatus ||
+        remoto.whatsappStatus ||
+        'pending';
+
+      payload.whatsappSent = false;
+
+      payload.whatsappDedupeKey =
+        reporte.whatsappDedupeKey ||
+        remoto.whatsappDedupeKey ||
+        reportId;
+    }
+
+    return reporteRef
+      .update(payload)
+      .then(function(){
+        return true;
+      });
+  })
+  .catch(function(error){
+    console.warn(
+      'FB write protegido:',
+      reportId,
+      error
+    );
+
+    return false;
+  });
 }
 
-// Actualizar estado en Firebase
+
 function actualizarEstadoFirebase(id, estado, ultimoIntento){
   if(!fbDB) return;
   try{
@@ -5493,11 +6083,27 @@ function actualizarEstadoFirebase(id, estado, ultimoIntento){
 
 // Sincronizar locales → Firebase (al recuperar señal)
 function sincronizarAFirebase(){
-  if(!fbDB) return;
+  if(!fbDB){
+    return;
+  }
+
   var locales = getHistorial();
-  locales.forEach(function(r){
-    guardarEnFirebase(r);
-  });
+  var indice = 0;
+
+  function siguiente(){
+    if(indice >= locales.length){
+      return;
+    }
+
+    var reporte = locales[indice++];
+
+    guardarEnFirebase(reporte)
+      .finally(function(){
+        setTimeout(siguiente, 100);
+      });
+  }
+
+  siguiente();
 }
 
 // Escuchar Firebase → actualizar local en tiempo real
@@ -5528,7 +6134,7 @@ function escucharFirebase(){
   try{ fbDB.ref('reportes').off('value'); }catch(e){}
 
   var _fbReportesInit = false;
-  fbDB.ref('reportes').orderByChild('fecha').limitToLast(20).on('value', function(snapshot){
+  fbDB.ref('reportes').orderByChild('fecha').limitToLast(15).on('value', function(snapshot){
     actualizarSyncBar('conectado');
     if(_fbReportesInit){
       // Find the newest report to show who sent it
@@ -5550,9 +6156,38 @@ function escucharFirebase(){
       remotos.forEach(function(r){
         if(!r || !r.id) return;
         if(localMap[r.id]){
-          // Actualizar estado desde Firebase
-          if(r.estado === 'enviado') localMap[r.id].estado = 'enviado';
-          if(r.ultimoIntento) localMap[r.id].ultimoIntento = r.ultimoIntento;
+          // Firebase es la fuente de verdad para el envío.
+          if(r.estado){
+            localMap[r.id].estado =
+              r.estado;
+          }
+
+          if(r.whatsappStatus){
+            localMap[r.id].whatsappStatus =
+              r.whatsappStatus;
+          }
+
+          if(
+            r.whatsappSent !== undefined
+          ){
+            localMap[r.id].whatsappSent =
+              r.whatsappSent === true;
+          }
+
+          if(r.whatsappSentAt){
+            localMap[r.id].whatsappSentAt =
+              r.whatsappSentAt;
+          }
+
+          if(r.whatsappDedupeKey){
+            localMap[r.id].whatsappDedupeKey =
+              r.whatsappDedupeKey;
+          }
+
+          if(r.ultimoIntento){
+            localMap[r.id].ultimoIntento =
+              r.ultimoIntento;
+          }
         } else {
           // Reporte de OTRO dispositivo — agregar sin fotos
           localMap[r.id] = {
@@ -5575,8 +6210,8 @@ function escucharFirebase(){
     // Ordenar por fecha descendente
     var merged = Object.values(localMap);
     merged.sort(function(a,b){ return new Date(b.fecha)-new Date(a.fecha); });
-    if (merged.length > 20) {
-      merged = merged.slice(0, 20);
+    if(merged.length > 15){
+      merged = merged.slice(0, 15);
     }
     saveHistorial(merged);
     renderHistorial();
@@ -5617,13 +6252,343 @@ function getReporte(id){
 }
 
 // ── Guardar (SIEMPRE, primero) ────────────────────
+
+function _aforoHora12a24(hora, periodo){
+  var partes = String(hora || '').split(':');
+
+  if(partes.length !== 2){
+    return String(hora || '');
+  }
+
+  var h = parseInt(partes[0], 10);
+  var m = parseInt(partes[1], 10);
+
+  if(
+    !Number.isFinite(h) ||
+    !Number.isFinite(m)
+  ){
+    return String(hora || '');
+  }
+
+  var p = String(periodo || '')
+    .toLowerCase()
+    .replace(/\s+/g, '');
+
+  var esPM = p.indexOf('p') === 0;
+  var esAM = p.indexOf('a') === 0;
+
+  if(esPM && h < 12){
+    h += 12;
+  }
+
+  if(esAM && h === 12){
+    h = 0;
+  }
+
+  return String(h).padStart(2, '0') +
+    ':' +
+    String(m).padStart(2, '0');
+}
+
+function buscarUltimoNivelAforo(pozo,tipoDeposito){
+  var candidatos = [];
+  var vistos = {};
+
+  function agregarLista(lista){
+    if(!Array.isArray(lista)){
+      return;
+    }
+
+    lista.forEach(function(r){
+      if(!r){
+        return;
+      }
+
+      var clave = String(
+        r.id ||
+        r.fbKey ||
+        (
+          String(r.fecha || '') +
+          '_' +
+          String(r.pozo || '')
+        )
+      );
+
+      if(vistos[clave]){
+        return;
+      }
+
+      vistos[clave] = true;
+      candidatos.push(r);
+    });
+  }
+
+  agregarLista(getHistorial());
+
+  if(
+    typeof _hcData !== 'undefined' &&
+    Array.isArray(_hcData)
+  ){
+    agregarLista(_hcData);
+  }
+
+  candidatos = candidatos.map(function(r){
+    if(String(r.pozo || '') !== String(pozo || '')){
+      return null;
+    }
+
+    var cm = null;
+    var bbl = null;
+    var hora = null;
+    var tipoNivel = '';
+    var fuente = '';
+
+    /*
+     * OPCIÓN 1:
+     * Nivel tradicional de CO o Guardia.
+     */
+    if(r.nivel && typeof r.nivel === 'object'){
+      cm = parseFloat(r.nivel.ctm);
+
+      bbl = parseFloat(
+        r.nivel.bls !== undefined
+          ? r.nivel.bls
+          : r.nivel.bbls
+      );
+
+      hora =
+        r.nivel.hora ||
+        r.hora ||
+        null;
+
+      tipoNivel =
+        r.nivel.tipoDeposito ||
+        r.nivel.tipo ||
+        '';
+
+      fuente =
+        r.nivel.fuente ||
+        r.modo ||
+        'co';
+
+      if(tipoNivel === 'guardia'){
+        var mensaje = String(r.msg || '').toUpperCase();
+
+        tipoNivel =
+          mensaje.indexOf('PRESA METÁLICA') !== -1 ||
+          mensaje.indexOf('PRESA METALICA') !== -1
+            ? 'pm'
+            : 'ft';
+      }
+    }
+
+    /*
+     * OPCIÓN 2:
+     * Nivel final de un Aforo anterior.
+     * Este debe convertirse en el siguiente nivel inicial.
+     */
+    if(
+      (
+        !Number.isFinite(cm) ||
+        !Number.isFinite(bbl)
+      ) &&
+      r.aforo &&
+      r.aforo.nivelFinal
+    ){
+      cm = parseFloat(r.aforo.nivelFinal.cm);
+
+      bbl = parseFloat(
+        r.aforo.nivelFinal.bbls !== undefined
+          ? r.aforo.nivelFinal.bbls
+          : r.aforo.nivelFinal.bbl
+      );
+
+      hora =
+        r.aforo.nivelFinal.hora ||
+        r.horaFinal ||
+        r.hora ||
+        null;
+
+      tipoNivel =
+        r.aforo.tipoDeposito ||
+        r.tipoDeposito ||
+        'ft';
+
+      fuente = 'aforo';
+    }
+
+    /*
+     * Compatibilidad con campos planos del Aforo.
+     */
+    if(
+      !Number.isFinite(cm) ||
+      !Number.isFinite(bbl)
+    ){
+      var cmPlano = parseFloat(r.cmFinal);
+      var bblPlano = parseFloat(r.bblFinal);
+
+      if(
+        Number.isFinite(cmPlano) &&
+        Number.isFinite(bblPlano)
+      ){
+        cm = cmPlano;
+        bbl = bblPlano;
+
+        hora =
+          r.horaFinal ||
+          r.hora ||
+          null;
+
+        tipoNivel =
+          r.tipoDeposito ||
+          'ft';
+
+        fuente = 'aforo';
+      }
+    }
+
+    /*
+     * Compatibilidad con reportes históricos.
+     *
+     * Algunos reportes antiguos no guardaron r.nivel.
+     * El BLS puede estar plano en r.bls y el CTM,
+     * BLS y hora permanecen dentro del mensaje.
+     */
+    if(
+      !Number.isFinite(cm) ||
+      !Number.isFinite(bbl)
+    ){
+      var mensajeOriginal = String(r.msg || '');
+
+      var matchNivelCompleto =
+        mensajeOriginal.match(
+          /CTM:\s*([+-]?\d+(?:\.\d+)?)\s*cm[\s\S]{0,80}?BLS:\s*([+-]?\d+(?:\.\d+)?)\s*bls[\s\S]{0,80}?([0-9]{1,2}:[0-9]{2})\s*(a\.?\s*m\.?|p\.?\s*m\.?)?/i
+        );
+
+      var matchGuardia =
+        mensajeOriginal.match(
+          /Barriles:\s*([+-]?\d+(?:\.\d+)?)[\s\S]{0,80}?Centímetros:\s*([+-]?\d+(?:\.\d+)?)[\s\S]{0,80}?([0-9]{1,2}:[0-9]{2})\s*(a\.?\s*m\.?|p\.?\s*m\.?)?/i
+        );
+
+      if(matchNivelCompleto){
+        cm = parseFloat(matchNivelCompleto[1]);
+        bbl = parseFloat(matchNivelCompleto[2]);
+
+        hora = _aforoHora12a24(
+          matchNivelCompleto[3],
+          matchNivelCompleto[4]
+        );
+
+        tipoNivel =
+          /PRESA\s+MET[ÁA]LICA/i.test(mensajeOriginal)
+            ? 'pm'
+            : 'ft';
+
+        fuente = r.modo || 'co';
+      }else if(matchGuardia){
+        bbl = parseFloat(matchGuardia[1]);
+        cm = parseFloat(matchGuardia[2]);
+
+        hora = _aforoHora12a24(
+          matchGuardia[3],
+          matchGuardia[4]
+        );
+
+        tipoNivel =
+          /PRESA\s+MET[ÁA]LICA/i.test(mensajeOriginal)
+            ? 'pm'
+            : 'ft';
+
+        fuente = 'guardia';
+      }else{
+        /*
+         * Último respaldo:
+         * BLS plano y CTM dentro del mensaje.
+         */
+        var bblHistorico = parseFloat(r.bls);
+
+        var matchCtm =
+          mensajeOriginal.match(
+            /(?:CTM|Centímetros):\s*([+-]?\d+(?:\.\d+)?)/i
+          );
+
+        if(
+          Number.isFinite(bblHistorico) &&
+          matchCtm
+        ){
+          cm = parseFloat(matchCtm[1]);
+          bbl = bblHistorico;
+
+          hora =
+            r.hora ||
+            null;
+
+          tipoNivel =
+            /PRESA\s+MET[ÁA]LICA/i.test(mensajeOriginal)
+              ? 'pm'
+              : 'ft';
+
+          fuente = r.modo || 'historico';
+        }
+      }
+    }
+
+    if(
+      !Number.isFinite(cm) ||
+      !Number.isFinite(bbl)
+    ){
+      return null;
+    }
+
+    if(!tipoNivel){
+      tipoNivel = 'ft';
+    }
+
+    if(
+      tipoDeposito &&
+      tipoNivel !== tipoDeposito
+    ){
+      return null;
+    }
+
+    return {
+      id: r.id || r.fbKey || null,
+      fecha: r.fecha || null,
+      hora: hora,
+      cm: cm,
+      bbl: bbl,
+      tipo: tipoNivel,
+      origen: fuente
+    };
+  }).filter(Boolean);
+
+  candidatos.sort(function(a,b){
+    var fa = new Date(a.fecha || 0).getTime();
+    var fb = new Date(b.fecha || 0).getTime();
+
+    if(!Number.isFinite(fa)){
+      fa = 0;
+    }
+
+    if(!Number.isFinite(fb)){
+      fb = 0;
+    }
+
+    return fb - fa;
+  });
+
+  return candidatos.length
+    ? candidatos[0]
+    : null;
+}
+
 function guardarReporte(reporte){
   var arr = getHistorial();
   var idx = -1;
   for(var i=0;i<arr.length;i++){ if(arr[i].id===reporte.id){ idx=i; break; } }
   if(idx >= 0) arr[idx] = reporte;
   else arr.unshift(reporte);
-  if(arr.length > 20) arr = arr.slice(0, 20); // máximo 20 reportes en historial local
+  if(arr.length > 15) arr = arr.slice(0, 15); // máximo 15 reportes en historial local
   saveHistorial(arr);
   // Sincronizar a Firebase si hay señal
   if(fbDB) guardarEnFirebase(reporte);
@@ -6596,31 +7561,133 @@ function intentarEnviar(id){
 // ── Procesar cola completa — silencioso ──────────
 var _colaEnProceso = false;
 function procesarCola(){
-  if(_colaEnProceso) return;
-  var pendientes = getPendientes();
-  if(!pendientes.length) return;
-  _colaEnProceso = true;
-  // Fix 3 — safety: liberar si se atasca internamente
-  var _colaTimeout = setTimeout(function(){ _colaEnProceso = false; }, 60000);
-  var idx = 0;
-  function enviarSiguiente(){
-    if(idx >= pendientes.length){ clearTimeout(_colaTimeout); _colaEnProceso = false; return; }
-    var r = pendientes[idx++];
-    // Solo sincronizar a Firebase — Cloud Function maneja WhatsApp
-    var rFresh = getReporte(r.id);
-    if(rFresh){
-      // Asegurar que tenga whatsappStatus:pending si no fue marcado como sent
-      if(!rFresh.whatsappSent && !rFresh.whatsappStatus){
-        rFresh.whatsappStatus    = 'pending';
-        rFresh.whatsappSent      = false;
-        rFresh.whatsappDedupeKey = String(rFresh.id);
-        rFresh.whatsappAttempts  = 0;
-        guardarReporte(rFresh);
-      }
-      if(fbDB) guardarEnFirebase(rFresh);
-    }
-    setTimeout(enviarSiguiente, 500); // sin delay de red, solo Firebase writes
+  if(_colaEnProceso || !fbDB){
+    return;
   }
+
+  var pendientes = getPendientes();
+
+  if(!pendientes.length){
+    return;
+  }
+
+  _colaEnProceso = true;
+
+  var _colaTimeout = setTimeout(function(){
+    _colaEnProceso = false;
+  }, 60000);
+
+  var indice = 0;
+
+  function terminar(){
+    clearTimeout(_colaTimeout);
+    _colaEnProceso = false;
+  }
+
+  function enviarSiguiente(){
+    if(indice >= pendientes.length){
+      terminar();
+      return;
+    }
+
+    var reporteLocal =
+      pendientes[indice++];
+
+    if(!reporteLocal || !reporteLocal.id){
+      setTimeout(enviarSiguiente, 100);
+      return;
+    }
+
+    var id = String(reporteLocal.id);
+
+    fbDB
+      .ref('whatsappSentRegistry/' + id)
+      .once('value')
+      .then(function(snapshot){
+        var registry = snapshot.val();
+
+        var status = String(
+          registry && (
+            registry.status ||
+            registry.estado ||
+            registry.whatsappStatus
+          ) || ''
+        ).toLowerCase();
+
+        var confirmado =
+          registry === true ||
+          status === 'sent' ||
+          status === 'enviado' ||
+          status === 'success' ||
+          status === 'ok';
+
+        var fresco =
+          getReporte(reporteLocal.id) ||
+          reporteLocal;
+
+        if(confirmado){
+          /*
+           * Ya llegó al grupo. Corregir únicamente
+           * el estado local y remoto; nunca reenviar.
+           */
+          fresco.estado = 'enviado';
+          fresco.whatsappStatus = 'sent';
+          fresco.whatsappSent = true;
+          fresco.whatsappSentAt =
+            registry && registry.sentAt
+              ? registry.sentAt
+              : fresco.whatsappSentAt || null;
+
+          var historial = getHistorial();
+          var posicion = historial.findIndex(
+            function(item){
+              return item.id === fresco.id;
+            }
+          );
+
+          if(posicion >= 0){
+            historial[posicion] = fresco;
+            saveHistorial(historial);
+          }
+
+          return fbDB
+            .ref('reportes/' + id)
+            .update({
+              estado: 'enviado',
+              whatsappStatus: 'sent',
+              whatsappSent: true,
+              whatsappSentAt:
+                fresco.whatsappSentAt || null,
+              whatsappDedupeKey: id
+            });
+        }
+
+        /*
+         * No existe confirmación: sincronizar el reporte
+         * como pending para que Cloud Function lo procese.
+         */
+        if(!fresco.whatsappSent){
+          fresco.whatsappStatus = 'pending';
+          fresco.whatsappSent = false;
+          fresco.whatsappDedupeKey = id;
+
+          return guardarEnFirebase(fresco);
+        }
+
+        return null;
+      })
+      .catch(function(error){
+        console.warn(
+          'Cola Registry:',
+          id,
+          error
+        );
+      })
+      .finally(function(){
+        setTimeout(enviarSiguiente, 250);
+      });
+  }
+
   enviarSiguiente();
 }
 
@@ -6676,7 +7743,294 @@ setTimeout(function(){
   if(getPendientes().length) verificarYEnviar();
 }, 3000);
 
+
+function confirmarEnvioMuestras(){
+  if(!REC){
+    showToast('⚠️ Selecciona tu nombre');
+    return;
+  }
+
+  if(!Array.isArray(muestrasPozos) || !muestrasPozos.length){
+    showToast('⚠️ Selecciona al menos un pozo');
+    return;
+  }
+
+  var overlay=document.getElementById('confirmOverlay');
+  if(overlay){
+    overlay.classList.remove('open');
+    overlay.style.cssText='';
+    overlay.style.display='none';
+  }
+
+  var ahora=new Date();
+  var fecha=ahora.toISOString();
+  var hora=ahora.toLocaleTimeString(
+    'es-MX',
+    {hour:'2-digit',minute:'2-digit'}
+  );
+
+  var grupoId='muestras_'+ahora.getTime();
+  var obsEl=document.getElementById('muestrasObs');
+  var observaciones=obsEl ? obsEl.value.trim() : '';
+
+  var fotosCopy=fotos.map(function(f){
+    return {
+      data:(f.data||f),
+      nombre:(f.nombre||'')
+    };
+  });
+
+  var gpsObj=null;
+
+  if(la && lo){
+    gpsObj={
+      lat:la,
+      lon:lo,
+      precision:ac,
+      rango:'multiple'
+    };
+  }
+
+  var reportePrincipalId=null;
+  var totalMuestras=muestrasPozos.length;
+
+  muestrasPozos.forEach(function(pozo,indice){
+    var principal=(indice===0);
+    var id=ahora.getTime()+indice;
+
+    if(principal){
+      reportePrincipalId=id;
+    }
+
+    var reporte={
+      id:id,
+      fecha:fecha,
+      hora:hora,
+      pozo:pozo,
+      recorredor:REC,
+      perfil:
+        (typeof loggedTheme!=='undefined' ? loggedTheme : '') ||
+        loggedUser ||
+        '',
+      modo:'muestras',
+      msg:msgPendiente,
+      observaciones:observaciones || null,
+      obs:observaciones || null,
+      grupoMuestrasId:grupoId,
+      pozosMuestra:muestrasPozos.slice(),
+      muestraPrincipal:principal,
+      reportePrincipalId:principal ? id : null,
+      fotos:principal ? fotosCopy : [],
+      fotosReferenciaGrupo:principal ? null : grupoId,
+      gps:gpsObj,
+      estado:principal ? 'pendiente' : 'vinculado',
+      ultimoIntento:null,
+      intentos:0,
+      whatsappStatus:principal ? 'pending' : 'linked',
+      whatsappSent:principal ? false : true,
+      whatsappDedupeKey:
+        principal ? grupoId : grupoId+'_'+pozo,
+      whatsappAttempts:0
+    };
+
+    guardarReporte(reporte);
+    agregarVisita(REC,pozo);
+
+    if(fbDB){
+      guardarEnFirebase(reporte);
+    }
+  });
+
+  _ccLastReporteId=reportePrincipalId;
+
+  mostrarContador(REC);
+  actualizarBadgeHistorial();
+
+  muestrasPozos=[];
+  muestrasPozosTemp=[];
+
+  if(obsEl){
+    obsEl.value='';
+  }
+
+  renderMuestrasSeleccionados();
+
+  showToast(
+    '✅ '+totalMuestras+
+    ' muestra'+(totalMuestras===1?'':'s')+
+    ' registrada'+(totalMuestras===1?'':'s')
+  );
+
+  resetFormulario();
+}
+
+
+/*
+ * Distintivo visual del recorredor.
+ *
+ * Solo modifica el texto del mensaje y la vista previa.
+ * El campo estructurado reporte.recorredor continúa limpio,
+ * sin emojis, para no afectar filtros ni exportaciones.
+ */
+function decorarRecorredorMensaje(nombre){
+  var limpio = String(nombre || '').trim();
+
+  if(!limpio){
+    return '';
+  }
+
+  var normalizado = limpio
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase();
+
+  if(normalizado.indexOf('MANRIQUE') !== -1){
+    return '🟢 ' + limpio + ' 🟢';
+  }
+
+  if(normalizado.indexOf('JUAN CARLOS') !== -1){
+    return '🟣 ' + limpio + ' 🟣';
+  }
+
+  if(normalizado.indexOf('JOSE') !== -1){
+    return '🟠 ' + limpio + ' 🟠';
+  }
+
+  if(normalizado.indexOf('LUIS') !== -1){
+    return '🔵 ' + limpio + ' 🔵';
+  }
+
+  return '⚪ ' + limpio + ' ⚪';
+}
+
 function confirmarEnvio(){
+  /*
+   * AFORO:
+   * - Primer clic: genera y abre la vista previa.
+   * - Segundo clic desde el overlay: continúa al envío real.
+   */
+  if(modoRegistro==='aforo' && !_aforoPreviewAbierto){
+    /*
+     * No validar todavía la hora final.
+     * Primero se actualiza automáticamente al momento
+     * de solicitar la vista previa.
+     */
+    var horaInicialAforo =
+      document.getElementById('aforoHoraInicial').value;
+
+    /*
+     * En automático se usa la hora actual.
+     * En manual se conserva la hora capturada
+     * por el operador.
+     */
+    var horaFinalElAforo =
+      document.getElementById('aforoHoraFinal');
+
+    if(
+      _aforoModoFinal !== 'manual' &&
+      horaFinalElAforo
+    ){
+      horaFinalElAforo.value =
+        _aforoHoraActual();
+    }
+
+    calcularBPHAforo();
+
+    if(!validarAforoCompleto(true)){
+      return;
+    }
+
+    var horaFinalAforo =
+      horaFinalElAforo.value;
+
+    var cmInicialAforo =
+      document.getElementById('aforoCmInicial').value;
+
+    var bblInicialAforo =
+      document.getElementById('aforoBblInicial').value;
+
+    var cmFinalAforo =
+      document.getElementById('aforoCmFinal').value;
+
+    var bblFinalAforo =
+      document.getElementById('aforoBblFinal').value;
+
+    var bphAforo =
+      document.getElementById('aforoBPH').value;
+
+    var fechaAforo =
+      new Date().toLocaleDateString('es-MX');
+
+    var lineaGpsAforo = '';
+    var distanciaAforo = calcDistanciaPozo();
+
+    if(
+      la &&
+      lo &&
+      distanciaAforo >= 0 &&
+      distanciaAforo <= RADIO_GPS_METROS
+    ){
+      lineaGpsAforo =
+        '✅ Dentro del rango\n';
+    }else if(la && lo){
+      lineaGpsAforo =
+        '⚠️ Fuera del rango\n' +
+        gpsLine() +
+        '\n';
+    }else{
+      lineaGpsAforo =
+        '⚠️ GPS no disponible\n';
+    }
+
+    var msgAforo =
+      '📈 *AFORO / PROYECCIÓN*\n' +
+      '🛢 Pozo: *C-' + W + '*\n' +
+      '👷 Recorredor: ' + decorarRecorredorMensaje(REC) + '\n' +
+      '📅 ' + fechaAforo + '\n' +
+      '══════════════════\n' +
+      '📍 *NIVEL INICIAL*\n' +
+      '🕐 Hora: ' +
+        _aforoHoraVisible(horaInicialAforo) +
+        '\n' +
+      '📐 Nivel: ' +
+        cmInicialAforo +
+        ' cm\n' +
+      '🛢 Volumen: ' +
+        bblInicialAforo +
+        ' BBL\n' +
+      '══════════════════\n' +
+      '📍 *NIVEL FINAL*\n' +
+      '🕐 Hora: ' +
+        _aforoHoraVisible(horaFinalAforo) +
+        '\n' +
+      '📐 Nivel: ' +
+        cmFinalAforo +
+        ' cm\n' +
+      '🛢 Volumen: ' +
+        bblFinalAforo +
+        ' BBL\n' +
+      '══════════════════\n' +
+      lineaManiobraEstado(
+        'aforoManiobra',
+        'aforoEstado'
+      ) +
+      '✅ *AFORO: ' +
+        bphAforo +
+        ' BPH*\n' +
+      '══════════════════\n' +
+      lineaGpsAforo +
+      '_C-' + W + '_';
+
+    _aforoPreviewAbierto = true;
+    _abrirConfirmOverlay(msgAforo);
+    return;
+  }
+
+  if(modoRegistro==='muestras'){
+    confirmarEnvioMuestras();
+    return;
+  }
+
   console.log('[ANDROID] CLICK ENVIAR — userAgent:', navigator.userAgent.slice(0,60));
   console.log('[ANDROID] online:', navigator.onLine, 'vvp:', !!(window.visualViewport));
   // ── Anti-duplicado ─────────────────────────────────────────
@@ -6694,11 +8048,19 @@ function confirmarEnvio(){
   ov.classList.remove('open');
   ov.style.cssText = '';
   ov.style.display = 'none';
+
+  /*
+   * El usuario ya confirmó el envío.
+   * Liberar la bandera para el próximo Aforo.
+   */
+  _aforoPreviewAbierto = false;
+
   var ahora = new Date().toISOString();
   // ── Capturar hora local antes de resetear ────────────────────
   var _ahoraLocal = new Date();
   var _horaStr = _ahoraLocal.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
   var _esGuardia = (modoRegistro === 'guardia');
+  var _esAforo = (modoRegistro === 'aforo');
   // Nivel: guardia usa medBarriles/medCentimetros; CO usa nivCTM/nivBLS
   var _nivCtm = _esGuardia
     ? parseFloat((document.getElementById('medCentimetros')||{}).value)||null
@@ -6720,8 +8082,7 @@ function confirmarEnvio(){
   }
   // Observaciones — prioridad: coObs > regObs > medObs
   var _obs = (document.getElementById('coObs') ||{}).value  ||
-             (document.getElementById('regObs')||{}).value  ||
-             (document.getElementById('medObs')||{}).value  || null;
+             (document.getElementById('regObs')||{}).value  || null;
   var reporte = {
     id: Date.now(),
     fecha: ahora,
@@ -6735,12 +8096,132 @@ function confirmarEnvio(){
     ultimoIntento: null,
     intentos: 0,
     modo: modoRegistro || 'co',
+
+    // Aforo / Proyección
+    tipoDeposito: _esAforo
+      ? _aforoTipo
+      : null,
+
+    modoInicial: _esAforo
+      ? _aforoModoInicial
+      : null,
+
+    horaInicial: _esAforo
+      ? (document.getElementById('aforoHoraInicial')||{}).value || null
+      : null,
+
+    horaFinal: _esAforo
+      ? (document.getElementById('aforoHoraFinal')||{}).value || null
+      : null,
+
+    modoFinal: _esAforo
+      ? _aforoModoFinal
+      : null,
+
+    unidadesTiempo: _esAforo
+      ? _aforoUnidadesTiempo
+      : null,
+
+    cmInicial: _esAforo
+      ? parseFloat((document.getElementById('aforoCmInicial')||{}).value) || null
+      : null,
+
+    cmFinal: _esAforo
+      ? parseFloat((document.getElementById('aforoCmFinal')||{}).value) || null
+      : null,
+
+    bblInicial: _esAforo
+      ? parseFloat((document.getElementById('aforoBblInicial')||{}).value) || null
+      : null,
+
+    bblFinal: _esAforo
+      ? parseFloat((document.getElementById('aforoBblFinal')||{}).value) || null
+      : null,
+
+    bph: _esAforo
+      ? parseFloat((document.getElementById('aforoBPH')||{}).value) || null
+      : null,
+
+    minutosReales: _esAforo
+      ? _aforoMinutosReales
+      : null,
+
+    minutosAjustados: _esAforo
+      ? _aforoMinutosAjustados
+      : null,
+
+    horasAjustadas: _esAforo && _aforoMinutosAjustados
+      ? _aforoMinutosAjustados / 60
+      : null,
+
+    barrilesProducidos: _esAforo
+      ? _aforoBarrilesProducidos
+      : null,
+
+    reporteNivelOrigenId: _esAforo
+      ? _aforoOrigenInicialId
+      : null,
+
+    aforo: _esAforo ? {
+      tipoDeposito: _aforoTipo,
+      fluye: _aforoTipo,
+      maniobraPozo:
+        (document.getElementById('aforoManiobra') || {}).value || null,
+      estadoPozo:
+        (document.getElementById('aforoEstado') || {}).value || null,
+      modoInicial: _aforoModoInicial,
+      modoFinal: _aforoModoFinal,
+      unidadesTiempo: _aforoUnidadesTiempo,
+      nivelInicial: {
+        hora: (document.getElementById('aforoHoraInicial')||{}).value || null,
+        cm: parseFloat((document.getElementById('aforoCmInicial')||{}).value) || null,
+        bbls: parseFloat((document.getElementById('aforoBblInicial')||{}).value) || null,
+        reporteOrigenId: _aforoOrigenInicialId
+      },
+      nivelFinal: {
+        hora: (document.getElementById('aforoHoraFinal')||{}).value || null,
+        cm: parseFloat((document.getElementById('aforoCmFinal')||{}).value) || null,
+        bbls: parseFloat((document.getElementById('aforoBblFinal')||{}).value) || null
+      },
+      minutosReales: _aforoMinutosReales,
+      minutosAjustados: _aforoMinutosAjustados,
+      horasAjustadas: _aforoMinutosAjustados
+        ? _aforoMinutosAjustados / 60
+        : null,
+      barrilesProducidos: _aforoBarrilesProducidos,
+      bph: parseFloat((document.getElementById('aforoBPH')||{}).value) || null
+    } : null,
+    // MANIOBRA Y ESTADO POR MÓDULO
+    guardiaManiobra:
+      (document.getElementById('guardiaManiobra') || {}).value || null,
+
+    guardiaEstado:
+      (document.getElementById('guardiaEstado') || {}).value || null,
+
+    aforoManiobra:
+      (document.getElementById('aforoManiobra') || {}).value || null,
+
+    aforoEstado:
+      (document.getElementById('aforoEstado') || {}).value || null,
+
     // C.O.
-    estatus:   (document.getElementById('coEstatus')    ||{}).value || null,
+    estatus:   (document.getElementById('coEstatus')    ||{}).value || null,    maniobraPozo: (document.getElementById('coManiobra') || {}).value || '',
+
     fluye:     (document.getElementById('coFlujo')      ||{}).value || null,
     sap:       (document.getElementById('coSistema')    ||{}).value || null,
     estrang:   (document.getElementById('coEstrangulador')||{}).value || null,
-    ptp: parseFloat((document.getElementById('coTP')     ||(document.getElementById('coPresion')||{})).value)||null,
+    ptp: parseFloat(
+      (
+        document.getElementById('coInyPTP') &&
+        document.getElementById('coInyPTP').value
+      )
+        ? document.getElementById('coInyPTP').value
+        : (
+            document.getElementById('coTP') ||
+            document.getElementById('coPresion') ||
+            {}
+          ).value
+    ) || null,
     ldd: parseFloat((document.getElementById('coLDD')    ||{}).value)||null,
     ptr: parseFloat((document.getElementById('coTR')     ||(document.getElementById('coPTR_bm')||{})).value)||null,
     lbn: parseFloat((document.getElementById('coLBN')    ||{}).value)||null,
@@ -6751,7 +8232,10 @@ function confirmarEnvio(){
       ctm:  _nivCtm,
       bls:  _nivBls,
       hora: _horaStr,
-      tipo: _esGuardia ? 'guardia' : (_nivTipo || 'ft')
+      tipo: _esGuardia
+        ? (_medTipo || 'ft')
+        : (_nivTipo || 'ft'),
+      fuente: _esGuardia ? 'guardia' : 'co'
     } : null,
     // Legacy flat (compatibilidad con código existente)
     bls: _nivBls,
@@ -6772,30 +8256,30 @@ function confirmarEnvio(){
     observaciones: _obs,
     obs:           _obs
   };
-  // 1. SIEMPRE guardar primero — nunca perder
+  // ── FLUJO ÚNICO — localStorage → Firebase → Cloud Function ──
+  // Completar el reporte antes de su primera y única persistencia.
+  // guardarReporte() conserva localmente y, si fbDB está disponible,
+  // llama internamente a guardarEnFirebase().
+  var fotosCopy = reporte.fotos || [];
+  var nFotos = fotosCopy.length;
+
+  reporte.whatsappStatus    = 'pending';
+  reporte.whatsappSent      = false;
+  reporte.whatsappDedupeKey = String(reporte.id);
+  reporte.whatsappAttempts  = 0;
+  reporte.fotos             = fotosCopy;
+
+  console.log('[VISITAS] INICIO FLUJO — vía Cloud Function');
+  console.log('[VISITAS] FOTOS:', nFotos);
+
+  // Única persistencia del reporte completo.
   guardarReporte(reporte);
+
   agregarVisita(REC, W);
   mostrarContador(REC);
   var n = getVisitas(REC).length;
   actualizarBadgeHistorial();
   _ccLastReporteId = reporte.id;
-
-  // ── NUEVO FLUJO — Firebase → Cloud Function → WhatsApp ─────
-  // El cliente solo escribe en Firebase con whatsappStatus:'pending'.
-  // La Cloud Function es el único proceso que llama UltraMsg.
-  var fotosCopy = fotos.map(function(f){ return {data:(f.data||f), nombre:(f.nombre||'')}; });
-  var nFotos = fotosCopy.length;
-  console.log('[VISITAS] INICIO FLUJO — vía Cloud Function');
-  console.log('[VISITAS] FOTOS:', nFotos);
-
-  // Agregar campos WhatsApp al reporte ANTES de guardar
-  reporte.whatsappStatus   = 'pending';
-  reporte.whatsappSent     = false;
-  reporte.whatsappDedupeKey = String(reporte.id);
-  reporte.whatsappAttempts  = 0;
-  reporte.fotos            = fotosCopy; // fotos capturadas antes de limpiar
-  guardarReporte(reporte);   // actualizar con fotos y whatsappStatus
-  if(fbDB) guardarEnFirebase(reporte); // Cloud Function lo detecta y envía
 
   // Mostrar tarjetas de confirmación
   var cc = document.getElementById('confirmCards');
@@ -6888,7 +8372,7 @@ function filtrarHist(f, btn){
 
 function renderHistorial(){
   var arr = getHistorial();
-  if(arr.length > 20) arr = arr.slice(0, 20); // mostrar solo los últimos 20 reportes
+  if(arr.length > 15) arr = arr.slice(0, 15); // mostrar solo los últimos 15 reportes
   var pendientes = getPendientes();
   if(histFiltro === 'alarmas'){
     arr = arr.filter(function(r){ return r.esAlarma; });
@@ -7179,9 +8663,103 @@ function cerrarBanner(){
   try{localStorage.setItem('pwa_dismissed','1');}catch(e){}
 }
 
+// ══ POZOS INYECTORES ══
+var POZOS_INYECTORES = [
+  '181',
+  '182',
+  '197',
+  '224',
+  '333',
+  '339',
+  '344'
+];
+
+function esPozoInyector(pozo){
+  return POZOS_INYECTORES.indexOf(
+    String(pozo || '')
+  ) !== -1;
+}
+
+function actualizarControlOperativoPorPozo(){
+  var inyector = esPozoInyector(W);
+
+  var fluye =
+    document.getElementById('coFluyeWrap');
+
+  var condicion =
+    document.getElementById('coCondicionFlujoWrap');
+
+  var sap =
+    document.getElementById('coSapWrap');
+
+  var ptpInyector =
+    document.getElementById('coInyectorPtpWrap');
+
+  if(fluye){
+    fluye.style.display =
+      inyector ? 'none' : '';
+  }
+
+  if(condicion){
+    condicion.style.display =
+      inyector ? 'none' : '';
+  }
+
+  if(sap){
+    sap.style.display =
+      inyector ? 'none' : '';
+  }
+
+  if(ptpInyector){
+    ptpInyector.style.display =
+      inyector ? 'block' : 'none';
+  }
+
+  [
+    'cond-estrangulador',
+    'cond-franco',
+    'cond-bnfy',
+    'cond-bm',
+    'cond-bn-extra'
+  ].forEach(function(id){
+    var elemento =
+      document.getElementById(id);
+
+    if(inyector && elemento){
+      elemento.className = 'cond';
+    }
+  });
+
+  if(inyector){
+    var flujo =
+      document.getElementById('coFlujo');
+
+    var flujoTipo =
+      document.getElementById('coFlujoTipo');
+
+    var sistema =
+      document.getElementById('coSistema');
+
+    if(flujo){
+      flujo.value = '';
+    }
+
+    if(flujoTipo){
+      flujoTipo.value = '';
+    }
+
+    if(sistema){
+      sistema.value = '';
+    }
+  }
+}
+
 // ══ WELL PICKER — selección de pozo ══
 function setWellFromPicker(num){
   W = num;
+
+  actualizarControlOperativoPorPozo();
+
   // Update title
   var wt = document.getElementById('wellTitle');
   if(wt) wt.textContent = 'C-' + num;
@@ -7199,6 +8777,14 @@ function setWellFromPicker(num){
   });
   // Update GPS button visibility
   actualizarEnviarBtn();
+
+  if(
+    typeof modoRegistro !== 'undefined' &&
+    modoRegistro === 'aforo' &&
+    typeof refrescarAforoPorPozo === 'function'
+  ){
+    refrescarAforoPorPozo();
+  }
 }
 
 (function initPicker(){
@@ -7282,10 +8868,17 @@ function toggleWellList(){
 
 
 var leafletMap = null;
+var watchId = null;
 var userMarker = null;
 var allMapMarkers = {};
 
 function initMapaView(){
+  // Detener el GPS propio del mapa antes de reconstruirlo.
+  if(watchId !== null && navigator.geolocation){
+    navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+  }
+
   // Destroy previous instance
   if(leafletMap){
     try{ leafletMap.remove(); }catch(e){}
@@ -7976,7 +9569,6 @@ document.addEventListener('click', function() { initAlarmAudio(); }, { once: tru
   var INACT_MS = 2 * 60 * 60 * 1000; // 2 horas
   var RECORREDORES = {
     'm':  'Manrique Jimenez Perez',
-    'c':  'Cirilo Cancino Gomez',
     'jc': 'Juan Carlos Flores Hernandez'
   };
 
@@ -8034,9 +9626,948 @@ document.addEventListener('click', function() { initAlarmAudio(); }, { once: tru
 <script>
 var _cabSel = '', _estSel = '';
 
+
+// ═════════════════════════════════════════════════════════════
+// AFORO / PROYECCIÓN
+// ═════════════════════════════════════════════════════════════
+
+var _aforoTipo = 'ft';
+var _aforoModoInicial = 'automatico';
+var _aforoOrigenInicialId = null;
+var _aforoMinutosReales = null;
+var _aforoMinutosAjustados = null;
+var _aforoBarrilesProducidos = null;
+var _aforoUnidadesTiempo = null;
+var _aforoModoFinal = 'automatico';
+
+function _aforoHoraActual(){
+  var d = new Date();
+
+  return String(d.getHours()).padStart(2,'0') +
+    ':' +
+    String(d.getMinutes()).padStart(2,'0');
+}
+
+function _aforoHoraDesdeReporte(reporte){
+  if(reporte && reporte.fecha){
+    var d = new Date(reporte.fecha);
+
+    if(!isNaN(d.getTime())){
+      return String(d.getHours()).padStart(2,'0') +
+        ':' +
+        String(d.getMinutes()).padStart(2,'0');
+    }
+  }
+
+  var raw = String(
+    reporte && reporte.hora
+      ? reporte.hora
+      : ''
+  ).trim();
+
+  var normal = raw.match(/^(\d{1,2}):(\d{2})$/);
+
+  if(normal){
+    return String(Number(normal[1])).padStart(2,'0') +
+      ':' +
+      normal[2];
+  }
+
+  var local = raw
+    .toLowerCase()
+    .replace(/\./g,'')
+    .match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/);
+
+  if(local){
+    var h = Number(local[1]);
+    var m = local[2];
+    var periodo = local[3];
+
+    if(periodo === 'pm' && h < 12) h += 12;
+    if(periodo === 'am' && h === 12) h = 0;
+
+    return String(h).padStart(2,'0') + ':' + m;
+  }
+
+  return '';
+}
+
+function _aforoMinutosHora(valor){
+  var partes = String(valor || '').split(':');
+
+  if(partes.length !== 2){
+    return null;
+  }
+
+  var h = Number(partes[0]);
+  var m = Number(partes[1]);
+
+  if(
+    !Number.isFinite(h) ||
+    !Number.isFinite(m) ||
+    h < 0 ||
+    h > 23 ||
+    m < 0 ||
+    m > 59
+  ){
+    return null;
+  }
+
+  return h * 60 + m;
+}
+
+function calcularBblAforo(cm){
+  var cmVal = parseFloat(cm);
+
+  if(
+    !Number.isFinite(cmVal) ||
+    cmVal <= 0
+  ){
+    return null;
+  }
+
+  // Regla especial ya existente para C-376.
+  if(String(W) === '376'){
+    return Number((cmVal * 1.6).toFixed(1));
+  }
+
+  // Presa Metálica.
+  if(_aforoTipo === 'pm'){
+    return Number((cmVal * 0.67).toFixed(1));
+  }
+
+  // Frac Tank.
+  var cmInt = Math.round(cmVal);
+
+  if(
+    typeof CM_BLS_TABLE !== 'undefined' &&
+    CM_BLS_TABLE[cmInt] !== undefined
+  ){
+    return Number(CM_BLS_TABLE[cmInt]);
+  }
+
+  if(
+    typeof CM_BLS_TABLE !== 'undefined' &&
+    cmInt > 255
+  ){
+    return Number(
+      (
+        CM_BLS_TABLE[255] +
+        (cmInt - 255) * 1.9
+      ).toFixed(1)
+    );
+  }
+
+  if(typeof CM_BLS_TABLE !== 'undefined'){
+    var inferior = Math.floor(cmVal);
+    var superior = Math.ceil(cmVal);
+    var bInferior = CM_BLS_TABLE[inferior] || 0;
+    var bSuperior =
+      CM_BLS_TABLE[superior] !== undefined
+        ? CM_BLS_TABLE[superior]
+        : bInferior;
+
+    return Number(
+      (
+        bInferior +
+        (bSuperior - bInferior) *
+        (cmVal - inferior)
+      ).toFixed(1)
+    );
+  }
+
+  return null;
+}
+
+function actualizarAforoDesdeCm(parte){
+  var esInicial = parte === 'inicial';
+
+  var cmEl = document.getElementById(
+    esInicial
+      ? 'aforoCmInicial'
+      : 'aforoCmFinal'
+  );
+
+  var bblEl = document.getElementById(
+    esInicial
+      ? 'aforoBblInicial'
+      : 'aforoBblFinal'
+  );
+
+  if(!cmEl || !bblEl){
+    return;
+  }
+
+  var resultado = calcularBblAforo(cmEl.value);
+
+  bblEl.value =
+    resultado === null
+      ? ''
+      : resultado;
+
+  calcularBPHAforo();
+  actualizarEnviarBtn();
+}
+
+function selTipoAforo(tipo, btn){
+  _aforoTipo = tipo === 'pm' ? 'pm' : 'ft';
+
+  var ft = document.getElementById('aforo-btn-ft');
+  var pm = document.getElementById('aforo-btn-pm');
+
+  if(ft && pm){
+    ft.style.background =
+      _aforoTipo === 'ft'
+        ? '#0f766e'
+        : 'var(--surface2)';
+
+    ft.style.color =
+      _aforoTipo === 'ft'
+        ? '#fff'
+        : 'var(--txt)';
+
+    ft.style.borderColor =
+      _aforoTipo === 'ft'
+        ? '#0f766e'
+        : 'var(--border)';
+
+    pm.style.background =
+      _aforoTipo === 'pm'
+        ? '#0f766e'
+        : 'var(--surface2)';
+
+    pm.style.color =
+      _aforoTipo === 'pm'
+        ? '#fff'
+        : 'var(--txt)';
+
+    pm.style.borderColor =
+      _aforoTipo === 'pm'
+        ? '#0f766e'
+        : 'var(--border)';
+  }
+
+  var cmInicial = document.getElementById('aforoCmInicial');
+  var cmFinal = document.getElementById('aforoCmFinal');
+
+  if(
+    _aforoModoInicial === 'automatico'
+  ){
+    cargarNivelInicialAutomaticoAforo();
+  }else if(cmInicial && cmInicial.value){
+    actualizarAforoDesdeCm('inicial');
+  }
+
+  if(cmFinal && cmFinal.value){
+    actualizarAforoDesdeCm('final');
+  }
+
+  calcularBPHAforo();
+  actualizarEnviarBtn();
+}
+
+function selModoInicialAforo(modo, btn){
+  _aforoModoInicial =
+    modo === 'manual'
+      ? 'manual'
+      : 'automatico';
+
+  var autoBtn =
+    document.getElementById('aforo-modo-auto');
+
+  var manualBtn =
+    document.getElementById('aforo-modo-manual');
+
+  var hora =
+    document.getElementById('aforoHoraInicial');
+
+  var cm =
+    document.getElementById('aforoCmInicial');
+
+  var bbl =
+    document.getElementById('aforoBblInicial');
+
+  var info =
+    document.getElementById('aforoInicialInfo');
+
+  if(autoBtn && manualBtn){
+    autoBtn.style.background =
+      _aforoModoInicial === 'automatico'
+        ? '#0f766e'
+        : 'var(--surface)';
+
+    autoBtn.style.color =
+      _aforoModoInicial === 'automatico'
+        ? '#fff'
+        : 'var(--txt)';
+
+    autoBtn.style.borderColor =
+      _aforoModoInicial === 'automatico'
+        ? '#0f766e'
+        : 'var(--border)';
+
+    manualBtn.style.background =
+      _aforoModoInicial === 'manual'
+        ? '#0f766e'
+        : 'var(--surface)';
+
+    manualBtn.style.color =
+      _aforoModoInicial === 'manual'
+        ? '#fff'
+        : 'var(--txt)';
+
+    manualBtn.style.borderColor =
+      _aforoModoInicial === 'manual'
+        ? '#0f766e'
+        : 'var(--border)';
+  }
+
+  var automatico =
+    _aforoModoInicial === 'automatico';
+
+  if(hora){
+    hora.readOnly = automatico;
+    hora.style.opacity = automatico ? '.72' : '1';
+  }
+
+  if(cm){
+    cm.readOnly = automatico;
+    cm.style.opacity = automatico ? '.72' : '1';
+  }
+
+  if(bbl){
+    bbl.readOnly = true;
+    bbl.style.opacity = '.72';
+  }
+
+  if(automatico){
+    cargarNivelInicialAutomaticoAforo();
+  }else{
+    _aforoOrigenInicialId = null;
+
+    if(hora) hora.value = '';
+    if(cm) cm.value = '';
+    if(bbl) bbl.value = '';
+
+    if(info){
+      info.style.display = 'block';
+      info.style.background = 'rgba(59,130,246,.08)';
+      info.style.color = '#1d4ed8';
+      info.textContent =
+        'Captura manualmente la hora y los centímetros iniciales.';
+    }
+  }
+
+  calcularBPHAforo();
+  actualizarEnviarBtn();
+}
+
+
+var _aforoCargaToken = 0;
+
+function buscarUltimoNivelAforoRemoto(pozo, tipoDeposito){
+  var resultadoLocal =
+    buscarUltimoNivelAforo(pozo, tipoDeposito);
+
+  if(!fbDB){
+    return Promise.resolve(resultadoLocal);
+  }
+
+  function procesarSnapshot(snapshot){
+    var data = snapshot.val() || {};
+
+    var remotos = Object.keys(data).map(function(key){
+      var r = data[key];
+
+      if(r && !r.id){
+        r.id = key;
+      }
+
+      return r;
+    }).filter(Boolean);
+
+    var hcAnterior =
+      (
+        typeof _hcData !== 'undefined' &&
+        Array.isArray(_hcData)
+      )
+        ? _hcData
+        : [];
+
+    var combinados =
+      getHistorial()
+        .concat(hcAnterior)
+        .concat(remotos);
+
+    var respaldoHC =
+      typeof _hcData !== 'undefined'
+        ? _hcData
+        : [];
+
+    _hcData = combinados;
+
+    var encontrado =
+      buscarUltimoNivelAforo(
+        pozo,
+        tipoDeposito
+      );
+
+    _hcData = respaldoHC;
+
+    return encontrado || resultadoLocal;
+  }
+
+  /*
+   * Primer intento:
+   * ordenar por fecha.
+   */
+  return fbDB.ref('reportes')
+    .orderByChild('fecha')
+    .limitToLast(1000)
+    .once('value')
+    .then(procesarSnapshot)
+    .catch(function(errorOrdenado){
+      console.warn(
+        '[AFORO] Consulta ordenada falló; usando respaldo:',
+        errorOrdenado
+      );
+
+      /*
+       * Respaldo sin orderByChild:
+       * evita depender del índice .indexOn de fecha.
+       */
+      return fbDB.ref('reportes')
+        .limitToLast(1000)
+        .once('value')
+        .then(procesarSnapshot);
+    })
+    .catch(function(error){
+      console.warn(
+        '[AFORO] No se pudo consultar Firebase:',
+        error
+      );
+
+      return resultadoLocal;
+    });
+}
+
+function _aforoHoraVisible(valor){
+  var partes = String(valor || '').split(':');
+
+  if(partes.length !== 2){
+    return String(valor || '');
+  }
+
+  var h = Number(partes[0]);
+  var m = Number(partes[1]);
+
+  if(!Number.isFinite(h) || !Number.isFinite(m)){
+    return String(valor || '');
+  }
+
+  var periodo = h >= 12 ? 'p. m.' : 'a. m.';
+  var hora12 = h % 12;
+
+  if(hora12 === 0){
+    hora12 = 12;
+  }
+
+  return hora12 +
+    ':' +
+    String(m).padStart(2, '0') +
+    ' ' +
+    periodo;
+}
+
+
+async function cargarNivelInicialAutomaticoAforo(){
+  var hora =
+    document.getElementById('aforoHoraInicial');
+
+  var cm =
+    document.getElementById('aforoCmInicial');
+
+  var bbl =
+    document.getElementById('aforoBblInicial');
+
+  var info =
+    document.getElementById('aforoInicialInfo');
+
+  if(
+    !W ||
+    W === '???' ||
+    W === 'NOTA'
+  ){
+    _aforoOrigenInicialId = null;
+
+    if(hora) hora.value = '';
+    if(cm) cm.value = '';
+    if(bbl) bbl.value = '';
+
+    if(info){
+      info.style.display = 'block';
+      info.style.background =
+        'rgba(220,38,38,.08)';
+      info.style.color = '#b91c1c';
+      info.textContent =
+        'Selecciona primero el pozo del aforo.';
+    }
+
+    calcularBPHAforo();
+    actualizarEnviarBtn();
+    return false;
+  }
+
+  var token = ++_aforoCargaToken;
+
+  if(info){
+    info.style.display = 'block';
+    info.style.background =
+      'rgba(59,130,246,.08)';
+    info.style.color = '#1d4ed8';
+    info.textContent =
+      'Buscando el último nivel de C-' +
+      W +
+      '...';
+  }
+
+  var ultimo =
+    await buscarUltimoNivelAforoRemoto(
+      W,
+      _aforoTipo
+    );
+
+  /*
+   * Ignorar una respuesta anterior si el usuario cambió
+   * rápidamente de pozo o depósito.
+   */
+  if(token !== _aforoCargaToken){
+    return false;
+  }
+
+  if(!ultimo){
+    _aforoOrigenInicialId = null;
+
+    if(hora) hora.value = '';
+    if(cm) cm.value = '';
+    if(bbl) bbl.value = '';
+
+    if(info){
+      info.style.display = 'block';
+      info.style.background =
+        'rgba(245,158,11,.10)';
+      info.style.color = '#b45309';
+      info.textContent =
+        'No se encontró un nivel anterior de este pozo y depósito. Usa captura Manual.';
+    }
+
+    calcularBPHAforo();
+    actualizarEnviarBtn();
+    return false;
+  }
+
+  _aforoOrigenInicialId =
+    ultimo.id || null;
+
+  var horaEncontrada =
+    _aforoHoraDesdeReporte(ultimo);
+
+  if(hora){
+    hora.value = horaEncontrada;
+  }
+
+  if(cm){
+    cm.value = ultimo.cm;
+  }
+
+  if(bbl){
+    bbl.value = ultimo.bbl;
+  }
+
+  if(info){
+    info.style.display = 'block';
+    info.style.background =
+      'rgba(15,118,110,.08)';
+    info.style.color = '#0f766e';
+    info.textContent =
+      'Último nivel encontrado: ' +
+      ultimo.cm +
+      ' cm · ' +
+      ultimo.bbl +
+      ' BBL · ' +
+      (
+        horaEncontrada
+          ? _aforoHoraVisible(horaEncontrada)
+          : 'hora no disponible'
+      );
+  }
+
+  calcularBPHAforo();
+  actualizarEnviarBtn();
+
+  return true;
+}
+
+
+function selModoFinalAforo(modo, boton){
+  _aforoModoFinal =
+    modo === 'manual'
+      ? 'manual'
+      : 'automatico';
+
+  var btnAuto =
+    document.getElementById('aforo-final-auto');
+
+  var btnManual =
+    document.getElementById('aforo-final-manual');
+
+  var horaFinal =
+    document.getElementById('aforoHoraFinal');
+
+  function pintar(btn, activo){
+    if(!btn) return;
+
+    btn.style.borderColor =
+      activo
+        ? '#0f766e'
+        : 'var(--border)';
+
+    btn.style.background =
+      activo
+        ? '#0f766e'
+        : 'var(--surface)';
+
+    btn.style.color =
+      activo
+        ? '#fff'
+        : 'var(--txt)';
+  }
+
+  pintar(
+    btnAuto,
+    _aforoModoFinal === 'automatico'
+  );
+
+  pintar(
+    btnManual,
+    _aforoModoFinal === 'manual'
+  );
+
+  if(horaFinal){
+    if(_aforoModoFinal === 'automatico'){
+      horaFinal.readOnly = true;
+      horaFinal.style.opacity = '.72';
+      horaFinal.value = _aforoHoraActual();
+    }else{
+      horaFinal.readOnly = false;
+      horaFinal.style.opacity = '1';
+
+      if(!horaFinal.value){
+        horaFinal.value = _aforoHoraActual();
+      }
+
+      setTimeout(function(){
+        try{
+          horaFinal.focus();
+        }catch(error){}
+      }, 30);
+    }
+  }
+
+  calcularBPHAforo();
+  actualizarEnviarBtn();
+}
+
+function calcularBPHAforo(){
+  var horaInicialEl =
+    document.getElementById('aforoHoraInicial');
+
+  var horaFinalEl =
+    document.getElementById('aforoHoraFinal');
+
+  var bblInicialEl =
+    document.getElementById('aforoBblInicial');
+
+  var bblFinalEl =
+    document.getElementById('aforoBblFinal');
+
+  var bphEl =
+    document.getElementById('aforoBPH');
+
+  if(!bphEl){
+    return null;
+  }
+
+  _aforoMinutosReales = null;
+  _aforoMinutosAjustados = null;
+  _aforoUnidadesTiempo = null;
+  _aforoBarrilesProducidos = null;
+
+  var inicio =
+    _aforoMinutosHora(
+      horaInicialEl
+        ? horaInicialEl.value
+        : ''
+    );
+
+  var final =
+    _aforoMinutosHora(
+      horaFinalEl
+        ? horaFinalEl.value
+        : ''
+    );
+
+  var bblInicial =
+    parseFloat(
+      bblInicialEl
+        ? bblInicialEl.value
+        : ''
+    );
+
+  var bblFinal =
+    parseFloat(
+      bblFinalEl
+        ? bblFinalEl.value
+        : ''
+    );
+
+  if(
+    inicio === null ||
+    final === null ||
+    !Number.isFinite(bblInicial) ||
+    !Number.isFinite(bblFinal)
+  ){
+    bphEl.value = '';
+    bphEl.placeholder = '—';
+    return null;
+  }
+
+  var minutosReales =
+    final - inicio;
+
+  /*
+   * Si la hora final es menor que la inicial,
+   * interpretar que el Aforo cruzó la medianoche.
+   */
+  if(minutosReales < 0){
+    minutosReales += 24 * 60;
+  }
+
+  if(minutosReales <= 0){
+    bphEl.value = '';
+    bphEl.placeholder = 'Hora inválida';
+    return null;
+  }
+
+  var producidos =
+    bblFinal - bblInicial;
+
+  if(producidos < 0){
+    bphEl.value = '';
+    bphEl.placeholder = 'Nivel final menor';
+    return null;
+  }
+
+  /*
+   * NUEVA REGLA OPERATIVA
+   *
+   * 60 minutos = 100 u
+   * 1 minuto = 100 / 60 u
+   *
+   * unidadesTiempo =
+   * minutos transcurridos × 1.6666666667
+   *
+   * BPH =
+   * (barriles producidos / unidadesTiempo) × 100
+   */
+  var unidadesPorMinuto =
+    100 / 60;
+
+  var unidadesTiempo =
+    minutosReales * unidadesPorMinuto;
+
+  var bph =
+    (
+      producidos /
+      unidadesTiempo
+    ) * 100;
+
+  _aforoMinutosReales =
+    minutosReales;
+
+  /*
+   * Se conserva este campo por compatibilidad,
+   * pero ya no contiene minutos redondeados:
+   * guarda los minutos reales.
+   */
+  _aforoMinutosAjustados =
+    minutosReales;
+
+  _aforoUnidadesTiempo =
+    unidadesTiempo;
+
+  _aforoBarrilesProducidos =
+    producidos;
+
+  var resultado =
+    Number(bph.toFixed(2));
+
+  bphEl.value = resultado;
+  bphEl.placeholder = '—';
+
+  return resultado;
+}
+
+function validarAforoCompleto(mostrarAviso){
+  var validoPozo =
+    W &&
+    W !== '???' &&
+    W !== 'NOTA';
+
+  var horaInicial =
+    document.getElementById('aforoHoraInicial');
+
+  var horaFinal =
+    document.getElementById('aforoHoraFinal');
+
+  var cmInicial =
+    document.getElementById('aforoCmInicial');
+
+  var cmFinal =
+    document.getElementById('aforoCmFinal');
+
+  var bblInicial =
+    document.getElementById('aforoBblInicial');
+
+  var bblFinal =
+    document.getElementById('aforoBblFinal');
+
+  var bph =
+    document.getElementById('aforoBPH');
+
+  var valido =
+    !!validoPozo &&
+    !!_aforoTipo &&
+    !!(horaInicial && horaInicial.value) &&
+    !!(horaFinal && horaFinal.value) &&
+    Number.isFinite(
+      parseFloat(cmInicial && cmInicial.value)
+    ) &&
+    Number.isFinite(
+      parseFloat(cmFinal && cmFinal.value)
+    ) &&
+    Number.isFinite(
+      parseFloat(bblInicial && bblInicial.value)
+    ) &&
+    Number.isFinite(
+      parseFloat(bblFinal && bblFinal.value)
+    ) &&
+    Number.isFinite(
+      parseFloat(bph && bph.value)
+    ) &&
+    _aforoMinutosReales > 0;
+
+  if(!valido && mostrarAviso){
+    if(!validoPozo){
+      showToast('⚠️ Selecciona el pozo del Aforo');
+    }else if(
+      !horaInicial ||
+      !horaInicial.value
+    ){
+      showToast('⚠️ Falta la hora inicial');
+    }else if(
+      !cmInicial ||
+      !cmInicial.value
+    ){
+      showToast('⚠️ Falta el nivel inicial');
+    }else if(
+      !cmFinal ||
+      !cmFinal.value
+    ){
+      showToast('⚠️ Falta el nivel final');
+    }else{
+      showToast(
+        '⚠️ Revisa las horas y los niveles del Aforo'
+      );
+    }
+  }
+
+  return valido;
+}
+
+function refrescarAforoPorPozo(){
+  if(modoRegistro !== 'aforo'){
+    return;
+  }
+
+  if(_aforoModoInicial === 'automatico'){
+    cargarNivelInicialAutomaticoAforo();
+  }
+
+  calcularBPHAforo();
+  actualizarEnviarBtn();
+}
+
+function iniciarFormularioAforo(){
+  var horaFinal =
+    document.getElementById('aforoHoraFinal');
+
+  if(horaFinal){
+    horaFinal.value = _aforoHoraActual();
+  }
+
+  if(
+    !W ||
+    W === '???' ||
+    W === 'NOTA'
+  ){
+    var picker =
+      document.getElementById('wellPicker');
+
+    if(picker){
+      picker.classList.add('show');
+    }
+
+    showToast(
+      '⚠️ Selecciona el pozo que se va a aforar'
+    );
+  }
+
+  selTipoAforo(
+    _aforoTipo || 'ft',
+    document.getElementById(
+      _aforoTipo === 'pm'
+        ? 'aforo-btn-pm'
+        : 'aforo-btn-ft'
+    )
+  );
+
+  selModoInicialAforo(
+    _aforoModoInicial || 'automatico',
+    document.getElementById(
+      _aforoModoInicial === 'manual'
+        ? 'aforo-modo-manual'
+        : 'aforo-modo-auto'
+    )
+  );
+
+  selModoFinalAforo(
+    _aforoModoFinal || 'automatico',
+    document.getElementById(
+      _aforoModoFinal === 'manual'
+        ? 'aforo-final-manual'
+        : 'aforo-final-auto'
+    )
+  );
+
+  calcularBPHAforo();
+  actualizarEnviarBtn();
+}
+
+
 function setModoReg(modo){
   modoRegistro = modo;
-  ['co','guardia','cab','estacion','nota'].forEach(function(m){
+  ['co','guardia','cab','estacion','nota','muestras','aforo'].forEach(function(m){
     var b=document.getElementById('modo-btn-'+m);
     if(b) b.classList.toggle('sel-mode', modo===m);
   });
@@ -8045,13 +10576,20 @@ function setModoReg(modo){
     'co':      'tabs-wrapper',
     'cab':     'card-cab',
     'estacion':'card-estacion',
-    'nota':    'card-nota'
+    'nota':    'card-nota',
+    'muestras':'card-muestras',
+    'aforo':   'card-aforo'
   };
-  ['card-guardia','tabs-wrapper','card-cab','card-estacion','card-nota'].forEach(function(id){
+  ['card-guardia','tabs-wrapper','card-cab','card-estacion','card-nota','card-muestras','card-aforo'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.style.display='none';
   });
   var target = show[modo];
   if(target){ var el=document.getElementById(target); if(el) el.style.display='block'; }
+
+  if(modo === 'aforo'){
+    iniciarFormularioAforo();
+  }
+
   // Reset sub-selections
   _cabSel=''; _estSel='';
   document.querySelectorAll('.cab-opt,.est-opt').forEach(function(b){
@@ -8061,6 +10599,119 @@ function setModoReg(modo){
   if(cw) cw.style.display='none'; if(ew) ew.style.display='none';
   actualizarEnviarBtn();
 }
+
+
+var muestrasPozos = [];
+var muestrasPozosTemp = [];
+
+function abrirSelectorMuestras(){
+  muestrasPozosTemp = muestrasPozos.slice();
+
+  var overlay = document.getElementById('muestrasSelectorOverlay');
+  var buscar = document.getElementById('muestrasBuscar');
+
+  if(buscar) buscar.value = '';
+
+  renderSelectorMuestras('');
+
+  if(overlay){
+    if(overlay.parentNode !== document.body){
+      document.body.appendChild(overlay);
+    }
+    overlay.style.display = 'flex';
+  }
+}
+
+function cerrarSelectorMuestras(){
+  var overlay = document.getElementById('muestrasSelectorOverlay');
+  if(overlay) overlay.style.display = 'none';
+}
+
+function togglePozoMuestra(pozo){
+  var idx = muestrasPozosTemp.indexOf(pozo);
+
+  if(idx === -1){
+    muestrasPozosTemp.push(pozo);
+  }else{
+    muestrasPozosTemp.splice(idx, 1);
+  }
+
+  var buscar = document.getElementById('muestrasBuscar');
+  renderSelectorMuestras(buscar ? buscar.value : '');
+}
+
+function renderSelectorMuestras(filtro){
+  var lista = document.getElementById('muestrasLista');
+  if(!lista) return;
+
+  var q = String(filtro || '').trim().toLowerCase();
+
+  var pozos = (typeof WELLS_ALL !== 'undefined' ? WELLS_ALL : [])
+    .filter(function(pozo){
+      return !q || String(pozo).toLowerCase().includes(q);
+    });
+
+  lista.innerHTML = pozos.map(function(pozo){
+    var seleccionado = muestrasPozosTemp.indexOf(pozo) !== -1;
+
+    return `
+      <button type="button"
+              onclick="togglePozoMuestra('${pozo}')"
+              style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 14px;margin-bottom:8px;border-radius:11px;border:1.5px solid ${seleccionado ? '#7c3aed' : 'var(--border)'};background:${seleccionado ? '#f5f3ff' : 'var(--surface2)'};color:var(--txt);font-weight:800;cursor:pointer">
+        <span>🛢 C-${pozo}</span>
+        <span>${seleccionado ? '✅' : '○'}</span>
+      </button>
+    `;
+  }).join('');
+}
+
+function confirmarSelectorMuestras(){
+  muestrasPozos = muestrasPozosTemp
+    .slice()
+    .sort(function(a,b){
+      return String(a).localeCompare(String(b), 'es', {numeric:true});
+    });
+
+  renderMuestrasSeleccionados();
+  cerrarSelectorMuestras();
+  actualizarEnviarBtn();
+}
+
+function quitarPozoMuestra(pozo){
+  muestrasPozos = muestrasPozos.filter(function(p){
+    return p !== pozo;
+  });
+
+  renderMuestrasSeleccionados();
+  actualizarEnviarBtn();
+}
+
+function renderMuestrasSeleccionados(){
+  var resumen = document.getElementById('muestrasResumen');
+  var cont = document.getElementById('muestrasSeleccionados');
+
+  if(resumen){
+    resumen.textContent = muestrasPozos.length
+      ? muestrasPozos.length + ' pozo' + (muestrasPozos.length === 1 ? '' : 's') + ' seleccionado' + (muestrasPozos.length === 1 ? '' : 's')
+      : 'Ningún pozo seleccionado';
+  }
+
+  if(cont){
+    cont.innerHTML = muestrasPozos.map(function(pozo){
+      return `
+        <span style="display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:99px;background:#ede9fe;color:#5b21b6;font-size:12px;font-weight:800">
+          C-${pozo}
+          <button type="button"
+                  onclick="quitarPozoMuestra('${pozo}')"
+                  style="border:none;background:transparent;color:#5b21b6;font-weight:900;cursor:pointer;padding:0">
+            ✕
+          </button>
+        </span>
+      `;
+    }).join('');
+  }
+}
+
 
 function selCabezal(cab, btn){
   _cabSel = cab;
@@ -8091,6 +10742,12 @@ function actualizarEnviarBtn(){
   else if(modoRegistro==='nota'){
     var t=document.getElementById('notaLibreText'); ok = t && t.value.trim().length>0;
   }
+  else if(modoRegistro==='muestras'){
+    ok = Array.isArray(muestrasPozos) && muestrasPozos.length > 0;
+  }
+  else if(modoRegistro==='aforo'){
+    ok = validarAforoCompleto(false);
+  }
   btn.style.opacity = ok?'1':'0.45';
   btn.style.pointerEvents = ok?'auto':'none';
 }
@@ -8119,6 +10776,56 @@ window.mostrarConfirmacion = function(){
     W='NOTA';
     var msg3='📝 *NOTA DE CAMPO*\n👷 '+REC+'\n📅 '+now()+'\n══════════════════\n'+nt.value.trim()+(la?'\n'+gpsLine():'');
     _abrirConfirmOverlay(msg3); return;
+  }
+
+  if(modoRegistro==='muestras'){
+    if(!Array.isArray(muestrasPozos) || !muestrasPozos.length){
+      showToast('⚠️ Selecciona al menos un pozo');
+      return;
+    }
+
+    var obsMuestras=document.getElementById('muestrasObs');
+    var textoObsMuestras=obsMuestras
+      ? obsMuestras.value.trim()
+      : '';
+
+    var listaMuestras=muestrasPozos.map(function(pozo){
+      return '• C-'+pozo;
+    }).join('\n');
+
+    var msgMuestras=
+      '🧪 *MUESTRAS*\n' +
+      '👷 Recorredor: '+decorarRecorredorMensaje(REC)+'\n' +
+      '📅 '+now()+'\n' +
+      '══════════════════\n' +
+      '🛢 *POZOS SELECCIONADOS*\n' +
+      listaMuestras+'\n';
+
+    if(textoObsMuestras){
+      msgMuestras+=
+        '══════════════════\n' +
+        '📝 *OBSERVACIONES*\n' +
+        textoObsMuestras+'\n';
+    }
+
+    if(la && lo){
+      msgMuestras+=
+        '══════════════════\n' +
+        'GPS: '+la.toFixed(6)+', '+lo.toFixed(6)+
+        ' (±'+ac+'m)\n' +
+        '🗺 maps.google.com/?q='+la+','+lo+'\n';
+    }
+
+    if(fotos.length){
+      msgMuestras+=
+        '📸 Evidencia: '+fotos.length+
+        ' foto'+(fotos.length===1?'':'s')+'\n';
+    }
+
+    msgMuestras+='_MUESTRAS_';
+
+    _abrirConfirmOverlay(msgMuestras);
+    return;
   }
   // co / guardia → original flow with GPS check
   if(!W||W==='???'){ showToast('⚠️ Selecciona un pozo'); return; }
@@ -8200,6 +10907,15 @@ function cerrarUbiMapa(){
   var modal = document.getElementById('ubiModal');
   if(modal) modal.style.display = 'none';
   document.body.style.overflow = '';
+
+  if(
+    _ubiWatchId !== null &&
+    navigator.geolocation
+  ){
+    navigator.geolocation.clearWatch(_ubiWatchId);
+    _ubiWatchId = null;
+  }
+
   var sidebar = document.querySelector('.sidebar');
   if(sidebar) sidebar.style.display = '';
 }
@@ -8209,6 +10925,7 @@ var _ubiUserLng = null;
 var _ubiUserMarker = null;
 var _ubiRouteLine = null;
 var _ubiLineObjs = [];
+var _ubiWatchId = null;
 
 function _initUbiMap(){
   var div = document.getElementById('ubiMapDiv');
@@ -8315,7 +11032,11 @@ function _initUbiMap(){
 
 function _ubiIniciarGPS(){
   if(!navigator.geolocation) return;
-  navigator.geolocation.watchPosition(function(pos){
+  if(_ubiWatchId !== null){
+    return;
+  }
+
+  _ubiWatchId = navigator.geolocation.watchPosition(function(pos){
     _ubiUserLat = pos.coords.latitude;
     _ubiUserLng = pos.coords.longitude;
     var gIcon = L.divIcon({
@@ -8697,5 +11418,7 @@ function ubiFiltrar(){ /* replaced by filter buttons */ }
 })();
 // ═════════════════════════════════════════════════════════════
 </script>
+
+<script src="./health-monitor.js?v=20260804235010"></script>
 </body>
 </html>

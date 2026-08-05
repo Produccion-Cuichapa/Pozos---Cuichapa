@@ -21,11 +21,221 @@
 const functions = require('firebase-functions');
 const admin     = require('firebase-admin');
 const https     = require('https');
+const crypto    = require('crypto');
 
 admin.initializeApp();
 
 const DB        = admin.database();
 const CFG       = () => functions.config().ultramsg || {};
+
+
+// ══════════════════════════════════════════════════════════════
+// ARCHIVO PERMANENTE DE EVIDENCIAS — FIREBASE STORAGE
+// ══════════════════════════════════════════════════════════════
+
+function _safeStorageSegment(value){
+  return String(value || 'sin-dato')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9_-]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 80) || 'sin-dato';
+}
+
+function _parsePhotoData(photo){
+  if(!photo) return null;
+
+  var raw = typeof photo === 'string'
+    ? photo
+    : (
+        photo.data ||
+        photo.base64 ||
+        photo.src ||
+        ''
+      );
+
+  if(typeof raw !== 'string' || !raw.trim()){
+    return null;
+  }
+
+  raw = raw.trim();
+
+  var mime =
+    (typeof photo === 'object' && (
+      photo.mime ||
+      photo.type ||
+      photo.tipo
+    )) ||
+    'image/jpeg';
+
+  var base64 = raw;
+
+  var match = raw.match(
+    /^data:([^;,]+);base64,(.+)$/s
+  );
+
+  if(match){
+    mime = match[1] || mime;
+    base64 = match[2];
+  }
+
+  base64 = String(base64).replace(/\s+/g, '');
+
+  if(!base64){
+    return null;
+  }
+
+  var extension =
+    mime === 'image/png'  ? 'png'  :
+    mime === 'image/webp' ? 'webp' :
+    mime === 'image/gif'  ? 'gif'  :
+    'jpg';
+
+  try{
+    return {
+      buffer: Buffer.from(base64, 'base64'),
+      mime: mime,
+      extension: extension
+    };
+  }catch(err){
+    console.error(
+      '[EVIDENCIAS] Base64 inválido:',
+      err.message
+    );
+    return null;
+  }
+}
+
+async function _archivePhotos(options){
+  options = options || {};
+
+  var photos = Array.isArray(options.photos)
+    ? options.photos
+    : [];
+
+  if(!photos.length){
+    return {
+      urls: [],
+      saved: 0,
+      total: 0,
+      complete: true,
+      errors: []
+    };
+  }
+
+  var bucket = admin.storage().bucket();
+
+  var category = _safeStorageSegment(
+    options.category || 'reportes'
+  );
+
+  var recordId = _safeStorageSegment(
+    options.recordId || Date.now()
+  );
+
+  var pozo = _safeStorageSegment(
+    options.pozo || 'sin-pozo'
+  );
+
+  var dateValue = options.fecha
+    ? new Date(options.fecha)
+    : new Date();
+
+  if(isNaN(dateValue.getTime())){
+    dateValue = new Date();
+  }
+
+  var year = String(dateValue.getFullYear());
+  var month = String(dateValue.getMonth() + 1)
+    .padStart(2, '0');
+
+  var urls = [];
+  var errors = [];
+
+  for(var i = 0; i < photos.length; i++){
+    var parsed = _parsePhotoData(photos[i]);
+
+    if(!parsed || !parsed.buffer.length){
+      errors.push({
+        index: i,
+        error: 'Foto vacía o Base64 inválido'
+      });
+      continue;
+    }
+
+    try{
+      var token = crypto.randomUUID();
+
+      var objectPath = [
+        'evidencias',
+        category,
+        year,
+        month,
+        pozo,
+        recordId,
+        'foto_' +
+          String(i + 1).padStart(2, '0') +
+          '.' +
+          parsed.extension
+      ].join('/');
+
+      var file = bucket.file(objectPath);
+
+      await file.save(parsed.buffer, {
+        resumable: false,
+        validation: 'md5',
+        metadata: {
+          contentType: parsed.mime,
+          cacheControl: 'public,max-age=31536000',
+          metadata: {
+            firebaseStorageDownloadTokens: token,
+            reporteId: String(options.recordId || ''),
+            pozo: String(options.pozo || ''),
+            categoria: String(options.category || ''),
+            indice: String(i)
+          }
+        }
+      });
+
+      var encodedPath = encodeURIComponent(objectPath);
+
+      var url =
+        'https://firebasestorage.googleapis.com/v0/b/' +
+        bucket.name +
+        '/o/' +
+        encodedPath +
+        '?alt=media&token=' +
+        token;
+
+      urls.push(url);
+
+      console.log(
+        '[EVIDENCIAS] guardada:',
+        objectPath
+      );
+
+    }catch(err){
+      console.error(
+        '[EVIDENCIAS] error foto',
+        i + 1,
+        err.message
+      );
+
+      errors.push({
+        index: i,
+        error: String(err.message || err)
+      });
+    }
+  }
+
+  return {
+    urls: urls,
+    saved: urls.length,
+    total: photos.length,
+    complete: urls.length === photos.length,
+    errors: errors
+  };
+}
 
 // ── Constantes ────────────────────────────────────────────────
 const REGISTRY_PATH  = '/whatsappSentRegistry';
@@ -319,13 +529,128 @@ exports.sendWhatsApp = functions
       return null;
     }
 
-    // ── STEP 4: Send photos (best-effort, text already sent) ─
-    var fotos      = after.fotos || [];
+    // ── STEP 4: Archivar y enviar fotos ──────────────────────
+    var fotosRaw = after.fotos || [];
+
+    // RTDB puede devolver un arreglo como objeto {0:...,1:...}.
+    var fotos = Array.isArray(fotosRaw)
+      ? fotosRaw
+      : (
+          fotosRaw && typeof fotosRaw === 'object'
+            ? Object.keys(fotosRaw)
+                .sort(function(a,b){
+                  return Number(a) - Number(b);
+                })
+                .map(function(key){
+                  return fotosRaw[key];
+                })
+            : []
+        );
+
+    console.log(
+      '[WA_EVID] STEP4_START',
+      JSON.stringify({
+        reportId: reportId,
+        pozo: after.pozo || '',
+        modo: after.modo || '',
+        fotosTipo: Array.isArray(fotosRaw)
+          ? 'array'
+          : typeof fotosRaw,
+        fotosCantidad: fotos.length
+      })
+    );
+
+    var archivoFotos = {
+      urls: [],
+      saved: 0,
+      total: fotos.length,
+      complete: fotos.length === 0,
+      errors: []
+    };
+
+    try{
+      archivoFotos = await _archivePhotos({
+        category: 'reportes',
+        recordId: reportId,
+        pozo: after.pozo || '',
+        fecha: after.fecha || new Date().toISOString(),
+        photos: fotos
+      });
+
+      console.log(
+        '[WA_EVID] ARCHIVE_RESULT',
+        JSON.stringify({
+          reportId: reportId,
+          total: archivoFotos.total,
+          saved: archivoFotos.saved,
+          complete: archivoFotos.complete,
+          urls: archivoFotos.urls.length,
+          errors: archivoFotos.errors.length
+        })
+      );
+    }catch(archiveErr){
+      console.error(
+        '[WA_EVID] ARCHIVE_FATAL',
+        reportId,
+        archiveErr && archiveErr.stack
+          ? archiveErr.stack
+          : archiveErr
+      );
+
+      archivoFotos = {
+        urls: [],
+        saved: 0,
+        total: fotos.length,
+        complete: false,
+        errors: [{
+          index: -1,
+          error: String(
+            archiveErr && archiveErr.message
+              ? archiveErr.message
+              : archiveErr
+          )
+        }]
+      };
+    }
+
     var recorredor = after.recorredor || '';
     var pozo       = after.pozo       || '';
     var photoLabel = 'report';
     var photoCaption = 'C-'+pozo+' ('+recorredor+')';
-    var fotosOk = await _sendPhotos(fotos, photoLabel, photoCaption);
+
+    var fotosOk = false;
+
+    try{
+      console.log(
+        '[WA_EVID] ULTRAMSG_PHOTOS_START',
+        reportId,
+        'cantidad:',
+        fotos.length
+      );
+
+      fotosOk = await _sendPhotos(
+        fotos,
+        photoLabel,
+        photoCaption
+      );
+
+      console.log(
+        '[WA_EVID] ULTRAMSG_PHOTOS_END',
+        reportId,
+        'resultado:',
+        fotosOk
+      );
+    }catch(photoErr){
+      fotosOk = false;
+
+      console.error(
+        '[WA_EVID] ULTRAMSG_PHOTOS_ERROR',
+        reportId,
+        photoErr && photoErr.stack
+          ? photoErr.stack
+          : photoErr
+      );
+    }
 
     // ── STEP 5: Mark as sent + limpiar fotos base64 (FIX 0 Android) ─────
     // Las fotos ya fueron enviadas por UltraMsg.
@@ -337,17 +662,99 @@ exports.sendWhatsApp = functions
     var nFotosEnviadas = Array.isArray(_fRaw) ? _fRaw.length
                        : (_fRaw && typeof _fRaw === 'object') ? Object.keys(_fRaw).length
                        : 0;
-    await DB.ref(REPORTES_PATH + '/' + reportId).update({
-      whatsappStatus:       'sent',
-      whatsappSent:          true,
-      whatsappSentAt:        sentAt,
-      whatsappTextStatus:   'sent',
-      whatsappPhotoStatus:   fotosOk ? 'sent' : 'partial',
-      ultraMsgResponseId:    ultraId  || null,
-      fotos:                 null,          // FIX 0 Android: vaciar base64
-      nFotos:                nFotosEnviadas, // conservar solo el conteo
-      estado:                'enviado'       // FIX: frontend/admin decide visualmente con este campo
-    });
+    var reporteRef =
+      DB.ref(REPORTES_PATH + '/' + reportId);
+
+    var evidenciasPayload = {
+      // Eliminar Base64 solamente si Storage confirmó todas.
+      fotos: archivoFotos.complete ? null : fotos,
+      fotoUrls: archivoFotos.urls || [],
+      nFotos: nFotosEnviadas,
+      evidenciasArchivadas: archivoFotos.saved || 0,
+      evidenciasEstado: archivoFotos.complete
+        ? 'archivadas'
+        : (
+            archivoFotos.saved > 0
+              ? 'parcial'
+              : 'pendiente'
+          ),
+      evidenciasError:
+        archivoFotos.errors &&
+        archivoFotos.errors.length
+          ? JSON.stringify(
+              archivoFotos.errors
+            ).slice(0, 900)
+          : null,
+      evidenciasActualizadasAt:
+        admin.database.ServerValue.TIMESTAMP
+    };
+
+    console.log(
+      '[WA_EVID] DB_EVIDENCE_BEFORE',
+      JSON.stringify({
+        reportId: reportId,
+        nFotos: evidenciasPayload.nFotos,
+        urls: evidenciasPayload.fotoUrls.length,
+        archivadas:
+          evidenciasPayload.evidenciasArchivadas,
+        estado:
+          evidenciasPayload.evidenciasEstado,
+        conservaBase64:
+          evidenciasPayload.fotos !== null
+      })
+    );
+
+    try{
+      await reporteRef.update(evidenciasPayload);
+
+      console.log(
+        '[WA_EVID] DB_EVIDENCE_OK',
+        reportId
+      );
+    }catch(evidenceDbErr){
+      console.error(
+        '[WA_EVID] DB_EVIDENCE_ERROR',
+        reportId,
+        evidenceDbErr && evidenceDbErr.stack
+          ? evidenceDbErr.stack
+          : evidenceDbErr
+      );
+    }
+
+    var whatsappPayload = {
+      whatsappStatus: 'sent',
+      whatsappSent: true,
+      whatsappSentAt: sentAt,
+      whatsappTextStatus: 'sent',
+      whatsappPhotoStatus:
+        fotosOk ? 'sent' : 'partial',
+      ultraMsgResponseId: ultraId || null,
+      estado: 'enviado'
+    };
+
+    console.log(
+      '[WA_EVID] DB_STATUS_BEFORE',
+      reportId
+    );
+
+    try{
+      await reporteRef.update(whatsappPayload);
+
+      console.log(
+        '[WA_EVID] DB_STATUS_OK',
+        reportId
+      );
+    }catch(statusDbErr){
+      console.error(
+        '[WA_EVID] DB_STATUS_ERROR',
+        reportId,
+        statusDbErr && statusDbErr.stack
+          ? statusDbErr.stack
+          : statusDbErr
+      );
+
+      throw statusDbErr;
+    }
 
     // Update registry to 'sent' (permanent — never retried)
     await lockRef.set({
@@ -446,6 +853,19 @@ exports.sendAlarmWhatsApp = functions
 
       // ── Fotos de alarma (best-effort) ─────────────────────────
       var alarmaFotos   = after.fotos || [];
+
+      // Archivar evidencias de alarma antes de borrar Base64.
+      var archivoAlarmaFotos = await _archivePhotos({
+        category: 'alarmas',
+        recordId: alarmaId,
+        pozo:
+          after.pozo ||
+          after.lugar ||
+          after.ubicacion ||
+          'alarma',
+        fecha: after.fecha || new Date().toISOString(),
+        photos: alarmaFotos
+      });
       var alarmCaption  = (after.tipo||'ALARMA') + ' (' + (after.recorredor||after.quien||'') + ')';
       await _sendPhotos(alarmaFotos, 'alarm', alarmCaption);
 
@@ -453,8 +873,25 @@ exports.sendAlarmWhatsApp = functions
       await DB.ref('/alarmas/'+alarmaId).update({
         whatsappStatus:'sent', whatsappSent:true,
         whatsappSentAt:admin.database.ServerValue.TIMESTAMP,
-        fotos: null,                         // FIX 0 Android: limpiar base64
-        nFotos: alarmaFotos.length
+        // Borrar Base64 solo cuando Storage confirmó el archivo.
+        fotos: archivoAlarmaFotos.complete
+          ? null
+          : alarmaFotos,
+        fotoUrls: archivoAlarmaFotos.urls,
+        nFotos: alarmaFotos.length,
+        evidenciasArchivadas: archivoAlarmaFotos.saved,
+        evidenciasEstado: archivoAlarmaFotos.complete
+          ? 'archivadas'
+          : (
+              archivoAlarmaFotos.saved > 0
+                ? 'parcial'
+                : 'pendiente'
+            ),
+        evidenciasError: archivoAlarmaFotos.errors.length
+          ? JSON.stringify(
+              archivoAlarmaFotos.errors
+            ).slice(0, 900)
+          : null
       });
       await idLockRef.set({ status:'sent', sentAt:Date.now() });
       await contentRef.set({ status:'sent', alarmaId:alarmaId, sentAt:Date.now() });
@@ -508,3 +945,9 @@ exports.retryFailedWhatsApp = functions
     }
     return null;
   });
+
+// ══════════════════════════════════════════════════════════════
+// IA Cuichapa
+// ══════════════════════════════════════════════════════════════
+exports.iaCuichapaChat =
+  require('./ia/chat-function').iaCuichapaChat;

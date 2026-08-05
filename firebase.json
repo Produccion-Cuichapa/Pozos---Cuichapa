@@ -1,9 +1,49 @@
 {
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "functions/**",
+      "**/backups/**",
+      "**/*backup*",
+      "**/*_backup_*",
+      "**/*_roto_*",
+      "**/*estado_roto*",
+      "auditoria*",
+      "**/auditoria*",
+      "database.rules*",
+      "*.py",
+      "README*",
+      "**/*.log",
+      "templates/*backup*",
+      "templates/*BACKUP*",
+      "plan_*",
+      "respaldo_*",
+      "*.txt",
+      "Claude_Context/**",
+      "**/Claude_Context/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/admin",
+        "destination": "/admin/index.html"
+      },
+      {
+        "source": "/admin/**",
+        "destination": "/admin/index.html"
+      }
+    ]
+  },
   "functions": {
     "source": "functions",
     "runtime": "nodejs20"
   },
   "database": {
     "rules": "database.rules.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
   }
 }

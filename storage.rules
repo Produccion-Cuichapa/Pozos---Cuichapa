@@ -1,0 +1,25 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    /*
+     * La plataforma administrativa necesita visualizar
+     * las fotografías ya cargadas por los reportes.
+     *
+     * Solo se permite lectura pública en esta carpeta.
+     * La escritura continúa bloqueada desde el navegador.
+     */
+    match /evidencias/reportes/{allPaths=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    /*
+     * Todo lo demás permanece cerrado.
+     */
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
