@@ -1,3 +1,138 @@
+
+/*
+ * Normaliza las evidencias fotográficas guardadas en Firebase.
+ *
+ * Admite:
+ * - URL directa
+ * - data:image/...;base64,...
+ * - base64 sin prefijo
+ * - objetos con data, url, src, downloadURL, etc.
+ * - arreglos y objetos indexados por claves de Firebase
+ */
+function normalizarFotosReporte(item){
+  var resultado = [];
+  var vistos = new Set();
+
+  function agregar(valor, profundidad){
+    if(
+      valor === null ||
+      valor === undefined ||
+      profundidad > 8
+    ){
+      return;
+    }
+
+    if(Array.isArray(valor)){
+      valor.forEach(function(elemento){
+        agregar(elemento, profundidad + 1);
+      });
+      return;
+    }
+
+    if(typeof valor === 'string'){
+      var texto = valor.trim();
+
+      if(!texto){
+        return;
+      }
+
+      var src = '';
+
+      if(
+        /^https?:\/\//i.test(texto) ||
+        /^blob:/i.test(texto) ||
+        /^data:image\//i.test(texto)
+      ){
+        src = texto;
+      }else if(
+        texto.length > 500 &&
+        /^[A-Za-z0-9+/=\r\n]+$/.test(texto)
+      ){
+        src =
+          'data:image/jpeg;base64,' +
+          texto.replace(/\s+/g, '');
+      }
+
+      if(src && !vistos.has(src)){
+        vistos.add(src);
+        resultado.push(src);
+      }
+
+      return;
+    }
+
+    if(typeof valor !== 'object'){
+      return;
+    }
+
+    var camposPreferidos = [
+      'url',
+      'URL',
+      'src',
+      'data',
+      'base64',
+      'fotoUrl',
+      'fotoURL',
+      'photoUrl',
+      'photoURL',
+      'imageUrl',
+      'imageURL',
+      'downloadURL',
+      'downloadUrl',
+      'storageUrl',
+      'storageURL',
+      'firebaseStorageDownloadUrl'
+    ];
+
+    var encontroCampo = false;
+
+    camposPreferidos.forEach(function(campo){
+      if(
+        Object.prototype.hasOwnProperty.call(valor, campo) &&
+        valor[campo]
+      ){
+        encontroCampo = true;
+        agregar(valor[campo], profundidad + 1);
+      }
+    });
+
+    /*
+     * Firebase a veces convierte los arreglos en objetos:
+     * {"0": {...}, "1": {...}}
+     */
+    if(!encontroCampo){
+      Object.keys(valor).forEach(function(clave){
+        if(
+          /^\d+$/.test(clave) ||
+          clave === 'fotos' ||
+          clave === 'fotoUrls' ||
+          clave === 'evidencias' ||
+          clave === 'imagenes' ||
+          clave === 'images'
+        ){
+          agregar(valor[clave], profundidad + 1);
+        }
+      });
+    }
+  }
+
+  if(!item){
+    return resultado;
+  }
+
+  agregar(item.fotos, 0);
+  agregar(item.fotoUrls, 0);
+  agregar(item.fotoUrl, 0);
+  agregar(item.fotoURL, 0);
+  agregar(item.evidencias, 0);
+  agregar(item.imagenes, 0);
+  agregar(item.images, 0);
+  agregar(item.imageUrl, 0);
+  agregar(item.imageURL, 0);
+
+  return resultado;
+}
+
 window.AdminUI = {
   currentView: 'dashboard',
   reportInspectorRows: [],
@@ -807,17 +942,20 @@ window.AdminUI = {
      */
     this.prepareInspectorLazyPanels(item);
 
-    const photos = []
-      .concat(item.fotos || [])
-      .concat(item.fotoUrls || [])
-      .concat(item.photos || [])
-      .concat(item.photoUrls || [])
-      .concat(item.evidencias || [])
-      .filter(Boolean);
+    const photos = this.resolveReportPhotos(item);
 
+    /*
+     * El contador de la pestaña Evidencias representa
+     * únicamente fotografías. El GPS se muestra en su
+     * apartado propio y no debe confundirse con una foto.
+     */
     const evidenceCount =
-      Number(item.nFotos || photos.length || 0) +
-      (AdminUtils.hasGps(item) ? 1 : 0);
+      Number(
+        photos.length ||
+        item.nFotos ||
+        parsed?.evidenceCount ||
+        0
+      );
 
     const evidenceEl = document.getElementById(
       'inspectorEvidenceCount'
@@ -3369,6 +3507,359 @@ window.AdminUI = {
     return '';
   },
 
+  async cargarFotosStorageReporte(item, containerId){
+    const contenedor =
+      document.getElementById(containerId);
+
+    if(!contenedor || !item){
+      return [];
+    }
+
+    /*
+     * Primero conservar cualquier foto que ya venga
+     * directamente dentro del reporte.
+     */
+    const directas =
+      this.resolveReportPhotos(item);
+
+    if(directas.length){
+      contenedor.innerHTML = directas.map(src => `
+        <a
+          href="${AdminUtils.escapeHtml(src)}"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            src="${AdminUtils.escapeHtml(src)}"
+            loading="lazy"
+            alt="Evidencia fotográfica"
+          >
+        </a>
+      `).join('');
+
+      return directas;
+    }
+
+    if(
+      typeof firebase === 'undefined' ||
+      typeof firebase.storage !== 'function'
+    ){
+      contenedor.innerHTML =
+        '<div class="empty">Firebase Storage no está disponible.</div>';
+
+      return [];
+    }
+
+    const reporteId = String(
+      item.id ||
+      item.reporteId ||
+      ''
+    ).trim();
+
+    let pozo = String(
+      item.pozo ||
+      item.well ||
+      item.lugar ||
+      ''
+    ).trim();
+
+    pozo = pozo
+      .replace(/^C[-\s]*/i, '')
+      .replace(/\s+/g, '');
+
+    const fecha = new Date(
+      item.fecha ||
+      item.createdAt ||
+      item.timestamp ||
+      0
+    );
+
+    if(
+      !reporteId ||
+      !pozo ||
+      Number.isNaN(fecha.getTime())
+    ){
+      contenedor.innerHTML =
+        '<div class="empty">No fue posible construir la ruta de las fotografías.</div>';
+
+      return [];
+    }
+
+    const anio = String(
+      fecha.getUTCFullYear()
+    );
+
+    const mes = String(
+      fecha.getUTCMonth() + 1
+    ).padStart(2, '0');
+
+    const carpeta =
+      'evidencias/reportes/' +
+      anio + '/' +
+      mes + '/' +
+      pozo + '/' +
+      reporteId;
+
+    contenedor.innerHTML =
+      '<div class="empty">Cargando fotografías…</div>';
+
+    try{
+      const resultado = await firebase
+        .storage()
+        .ref(carpeta)
+        .listAll();
+
+      const referencias = resultado.items || [];
+
+      if(!referencias.length){
+        contenedor.innerHTML =
+          '<div class="empty">El reporte indica evidencia, pero no se encontraron archivos en Storage.</div>';
+
+        return [];
+      }
+
+      const urls = await Promise.all(
+        referencias
+          .slice()
+          .sort((a, b) =>
+            String(a.name).localeCompare(
+              String(b.name),
+              undefined,
+              {
+                numeric: true,
+                sensitivity: 'base'
+              }
+            )
+          )
+          .map(ref => ref.getDownloadURL())
+      );
+
+      /*
+       * Evitar actualizar otro reporte si el usuario
+       * cambió de expediente mientras cargaban las fotos.
+       */
+      const contenedorActual =
+        document.getElementById(containerId);
+
+      if(!contenedorActual){
+        return urls;
+      }
+
+      contenedorActual.innerHTML = urls.map(src => `
+        <a
+          href="${AdminUtils.escapeHtml(src)}"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            src="${AdminUtils.escapeHtml(src)}"
+            loading="lazy"
+            alt="Evidencia fotográfica"
+          >
+        </a>
+      `).join('');
+
+      return urls;
+
+    }catch(error){
+      console.error(
+        '========== ERROR STORAGE =========='
+      );
+
+      console.error(
+        'CARPETA:',
+        carpeta
+      );
+
+      console.error(
+        'ERROR:',
+        error
+      );
+
+      console.error(
+        'CODE:',
+        error && error.code
+      );
+
+      console.error(
+        'MESSAGE:',
+        error && error.message
+      );
+
+      console.error(
+        '==================================='
+      );
+
+      contenedor.innerHTML =
+        '<div class="empty">No se pudieron cargar las fotografías desde Firebase Storage.</div>';
+
+      return [];
+    }
+  },
+
+  resolveReportPhotos(item){
+    if(!item || typeof item !== 'object'){
+      return [];
+    }
+
+    let sourceItem = item;
+
+    let candidates = normalizarFotosReporte(sourceItem);
+
+    /*
+     * Muestras vinculadas:
+     * si el registro secundario no contiene fotografías,
+     * localizar el registro principal del mismo grupo.
+     */
+    if(!candidates.filter(Boolean).length){
+      const groupId =
+        item.fotosReferenciaGrupo ||
+        item.grupoMuestrasId ||
+        '';
+
+      if(groupId){
+        const reports =
+          window.AdminFirebase?.reportes || [];
+
+        const principal = reports.find(row => {
+          if(!row || row === item){
+            return false;
+          }
+
+          const sameGroup =
+            String(row.grupoMuestrasId || '') ===
+            String(groupId);
+
+          if(!sameGroup){
+            return false;
+          }
+
+          const rowPhotos = []
+            .concat(row.fotos || [])
+            .concat(row.fotoUrls || [])
+            .concat(row.photos || [])
+            .concat(row.photoUrls || [])
+            .concat(row.evidencias || [])
+            .filter(Boolean);
+
+          return (
+            row.muestraPrincipal === true ||
+            rowPhotos.length > 0
+          );
+        });
+
+        if(principal){
+          sourceItem = principal;
+
+          candidates = normalizarFotosReporte(sourceItem);
+        }
+      }
+    }
+
+    const resolved = candidates
+      .map(photo => {
+        if(!photo){
+          return null;
+        }
+
+        /*
+         * Formato directo:
+         *   "https://..."
+         *   "data:image/jpeg;base64,..."
+         *   "blob:..."
+         */
+        if(typeof photo === 'string'){
+          const value = photo.trim();
+
+          if(!value){
+            return null;
+          }
+
+          /*
+           * Compatibilidad con Base64 antiguo sin encabezado.
+           * Solo se interpreta como imagen cuando parece una
+           * cadena Base64 extensa.
+           */
+          if(
+            !value.startsWith('data:') &&
+            !value.startsWith('http://') &&
+            !value.startsWith('https://') &&
+            !value.startsWith('blob:') &&
+            /^[A-Za-z0-9+/=\s]+$/.test(value) &&
+            value.length > 500
+          ){
+            return 'data:image/jpeg;base64,' +
+              value.replace(/\s+/g, '');
+          }
+
+          return value;
+        }
+
+        /*
+         * Formatos estructurados soportados:
+         *   {data, nombre}
+         *   {url}
+         *   {src}
+         *   {base64}
+         *   {downloadURL}
+         */
+        if(typeof photo === 'object'){
+          const direct =
+            photo.data ||
+            photo.url ||
+            photo.src ||
+            photo.downloadURL ||
+            photo.downloadUrl ||
+            photo.fotoUrl ||
+            photo.photoUrl ||
+            null;
+
+          if(typeof direct === 'string' && direct.trim()){
+            const value = direct.trim();
+
+            if(
+              !value.startsWith('data:') &&
+              !value.startsWith('http://') &&
+              !value.startsWith('https://') &&
+              !value.startsWith('blob:') &&
+              /^[A-Za-z0-9+/=\s]+$/.test(value) &&
+              value.length > 500
+            ){
+              const mime =
+                photo.mime ||
+                photo.type ||
+                photo.tipo ||
+                'image/jpeg';
+
+              return 'data:' + mime + ';base64,' +
+                value.replace(/\s+/g, '');
+            }
+
+            return value;
+          }
+
+          if(typeof photo.base64 === 'string' && photo.base64.trim()){
+            const mime =
+              photo.mime ||
+              photo.type ||
+              photo.tipo ||
+              'image/jpeg';
+
+            return 'data:' + mime + ';base64,' +
+              photo.base64.replace(/\s+/g, '');
+          }
+        }
+
+        return null;
+      })
+      .filter(Boolean);
+
+    /*
+     * Evitar imágenes repetidas dentro del mismo reporte.
+     */
+    return Array.from(new Set(resolved));
+  },
+
   openDetail(type, item){
     if(!item) return;
 
@@ -3402,13 +3893,7 @@ window.AdminUI = {
     const lat = gps.lat || gps.latitude || gps.latitud || item.lat || item.latitude || item.latitud || '';
     const lon = gps.lon || gps.lng || gps.longitude || gps.longitud || item.lon || item.lng || item.longitude || item.longitud || '';
 
-    const fotos = []
-      .concat(item.fotos || [])
-      .concat(item.fotoUrls || [])
-      .concat(item.photos || [])
-      .concat(item.photoUrls || [])
-      .concat(item.evidencias || [])
-      .filter(Boolean);
+    const fotos = this.resolveReportPhotos(item);
 
     const parsed = u.parseMsg ? u.parseMsg(item) : {};
     const co = item.co || {};
@@ -3661,11 +4146,18 @@ window.AdminUI = {
 
       <div class="detail-section">
         <h3>Fotos</h3>
-        <div class="photo-grid">
+        <div
+          class="photo-grid"
+          id="reportPhotos-${u.escapeHtml(String(item.id || 'sin-id'))}"
+        >
           ${
             fotos.length
-              ? fotos.map(src => `<a href="${u.escapeHtml(src)}" target="_blank"><img src="${u.escapeHtml(src)}" loading="lazy"></a>`).join('')
-              : (parsed.evidenceCount ? `<div class="empty">El reporte indica ${parsed.evidenceCount} evidencia(s), pero no hay URL de foto guardada en Firebase.</div>` : '<div class="empty">Sin fotografías registradas.</div>')
+              ? fotos.map(src => `<a href="${u.escapeHtml(src)}" target="_blank" rel="noopener noreferrer"><img src="${u.escapeHtml(src)}" loading="lazy" alt="Evidencia fotográfica"></a>`).join('')
+              : (
+                  parsed.evidenceCount
+                    ? '<div class="empty">Cargando fotografías…</div>'
+                    : '<div class="empty">Sin fotografías registradas.</div>'
+                )
           }
         </div>
       </div>
@@ -3686,6 +4178,15 @@ window.AdminUI = {
         <pre>${u.escapeHtml(JSON.stringify(item, null, 2))}</pre>
       </details>
     `;
+
+    /*
+     * Las fotografías pueden estar únicamente en Storage,
+     * sin URL guardada en Realtime Database.
+     */
+    this.cargarFotosStorageReporte(
+      item,
+      'reportPhotos-' + String(item.id || 'sin-id')
+    );
 
     if(useInspector){
       this.currentReportItem = item;

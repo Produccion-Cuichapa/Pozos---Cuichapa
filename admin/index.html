@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Cuichapa Control | Centro de Operaciones</title>
-  <link rel="stylesheet" href="./css/admin.css?v=1785433512">
+  <link rel="stylesheet" href="./css/admin.css?v=20260804151709">
 >
     <link rel="stylesheet" href="./css/dashboard-v2.css?v=1784348754">
 <link rel="stylesheet" href="./css/reportes-v2.css?v=1784314915">
@@ -18,7 +18,7 @@
   <script src="./js/utils.js?v=1784566076" defer></script>
   <script src="./js/firebase.js" defer></script>
   <script src="./js/auth.js" defer></script>
-  <script src="./js/ui.js?v=1784566076" defer></script>
+  <script src="./js/ui.js?v=20260804001403" defer></script>
   <script src="./js/dashboard.js?v=1784312497" defer></script>
 <script src="./js/reportes.js" defer></script>
   <script src="./js/reportes-v2.js?v=1784314540" defer></script>
@@ -29,7 +29,7 @@
   <script src="./js/dashboard-mensual.js?v=1784664016" defer></script>
   <script src="./js/dashboard-indicador.js?v=12" defer></script>
   <script src="./js/pozos.js?v=1784567781" defer></script>
-  <script src="./js/graficas-pozos.js?v=1784567781" defer></script>
+  <script src="./js/graficas-pozos.js?v=20260804151709" defer></script>
 <script src="./js/firebase-upv-admin.js" defer></script>
   <script src="./js/upv-admin.js" defer></script>
   <script src="./js/config-center.js?v=1784657401" defer></script>
@@ -919,7 +919,6 @@
                 <option>Manrique</option>
                 <option>Juan Carlos</option>
                   <option>Luis Carlos</option>
-                <option>Cirilo</option>
               </select>
               <input id="expDesde" type="date">
               <input id="expHasta" type="date">
@@ -1803,6 +1802,50 @@
     <div id="detailBody" class="detail-body"></div>
   </dialog>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="./js/reporte-campo-excel.js?v=20260804002715"></script>
+
+  <!-- VISOR INDIVIDUAL DE GRÁFICAS -->
+  <div
+    id="wellChartExpandedModal"
+    class="well-chart-expanded-modal hidden"
+    aria-hidden="true">
+
+    <div
+      class="well-chart-expanded-backdrop"
+      data-close-expanded-chart>
+    </div>
+
+    <section
+      class="well-chart-expanded-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="wellChartExpandedTitle">
+
+      <header class="well-chart-expanded-header">
+        <div>
+          <span>GRÁFICA AMPLIADA</span>
+          <h2 id="wellChartExpandedTitle">
+            Análisis operativo
+          </h2>
+          <p id="wellChartExpandedSubtitle"></p>
+        </div>
+
+        <button
+          type="button"
+          class="well-chart-expanded-close"
+          data-close-expanded-chart
+          aria-label="Cerrar gráfica ampliada">
+          ✕
+        </button>
+      </header>
+
+      <div
+        id="wellChartExpandedBody"
+        class="well-chart-expanded-body">
+      </div>
+
+    </section>
+  </div>
 
   <aside id="wellChartsDrawer"
          class="well-charts-drawer hidden"
@@ -1885,5 +1928,7 @@
   <script src="./js/dashboard-produccion.js?v=1784393750" defer></script>
   <script src="./js/login-v2.js?v=1784394705" defer></script>
   <script src="./js/admin-pwa.js?v=2026.07.19.045207" defer></script>
+
+<script src="../health-monitor.js?v=20260804235010"></script>
 </body>
 </html>

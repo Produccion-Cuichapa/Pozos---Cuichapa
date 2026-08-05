@@ -1047,12 +1047,23 @@ window.AdminGraficas = {
             <h3>${label}</h3>
           </div>
 
-          <b>
-            ${points.length}
-            ${points.length === 1
-              ? 'medición'
-              : 'mediciones'}
-          </b>
+          <div class="well-charts-card-actions">
+            <b>
+              ${points.length}
+              ${points.length === 1
+                ? 'medición'
+                : 'mediciones'}
+            </b>
+
+            <button
+              type="button"
+              class="well-chart-expand-btn"
+              data-well-chart-expand
+              aria-label="Ampliar gráfica ${AdminUtils.escapeHtml(label)}"
+              title="Ampliar gráfica">
+              ⛶ Ampliar
+            </button>
+          </div>
         </header>
 
         ${
@@ -1216,3 +1227,211 @@ console.info(
   '✅ graficas-pozos.js cargado',
   typeof window.AdminGraficas.open
 );
+
+
+/* ==========================================================
+ * VISOR INDIVIDUAL DE GRÁFICAS
+ * Amplía únicamente la tarjeta seleccionada.
+ * ========================================================== */
+(function instalarVisorGraficaIndividual(){
+  'use strict';
+
+  if(window.__visorGraficaIndividualInstalado){
+    return;
+  }
+
+  window.__visorGraficaIndividualInstalado = true;
+
+  function elementos(){
+    return {
+      modal: document.getElementById(
+        'wellChartExpandedModal'
+      ),
+      body: document.getElementById(
+        'wellChartExpandedBody'
+      ),
+      title: document.getElementById(
+        'wellChartExpandedTitle'
+      ),
+      subtitle: document.getElementById(
+        'wellChartExpandedSubtitle'
+      )
+    };
+  }
+
+  function abrirGrafica(button){
+    const card = button.closest(
+      '.well-charts-card'
+    );
+
+    if(!card){
+      return;
+    }
+
+    const refs = elementos();
+
+    if(
+      !refs.modal ||
+      !refs.body
+    ){
+      console.warn(
+        '[GRÁFICAS] No existe el modal ampliado.'
+      );
+      return;
+    }
+
+    const heading = card.querySelector(
+      'header h3'
+    );
+
+    const category = card.querySelector(
+      'header span'
+    );
+
+    const drawerTitle = document.getElementById(
+      'wellChartsTitle'
+    );
+
+    const dateRange = document.getElementById(
+      'wellChartsWeekRange'
+    );
+
+    if(refs.title){
+      refs.title.textContent =
+        heading?.textContent?.trim() ||
+        'Gráfica operativa';
+    }
+
+    if(refs.subtitle){
+      const parts = [];
+
+      if(drawerTitle?.textContent){
+        parts.push(
+          drawerTitle.textContent.trim()
+        );
+      }
+
+      if(category?.textContent){
+        parts.push(
+          category.textContent.trim()
+        );
+      }
+
+      if(dateRange?.textContent){
+        parts.push(
+          dateRange.textContent.trim()
+        );
+      }
+
+      refs.subtitle.textContent =
+        parts.join(' · ');
+    }
+
+    /*
+     * Clonar la tarjeta evita mover o modificar
+     * la gráfica original del panel lateral.
+     */
+    const clone = card.cloneNode(true);
+
+    clone.classList.add(
+      'well-charts-card-expanded'
+    );
+
+    clone.classList.remove(
+      'well-charts-card-ft'
+    );
+
+    clone
+      .querySelectorAll(
+        '[data-well-chart-expand]'
+      )
+      .forEach(element => element.remove());
+
+    refs.body.innerHTML = '';
+    refs.body.appendChild(clone);
+
+    refs.modal.classList.remove('hidden');
+    refs.modal.setAttribute(
+      'aria-hidden',
+      'false'
+    );
+
+    document.body.classList.add(
+      'well-chart-expanded-open'
+    );
+
+    const closeButton = refs.modal.querySelector(
+      '[data-close-expanded-chart]'
+    );
+
+    setTimeout(() => {
+      closeButton?.focus();
+    }, 30);
+  }
+
+  function cerrarGrafica(){
+    const refs = elementos();
+
+    if(!refs.modal){
+      return;
+    }
+
+    refs.modal.classList.add('hidden');
+    refs.modal.setAttribute(
+      'aria-hidden',
+      'true'
+    );
+
+    document.body.classList.remove(
+      'well-chart-expanded-open'
+    );
+
+    if(refs.body){
+      refs.body.innerHTML = '';
+    }
+  }
+
+  document.addEventListener(
+    'click',
+    event => {
+      const expandButton = event.target.closest(
+        '[data-well-chart-expand]'
+      );
+
+      if(expandButton){
+        event.preventDefault();
+        abrirGrafica(expandButton);
+        return;
+      }
+
+      const closeButton = event.target.closest(
+        '[data-close-expanded-chart]'
+      );
+
+      if(closeButton){
+        event.preventDefault();
+        cerrarGrafica();
+      }
+    }
+  );
+
+  document.addEventListener(
+    'keydown',
+    event => {
+      if(event.key !== 'Escape'){
+        return;
+      }
+
+      const modal = document.getElementById(
+        'wellChartExpandedModal'
+      );
+
+      if(
+        modal &&
+        !modal.classList.contains('hidden')
+      ){
+        cerrarGrafica();
+      }
+    }
+  );
+})();

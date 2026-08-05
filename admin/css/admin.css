@@ -9110,3 +9110,226 @@ summary:focus-visible{
 
 /* ===== FIN BALANCE FRAC TANK DIARIO GRANDE ===== */
 
+
+
+/* ==========================================================
+   GRÁFICAS — AMPLIACIÓN INDIVIDUAL
+   ========================================================== */
+
+.well-charts-card-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.well-charts-card-actions > b{
+  color:#9eb2c8;
+  font-size:9px;
+  white-space:nowrap;
+}
+
+.well-chart-expand-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  min-height:30px;
+  padding:6px 9px;
+  border:1px solid rgba(96,165,250,.35);
+  border-radius:8px;
+  color:#bfdbfe;
+  background:rgba(59,130,246,.1);
+  font-family:inherit;
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.03em;
+  cursor:pointer;
+  transition:
+    background .18s ease,
+    border-color .18s ease,
+    transform .18s ease;
+}
+
+.well-chart-expand-btn:hover{
+  border-color:#60a5fa;
+  color:#fff;
+  background:rgba(59,130,246,.24);
+  transform:translateY(-1px);
+}
+
+.well-chart-expand-btn:focus-visible{
+  outline:2px solid #60a5fa;
+  outline-offset:2px;
+}
+
+body.well-chart-expanded-open{
+  overflow:hidden;
+}
+
+.well-chart-expanded-modal{
+  position:fixed;
+  z-index:12000;
+  inset:0;
+}
+
+.well-chart-expanded-modal.hidden{
+  display:none !important;
+}
+
+.well-chart-expanded-backdrop{
+  position:absolute;
+  inset:0;
+  background:rgba(1,8,18,.88);
+  backdrop-filter:blur(5px);
+}
+
+.well-chart-expanded-panel{
+  position:absolute;
+  inset:3vh 3vw;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  border:1px solid #31506f;
+  border-radius:20px;
+  background:#071525;
+  box-shadow:0 28px 90px rgba(0,0,0,.65);
+}
+
+.well-chart-expanded-header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  flex-shrink:0;
+  gap:18px;
+  padding:18px 21px;
+  border-bottom:1px solid rgba(148,163,184,.15);
+  background:#0a1a2d;
+}
+
+.well-chart-expanded-header span{
+  color:#60a5fa;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.14em;
+}
+
+.well-chart-expanded-header h2{
+  margin:5px 0 0;
+  color:#f3f8fd;
+  font-size:25px;
+}
+
+.well-chart-expanded-header p{
+  margin:6px 0 0;
+  color:#8da4bd;
+  font-size:10px;
+}
+
+.well-chart-expanded-close{
+  display:grid;
+  place-items:center;
+  flex-shrink:0;
+  width:44px;
+  height:44px;
+  border:1px solid #31506f;
+  border-radius:12px;
+  color:#e4edf7;
+  background:#10243d;
+  font-family:inherit;
+  font-size:20px;
+  cursor:pointer;
+}
+
+.well-chart-expanded-close:hover{
+  border-color:#60a5fa;
+  background:#173456;
+}
+
+.well-chart-expanded-body{
+  flex:1;
+  min-height:0;
+  overflow:auto;
+  padding:20px;
+}
+
+.well-chart-expanded-body .well-charts-card-expanded{
+  display:flex;
+  flex-direction:column;
+  min-height:100%;
+  overflow:visible;
+  border-color:rgba(96,165,250,.28);
+  background:rgba(5,17,31,.95);
+}
+
+.well-chart-expanded-body
+.well-charts-card-expanded
+.well-charts-graph{
+  display:flex;
+  align-items:center;
+  flex:1;
+  min-height:420px;
+  padding:16px 20px 22px;
+}
+
+.well-chart-expanded-body
+.well-charts-card-expanded
+.well-charts-svg{
+  display:block;
+  width:100%;
+  height:auto;
+  min-height:420px;
+  max-height:65vh;
+}
+
+.well-chart-expanded-body
+.well-charts-card-expanded
+.well-charts-stats{
+  grid-template-columns:repeat(4,minmax(120px,1fr));
+}
+
+@media (max-width:700px){
+  .well-chart-expanded-panel{
+    inset:1.5vh 2vw;
+    border-radius:15px;
+  }
+
+  .well-chart-expanded-header{
+    padding:14px;
+  }
+
+  .well-chart-expanded-header h2{
+    font-size:20px;
+  }
+
+  .well-chart-expanded-body{
+    padding:10px;
+  }
+
+  .well-chart-expanded-body
+  .well-charts-card-expanded
+  .well-charts-graph{
+    min-height:330px;
+    overflow-x:auto;
+    padding:8px;
+  }
+
+  .well-chart-expanded-body
+  .well-charts-card-expanded
+  .well-charts-svg{
+    min-width:700px;
+    min-height:330px;
+  }
+
+  .well-chart-expanded-body
+  .well-charts-card-expanded
+  .well-charts-stats{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .well-charts-card-actions{
+    align-items:flex-end;
+    flex-direction:column;
+  }
+}

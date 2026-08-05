@@ -291,7 +291,7 @@ window.AdminExportaciones = {
       .replace(/\*REPORTE CABEZAL\*/ig,'')
       .replace(/\*ESTACI[ÓO]N\*/ig,'')
       .replace(/Recorredor\s*:\s*[^\n]+/ig,'')
-      .replace(/Juan Carlos|Manrique|Cirilo/ig,'')
+      .replace(/Juan Carlos|Manrique/ig,'')
       .replace(/\d{2}\/\d{2}\/\d{4}\s+[^\n]+/ig,'')
       .replace(/GPS\s*:[^\n]+/ig,'')
       .replace(/https?:\/\/\S+/ig,'')
@@ -388,8 +388,7 @@ window.AdminExportaciones = {
         elegido.includes(persona) ||
         (elegido.includes('luis') && persona.includes('luis')) ||
         (elegido.includes('juan') && persona.includes('juan')) ||
-        (elegido.includes('manrique') && persona.includes('manrique')) ||
-        (elegido.includes('cirilo') && persona.includes('cirilo'));
+        (elegido.includes('manrique') && persona.includes('manrique'));
 
       return matchRec && ymd >= desde && ymd <= hasta;
     }).sort((a,b) => new Date(a.fecha || a.timestamp || 0) - new Date(b.fecha || b.timestamp || 0));
@@ -495,8 +494,6 @@ window.AdminExportaciones = {
       );
 
       const mapaRecorredores = {
-        'cirilo': 'Cirilo Cancino Gómez',
-        'cirilo cancino': 'Cirilo Cancino Gómez',
         'manrique': 'Manrique Jiménez',
         'juan': 'Juan Carlos Flores',
         'juan carlos': 'Juan Carlos Flores',
