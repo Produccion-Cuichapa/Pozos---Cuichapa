@@ -1,7 +1,7 @@
 // UPV Service Worker v2
 // Cache exclusivo upv-pwa-v9-sync-prueba. No toca caches de la app de recorredores.
 // Usa rutas relativas. No depende de /upv/ en minusculas.
-const UPV_CACHE = 'upv-pwa-v28-gps-rango-final';
+const UPV_CACHE = 'upv-pwa-v29-whatsapp-activo';
 
 const UPV_ASSETS = [
   './',

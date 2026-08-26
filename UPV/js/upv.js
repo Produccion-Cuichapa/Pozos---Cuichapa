@@ -1030,10 +1030,16 @@ async function guardarRegistroFinalUPV(data){
       'pendiente',
 
     /*
-     * Todavía NO activamos WhatsApp.
+     * WHATSAPP UPV ACTIVO.
+     *
+     * Los registros NUEVOS confirmados por el operador
+     * entran como pending.
+     *
+     * Firebase sendUpvWhatsApp los enviará únicamente
+     * al grupo configurado como ultramsg.upv_group.
      */
     whatsappStatus:
-      'pendiente_configuracion',
+      'pending',
 
     origenApp:
       'UPV',
