@@ -6052,3 +6052,212 @@ body.upv-cuichapa-theme
 }
 
 
+
+
+/* ==========================================================
+   UPV — EMPRESA ACTIVA PREMIUM V1
+   Solo presentación
+   ========================================================== */
+
+body.upv-cuichapa-theme #upv-header{
+  min-height:86px !important;
+
+  padding:
+    calc(13px + env(safe-area-inset-top))
+    20px
+    13px !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #111d33 0%,
+      #172844 55%,
+      #1c3153 100%
+    ) !important;
+
+  border-bottom:
+    1px solid rgba(255,255,255,.08) !important;
+
+  box-shadow:
+    0 8px 24px rgba(10,25,48,.14) !important;
+
+  overflow:hidden;
+}
+
+
+/* Línea decorativa superior */
+
+body.upv-cuichapa-theme #upv-header::before{
+  content:"";
+
+  position:absolute;
+  left:0;
+  top:0;
+
+  width:100%;
+  height:3px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #4c84df,
+      #83b6ff,
+      #4c84df
+    );
+
+  opacity:.9;
+}
+
+
+/* Bloque izquierdo */
+
+body.upv-cuichapa-theme
+#upv-header > div:first-child{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+
+  gap:7px;
+
+  min-width:0;
+}
+
+
+/* "Empresa activa" */
+
+body.upv-cuichapa-theme
+#upv-header > div:first-child
+.fs13{
+  color:#9dafc9 !important;
+
+  font-size:12px !important;
+  line-height:1 !important;
+
+  font-weight:700 !important;
+
+  letter-spacing:.035em;
+}
+
+
+/* PETROSMART / IPEP */
+
+body.upv-cuichapa-theme
+#upv-empresa-label{
+  display:inline-flex;
+  align-items:center;
+
+  min-height:32px;
+
+  padding:7px 16px !important;
+
+  border:
+    1px solid rgba(113,166,255,.20);
+
+  border-radius:12px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(53,101,180,.48),
+      rgba(39,76,137,.62)
+    );
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.07),
+    0 4px 12px rgba(0,0,0,.10);
+
+  color:#8dbaff !important;
+
+  font-size:15px !important;
+  line-height:1 !important;
+
+  font-weight:900 !important;
+
+  letter-spacing:.055em !important;
+}
+
+
+/* Indicador visual antes del nombre */
+
+body.upv-cuichapa-theme
+#upv-empresa-label::before{
+  content:"";
+
+  width:7px;
+  height:7px;
+
+  margin-right:9px;
+
+  border-radius:50%;
+
+  background:#68a4ff;
+
+  box-shadow:
+    0 0 0 4px rgba(104,164,255,.10);
+}
+
+
+/* Estado EN LÍNEA */
+
+body.upv-cuichapa-theme
+#upv-header .conn-badge{
+  padding:6px 10px !important;
+
+  border-radius:9px !important;
+
+  font-size:10px !important;
+  font-weight:800 !important;
+
+  letter-spacing:.03em;
+}
+
+
+/* Botón regresar */
+
+body.upv-cuichapa-theme
+#upv-header button[onclick*="cerrarSesion"]{
+  width:34px;
+  height:34px;
+
+  display:grid;
+  place-items:center;
+
+  padding:0 !important;
+
+  border:
+    1px solid rgba(255,255,255,.10) !important;
+
+  border-radius:10px !important;
+
+  background:
+    rgba(255,255,255,.055) !important;
+
+  color:#c5d2e5 !important;
+
+  font-size:17px !important;
+}
+
+
+/* Móvil */
+
+@media (max-width:620px){
+
+  body.upv-cuichapa-theme #upv-header{
+    min-height:82px !important;
+
+    padding-left:16px !important;
+    padding-right:14px !important;
+  }
+
+  body.upv-cuichapa-theme
+  #upv-empresa-label{
+    min-height:30px;
+
+    padding:6px 13px !important;
+
+    font-size:14px !important;
+  }
+
+}
+
+
