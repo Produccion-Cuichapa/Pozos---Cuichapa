@@ -1,0 +1,6 @@
+{
+  "functions": {
+    "source": "functions-upv",
+    "runtime": "nodejs20"
+  }
+}

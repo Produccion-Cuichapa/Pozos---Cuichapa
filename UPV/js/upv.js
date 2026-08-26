@@ -1,47 +1,18 @@
-// ═══════════════════════════════════════════════════════════
-// UPV Fase 2 — js/upv.js
-// Objetivos: fotos reales, GPS robusto, IndexedDB, historial,
-// validación, deduplicación local.
+// UPV Fase 2
 // Sin Firebase, sin UltraMsg, sin CDN externos.
-// Prefijo exclusivo de localStorage/IDB: upv_
-// ═══════════════════════════════════════════════════════════
+// Prefijo exclusivo localStorage/IDB: upv_
 'use strict';
 
-// ── Constantes ─────────────────────────────────────────────
-const UPV_LS_EMPRESA   = 'upv_empresa_seleccionada';
-const UPV_LS_HISTORIAL = 'upv_historial';   // compat legacy
-const UPV_IDB_NAME     = 'upv_operacion_db';
-const UPV_IDB_VERSION  = 1;
-const UPV_MAX_FOTOS    = 5;
-const UPV_IMG_MAX_PX   = 1280;
-const UPV_IMG_QUALITY  = 0.72;
-const UPV_DEDUP_WINDOW = 60000; // 60 segundos
+// Constantes
+// Configuración y estado cargados desde config.js y state.js
 
-// ── Estado global ──────────────────────────────────────────
-const UPV = {
-  empresa:          null,
-  pantalla:         'upv',
-  tipoOp:           null,
-  // GPS separados por módulo
-  gpsOperacion:     null,
-  gpsObservacion:   null,
-  // Fotos separadas por módulo
-  fotosOperacion:   [],
-  fotosObservacion: [],
-  // Control de guardado
-  saveInProgress:   false,
-  enLinea:          navigator.onLine,
-  // IndexedDB
-  db:               null
-};
-
-// ═══════════════════════════════════════════════════════════
-// INICIALIZACIÓN
-// ═══════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', async () => {
   registrarSW();
+
+  if (typeof inicializarFirebaseUpv === 'function') {
+    inicializarFirebaseUpv();
+  }
   escucharConexion();
-  setTimeout(upvVerificarPermisos, 800); // verificar permisos al cargar
   await abrirIDB();
   await migrarDesdeLocalStorage();
   recuperarEmpresa();
@@ -52,7 +23,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   await renderHistorial();
 });
 
-// ── Service Worker ─────────────────────────────────────────
 function registrarSW() {
   if (!('serviceWorker' in navigator)) return;
   navigator.serviceWorker.register('./sw.js', { scope: './' })
@@ -60,13 +30,12 @@ function registrarSW() {
     .catch(e => console.warn('[UPV-SW] error:', e));
 }
 
-// ── Conexión ───────────────────────────────────────────────
 function escucharConexion() {
   const update = () => {
     UPV.enLinea = navigator.onLine;
     const badge = document.getElementById('upv-conn-badge');
     if (!badge) return;
-    badge.textContent = UPV.enLinea ? 'EN LÍNEA' : 'SIN CONEXIÓN';
+    badge.textContent = UPV.enLinea ? 'EN LINEA' : 'SIN CONEXION';
     badge.className = 'conn-badge' + (UPV.enLinea ? '' : ' offline');
     if (UPV.enLinea) sincronizarPendientesUpv();
   };
@@ -76,90 +45,86 @@ function escucharConexion() {
 }
 
 // ═══════════════════════════════════════════════════════════
-// INDEXEDDB
+// INDEXEDDB — upv_operacion_db v1
+// stores: reportes, fotos, configuracion
 // ═══════════════════════════════════════════════════════════
 function abrirIDB() {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const req = indexedDB.open(UPV_IDB_NAME, UPV_IDB_VERSION);
     req.onupgradeneeded = e => {
       const db = e.target.result;
-      // Almacén reportes
       if (!db.objectStoreNames.contains('reportes')) {
         const rs = db.createObjectStore('reportes', { keyPath: 'id' });
         rs.createIndex('empresa',    'empresa',    { unique: false });
         rs.createIndex('syncStatus', 'syncStatus', { unique: false });
         rs.createIndex('createdAt',  'createdAt',  { unique: false });
       }
-      // Almacén fotos
       if (!db.objectStoreNames.contains('fotos')) {
         const fs = db.createObjectStore('fotos', { keyPath: 'id' });
         fs.createIndex('reporteId', 'reporteId', { unique: false });
       }
-      // Almacén configuracion
       if (!db.objectStoreNames.contains('configuracion')) {
         db.createObjectStore('configuracion', { keyPath: 'clave' });
       }
     };
     req.onsuccess = e => { UPV.db = e.target.result; resolve(); };
-    req.onerror   = e => { console.warn('[UPV-IDB] error al abrir:', e.target.error); resolve(); };
+    req.onerror   = e => { console.warn('[UPV-IDB] error:', e.target.error); resolve(); };
   });
 }
 
-function idbTx(storeName, mode = 'readonly') {
-  return UPV.db.transaction(storeName, mode).objectStore(storeName);
+function idbTx(store, mode) {
+  return UPV.db.transaction(store, mode || 'readonly').objectStore(store);
 }
-
-function idbPut(storeName, obj) {
+function idbPut(store, obj) {
   return new Promise((res, rej) => {
-    const req = idbTx(storeName, 'readwrite').put(obj);
-    req.onsuccess = () => res(req.result);
-    req.onerror   = () => rej(req.error);
+    const r = idbTx(store, 'readwrite').put(obj);
+    r.onsuccess = () => res(r.result);
+    r.onerror   = () => rej(r.error);
   });
 }
-
-function idbGetAll(storeName) {
+function idbGetAll(store) {
   return new Promise((res, rej) => {
-    const req = idbTx(storeName).getAll();
-    req.onsuccess = () => res(req.result || []);
-    req.onerror   = () => rej(req.error);
+    const r = idbTx(store).getAll();
+    r.onsuccess = () => res(r.result || []);
+    r.onerror   = () => rej(r.error);
   });
 }
-
-function idbGet(storeName, key) {
+function idbGet(store, key) {
   return new Promise((res, rej) => {
-    const req = idbTx(storeName).get(key);
-    req.onsuccess = () => res(req.result);
-    req.onerror   = () => rej(req.error);
+    const r = idbTx(store).get(key);
+    r.onsuccess = () => res(r.result);
+    r.onerror   = () => rej(r.error);
   });
 }
 
-// Migración desde localStorage (una sola vez)
+// Migracion desde upv_historial en localStorage (una sola vez)
 async function migrarDesdeLocalStorage() {
   if (!UPV.db) return;
   try {
     const existentes = await idbGetAll('reportes');
-    if (existentes.length > 0) return; // ya hay datos en IDB
+    if (existentes.length > 0) return;
     const legacy = localStorage.getItem(UPV_LS_HISTORIAL);
     if (!legacy) return;
     const arr = JSON.parse(legacy);
-    if (!Array.isArray(arr) || arr.length === 0) return;
-    // Confirmar con una clave en configuracion que la migración se hizo
+    if (!Array.isArray(arr) || !arr.length) return;
     const yaHecho = await idbGet('configuracion', 'migracion_ls_done');
     if (yaHecho) return;
     for (const r of arr) {
-      const migrado = Object.assign({
+      await idbPut('reportes', Object.assign({
         estadoLocal:    r.estado   || 'guardado',
         syncStatus:     r.enviado  ? 'sincronizado' : 'pendiente',
         whatsappStatus: 'no_configurado',
         fotoIds:        [],
         createdAt:      r.fecha || new Date().toISOString()
-      }, r);
-      await idbPut('reportes', migrado);
+      }, r));
     }
-    await idbPut('configuracion', { clave: 'migracion_ls_done', valor: new Date().toISOString() });
-    console.log('[UPV-IDB] Migración desde localStorage completada:', arr.length, 'registros');
-  } catch (e) {
-    console.warn('[UPV-IDB] Error en migración:', e);
+    await idbPut('configuracion', {
+      clave: 'migracion_ls_done',
+      valor: new Date().toISOString()
+    });
+    console.log('[UPV-IDB] Migracion completada:', arr.length, 'registros');
+  } catch(e) {
+    console.warn('[UPV-IDB] Error en migracion:', e);
   }
 }
 
@@ -204,7 +169,7 @@ function cerrarSesion() {
 }
 
 // ═══════════════════════════════════════════════════════════
-// NAVEGACIÓN
+// NAVEGACION
 // ═══════════════════════════════════════════════════════════
 function bindNavBtns() {
   document.querySelectorAll('.nav-btn[data-screen]').forEach(btn =>
@@ -224,7 +189,7 @@ function mostrarPantalla(id) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// FOTOGRAFÍAS REALES (Objetivo 2)
+// FOTOGRAFIAS REALES
 // ═══════════════════════════════════════════════════════════
 function bindFotoInputs() {
   const inpOp  = document.getElementById('foto-input-operacion');
@@ -236,20 +201,20 @@ function bindFotoInputs() {
 function procesarFotos(files, modulo) {
   if (!files || !files.length) return;
   const estado = modulo === 'operacion' ? UPV.fotosOperacion : UPV.fotosObservacion;
-  const max = UPV_MAX_FOTOS - estado.length;
-  if (max <= 0) { mostrarError('Máximo ' + UPV_MAX_FOTOS + ' fotos por reporte.'); return; }
-  const lista = Array.from(files).slice(0, max);
+  const libre  = UPV_MAX_FOTOS - estado.length;
+  if (libre <= 0) { mostrarError('Maximo ' + UPV_MAX_FOTOS + ' fotos por reporte.'); return; }
+  const lista = Array.from(files).slice(0, libre);
   lista.forEach(file => {
     const reader = new FileReader();
     reader.onload = ev => {
-      const originalSize = file.size;
-      comprimirImagen(ev.target.result, file.type).then(dataUrl => {
+      const sizeOriginal = file.size;
+      comprimirImagen(ev.target.result).then(dataUrl => {
         const foto = {
           id:             'foto_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
           dataUrl:        dataUrl,
           nombre:         file.name,
           tipo:           file.type || 'image/jpeg',
-          sizeOriginal:   originalSize,
+          sizeOriginal:   sizeOriginal,
           sizeComprimido: Math.round(dataUrl.length * 0.75),
           createdAt:      new Date().toISOString()
         };
@@ -260,12 +225,11 @@ function procesarFotos(files, modulo) {
     };
     reader.readAsDataURL(file);
   });
-  // Limpiar el input para permitir re-seleccionar el mismo archivo
   const inp = document.getElementById('foto-input-' + modulo);
   if (inp) inp.value = '';
 }
 
-function comprimirImagen(dataUrl, tipo) {
+function comprimirImagen(dataUrl) {
   return new Promise(resolve => {
     const img = new Image();
     img.onload = () => {
@@ -278,33 +242,33 @@ function comprimirImagen(dataUrl, tipo) {
       const canvas = document.createElement('canvas');
       canvas.width  = width;
       canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, width, height);
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
       resolve(canvas.toDataURL('image/jpeg', UPV_IMG_QUALITY));
     };
-    img.onerror = () => resolve(dataUrl); // si falla, usar original
+    img.onerror = () => resolve(dataUrl);
     img.src = dataUrl;
   });
 }
 
 function renderFotosPreview(modulo) {
-  const fotos     = modulo === 'operacion' ? UPV.fotosOperacion : UPV.fotosObservacion;
-  const contenId  = 'fotos-preview-' + modulo;
-  const contadorId= 'fotos-count-' + modulo;
-  const cont = document.getElementById(contenId);
-  const cnt  = document.getElementById(contadorId);
+  const fotos    = modulo === 'operacion' ? UPV.fotosOperacion : UPV.fotosObservacion;
+  const contId   = 'fotos-preview-' + modulo;
+  const cntId    = 'fotos-count-'   + modulo;
+  const cont = document.getElementById(contId);
+  const cnt  = document.getElementById(cntId);
   if (cnt) cnt.textContent = fotos.length + '/' + UPV_MAX_FOTOS;
   if (!cont) return;
   if (!fotos.length) { cont.innerHTML = ''; return; }
-  cont.innerHTML = fotos.map((f, i) => `
-    <div style="position:relative;display:inline-block;margin:4px">
-      <img src="${f.dataUrl}" alt="foto ${i+1}"
-           style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--border)">
-      <button onclick="eliminarFoto('${modulo}',${i})"
-              style="position:absolute;top:-6px;right:-6px;background:#ef4444;border:none;
-                     color:#fff;border-radius:50%;width:20px;height:20px;font-size:12px;
-                     line-height:20px;cursor:pointer;padding:0">✕</button>
-    </div>`).join('');
+  cont.innerHTML = fotos.map((f, i) =>
+    '<div style="position:relative;display:inline-block;margin:4px">' +
+    '<img src="' + f.dataUrl + '" alt="foto ' + (i+1) + '" ' +
+         'style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--border)">' +
+    '<button onclick="eliminarFoto(\'' + modulo + '\',' + i + ')" ' +
+            'style="position:absolute;top:-6px;right:-6px;background:#ef4444;border:none;' +
+            'color:#fff;border-radius:50%;width:20px;height:20px;font-size:12px;' +
+            'line-height:20px;cursor:pointer;padding:0">x</button>' +
+    '</div>'
+  ).join('');
 }
 
 function eliminarFoto(modulo, index) {
@@ -314,75 +278,62 @@ function eliminarFoto(modulo, index) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// GPS ROBUSTO (Objetivo 3)
+// GPS ROBUSTO — fresh 35000ms, fallback recent 5min
+// Estados separados: UPV.gpsOperacion / UPV.gpsObservacion
 // ═══════════════════════════════════════════════════════════
-const GPS_TIMEOUT_ANDROID = 35000;
-
 function capturarGpsUpv(modulo) {
   const statusId = modulo === 'operacion' ? 'upv-gps-status' : 'obs-gps-status';
   const statusEl = document.getElementById(statusId);
-
   if (!navigator.geolocation) {
-    _setGpsStatus(statusEl, 'error', '⚠️ GPS no disponible en este dispositivo');
-    _setGpsResult(modulo, null, 'unavailable');
+    setGpsUI(statusEl, 'error', 'GPS no disponible en este dispositivo');
+    setGpsResult(modulo, null);
     return;
   }
-
-  _setGpsStatus(statusEl, 'buscando', '📡 Obteniendo ubicación...');
-
-  const opsFresh  = { enableHighAccuracy: true, timeout: GPS_TIMEOUT_ANDROID, maximumAge: 0 };
-  const opsRecent = { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 };
+  setGpsUI(statusEl, 'buscando', 'Obteniendo ubicacion...');
 
   navigator.geolocation.getCurrentPosition(
     pos => {
-      const r = _buildGpsResult(pos, 'fresh');
-      _setGpsResult(modulo, r);
-      _setGpsStatus(statusEl, 'ok',
-        '📍 GPS capturado · Precisión: ±' + r.accuracy + ' m');
+      const r = buildGps(pos, 'fresh');
+      setGpsResult(modulo, r);
+      setGpsUI(statusEl, 'ok', 'GPS capturado. Precision: +/-' + r.accuracy + ' m');
     },
-    _err1 => {
-      console.warn('[UPV-GPS] intento fresco falló, intentando reciente...', _err1.message);
+    err1 => {
+      console.warn('[UPV-GPS] fresco fallo, intentando reciente...', err1.message);
       navigator.geolocation.getCurrentPosition(
         pos => {
-          const r = _buildGpsResult(pos, 'recent');
-          _setGpsResult(modulo, r);
-          _setGpsStatus(statusEl, 'warn',
-            '🕐 Ubicación reciente · Precisión: ±' + r.accuracy + ' m');
+          const r = buildGps(pos, 'recent');
+          setGpsResult(modulo, r);
+          setGpsUI(statusEl, 'warn', 'Ubicacion reciente. Precision: +/-' + r.accuracy + ' m');
         },
-        _err2 => {
-          _setGpsResult(modulo, null, 'unavailable');
-          if (_err2.code === 1) {
-            _setGpsStatus(statusEl, 'error', '🚫 Permiso denegado. Revisa configuración.');
-          } else {
-            _setGpsStatus(statusEl, 'error', '⚠️ GPS sin señal. Intenta en exteriores.');
-          }
+        err2 => {
+          setGpsResult(modulo, null);
+          if (err2.code === 1) setGpsUI(statusEl, 'error', 'Permiso denegado. Revisa configuracion.');
+          else                 setGpsUI(statusEl, 'error', 'GPS sin senal. Intenta en exteriores.');
         },
-        opsRecent
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
       );
     },
-    opsFresh
+    { enableHighAccuracy: true, timeout: GPS_TIMEOUT_MS, maximumAge: 0 }
   );
 }
 
-function _buildGpsResult(pos, source) {
+function buildGps(pos, source) {
   return {
-    lat:         pos.coords.latitude,
-    lon:         pos.coords.longitude,
-    accuracy:    Math.round(pos.coords.accuracy),
-    source:      source,
-    capturedAt:  new Date().toISOString()
+    lat:        pos.coords.latitude,
+    lon:        pos.coords.longitude,
+    accuracy:   Math.round(pos.coords.accuracy),
+    source:     source,
+    capturedAt: new Date().toISOString()
   };
 }
-
-function _setGpsResult(modulo, gps) {
+function setGpsResult(modulo, gps) {
   if (modulo === 'operacion') UPV.gpsOperacion  = gps;
   else                        UPV.gpsObservacion = gps;
 }
-
-function _setGpsStatus(el, estado, texto) {
+function setGpsUI(el, estado, texto) {
   if (!el) return;
-  const colores = { buscando: 'var(--orange)', ok: 'var(--green)', warn: 'var(--orange)', error: 'var(--red)' };
-  el.innerHTML = `<span style="color:${colores[estado] || 'var(--txt2)'}">${texto}</span>`;
+  var colores = { buscando: 'var(--orange)', ok: 'var(--green)', warn: 'var(--orange)', error: 'var(--red)' };
+  el.innerHTML = '<span style="color:' + (colores[estado]||'var(--txt2)') + '">' + texto + '</span>';
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -392,259 +343,186 @@ function bindFormEvents() {
   document.querySelectorAll('.tipo-btn').forEach(btn =>
     btn.addEventListener('click', () => seleccionarTipo(btn.dataset.tipo))
   );
-  const btnObs = document.getElementById('btn-guardar-obs');
+  var btnObs = document.getElementById('btn-guardar-obs');
   if (btnObs) btnObs.addEventListener('click', guardarObservacion);
-  const btnLogout = document.getElementById('btn-logout');
+  var btnLogout = document.getElementById('btn-logout');
   if (btnLogout) btnLogout.addEventListener('click', cerrarSesion);
 }
 
-function upvOnOrigenChange(val) {
-  var wrap = document.getElementById('upv-pozo-wrap');
-  var sel  = document.getElementById('upv-pozo');
-  var err  = document.getElementById('upv-pozo-error');
-  if (!wrap) return;
-  if (val === 'POZO') {
-    wrap.style.display = 'block';
-  } else {
-    wrap.style.display = 'none';
-    if (sel) sel.value = '';
-    if (err) err.style.display = 'none';
-  }
-}
-
 function seleccionarTipo(tipo) {
-  UPV.tipoOp = tipo;
-  UPV.gpsOperacion  = null;
+  UPV.tipoOp         = tipo;
+  UPV.gpsOperacion   = null;
   UPV.fotosOperacion = [];
   document.querySelectorAll('.tipo-btn').forEach(b =>
     b.classList.remove('active-carga', 'active-descarga'));
-  const btn = document.querySelector('.tipo-btn[data-tipo="' + tipo + '"]');
+  var btn = document.querySelector('.tipo-btn[data-tipo="' + tipo + '"]');
   if (btn) btn.classList.add(tipo === 'CARGA' ? 'active-carga' : 'active-descarga');
-
-  const contenedor = document.getElementById('campos-dinamicos');
+  var contenedor = document.getElementById('campos-dinamicos');
   if (!contenedor) return;
-
   if (tipo === 'CARGA') {
-    contenedor.innerHTML = `
-      <div class="upv-card">
-        <div class="upv-label">EN</div>
-        <select id="upv-origen" class="upv-select" onchange="upvOnOrigenChange(this.value)">
-          <option value="">Seleccionar origen...</option>
-          <option value="POZO">POZO</option>
-          <option value="ECO">ECO</option>
-          <option value="PIA">PIA</option>
-        </select>
-      </div>
-      <div id="upv-pozo-wrap" class="upv-card" style="display:none">
-        <div class="upv-label">POZO / LUGAR</div>
-        <select id="upv-pozo" class="upv-select">
-          <option value="">Seleccionar pozo...</option>
-          <option value="352">352</option>
-          <option value="505">505</option>
-          <option value="376">376</option>
-          <option value="172">172</option>
-          <option value="602">602</option>
-          <option value="601">601</option>
-          <option value="107">107</option>
-          <option value="603">603</option>
-        </select>
-        <div id="upv-pozo-error" style="color:#ef4444;font-size:12px;margin-top:6px;display:none">
-          Selecciona un pozo antes de continuar.
-        </div>
-      </div>
-      <div class="upv-card">
-        <div class="upv-label">Cantidad (bbls)</div>
-        <input id="upv-cantidad" type="number" inputmode="decimal"
-               class="upv-input" placeholder="0.0" step="0.1" min="0">
-      </div>
-      <div class="upv-card">
-        <div class="upv-label">
-          Fotografías
-          <span id="fotos-count-operacion" style="font-size:11px;color:var(--accent2);margin-left:8px">0/${UPV_MAX_FOTOS}</span>
-        </div>
-        <label style="display:flex;align-items:center;gap:10px;padding:14px;background:var(--surface2);
-                      border-radius:10px;border:1.5px dashed var(--border);cursor:pointer;color:var(--txt2);font-size:13px">
-          <span style="font-size:24px">📸</span>
-          <span>Tomar foto o seleccionar de galería</span>
-          <input id="foto-input-operacion" type="file" accept="image/*" capture="environment"
-                 multiple style="display:none">
-        </label>
-        <div id="fotos-preview-operacion" style="margin-top:8px"></div>
-      </div>
-      <div class="upv-card">
-        <div class="upv-label">GPS</div>
-        <div class="gps-mock" id="upv-gps-status">
-          <span style="color:var(--txt2)">📡 Toca para capturar ubicación</span>
-        </div>
-        <button class="upv-btn mt8" style="padding:10px;font-size:13px"
-                onclick="capturarGpsUpv('operacion')">📍 Capturar GPS</button>
-      </div>
-      <button id="btn-termino" class="upv-btn green mt12">✅ TÉRMINO</button>
-    `;
+    contenedor.innerHTML =
+      '<div class="upv-card">' +
+        '<div class="upv-label">EN</div>' +
+        '<select id="upv-origen" class="upv-select">' +
+          '<option value="">Seleccionar origen...</option>' +
+          '<option value="POZO">POZO</option>' +
+          '<option value="ECO">ECO</option>' +
+          '<option value="PIA">PIA</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="upv-card">' +
+        '<div class="upv-label">Cantidad (bbls)</div>' +
+        '<input id="upv-cantidad" type="number" inputmode="decimal" class="upv-input" placeholder="0.0" step="0.1" min="0">' +
+      '</div>' +
+      '<div class="upv-card">' +
+        '<div class="upv-label">Fotografias ' +
+          '<span id="fotos-count-operacion" style="font-size:11px;color:var(--accent2);margin-left:8px">0/' + UPV_MAX_FOTOS + '</span>' +
+        '</div>' +
+        '<label style="display:flex;align-items:center;gap:10px;padding:14px;background:var(--surface2);' +
+               'border-radius:10px;border:1.5px dashed var(--border);cursor:pointer;color:var(--txt2);font-size:13px">' +
+          '<span style="font-size:24px">📸</span>' +
+          '<span>Tomar foto o elegir de galeria</span>' +
+          '<input id="foto-input-operacion" type="file" accept="image/*" capture="environment" multiple style="display:none">' +
+        '</label>' +
+        '<div id="fotos-preview-operacion" style="margin-top:8px"></div>' +
+      '</div>' +
+      '<div class="upv-card">' +
+        '<div class="upv-label">GPS</div>' +
+        '<div class="gps-mock" id="upv-gps-status">' +
+          '<span style="color:var(--txt2)">Toca para capturar ubicacion</span>' +
+        '</div>' +
+        '<button class="upv-btn mt8" style="padding:10px;font-size:13px" onclick="capturarGpsUpv(\'operacion\')">Capturar GPS</button>' +
+      '</div>' +
+      '<button id="btn-termino" class="upv-btn green mt12">TERMINO</button>';
     document.getElementById('foto-input-operacion')
-      .addEventListener('change', e => procesarFotos(e.target.files, 'operacion'));
-    const t = document.getElementById('btn-termino');
+      .addEventListener('change', function(e){ procesarFotos(e.target.files, 'operacion'); });
+    var t = document.getElementById('btn-termino');
     if (t) t.addEventListener('click', previsualizarReporte);
     capturarGpsUpv('operacion');
   } else {
-    contenedor.innerHTML = `
-      <div class="upv-msg-provisional">
-        ⚠️ Los campos de descarga serán configurados posteriormente.
-      </div>`;
+    contenedor.innerHTML = '<div class="upv-msg-provisional">Los campos de descarga seran configurados posteriormente.</div>';
   }
 }
 
 // ═══════════════════════════════════════════════════════════
-// GENERADOR DE ID ÚNICO (Objetivo 6)
+// ID UNICO
 // ═══════════════════════════════════════════════════════════
 function generarIdUpv() {
-  const ts  = Date.now();
-  const rnd = Math.random().toString(36).slice(2, 9);
-  return 'upv_' + ts + '_' + rnd;
+  return 'upv_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
 }
 
 // ═══════════════════════════════════════════════════════════
-// DEDUPLICACIÓN LOCAL (Objetivo 7)
+// DEDUPLICACION LOCAL — ventana 60 segundos
 // ═══════════════════════════════════════════════════════════
 async function firmaExisteReciente(empresa, unidad, tipo, origen, cantidad) {
   if (!UPV.db) return false;
   try {
-    const todos = await idbGetAll('reportes');
-    const ahora = Date.now();
-    const firma = [empresa, unidad, tipo, origen, String(cantidad)].join('|').toLowerCase();
-    return todos.some(r => {
-      const rFirma = [r.empresa, r.unidad, r.tipo, r.origen, String(r.cantidad)].join('|').toLowerCase();
-      const age    = ahora - new Date(r.createdAt).getTime();
+    var todos  = await idbGetAll('reportes');
+    var ahora  = Date.now();
+    var firma  = [empresa, unidad, tipo, origen, String(cantidad)].join('|').toLowerCase();
+    return todos.some(function(r) {
+      var rFirma = [r.empresa, r.unidad, r.tipo, r.origen, String(r.cantidad)].join('|').toLowerCase();
+      var age    = ahora - new Date(r.createdAt).getTime();
       return rFirma === firma && age < UPV_DEDUP_WINDOW;
     });
-  } catch(e) {
-    return false;
-  }
+  } catch(e) { return false; }
 }
 
 // ═══════════════════════════════════════════════════════════
-// PREVIEW Y CONFIRMACIÓN (Objetivo 6)
+// PREVIEW Y CONFIRMACION
 // ═══════════════════════════════════════════════════════════
 async function previsualizarReporte() {
-  const btn = document.getElementById('btn-termino');
   if (UPV.saveInProgress) return;
-
-  // Validaciones
-  const unidad   = (document.getElementById('upv-unidad')?.value || '').trim();
-  const origen   = document.getElementById('upv-origen')?.value  || '';
-  const cantRaw  = document.getElementById('upv-cantidad')?.value || '';
-  const cantidad = parseFloat(cantRaw);
-
-  if (!UPV.empresa)      return mostrarError('Selecciona una empresa.');
-  if (!unidad)           return mostrarError('Ingresa el número de unidad.');
-  if (!origen)           return mostrarError('Selecciona el origen: POZO / ECO / PIA.');
-  const pozo = (origen === 'POZO') ? (document.getElementById('upv-pozo')?.value || '') : '';
-  if (origen === 'POZO' && !pozo) {
-    const errEl = document.getElementById('upv-pozo-error');
-    if (errEl) errEl.style.display = 'block';
-    mostrarError('Selecciona el pozo antes de continuar.');
-    return;
-  }
-  const _errElOk = document.getElementById('upv-pozo-error');
-  if (_errElOk) _errElOk.style.display = 'none';
-  if (isNaN(cantidad) || cantidad <= 0) return mostrarError('Ingresa una cantidad válida mayor que cero.');
-
-  // Advertencia GPS
-  let confirmGps = true;
+  var unidad   = (document.getElementById('upv-unidad')  ? document.getElementById('upv-unidad').value   : '').trim();
+  var origen   =  document.getElementById('upv-origen')  ? document.getElementById('upv-origen').value   : '';
+  var cantRaw  =  document.getElementById('upv-cantidad') ? document.getElementById('upv-cantidad').value : '';
+  var cantidad = parseFloat(cantRaw);
+  if (!UPV.empresa)                     return mostrarError('Selecciona una empresa.');
+  if (!unidad)                          return mostrarError('Ingresa el numero de unidad.');
+  if (!origen)                          return mostrarError('Selecciona origen: POZO / ECO / PIA.');
+  if (isNaN(cantidad) || cantidad <= 0) return mostrarError('Ingresa una cantidad valida mayor que cero.');
   if (!UPV.gpsOperacion) {
-    confirmGps = await mostrarConfirmacion(
-      '⚠️ GPS no capturado',
-      'No se registró ubicación GPS. ¿Deseas guardar el reporte sin GPS?'
-    );
-    if (!confirmGps) return;
+    var okGps = await mostrarConfirmacion('Sin GPS', 'No se registro GPS. Guardar sin ubicacion?');
+    if (!okGps) return;
   }
-
-  // Verificar duplicado
-  const esDuplicado = await firmaExisteReciente(UPV.empresa, unidad, 'CARGA', origen, cantidad);
-  if (esDuplicado) {
-    const ok = await mostrarConfirmacion(
-      '⚠️ Posible duplicado',
-      'Este reporte parece haberse guardado recientemente. ¿Guardar de todas formas?'
-    );
-    if (!ok) return;
+  var esDup = await firmaExisteReciente(UPV.empresa, unidad, 'CARGA', origen, cantidad);
+  if (esDup) {
+    var okDup = await mostrarConfirmacion('Posible duplicado', 'Este reporte parece haberse guardado recientemente. Guardar de todas formas?');
+    if (!okDup) return;
   }
-
-  // Bloquear botón
-  if (btn) { btn.disabled = true; UPV.saveInProgress = true; }
-
-  const preview  = document.getElementById('upv-preview');
-  const formPpal = document.getElementById('upv-form-principal');
+  UPV.saveInProgress = true;
+  var btnT = document.getElementById('btn-termino');
+  if (btnT) btnT.disabled = true;
+  var preview  = document.getElementById('upv-preview');
+  var formPpal = document.getElementById('upv-form-principal');
   if (!preview) { desbloquearTermino(); return; }
-
-  const ahora = new Date();
-  const hora  = ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-  const fecha = ahora.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
-  preview.innerHTML = `
-    <div class="upv-card" style="border-color:var(--accent2)">
-      <div class="upv-label" style="color:var(--accent2)">Vista previa del reporte</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <span class="emp-tag ${UPV.empresa}">${UPV.empresa}</span>
-        <span class="fs13 txt2">CARGA</span>
-      </div>
-      <div class="fs13 txt2">📅 ${fecha} · ${hora}</div>
-      <div class="upv-sep"></div>
-      <div class="mt8"><div class="upv-label">Unidad</div><div class="fw7" style="font-size:18px">${unidad}</div></div>
-      <div class="mt8"><div class="upv-label">Origen</div><div class="fw7">${origen}</div></div>
-      ${pozo ? '<div class="mt8"><div class="upv-label">Pozo</div><div class="fw7" style="font-size:18px">' + pozo + '</div></div>' : ''}
-      <div class="mt8"><div class="upv-label">Cantidad</div><div class="fw7" style="font-size:18px">${cantidad} bbls</div></div>
-      <div class="mt8 fs13 txt2">${UPV.gpsOperacion
-        ? '📍 GPS: ±' + UPV.gpsOperacion.accuracy + ' m (' + UPV.gpsOperacion.source + ')'
-        : '📍 Sin GPS'}</div>
-      <div class="mt8 fs13 txt2">📸 ${UPV.fotosOperacion.length} foto(s)</div>
-    </div>
-    <div style="display:flex;gap:10px;margin-top:8px">
-      <button id="btn-cancelar-preview" class="upv-btn"
-              style="background:var(--surface2);color:var(--txt2);box-shadow:none;flex:1">Cancelar</button>
-      <button id="btn-confirmar" class="upv-btn green" style="flex:2">✅ Confirmar y guardar</button>
-    </div>`;
-
+  var ahora  = new Date();
+  var hora   = ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+  var fecha  = ahora.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  var gpsStr = UPV.gpsOperacion
+    ? 'GPS: +/-' + UPV.gpsOperacion.accuracy + ' m (' + UPV.gpsOperacion.source + ')'
+    : 'Sin GPS';
+  preview.innerHTML =
+    '<div class="upv-card" style="border-color:var(--accent2)">' +
+      '<div class="upv-label" style="color:var(--accent2)">Vista previa</div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+        '<span class="emp-tag ' + UPV.empresa + '">' + UPV.empresa + '</span>' +
+        '<span class="fs13 txt2">CARGA</span>' +
+      '</div>' +
+      '<div class="fs13 txt2">📅 ' + fecha + ' ' + hora + '</div>' +
+      '<div class="upv-sep"></div>' +
+      '<div class="mt8"><div class="upv-label">Unidad</div><div class="fw7" style="font-size:18px">' + unidad + '</div></div>' +
+      '<div class="mt8"><div class="upv-label">Origen</div><div class="fw7">' + origen + '</div></div>' +
+      '<div class="mt8"><div class="upv-label">Cantidad</div><div class="fw7" style="font-size:18px">' + cantidad + ' bbls</div></div>' +
+      '<div class="mt8 fs13 txt2">' + gpsStr + '</div>' +
+      '<div class="mt8 fs13 txt2">📸 ' + UPV.fotosOperacion.length + ' foto(s)</div>' +
+    '</div>' +
+    '<div style="display:flex;gap:10px;margin-top:8px">' +
+      '<button id="btn-cancelar-preview" class="upv-btn" ' +
+              'style="background:var(--surface2);color:var(--txt2);box-shadow:none;flex:1">Cancelar</button>' +
+      '<button id="btn-confirmar" class="upv-btn green" style="flex:2">Confirmar y guardar</button>' +
+    '</div>';
   preview.style.display = 'block';
   if (formPpal) formPpal.style.display = 'none';
-  document.getElementById('btn-cancelar-preview')?.addEventListener('click', () => { cerrarPreview(); desbloquearTermino(); });
-  document.getElementById('btn-confirmar')?.addEventListener('click', () => confirmarGuardado({ unidad, origen, cantidad, pozo }));
+  document.getElementById('btn-cancelar-preview').addEventListener('click', function() {
+    cerrarPreview(); desbloquearTermino();
+  });
+  document.getElementById('btn-confirmar').addEventListener('click', function() {
+    confirmarGuardado(unidad, origen, cantidad);
+  });
 }
 
 function desbloquearTermino() {
   UPV.saveInProgress = false;
-  const btn = document.getElementById('btn-termino');
+  var btn = document.getElementById('btn-termino');
   if (btn) btn.disabled = false;
 }
 
 function cerrarPreview() {
-  const preview  = document.getElementById('upv-preview');
-  const formPpal = document.getElementById('upv-form-principal');
+  var preview  = document.getElementById('upv-preview');
+  var formPpal = document.getElementById('upv-form-principal');
   if (preview)  preview.style.display = 'none';
   if (formPpal) formPpal.style.display = 'block';
 }
 
-async function confirmarGuardado({ unidad, origen, cantidad, pozo }) {
-  const id = generarIdUpv();
+async function confirmarGuardado(unidad, origen, cantidad) {
+  var id = generarIdUpv();
   try {
-    // 1. Guardar fotos en IDB
-    const fotoIds = [];
-    for (const f of UPV.fotosOperacion) {
-      const fotoDoc = Object.assign({ reporteId: id }, f);
-      await idbPut('fotos', fotoDoc);
+    var fotoIds = [];
+    for (var i = 0; i < UPV.fotosOperacion.length; i++) {
+      var f = UPV.fotosOperacion[i];
+      await idbPut('fotos', Object.assign({ reporteId: id }, f));
       fotoIds.push(f.id);
     }
-    // 2. Construir y guardar reporte
-    const reporte = {
-      id,
+    var reporte = {
+      id:             id,
       empresa:        UPV.empresa,
       tipo:           'CARGA',
-      unidad,
-      origen,
-      pozo:           pozo || null,
-      lugarDetalle:   pozo || null,
-      cantidad,
+      unidad:         unidad,
+      origen:         origen,
+      cantidad:       cantidad,
       gps:            UPV.gpsOperacion || null,
-      fotoIds,
+      fotoIds:        fotoIds,
       fecha:          new Date().toISOString(),
       estadoLocal:    'guardado',
       syncStatus:     'pendiente',
@@ -652,381 +530,840 @@ async function confirmarGuardado({ unidad, origen, cantidad, pozo }) {
       createdAt:      new Date().toISOString()
     };
     await idbPut('reportes', reporte);
-    // 3. Limpiar y cerrar
     resetFormularioOperacion();
     cerrarPreview();
     mostrarPantalla('upv');
-    mostrarExito('✅ Reporte guardado localmente');
+    mostrarExito('Reporte guardado localmente');
   } catch(e) {
     console.error('[UPV] Error al guardar:', e);
-    mostrarError('❌ Error al guardar: ' + e.message);
+    mostrarError('Error al guardar: ' + e.message);
     desbloquearTermino();
   }
 }
 
 function resetFormularioOperacion() {
-  const un = document.getElementById('upv-unidad');
+  var un = document.getElementById('upv-unidad');
   if (un) un.value = '';
-  UPV.tipoOp        = null;
-  UPV.gpsOperacion  = null;
+  UPV.tipoOp         = null;
+  UPV.gpsOperacion   = null;
   UPV.fotosOperacion = [];
   UPV.saveInProgress = false;
-  const din = document.getElementById('campos-dinamicos');
+  var din = document.getElementById('campos-dinamicos');
   if (din) din.innerHTML = '';
-  document.querySelectorAll('.tipo-btn').forEach(b =>
-    b.classList.remove('active-carga', 'active-descarga'));
+  document.querySelectorAll('.tipo-btn').forEach(function(b) {
+    b.classList.remove('active-carga', 'active-descarga');
+  });
 }
 
 // ═══════════════════════════════════════════════════════════
-// MÓDULO OBSERVACIONES
+// OBSERVACIONES
 // ═══════════════════════════════════════════════════════════
 async function guardarObservacion() {
-  const unidad = (document.getElementById('obs-unidad')?.value || '').trim();
-  const texto  = (document.getElementById('obs-texto')?.value  || '').trim();
-  const tipo   = document.getElementById('obs-tipo')?.value    || 'normal';
-
+  var unidad = (document.getElementById('obs-unidad') ? document.getElementById('obs-unidad').value : '').trim();
+  var texto  = (document.getElementById('obs-texto')  ? document.getElementById('obs-texto').value  : '').trim();
+  var tipo   =  document.getElementById('obs-tipo')   ? document.getElementById('obs-tipo').value   : 'normal';
   if (!UPV.empresa) return mostrarError('Selecciona una empresa primero.');
   if (!unidad)      return mostrarError('Ingresa la unidad.');
-  if (!texto)       return mostrarError('Escribe la observación.');
-
+  if (!texto)       return mostrarError('Escribe la observacion.');
   if (!UPV.gpsObservacion) {
-    const ok = await mostrarConfirmacion(
-      '⚠️ Sin GPS',
-      'No se capturó ubicación GPS. ¿Guardar la observación sin GPS?'
-    );
+    var ok = await mostrarConfirmacion('Sin GPS', 'No se capturo GPS. Guardar sin ubicacion?');
     if (!ok) return;
   }
-
-  const id = generarIdUpv();
+  var id = generarIdUpv();
   try {
-    const fotoIds = [];
-    for (const f of UPV.fotosObservacion) {
+    var fotoIds = [];
+    for (var i = 0; i < UPV.fotosObservacion.length; i++) {
+      var f = UPV.fotosObservacion[i];
       await idbPut('fotos', Object.assign({ reporteId: id }, f));
       fotoIds.push(f.id);
     }
-    const obs = {
-      id,
+    await idbPut('reportes', {
+      id:             id,
       empresa:        UPV.empresa,
       tipo:           'OBSERVACION',
       subtipo:        tipo,
-      unidad,
-      texto,
+      unidad:         unidad,
+      texto:          texto,
       gps:            UPV.gpsObservacion || null,
-      fotoIds,
+      fotoIds:        fotoIds,
       fecha:          new Date().toISOString(),
       estadoLocal:    'guardado',
       syncStatus:     'pendiente',
       whatsappStatus: 'no_configurado',
       createdAt:      new Date().toISOString()
-    };
-    await idbPut('reportes', obs);
-
-    document.getElementById('obs-unidad').value = '';
-    document.getElementById('obs-texto').value  = '';
+    });
+    if (document.getElementById('obs-unidad')) document.getElementById('obs-unidad').value = '';
+    if (document.getElementById('obs-texto'))  document.getElementById('obs-texto').value  = '';
     UPV.fotosObservacion = [];
     UPV.gpsObservacion   = null;
     renderFotosPreview('observacion');
-    _setGpsStatus(document.getElementById('obs-gps-status'), 'buscando', '📡 Toca para capturar ubicación');
-
+    setGpsUI(document.getElementById('obs-gps-status'), 'buscando', 'Toca para capturar ubicacion');
     mostrarPantalla('upv');
-    mostrarExito('✅ Observación guardada localmente');
+    mostrarExito('Observacion guardada localmente');
   } catch(e) {
-    console.error('[UPV] Error al guardar observación:', e);
-    mostrarError('❌ Error: ' + e.message);
+    console.error('[UPV] Error:', e);
+    mostrarError('Error: ' + e.message);
   }
 }
 
 // ═══════════════════════════════════════════════════════════
-// HISTORIAL (Objetivo 5)
+// HISTORIAL desde IndexedDB
 // ═══════════════════════════════════════════════════════════
 async function renderHistorial() {
-  const cont = document.getElementById('upv-historial');
+  var cont = document.getElementById('upv-historial');
   if (!cont) return;
-
-  let reportes = [];
+  var reportes = [];
   try {
     if (UPV.db) {
       reportes = await idbGetAll('reportes');
-      reportes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      reportes.sort(function(a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
     }
-  } catch(e) {
-    console.warn('[UPV] Error al leer historial:', e);
-  }
-
+  } catch(e) { console.warn('[UPV] historial error:', e); }
   if (!reportes.length) {
-    cont.innerHTML = '<div class="hist-empty">📋 Sin reportes registrados aún</div>';
+    cont.innerHTML = '<div class="hist-empty">📋 Sin reportes registrados aun</div>';
     return;
   }
-
-  const visibles = reportes.slice(0, 50);
-  cont.innerHTML = visibles.map(r => {
-    const esCarga = r.tipo === 'CARGA';
-    const esObs   = r.tipo === 'OBSERVACION';
-    const titulo  = esCarga ? 'Carga · ' + r.unidad + ' · ' + r.origen + (r.pozo ? ' · Pozo ' + r.pozo : '')
-                  : esObs  ? 'Obs · ' + r.unidad
-                  : r.tipo;
-    const detalle = esCarga ? r.cantidad + ' bbls'
-                  : esObs  ? (r.texto || '').slice(0, 60)
-                  : '';
-    const fechaStr = r.createdAt
+  cont.innerHTML = reportes.slice(0, 50).map(function(r) {
+    var esCarga = r.tipo === 'CARGA';
+    var esObs   = r.tipo === 'OBSERVACION';
+    var titulo  = esCarga ? 'Carga · ' + r.unidad + ' · ' + r.origen
+                : esObs  ? 'Obs · '   + r.unidad
+                : r.tipo;
+    var detalle = esCarga ? r.cantidad + ' bbls'
+                : esObs  ? (r.texto || '').slice(0, 60) : '';
+    var fechaStr = r.createdAt
       ? new Date(r.createdAt).toLocaleString('es-MX', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-      : '—';
-    const gpsStr  = r.gps
-      ? '📍 ±' + r.gps.accuracy + ' m (' + r.gps.source + ')'
-      : '📍 Sin GPS';
-    const sync    = r.syncStatus === 'sincronizado' ? '✅ Sincronizado' : '⏳ Pendiente';
-    const syncClr = r.syncStatus === 'sincronizado' ? 'var(--green)' : 'var(--orange)';
-    return `
-      <div class="hist-item">
-        <div class="hist-item-header">
-          <span class="emp-tag ${r.empresa || ''}">${r.empresa || ''}</span>
-          <span>${fechaStr}</span>
-        </div>
-        <div class="hist-item-title">${titulo}</div>
-        ${detalle ? '<div class="fs13 txt2 mt8">' + detalle + '</div>' : ''}
-        <div class="fs13 txt2 mt8">${gpsStr}</div>
-        <div class="fs13 txt2 mt8">📸 ${(r.fotoIds || []).length} foto(s) &nbsp;·&nbsp; Estado: ${r.estadoLocal || '—'}</div>
-        <div class="mt8 fs13" style="color:${syncClr}">${sync}</div>
-      </div>`;
+      : '--';
+    var gpsStr  = r.gps ? 'GPS: +/-' + r.gps.accuracy + ' m (' + r.gps.source + ')' : 'Sin GPS';
+    var sync    = r.syncStatus === 'sincronizado' ? 'Sincronizado' : 'Pendiente';
+    var syncClr = r.syncStatus === 'sincronizado' ? 'var(--green)' : 'var(--orange)';
+    return '<div class="hist-item">' +
+      '<div class="hist-item-header">' +
+        '<span class="emp-tag ' + (r.empresa||'') + '">' + (r.empresa||'') + '</span>' +
+        '<span>' + fechaStr + '</span>' +
+      '</div>' +
+      '<div class="hist-item-title">' + titulo + '</div>' +
+      (detalle ? '<div class="fs13 txt2 mt8">' + detalle + '</div>' : '') +
+      '<div class="fs13 txt2 mt8">' + gpsStr + '</div>' +
+      '<div class="fs13 txt2 mt8">📸 ' + (r.fotoIds||[]).length + ' foto(s) · Estado: ' + (r.estadoLocal||'--') + '</div>' +
+      '<div class="mt8 fs13" style="color:' + syncClr + '">' + sync + '</div>' +
+    '</div>';
   }).join('');
 }
 
 // ═══════════════════════════════════════════════════════════
-// FUNCIONES STUB (para fases futuras)
+// STUBS FASE 3
 // ═══════════════════════════════════════════════════════════
-function sincronizarPendientesUpv() {
-  // TODO Fase 3: conectar con Firebase, subir reportes pendientes, marcar syncStatus
-  console.log('[UPV] sincronizarPendientesUpv() — pendiente');
+async function sincronizarPendientesUpv() {
+  if (UPV.syncInProgress) return;
+
+  if (
+    !UPV.firebaseReady ||
+    !UPV.firebaseConnected ||
+    !UPV.firebaseDb ||
+    !UPV.db
+  ) {
+    return;
+  }
+
+  UPV.syncInProgress = true;
+
+  try {
+    var todos = await idbGetAll('reportes');
+
+    var pendientes = todos
+      .filter(function(r) {
+        return r && r.id && r.syncStatus !== 'sincronizado';
+      })
+      .sort(function(a, b) {
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      });
+
+    if (!pendientes.length) {
+      console.log('[UPV-SYNC] No hay reportes pendientes');
+      return;
+    }
+
+    console.log('[UPV-SYNC] Pendientes encontrados:', pendientes.length);
+
+    for (var i = 0; i < pendientes.length; i++) {
+      try {
+        await enviarReporteUpv(pendientes[i].id);
+      } catch (e) {
+        console.warn(
+          '[UPV-SYNC] Error al enviar reporte',
+          pendientes[i].id,
+          e.message
+        );
+      }
+    }
+
+    if (typeof renderHistorial === 'function') {
+      await renderHistorial();
+    }
+  } catch (e) {
+    console.warn(
+      '[UPV-SYNC] Error general en sincronizarPendientesUpv:',
+      e.message
+    );
+  } finally {
+    UPV.syncInProgress = false;
+  }
 }
-function enviarReporteUpv(id) {
-  // TODO Fase 3: Cloud Function / UltraMsg
-  console.log('[UPV] enviarReporteUpv()', id, '— pendiente');
+
+async function enviarReporteUpv(id) {
+  if (
+    !id ||
+    !UPV.firebaseReady ||
+    !UPV.firebaseConnected ||
+    !UPV.firebaseDb ||
+    !UPV.db
+  ) {
+    return false;
+  }
+
+  try {
+    var reporte = await idbGet('reportes', id);
+
+    if (!reporte) {
+      console.warn(
+        '[UPV-SYNC] Reporte no encontrado en IndexedDB:',
+        id
+      );
+      return false;
+    }
+
+    if (reporte.syncStatus === 'sincronizado') {
+      console.log('[UPV-SYNC] Reporte ya sincronizado:', id);
+      return true;
+    }
+
+    var ruta =
+      '/' +
+      UPV_FIREBASE_TEST_PATH +
+      '/' +
+      reporte.id;
+
+    var fotoIds = Array.isArray(reporte.fotoIds)
+      ? reporte.fotoIds
+      : [];
+
+    var payload = {
+      id: reporte.id,
+      empresa: reporte.empresa || null,
+      tipo: reporte.tipo || null,
+      subtipo: reporte.subtipo || null,
+      unidad: reporte.unidad || null,
+      origen: reporte.origen || null,
+      cantidad:
+        reporte.cantidad !== undefined
+          ? reporte.cantidad
+          : null,
+      texto:
+        reporte.texto || null,
+
+      etapa:
+        reporte.etapa || null,
+
+      pozo:
+        reporte.pozo || null,
+
+      pozoOrigen:
+        reporte.pozoOrigen ||
+        reporte.pozo ||
+        null,
+
+      destino:
+        reporte.destino || null,
+
+      destinoPozo:
+        reporte.destinoPozo || null,
+
+      pozoDestino:
+        reporte.pozoDestino ||
+        reporte.destinoPozo ||
+        null,
+
+      cantidadM3:
+        reporte.cantidadM3 !== undefined
+          ? reporte.cantidadM3
+          : null,
+
+      cantidadBbl:
+        reporte.cantidadBbl !== undefined
+          ? reporte.cantidadBbl
+          : null,
+
+      observaciones:
+        reporte.observaciones || null,
+
+      /*
+       * Texto EXACTO confirmado en la vista previa.
+       * Todavía ninguna Function lo envía.
+       */
+      mensajeWhatsapp:
+        reporte.mensajeWhatsapp || null,
+
+      cargasSeleccionadas:
+        Array.isArray(
+          reporte.cargasSeleccionadas
+        )
+          ? reporte.cargasSeleccionadas
+          : [],
+
+      whatsappStatus:
+        reporte.whatsappStatus ||
+        'pendiente_configuracion',
+
+      gps:
+        reporte.gps || null,
+
+      fotoIds: fotoIds,
+      nFotos: fotoIds.length,
+      fecha: reporte.fecha || null,
+      createdAt: reporte.createdAt || null,
+      origenApp: 'UPV',
+      entorno: 'PRUEBA',
+      schemaVersion: 1,
+      receivedAtClient: new Date().toISOString()
+    };
+
+    await UPV.firebaseDb
+      .ref(ruta)
+      .set(payload);
+
+    reporte.syncStatus = 'sincronizado';
+    reporte.firebasePath = ruta;
+    reporte.firebaseSyncedAt = new Date().toISOString();
+    reporte.syncError = null;
+
+    await idbPut('reportes', reporte);
+
+    console.log(
+      '[UPV-SYNC] Sincronizado correctamente:',
+      reporte.id,
+      ruta
+    );
+
+    return true;
+  } catch (e) {
+    console.warn(
+      '[UPV-SYNC] Error al enviar reporte',
+      id,
+      e.message
+    );
+
+    try {
+      var reporteFallido = await idbGet('reportes', id);
+
+      if (reporteFallido) {
+        reporteFallido.syncStatus = 'pendiente';
+        reporteFallido.syncError =
+          e && e.message
+            ? e.message
+            : String(e);
+
+        await idbPut('reportes', reporteFallido);
+      }
+    } catch (e2) {
+      console.warn(
+        '[UPV-SYNC] No se pudo guardar syncError:',
+        e2.message
+      );
+    }
+
+    return false;
+  }
 }
+
+/* ==========================================================
+   PUENTE OPERACIÓN FINAL → INDEXEDDB UPV
+
+   Recibe exclusivamente el registro confirmado por
+   upv-operacion-final.js.
+
+   IMPORTANTE:
+   - NO llama UltraMsg.
+   - NO toca Firebase de recorredores.
+   - NO escribe directamente en WhatsApp.
+   - Conserva offline-first.
+   ========================================================== */
+
+async function guardarRegistroFinalUPV(data){
+
+  if(
+    !data ||
+    typeof data !== 'object'
+  ){
+    throw new Error(
+      'Registro final UPV inválido'
+    );
+  }
+
+  if(!UPV.db){
+    throw new Error(
+      'IndexedDB UPV no disponible'
+    );
+  }
+
+  var id =
+    String(
+      data.id ||
+      generarIdUpv()
+    ).trim();
+
+  var ahora =
+    new Date().toISOString();
+
+  var reporte = {
+    id:id,
+
+    empresa:
+      data.empresa ||
+      UPV.empresa ||
+      null,
+
+    tipo:
+      data.tipo ||
+      null,
+
+    subtipo:
+      data.subtipo ||
+      data.etapa ||
+      null,
+
+    etapa:
+      data.etapa ||
+      data.subtipo ||
+      null,
+
+    unidad:
+      data.unidad ||
+      null,
+
+    origen:
+      data.origen ||
+      null,
+
+    pozo:
+      data.pozo ||
+      data.pozoOrigen ||
+      null,
+
+    pozoOrigen:
+      data.pozoOrigen ||
+      data.pozo ||
+      null,
+
+    destino:
+      data.destino ||
+      null,
+
+    destinoPozo:
+      data.destinoPozo ||
+      data.pozoDestino ||
+      null,
+
+    pozoDestino:
+      data.pozoDestino ||
+      data.destinoPozo ||
+      null,
+
+    cantidad:
+      data.cantidad !== undefined
+        ? data.cantidad
+        : (
+            data.cantidadM3 !== undefined
+              ? data.cantidadM3
+              : null
+          ),
+
+    cantidadM3:
+      data.cantidadM3 !== undefined
+        ? data.cantidadM3
+        : null,
+
+    cantidadBbl:
+      data.cantidadBbl !== undefined
+        ? data.cantidadBbl
+        : null,
+
+    observaciones:
+      data.observaciones ||
+      data.observacionesOperacion ||
+      null,
+
+    gps:
+      data.gps ||
+      window.UPV_FINAL_GPS ||
+      null,
+
+    mensajeWhatsapp:
+      data.mensajeWhatsapp ||
+      data.mensajeWA ||
+      null,
+
+    cargasSeleccionadas:
+      Array.isArray(
+        data.cargasSeleccionadas
+      )
+        ? data.cargasSeleccionadas
+        : [],
+
+    fotoIds:
+      Array.isArray(data.fotoIds)
+        ? data.fotoIds
+        : [],
+
+    fecha:
+      data.fecha ||
+      ahora,
+
+    createdAt:
+      data.createdAt ||
+      ahora,
+
+    estadoLocal:
+      'guardado',
+
+    syncStatus:
+      'pendiente',
+
+    /*
+     * Todavía NO activamos WhatsApp.
+     */
+    whatsappStatus:
+      'pendiente_configuracion',
+
+    origenApp:
+      'UPV',
+
+    schemaVersion:
+      2
+  };
+
+  await idbPut(
+    'reportes',
+    reporte
+  );
+
+  console.log(
+    '[UPV-FINAL] Registro guardado en IndexedDB:',
+    reporte.id,
+    reporte.tipo,
+    reporte.etapa
+  );
+
+  /*
+   * Si existe conexión, aprovechamos el sincronizador
+   * normal de UPV.
+   */
+  if(
+    UPV.firebaseReady &&
+    UPV.firebaseConnected &&
+    typeof sincronizarPendientesUpv === 'function'
+  ){
+    sincronizarPendientesUpv();
+  }
+
+  return reporte;
+}
+
+window.guardarRegistroFinalUPV =
+  guardarRegistroFinalUPV;
+
+
+
 function corregirReporteUpv(id) {
-  // TODO Fase 3: edición con ventana de tiempo y editHistory
-  console.log('[UPV] corregirReporteUpv()', id, '— pendiente');
+  console.log(
+    '[UPV] corregirReporteUpv pendiente Fase 3, id:',
+    id
+  );
 }
 
 // ═══════════════════════════════════════════════════════════
 // UTILIDADES UI
 // ═══════════════════════════════════════════════════════════
 function mostrarConfirmacion(titulo, mensaje) {
-  return new Promise(resolve => {
-    const modal = document.createElement('div');
-    modal.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:20px';
-    modal.innerHTML = `
-      <div style="background:#1c2d42;border-radius:16px;padding:24px;max-width:320px;width:100%;border:1px solid rgba(255,255,255,.15)">
-        <div style="font-size:15px;font-weight:800;color:#e8edf2;margin-bottom:10px">${titulo}</div>
-        <div style="font-size:13px;color:#8aa4bf;margin-bottom:20px;line-height:1.6">${mensaje}</div>
-        <div style="display:flex;gap:10px">
-          <button id="conf-no"  style="flex:1;padding:12px;border-radius:10px;border:none;background:#142032;color:#8aa4bf;font-size:14px;font-weight:700;cursor:pointer">Cancelar</button>
-          <button id="conf-yes" style="flex:1;padding:12px;border-radius:10px;border:none;background:#1e6fbf;color:#fff;font-size:14px;font-weight:700;cursor:pointer">Continuar</button>
-        </div>
-      </div>`;
+  return new Promise(function(resolve) {
+    var modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.75);' +
+                          'display:flex;align-items:center;justify-content:center;padding:20px';
+    modal.innerHTML =
+      '<div style="background:#1c2d42;border-radius:16px;padding:24px;max-width:320px;' +
+                   'width:100%;border:1px solid rgba(255,255,255,.15)">' +
+        '<div style="font-size:15px;font-weight:800;color:#e8edf2;margin-bottom:10px">' + titulo + '</div>' +
+        '<div style="font-size:13px;color:#8aa4bf;margin-bottom:20px;line-height:1.6">' + mensaje + '</div>' +
+        '<div style="display:flex;gap:10px">' +
+          '<button id="conf-no"  style="flex:1;padding:12px;border-radius:10px;border:none;' +
+                  'background:#142032;color:#8aa4bf;font-size:14px;font-weight:700;cursor:pointer">Cancelar</button>' +
+          '<button id="conf-yes" style="flex:1;padding:12px;border-radius:10px;border:none;' +
+                  'background:#1e6fbf;color:#fff;font-size:14px;font-weight:700;cursor:pointer">Continuar</button>' +
+        '</div>' +
+      '</div>';
     document.body.appendChild(modal);
-    modal.querySelector('#conf-yes').addEventListener('click', () => { modal.remove(); resolve(true);  });
-    modal.querySelector('#conf-no').addEventListener('click',  () => { modal.remove(); resolve(false); });
+    modal.querySelector('#conf-yes').addEventListener('click', function() { modal.remove(); resolve(true);  });
+    modal.querySelector('#conf-no').addEventListener('click',  function() { modal.remove(); resolve(false); });
   });
 }
-
 function mostrarError(msg) {
-  const t = _crearToast(msg, 'var(--red)');
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 3500);
+  var t = crearToast(msg, 'var(--red)'); document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 3500);
 }
-
 function mostrarExito(msg) {
-  const t = _crearToast(msg, 'var(--green)');
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2800);
+  var t = crearToast(msg, 'var(--green)'); document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 2800);
 }
-
-function _crearToast(msg, color) {
-  const el = document.createElement('div');
+function crearToast(msg, color) {
+  var el = document.createElement('div');
   Object.assign(el.style, {
-    position: 'fixed', bottom: '90px', left: '50%', transform: 'translateX(-50%)',
-    background: '#1c2d42', color, border: '1.5px solid ' + color,
-    borderRadius: '12px', padding: '12px 20px', fontSize: '13px', fontWeight: '700',
-    zIndex: '9999', maxWidth: '90vw', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,.4)'
+    position:'fixed', bottom:'90px', left:'50%', transform:'translateX(-50%)',
+    background:'#1c2d42', color:color, border:'1.5px solid '+color,
+    borderRadius:'12px', padding:'12px 20px', fontSize:'13px', fontWeight:'700',
+    zIndex:'9999', maxWidth:'90vw', textAlign:'center', boxShadow:'0 4px 20px rgba(0,0,0,.4)'
   });
   el.textContent = msg;
   return el;
 }
 
-
-// ═══════════════════════════════════════════════════════════
-// OBJETIVO 1 — BOTÓN ACTUALIZAR
-// Seguro: solo elimina cachés upv-pwa-*, solo opera sobre
-// el SW del scope ./ de UPV. No toca otros SWs.
-// ═══════════════════════════════════════════════════════════
-function upvActualizarApp() {
-  var btn = document.getElementById('upv-update-btn');
-  var msg = document.getElementById('upv-update-msg');
-  if (btn) btn.disabled = true;
-  if (msg) msg.textContent = 'Actualizando...';
-
-  var limpiarCachesUpv = function() {
-    if (!('caches' in window)) return Promise.resolve();
-    return caches.keys().then(function(keys) {
-      return Promise.all(
-        keys
-          .filter(function(k) { return k.startsWith('upv-pwa-'); })
-          .map(function(k) { return caches.delete(k); })
-      );
-    });
-  };
-
-  // Solo el SW de este scope (./), no getRegistrations() global
-  var actualizarSW = function() {
-    if (!('serviceWorker' in navigator)) return Promise.resolve();
-    return navigator.serviceWorker.getRegistration('./').then(function(reg) {
-      if (reg) {
-        return reg.update().catch(function() {});
-      }
-    });
-  };
-
-  limpiarCachesUpv()
-    .then(actualizarSW)
-    .then(function() {
-      // Recarga con parámetro de versión para evitar caché del navegador
-      var url = location.href.split('?')[0] + '?v=' + Date.now();
-      location.replace(url);
-    })
-    .catch(function(e) {
-      console.warn('[UPV] Error al actualizar:', e);
-      if (msg) msg.textContent = 'Error al actualizar. Recarga manualmente.';
-      if (btn) btn.disabled = false;
-    });
-}
-
-// ═══════════════════════════════════════════════════════════
-// OBJETIVO 2 — ESTADO DE PERMISOS
-// Independiente de la app de recorredores.
-// No registra FCM, no modifica Firebase, no bloquea la app.
-// ═══════════════════════════════════════════════════════════
-var _upvLastGps = null; // última lectura GPS para mostrar precisión
-
-function upvVerificarPermisos() {
-  var gpsIcon  = document.getElementById('upv-ps-gps-icon');
-  var gpsTxt   = document.getElementById('upv-ps-gps-txt');
-  var valIcon  = document.getElementById('upv-ps-val-icon');
-  var valTxt   = document.getElementById('upv-ps-val-txt');
-  var notifIcon= document.getElementById('upv-ps-notif-icon');
-  var notifTxt = document.getElementById('upv-ps-notif-txt');
-
-  // GPS permission
-  if (navigator.permissions) {
-    navigator.permissions.query({ name: 'geolocation' }).then(function(r) {
-      if (r.state === 'granted') {
-        if (gpsIcon) gpsIcon.textContent = '✅';
-        if (gpsTxt)  { gpsTxt.textContent = 'Activada'; gpsTxt.style.color = '#4ade80'; }
-        // Intentar lectura fresca sin pedir permiso de nuevo
-        navigator.geolocation.getCurrentPosition(
-          function(p) {
-            _upvLastGps = { lat: p.coords.latitude, lon: p.coords.longitude, acc: Math.round(p.coords.accuracy) };
-            if (valIcon) valIcon.textContent = '✅';
-            if (valTxt)  { valTxt.textContent = '±' + _upvLastGps.acc + ' m'; valTxt.style.color = '#4ade80'; }
-          },
-          function() {
-            if (_upvLastGps) {
-              if (valIcon) valIcon.textContent = '⚠️';
-              if (valTxt)  { valTxt.textContent = '±' + _upvLastGps.acc + ' m (cacheado)'; valTxt.style.color = '#facc15'; }
-            } else {
-              if (valIcon) valIcon.textContent = '⚠️';
-              if (valTxt)  { valTxt.textContent = 'Sin lectura'; valTxt.style.color = '#facc15'; }
-            }
-          },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-        );
-      } else if (r.state === 'denied') {
-        if (gpsIcon) gpsIcon.textContent = '🚫';
-        if (gpsTxt)  { gpsTxt.textContent = 'Bloqueada'; gpsTxt.style.color = '#f87171'; }
-        if (valIcon) valIcon.textContent = '❌';
-        if (valTxt)  { valTxt.textContent = 'Sin lectura'; valTxt.style.color = '#f87171'; }
-      } else {
-        if (gpsIcon) gpsIcon.textContent = '⚪';
-        if (gpsTxt)  { gpsTxt.textContent = 'Sin activar'; gpsTxt.style.color = '#facc15'; }
-        if (valIcon) valIcon.textContent = '⚪';
-        if (valTxt)  { valTxt.textContent = 'Sin lectura'; valTxt.style.color = '#facc15'; }
-      }
-    }).catch(function() {
-      // Navegador sin API permissions (Safari antiguo)
-      if (gpsIcon) gpsIcon.textContent = '❓';
-      if (gpsTxt)  { gpsTxt.textContent = 'No disponible'; gpsTxt.style.color = '#94a3b8'; }
-      if (valIcon) valIcon.textContent = '❓';
-      if (valTxt)  { valTxt.textContent = 'Sin lectura'; valTxt.style.color = '#94a3b8'; }
-    });
-  } else {
-    if (gpsIcon) gpsIcon.textContent = '❓';
-    if (gpsTxt)  { gpsTxt.textContent = 'No disponible'; gpsTxt.style.color = '#94a3b8'; }
-  }
-
-  // Notificaciones
-  if ('Notification' in window) {
-    var perm = Notification.permission;
-    if (perm === 'granted') {
-      if (notifIcon) notifIcon.textContent = '✅';
-      if (notifTxt)  { notifTxt.textContent = 'Activadas'; notifTxt.style.color = '#4ade80'; }
-    } else if (perm === 'denied') {
-      if (notifIcon) notifIcon.textContent = '🚫';
-      if (notifTxt)  { notifTxt.textContent = 'Bloqueadas'; notifTxt.style.color = '#f87171'; }
-    } else {
-      if (notifIcon) notifIcon.textContent = '⚪';
-      if (notifTxt)  { notifTxt.textContent = 'Sin activar'; notifTxt.style.color = '#facc15'; }
-    }
-  } else {
-    if (notifIcon) notifIcon.textContent = '❓';
-    if (notifTxt)  { notifTxt.textContent = 'No compatible'; notifTxt.style.color = '#94a3b8'; }
-  }
-}
-
-function upvActivarPermisos() {
-  var btnActivar = document.getElementById('upv-ps-activar-btn');
-  if (btnActivar) { btnActivar.disabled = true; btnActivar.textContent = 'Activando...'; }
-
-  var done = 0;
-  var total = 2;
-  var onDone = function() {
-    done++;
-    if (done >= total) {
-      if (btnActivar) { btnActivar.disabled = false; btnActivar.textContent = 'Activar GPS y notificaciones'; }
-      upvVerificarPermisos();
-    }
-  };
-
-  // 1. Solicitar GPS
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      function(p) {
-        _upvLastGps = { lat: p.coords.latitude, lon: p.coords.longitude, acc: Math.round(p.coords.accuracy) };
-        onDone();
-      },
-      function() { onDone(); },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-    );
-  } else {
-    onDone();
-  }
-
-  // 2. Solicitar notificaciones (sin FCM, sin tokens)
-  if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission().then(function() { onDone(); }).catch(function() { onDone(); });
-  } else {
-    onDone();
-  }
-}
-
-// Exponer globalmente para onclick del HTML
-window.upvActualizarApp    = upvActualizarApp;
-window.upvVerificarPermisos = upvVerificarPermisos;
-window.upvActivarPermisos   = upvActivarPermisos;
-window.upvOnOrigenChange    = upvOnOrigenChange;
-
-// Exponer globalmente lo que se llama desde HTML inline
-window.cerrarSesion       = cerrarSesion;
-window.eliminarFoto       = eliminarFoto;
-window.capturarGpsUpv     = capturarGpsUpv;
+// Exponer al HTML
+window.cerrarSesion             = cerrarSesion;
+window.eliminarFoto             = eliminarFoto;
+window.capturarGpsUpv           = capturarGpsUpv;
 window.sincronizarPendientesUpv = sincronizarPendientesUpv;
-window.enviarReporteUpv   = enviarReporteUpv;
-window.corregirReporteUpv = corregirReporteUpv;
+window.enviarReporteUpv         = enviarReporteUpv;
+window.corregirReporteUpv       = corregirReporteUpv;
+
+// ═══════════════════════════════════════════════════════════
+// INSTALACIÓN PWA
+// ═══════════════════════════════════════════════════════════
+var upvDeferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', function(event) {
+  event.preventDefault();
+  upvDeferredInstallPrompt = event;
+
+  var btn = document.getElementById('upv-install-btn');
+  if (btn) btn.style.display = 'block';
+});
+
+document.addEventListener('click', function(event) {
+  var btn = event.target.closest('#upv-install-btn');
+  if (!btn || !upvDeferredInstallPrompt) return;
+
+  btn.disabled = true;
+
+  upvDeferredInstallPrompt.prompt();
+
+  upvDeferredInstallPrompt.userChoice.finally(function() {
+    upvDeferredInstallPrompt = null;
+    btn.style.display = 'none';
+    btn.disabled = false;
+  });
+});
+
+window.addEventListener('appinstalled', function() {
+  var btn = document.getElementById('upv-install-btn');
+  if (btn) btn.style.display = 'none';
+
+  upvDeferredInstallPrompt = null;
+  console.log('[UPV] Aplicación instalada');
+});
+
+// ═══════════════════════════════════════════════════════════
+// ACTUALIZACIÓN MANUAL DE LA PWA
+// ═══════════════════════════════════════════════════════════
+var upvSwRegistration = null;
+var upvRefreshing = false;
+
+function mostrarBotonActualizarUpv() {
+  var banner = document.getElementById('upv-update-banner');
+  if (banner) banner.classList.add('show');
+}
+
+function ocultarBotonActualizarUpv() {
+  var banner = document.getElementById('upv-update-banner');
+  if (banner) banner.classList.remove('show');
+}
+
+async function actualizarAppUpv() {
+  var btn = document.getElementById('upv-update-btn');
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Actualizando...';
+  }
+
+  try {
+    if ('serviceWorker' in navigator) {
+      var registrations = await navigator.serviceWorker.getRegistrations();
+
+      for (var i = 0; i < registrations.length; i++) {
+        var reg = registrations[i];
+
+        if (reg.scope.indexOf('/UPV/') !== -1) {
+          await reg.update();
+
+          if (reg.waiting) {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+        }
+      }
+    }
+
+    if ('caches' in window) {
+      var keys = await caches.keys();
+
+      await Promise.all(
+        keys
+          .filter(function(key) {
+            return key.indexOf('upv-pwa-') === 0;
+          })
+          .map(function(key) {
+            return caches.delete(key);
+          })
+      );
+    }
+
+    ocultarBotonActualizarUpv();
+
+    window.location.replace(
+      window.location.pathname + '?upv_update=' + Date.now()
+    );
+  } catch (error) {
+    console.error('[UPV] Error al actualizar:', error);
+    mostrarError('No fue posible actualizar. Intenta nuevamente.');
+
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Actualizar';
+    }
+  }
+}
+
+function configurarActualizacionUpv() {
+  var btn = document.getElementById('upv-update-btn');
+
+  if (btn) {
+    btn.addEventListener('click', actualizarAppUpv);
+  }
+
+  if (!('serviceWorker' in navigator)) return;
+
+  navigator.serviceWorker.getRegistration('./').then(function(reg) {
+    if (!reg) return;
+
+    upvSwRegistration = reg;
+
+    if (reg.waiting) {
+      mostrarBotonActualizarUpv();
+    }
+
+    reg.addEventListener('updatefound', function() {
+      var nuevoWorker = reg.installing;
+      if (!nuevoWorker) return;
+
+      nuevoWorker.addEventListener('statechange', function() {
+        if (
+          nuevoWorker.state === 'installed' &&
+          navigator.serviceWorker.controller
+        ) {
+          mostrarBotonActualizarUpv();
+        }
+      });
+    });
+  });
+
+  navigator.serviceWorker.addEventListener('controllerchange', function() {
+    if (upvRefreshing) return;
+    upvRefreshing = true;
+    window.location.reload();
+  });
+}
+
+document.addEventListener('DOMContentLoaded', configurarActualizacionUpv);
+
+window.actualizarAppUpv = actualizarAppUpv;
+
+// ═══════════════════════════════════════════════════════════
+// ACTUALIZACIÓN MANUAL PERMANENTE
+// ═══════════════════════════════════════════════════════════
+var upvActualizando = false;
+
+async function actualizarAppUpv() {
+  if (upvActualizando) return;
+
+  var btn = document.getElementById('upv-update-btn');
+  upvActualizando = true;
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Actualizando...';
+  }
+
+  try {
+    if ('serviceWorker' in navigator) {
+      var registros = await navigator.serviceWorker.getRegistrations();
+
+      for (var i = 0; i < registros.length; i++) {
+        var reg = registros[i];
+
+        if (reg.scope.indexOf('/UPV/') !== -1) {
+          await reg.update();
+
+          if (reg.waiting) {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+        }
+      }
+    }
+
+    if ('caches' in window) {
+      var claves = await caches.keys();
+
+      await Promise.all(
+        claves
+          .filter(function(clave) {
+            return clave.indexOf('upv-pwa-') === 0;
+          })
+          .map(function(clave) {
+            return caches.delete(clave);
+          })
+      );
+    }
+
+    var url = new URL(window.location.href);
+    url.searchParams.set('actualizado', Date.now().toString());
+
+    window.location.replace(url.toString());
+  } catch (error) {
+    console.error('[UPV] No se pudo actualizar:', error);
+
+    if (typeof mostrarError === 'function') {
+      mostrarError('No fue posible actualizar. Intenta otra vez.');
+    }
+
+    upvActualizando = false;
+
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Actualizar';
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var btn = document.getElementById('upv-update-btn');
+
+  if (btn) {
+    btn.addEventListener('click', actualizarAppUpv);
+  }
+});
+
+window.actualizarAppUpv = actualizarAppUpv;
+
+
+/* ===== EXPORTS FLUJO OPERATIVO UNIFICADO ===== */
+window.idbPut = idbPut;
+window.procesarFotos = procesarFotos;
+/* ===== FIN EXPORTS FLUJO OPERATIVO ===== */

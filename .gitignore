@@ -1,0 +1,43 @@
+
+# ===== LIMPIEZA PROYECTO CUICHAPA =====
+
+# Dependencias instaladas localmente
+node_modules/
+functions/node_modules/
+
+# Archivos internos generados por Firebase CLI
+.firebase/
+
+# Archivos temporales del sistema
+*.log
+*.tmp
+*.cache
+.DS_Store
+Thumbs.db
+
+# Respaldos generados durante el desarrollo
+*.bak
+*.bak_*
+*.bak.*
+*.backup
+*.backup_*
+*.backup.*
+*_backup_*
+*_respaldo_*
+*_roto_*
+*_estado_roto_*
+
+# Carpetas de respaldos históricos
+admin/backups/
+backups/
+
+# Auditorías temporales
+auditoria_*.txt
+
+# ===== FIN LIMPIEZA CUICHAPA =====
+functions-upv/node_modules/
+UPV/backups/
+UPV/**/*.backup*
+UPV/**/*backup*
+UPV/*.backup*
+UPV/*backup*

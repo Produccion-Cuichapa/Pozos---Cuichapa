@@ -1,0 +1,134 @@
+/* ==========================================================
+   UPV — PORTADA Y APP COMO PANTALLAS INDEPENDIENTES
+   ========================================================== */
+
+
+/* ==========================================================
+   MODO PORTADA
+   ========================================================== */
+
+body.upv-solo-portada{
+  width:100% !important;
+
+  min-height:100dvh !important;
+
+  margin:0 !important;
+
+  overflow-x:hidden !important;
+}
+
+
+/*
+ * Mientras la portada esté abierta,
+ * la aplicación operativa NO puede mostrarse.
+ */
+body.upv-solo-portada #upv-app{
+  display:none !important;
+
+  visibility:hidden !important;
+
+  opacity:0 !important;
+
+  pointer-events:none !important;
+
+  position:absolute !important;
+
+  width:0 !important;
+  height:0 !important;
+
+  overflow:hidden !important;
+}
+
+
+/*
+ * La portada ocupa su propia pantalla.
+ */
+body.upv-solo-portada #screen-login{
+  display:flex !important;
+
+  visibility:visible !important;
+
+  opacity:1 !important;
+
+  position:relative !important;
+
+  width:100% !important;
+
+  min-height:100dvh !important;
+
+  box-sizing:border-box !important;
+}
+
+
+/* ==========================================================
+   MODO APP
+   ========================================================== */
+
+body.upv-app-abierta #screen-login{
+  display:none !important;
+
+  visibility:hidden !important;
+
+  opacity:0 !important;
+
+  pointer-events:none !important;
+}
+
+
+body.upv-app-abierta #upv-app{
+  display:flex !important;
+
+  visibility:visible !important;
+
+  opacity:1 !important;
+
+  position:relative !important;
+
+  width:100% !important;
+
+  height:auto !important;
+
+  min-height:100dvh !important;
+
+  pointer-events:auto !important;
+}
+
+
+/* ==========================================================
+   EVITAR ESPACIOS FANTASMA ENTRE AMBAS PANTALLAS
+   ========================================================== */
+
+body.upv-solo-portada #upv-update-banner{
+  /*
+   * El banner podrá funcionar posteriormente,
+   * pero no debe reservar un bloque debajo de la portada.
+   */
+  position:fixed !important;
+}
+
+
+html,
+body{
+  margin:0 !important;
+
+  padding:0 !important;
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media(max-width:620px){
+
+  body.upv-solo-portada,
+  body.upv-solo-portada #screen-login{
+    min-height:100dvh !important;
+
+    width:100% !important;
+  }
+
+  body.upv-app-abierta #upv-app{
+    min-height:100dvh !important;
+  }
+}

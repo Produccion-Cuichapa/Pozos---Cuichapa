@@ -1,0 +1,265 @@
+/* ==========================================================
+   UPV — CONFIRMACIÓN GPS
+   ========================================================== */
+
+
+/*
+ * El texto "EN" queda oculto,
+ * pero nunca ocultamos el selector.
+ */
+[data-upv-en-oculto="1"]{
+  display:none !important;
+}
+
+
+/* ==========================================================
+   TARJETA GPS
+   ========================================================== */
+
+.upv-confirm-gps-card{
+  display:flex;
+
+  align-items:center;
+
+  gap:14px;
+
+  margin:
+    15px 0;
+
+  padding:
+    15px 16px;
+
+  box-sizing:
+    border-box;
+
+  border:
+    1px solid #d8e3f0;
+
+  border-radius:
+    16px;
+
+  background:
+    #f7faff;
+}
+
+
+.upv-confirm-gps-card .gps-icon{
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  flex:
+    0 0 48px;
+
+  width:48px;
+  height:48px;
+
+  border-radius:
+    14px;
+
+  font-size:
+    23px;
+}
+
+
+.upv-confirm-gps-card > div{
+  min-width:0;
+}
+
+
+.upv-confirm-gps-card strong{
+  display:block;
+
+  margin-bottom:
+    4px;
+
+  color:
+    #18365f;
+
+  font-size:
+    15px;
+
+  font-weight:
+    950;
+}
+
+
+.upv-confirm-gps-card small{
+  display:block;
+
+  color:
+    #7688a0;
+
+  font-size:
+    11px;
+
+  line-height:
+    1.45;
+}
+
+
+/* Dentro */
+
+.upv-confirm-gps-card.gps-dentro{
+  border-color:
+    #bfe2c8;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f3fbf5,
+      #e7f7eb
+    );
+}
+
+
+.upv-confirm-gps-card.gps-dentro .gps-icon{
+  color:#fff;
+  background:#35a853;
+}
+
+
+.upv-confirm-gps-card.gps-dentro strong{
+  color:#25823b;
+}
+
+
+/* Fuera */
+
+.upv-confirm-gps-card.gps-fuera{
+  border-color:
+    #f0b9b9;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fff7f7,
+      #ffeded
+    );
+}
+
+
+.upv-confirm-gps-card.gps-fuera .gps-icon{
+  color:#fff;
+  background:#dd4148;
+}
+
+
+.upv-confirm-gps-card.gps-fuera strong{
+  color:#bf2931;
+}
+
+
+/* Error */
+
+.upv-confirm-gps-card.gps-error{
+  border-color:
+    #edc5a0;
+
+  background:
+    #fff8ef;
+}
+
+
+.upv-confirm-gps-card.gps-error .gps-icon{
+  background:
+    #f0ad42;
+}
+
+
+/* Loading */
+
+.upv-confirm-gps-loading{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+
+.upv-confirm-gps-loading > span{
+  font-size:24px;
+}
+
+
+/* ==========================================================
+   WHATSAPP
+   ========================================================== */
+
+.upv-wa-gps-info{
+  margin:
+    12px 0;
+
+  padding:
+    10px 0;
+
+  border-top:
+    1px solid
+    rgba(50,100,50,.12);
+
+  border-bottom:
+    1px solid
+    rgba(50,100,50,.12);
+
+  line-height:
+    1.55;
+}
+
+
+.upv-wa-rango{
+  margin-bottom:
+    5px;
+}
+
+
+.upv-wa-rango.dentro{
+  color:#21813b;
+}
+
+
+.upv-wa-rango.fuera{
+  color:#be3038;
+}
+
+
+/* ==========================================================
+   MÓVIL
+   ========================================================== */
+
+@media(max-width:600px){
+
+  .upv-confirm-gps-card{
+    gap:11px;
+
+    padding:
+      13px;
+
+    border-radius:
+      13px;
+  }
+
+
+  .upv-confirm-gps-card .gps-icon{
+    flex-basis:
+      42px;
+
+    width:42px;
+    height:42px;
+
+    font-size:
+      20px;
+  }
+
+
+  .upv-confirm-gps-card strong{
+    font-size:
+      13px;
+  }
+
+
+  .upv-confirm-gps-card small{
+    font-size:
+      10px;
+  }
+}

@@ -1,0 +1,1186 @@
+/* ==========================================================
+   UPV — AJUSTE FINAL APROBADO
+   Replica la composición de referencia sin alterar lógica.
+   ========================================================== */
+
+body.upv-final-listo{
+  overflow-x:hidden !important;
+  background:#06172f !important;
+}
+
+/* ==========================================================
+   PANTALLA GENERAL
+   ========================================================== */
+
+body.upv-final-listo .upv-portada-final-activa{
+  position:relative !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  width:100vw !important;
+  max-width:none !important;
+  min-height:100dvh !important;
+  margin:0 !important;
+  padding:
+    35px
+    24px
+    25px
+    !important;
+  overflow:hidden !important;
+  isolation:isolate;
+  background:
+    radial-gradient(
+      circle at 84% 20%,
+      rgba(22,111,242,.40),
+      transparent 31%
+    ),
+    radial-gradient(
+      circle at 20% 60%,
+      rgba(6,63,161,.34),
+      transparent 38%
+    ),
+    linear-gradient(
+      135deg,
+      #03152f 0%,
+      #06255a 52%,
+      #064da5 100%
+    ) !important;
+}
+
+/* Curva azul superior izquierda */
+body.upv-final-listo
+.upv-portada-final-activa::before{
+  position:absolute !important;
+  top:-320px !important;
+  left:-360px !important;
+  z-index:-5 !important;
+  width:1050px !important;
+  height:690px !important;
+  border:1px solid rgba(75,145,255,.24) !important;
+  border-radius:50% !important;
+  content:"" !important;
+  opacity:1 !important;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(3,18,51,.88),
+      rgba(6,55,140,.27)
+    ) !important;
+  background-image:none !important;
+  transform:rotate(-13deg);
+}
+
+/* Curva blanca inferior */
+body.upv-final-listo
+.upv-portada-final-activa::after{
+  position:absolute !important;
+  right:-8vw !important;
+  bottom:-255px !important;
+  left:-8vw !important;
+  z-index:-4 !important;
+  height:515px !important;
+  border-radius:
+    50% 50% 0 0 /
+    22% 22% 0 0 !important;
+  content:"" !important;
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #eef4fb 100%
+    ) !important;
+  box-shadow:
+    0 -2px 0 rgba(255,255,255,.82),
+    0 -25px 65px rgba(0,18,55,.19) !important;
+}
+
+/* ==========================================================
+   ENCABEZADO
+   ========================================================== */
+
+body.upv-final-listo .upv-titulo-principal{
+  position:relative;
+  z-index:5;
+  margin:0 !important;
+  color:#fff !important;
+  font-size:clamp(83px,9vw,126px) !important;
+  line-height:.84 !important;
+  font-weight:950 !important;
+  letter-spacing:-.06em !important;
+  text-shadow:
+    0 0 20px rgba(70,145,255,.42),
+    0 14px 28px rgba(0,0,0,.23) !important;
+}
+
+/* Icono sobre UPV */
+body.upv-final-listo .upv-titulo-principal::before{
+  display:block;
+  width:58px;
+  height:47px;
+  margin:0 auto 15px;
+  border:6px double #4287ee;
+  content:"";
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 8px,
+      #4287ee 8px 12px
+    );
+  box-shadow:0 0 15px rgba(66,135,238,.27);
+}
+
+/* Subtítulos */
+body.upv-final-listo
+.upv-portada-final-activa p{
+  position:relative;
+  z-index:5;
+  margin:8px 0 0 !important;
+  color:#a8c9ee !important;
+  font-size:17px !important;
+  line-height:1.25 !important;
+}
+
+body.upv-final-listo
+.upv-selector-titulo{
+  position:relative;
+  z-index:5;
+  width:min(700px,100%) !important;
+  margin:30px auto 20px !important;
+  color:#d8ebff !important;
+  font-size:15px !important;
+  font-weight:900 !important;
+  letter-spacing:.19em !important;
+}
+
+/* ==========================================================
+   GRID
+   ========================================================== */
+
+body.upv-final-listo
+.upv-company-choice-grid{
+  position:relative !important;
+  z-index:7 !important;
+  display:grid !important;
+  grid-template-columns:
+    repeat(2,minmax(310px,390px))
+    !important;
+  justify-content:center !important;
+  align-items:stretch !important;
+  gap:32px !important;
+  width:min(840px,calc(100vw - 40px)) !important;
+  max-width:none !important;
+  margin:0 auto !important;
+  padding:0 0 30px !important;
+  overflow:visible !important;
+}
+
+/* ==========================================================
+   TARJETAS
+   ========================================================== */
+
+body.upv-final-listo
+.upv-company-choice{
+  position:relative !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:100% !important;
+  min-width:0 !important;
+  min-height:275px !important;
+  margin:0 !important;
+  padding:
+    74px
+    24px
+    38px
+    !important;
+  overflow:visible !important;
+  border-width:2px !important;
+  border-radius:20px !important;
+  background:
+    linear-gradient(
+      150deg,
+      #ffffff,
+      #f8fbff
+    ) !important;
+  box-shadow:
+    0 19px 42px rgba(0,16,53,.26),
+    0 0 28px var(--empresa-glow) !important;
+}
+
+/* Quitamos pseudo anteriores para evitar duplicación */
+body.upv-final-listo
+.upv-company-choice::before{
+  top:75px !important;
+  width:92px !important;
+  height:92px !important;
+  font-size:45px !important;
+}
+
+body.upv-final-listo
+.upv-company-choice::after{
+  right:20px !important;
+  bottom:43px !important;
+  left:20px !important;
+  color:var(--empresa-color) !important;
+  font-size:31px !important;
+  font-weight:950 !important;
+}
+
+/* Encabezado pequeño de empresa */
+body.upv-final-listo .upv-card-top-label{
+  position:absolute;
+  top:27px;
+  left:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  width:max-content;
+  max-width:calc(100% - 40px);
+  color:var(--empresa-color);
+  transform:translateX(-50%);
+  pointer-events:none;
+}
+
+body.upv-final-listo .upv-card-top-dot{
+  width:17px;
+  height:17px;
+  flex:none;
+  border-radius:50%;
+  background:
+    radial-gradient(
+      circle at 32% 28%,
+      #fff,
+      var(--empresa-color)
+    );
+  box-shadow:0 3px 9px var(--empresa-glow);
+}
+
+body.upv-final-listo .upv-card-top-name{
+  color:var(--empresa-color);
+  font-size:16px;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:.01em;
+}
+
+/* Evitar que la regla anterior oculte estos elementos */
+body.upv-final-listo
+.upv-company-choice > .upv-card-top-label,
+body.upv-final-listo
+.upv-company-choice > .upv-card-final-arrow{
+  opacity:1 !important;
+  pointer-events:none !important;
+}
+
+/* Flecha circular */
+body.upv-final-listo .upv-card-final-arrow{
+  position:absolute;
+  left:50%;
+  bottom:-25px;
+  z-index:9;
+  display:grid;
+  place-items:center;
+  width:53px;
+  height:53px;
+  border:4px solid #fff;
+  border-radius:50%;
+  color:#fff;
+  background:var(--empresa-color);
+  box-shadow:0 9px 21px var(--empresa-glow);
+  font-size:32px;
+  line-height:1;
+  font-weight:900;
+  transform:translateX(-50%);
+}
+
+/* ==========================================================
+   FONDO INDUSTRIAL
+   ========================================================== */
+
+body.upv-final-listo .upv-industrial-final{
+  position:absolute;
+  top:40px;
+  right:0;
+  z-index:-2;
+  width:43%;
+  height:420px;
+  overflow:hidden;
+  opacity:.38;
+  filter:
+    drop-shadow(
+      0 0 14px rgba(47,139,255,.38)
+    );
+  pointer-events:none;
+}
+
+.upv-industrial-tank{
+  position:absolute;
+  bottom:55px;
+  display:block;
+  border:2px solid rgba(123,188,255,.79);
+  border-radius:
+    48% 48% 8px 8px /
+    12% 12% 8px 8px;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(22,95,190,.26),
+      rgba(96,163,255,.15)
+    );
+}
+
+.upv-industrial-tank::before{
+  position:absolute;
+  top:-10px;
+  left:7%;
+  width:86%;
+  height:17px;
+  border:2px solid rgba(123,188,255,.79);
+  border-radius:50%;
+  content:"";
+}
+
+.upv-industrial-tank.tank-a{
+  right:20px;
+  width:175px;
+  height:250px;
+}
+
+.upv-industrial-tank.tank-b{
+  right:235px;
+  width:115px;
+  height:175px;
+}
+
+.upv-industrial-tower{
+  position:absolute;
+  bottom:55px;
+  display:block;
+  width:36px;
+  border:2px solid rgba(123,188,255,.79);
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 22px,
+      rgba(123,188,255,.42) 22px 24px
+    );
+}
+
+.upv-industrial-tower.tower-a{
+  right:190px;
+  height:310px;
+}
+
+.upv-industrial-tower.tower-b{
+  right:370px;
+  height:220px;
+}
+
+.upv-industrial-pipe{
+  position:absolute;
+  right:0;
+  display:block;
+  height:18px;
+  border-top:2px solid rgba(123,188,255,.72);
+  border-bottom:2px solid rgba(123,188,255,.72);
+}
+
+.upv-industrial-pipe.pipe-a{
+  bottom:79px;
+  width:92%;
+}
+
+.upv-industrial-pipe.pipe-b{
+  bottom:38px;
+  width:76%;
+}
+
+.upv-industrial-light{
+  position:absolute;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#fff;
+  box-shadow:
+    0 0 6px #fff,
+    0 0 17px #4c9cff,
+    0 0 30px #1474ef;
+}
+
+.upv-industrial-light.light-a{
+  top:36px;
+  right:110px;
+}
+
+.upv-industrial-light.light-b{
+  top:85px;
+  right:320px;
+}
+
+/* ==========================================================
+   BENEFICIOS
+   ========================================================== */
+
+body.upv-final-listo .upv-beneficios-final{
+  position:relative;
+  z-index:8;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  width:min(850px,calc(100vw - 40px));
+  margin:29px auto 0;
+  color:#17365f;
+}
+
+body.upv-final-listo .upv-beneficio-final{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  min-height:64px;
+  padding:0 22px;
+  border-right:1px solid #d9e3f0;
+}
+
+body.upv-final-listo
+.upv-beneficio-final:last-child{
+  border-right:0;
+}
+
+body.upv-final-listo .upv-beneficio-icono{
+  display:grid;
+  place-items:center;
+  width:47px;
+  height:47px;
+  flex:none;
+  border-radius:50%;
+  color:#165fd8;
+  background:#e7efff;
+  font-size:23px;
+  font-weight:900;
+}
+
+body.upv-final-listo
+.upv-beneficio-contenido strong{
+  display:block;
+  color:#183861;
+  font-size:14px;
+  line-height:1.2;
+  font-weight:900;
+}
+
+body.upv-final-listo
+.upv-beneficio-contenido small{
+  display:block;
+  margin-top:4px;
+  color:#697c98;
+  font-size:12px;
+  line-height:1.2;
+}
+
+/* ==========================================================
+   PIE
+   ========================================================== */
+
+body.upv-final-listo .upv-footer-final{
+  position:relative;
+  z-index:8;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  width:100%;
+  margin:20px auto 0;
+  color:#617897;
+  font-size:13px;
+  line-height:1.4;
+  text-align:center;
+}
+
+body.upv-final-listo
+.upv-footer-final strong{
+  color:#526e91;
+  font-size:14px;
+}
+
+/* ==========================================================
+   BOTÓN INSTALAR
+   ========================================================== */
+
+body.upv-final-listo .upv-install-renovado,
+body.upv-final-listo #installBtn{
+  left:28px !important;
+  bottom:26px !important;
+  min-width:225px !important;
+  min-height:68px !important;
+  border-radius:17px !important;
+  background:
+    linear-gradient(
+      135deg,
+      #2466df,
+      #0a43b3
+    ) !important;
+}
+
+/* ==========================================================
+   TABLET
+   ========================================================== */
+
+@media (max-width:900px){
+  body.upv-final-listo
+  .upv-company-choice-grid{
+    grid-template-columns:
+      repeat(2,minmax(240px,1fr))
+      !important;
+    width:min(760px,calc(100vw - 30px)) !important;
+    gap:22px !important;
+  }
+
+  body.upv-final-listo
+  .upv-industrial-final{
+    width:55%;
+    opacity:.23;
+  }
+}
+
+/* ==========================================================
+   CELULAR
+   ========================================================== */
+
+@media (max-width:620px){
+  body.upv-final-listo
+  .upv-portada-final-activa{
+    min-height:100dvh !important;
+    padding:
+      27px
+      14px
+      105px
+      !important;
+  }
+
+  body.upv-final-listo .upv-titulo-principal{
+    font-size:70px !important;
+  }
+
+  body.upv-final-listo
+  .upv-titulo-principal::before{
+    width:43px;
+    height:35px;
+    margin-bottom:10px;
+    border-width:4px;
+  }
+
+  body.upv-final-listo
+  .upv-selector-titulo{
+    margin-top:27px !important;
+    font-size:12px !important;
+  }
+
+  body.upv-final-listo
+  .upv-company-choice-grid{
+    grid-template-columns:1fr !important;
+    width:min(360px,calc(100vw - 28px)) !important;
+    gap:39px !important;
+  }
+
+  body.upv-final-listo
+  .upv-company-choice{
+    min-height:185px !important;
+    padding:
+      64px
+      18px
+      28px
+      !important;
+  }
+
+  body.upv-final-listo
+  .upv-company-choice::before{
+    top:56px !important;
+    width:66px !important;
+    height:66px !important;
+    font-size:32px !important;
+  }
+
+  body.upv-final-listo
+  .upv-company-choice::after{
+    bottom:26px !important;
+    font-size:26px !important;
+  }
+
+  body.upv-final-listo
+  .upv-card-top-label{
+    top:20px;
+  }
+
+  body.upv-final-listo
+  .upv-card-top-dot{
+    width:13px;
+    height:13px;
+  }
+
+  body.upv-final-listo
+  .upv-card-top-name{
+    font-size:13px;
+  }
+
+  body.upv-final-listo
+  .upv-card-final-arrow{
+    bottom:-21px;
+    width:45px;
+    height:45px;
+    font-size:27px;
+  }
+
+  body.upv-final-listo
+  .upv-industrial-final{
+    top:80px;
+    width:82%;
+    opacity:.12;
+  }
+
+  body.upv-final-listo
+  .upv-beneficios-final{
+    grid-template-columns:1fr;
+    gap:3px;
+    width:min(360px,calc(100vw - 24px));
+    margin-top:34px;
+  }
+
+  body.upv-final-listo
+  .upv-beneficio-final{
+    justify-content:flex-start;
+    min-height:47px;
+    padding:3px 13px;
+    border-right:0;
+  }
+
+  body.upv-final-listo
+  .upv-beneficio-icono{
+    width:37px;
+    height:37px;
+    font-size:18px;
+  }
+
+  body.upv-final-listo
+  .upv-beneficio-contenido strong{
+    font-size:12px;
+  }
+
+  body.upv-final-listo
+  .upv-beneficio-contenido small{
+    font-size:10px;
+  }
+
+  body.upv-final-listo
+  .upv-footer-final{
+    margin-top:15px;
+    font-size:11px;
+  }
+
+  body.upv-final-listo .upv-install-renovado,
+  body.upv-final-listo #installBtn{
+    right:14px !important;
+    left:14px !important;
+    bottom:11px !important;
+    width:auto !important;
+    min-height:55px !important;
+  }
+}
+
+
+/* ==========================================================
+   UPV — FORMULARIO COMO VISTA INDEPENDIENTE
+   ========================================================== */
+
+html.upv-formulario-activo,
+body.upv-formulario-activo{
+  scroll-behavior:auto !important;
+  background:#f3f7fc !important;
+}
+
+/*
+ * Después de elegir empresa, la portada desaparece
+ * completamente y deja de ocupar espacio.
+ */
+body.upv-formulario-activo
+.upv-portada-final-activa,
+body.upv-formulario-activo
+.upv-landing-renovada{
+  display:none !important;
+}
+
+/*
+ * Ocultar también elementos decorativos o beneficios
+ * que hayan quedado fuera del contenedor principal.
+ */
+body.upv-formulario-activo
+.upv-beneficios-final,
+body.upv-formulario-activo
+.upv-footer-final,
+body.upv-formulario-activo
+.upv-industrial-final{
+  display:none !important;
+}
+
+/*
+ * El contenido operativo comienza en la parte superior.
+ */
+body.upv-formulario-activo
+.upv-contenido-operativo{
+  display:block !important;
+  width:100% !important;
+  max-width:none !important;
+  min-height:100dvh !important;
+  margin:0 !important;
+  padding-top:0 !important;
+  transform:none !important;
+}
+
+/*
+ * Evitar espacios creados por los antiguos contenedores
+ * que alojaban portada y formulario en una sola página.
+ */
+body.upv-formulario-activo
+.upv-layout-liberado{
+  min-height:0 !important;
+  margin-top:0 !important;
+  padding-top:0 !important;
+}
+
+/*
+ * El botón Instalar UPV solo pertenece a la portada.
+ * No debe cubrir campos del formulario.
+ */
+body.upv-formulario-activo
+.upv-install-renovado,
+body.upv-formulario-activo
+#installBtn,
+body.upv-formulario-activo
+.upv-install-btn{
+  display:none !important;
+}
+
+/*
+ * La barra de empresa activa queda fija visualmente
+ * como encabezado del formulario, pero sin taparlo.
+ */
+body.upv-formulario-activo
+.upv-contenido-operativo
+header,
+body.upv-formulario-activo
+.upv-contenido-operativo
+.app-header,
+body.upv-formulario-activo
+.upv-contenido-operativo
+.topbar{
+  margin-top:0 !important;
+}
+
+/*
+ * En celular elimina cualquier desplazamiento horizontal
+ * provocado por la portada anterior.
+ */
+@media (max-width:620px){
+  body.upv-formulario-activo{
+    width:100% !important;
+    overflow-x:hidden !important;
+  }
+
+  body.upv-formulario-activo
+  .upv-contenido-operativo{
+    width:100% !important;
+    padding-right:0 !important;
+    padding-left:0 !important;
+  }
+}
+
+
+/* ==========================================================
+   UPV — CORRECCIÓN DE SECCIÓN INFERIOR
+   Separa tarjetas, curva blanca y beneficios.
+   ========================================================== */
+
+/*
+ * Dar más espacio debajo de las tarjetas para que
+ * la transición hacia la zona blanca no las alcance.
+ */
+body.upv-final-listo
+.upv-company-choice-grid{
+  padding-bottom:88px !important;
+}
+
+/*
+ * Bajar la curva blanca.
+ * Antes comenzaba demasiado arriba y atravesaba
+ * visualmente los beneficios.
+ */
+body.upv-final-listo
+.upv-portada-final-activa::after{
+  bottom:-315px !important;
+  height:540px !important;
+}
+
+/*
+ * Colocar los beneficios completamente dentro
+ * de la zona blanca, sin mezclarlos con el fondo azul.
+ */
+body.upv-final-listo
+.upv-beneficios-final{
+  position:relative !important;
+  z-index:12 !important;
+  margin:62px auto 0 !important;
+  padding:22px 18px 8px !important;
+  color:#17365f !important;
+  background:transparent !important;
+  transform:none !important;
+}
+
+/*
+ * Asegurar que cada beneficio quede visualmente limpio.
+ */
+body.upv-final-listo
+.upv-beneficio-final{
+  min-height:72px !important;
+  padding:8px 26px !important;
+  color:#17365f !important;
+}
+
+/*
+ * Mejorar contraste del texto inferior.
+ */
+body.upv-final-listo
+.upv-beneficio-contenido strong{
+  color:#17365f !important;
+}
+
+body.upv-final-listo
+.upv-beneficio-contenido small{
+  color:#6b7f9c !important;
+}
+
+/*
+ * Separar el pie institucional de los beneficios.
+ */
+body.upv-final-listo
+.upv-footer-final{
+  margin:28px auto 0 !important;
+  padding-bottom:18px !important;
+}
+
+/*
+ * Evitar que el botón Instalar UPV se monte sobre
+ * la información inferior.
+ */
+body.upv-final-listo
+.upv-install-renovado,
+body.upv-final-listo
+#installBtn{
+  bottom:24px !important;
+}
+
+/* Tablet */
+@media (max-width:900px){
+  body.upv-final-listo
+  .upv-company-choice-grid{
+    padding-bottom:82px !important;
+  }
+
+  body.upv-final-listo
+  .upv-beneficios-final{
+    margin-top:56px !important;
+  }
+}
+
+/* Celular */
+@media (max-width:620px){
+  body.upv-final-listo
+  .upv-company-choice-grid{
+    padding-bottom:60px !important;
+  }
+
+  body.upv-final-listo
+  .upv-portada-final-activa::after{
+    bottom:-390px !important;
+    height:570px !important;
+  }
+
+  body.upv-final-listo
+  .upv-beneficios-final{
+    margin-top:44px !important;
+    padding:18px 10px 4px !important;
+  }
+
+  body.upv-final-listo
+  .upv-beneficio-final{
+    min-height:52px !important;
+    padding:5px 14px !important;
+  }
+
+  body.upv-final-listo
+  .upv-footer-final{
+    margin-top:22px !important;
+    padding-bottom:70px !important;
+  }
+}
+
+
+/* ==========================================================
+   UPV — OPTIMIZACIÓN PRIORITARIA PARA CELULAR
+   Mantiene intacto el diseño de computadora.
+   ========================================================== */
+
+@media (max-width:620px){
+
+  /*
+   * Pantalla móvil más compacta y equilibrada.
+   */
+  body.upv-final-listo
+  .upv-portada-final-activa{
+    min-height:100dvh !important;
+    padding:
+      max(22px,env(safe-area-inset-top))
+      14px
+      128px
+      !important;
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
+  }
+
+  /*
+   * Reducir el encabezado para dar prioridad
+   * a las empresas y evitar scroll innecesario.
+   */
+  body.upv-final-listo
+  .upv-titulo-principal{
+    font-size:62px !important;
+    line-height:.88 !important;
+  }
+
+  body.upv-final-listo
+  .upv-titulo-principal::before{
+    width:38px !important;
+    height:31px !important;
+    margin-bottom:8px !important;
+    border-width:3px !important;
+  }
+
+  body.upv-final-listo
+  .upv-portada-final-activa p{
+    margin-top:4px !important;
+    font-size:13px !important;
+    line-height:1.2 !important;
+  }
+
+  body.upv-final-listo
+  .upv-selector-titulo{
+    margin:
+      22px auto
+      14px
+      !important;
+    font-size:11px !important;
+    letter-spacing:.13em !important;
+  }
+
+  /*
+   * Tarjetas móviles más compactas.
+   */
+  body.upv-final-listo
+  .upv-company-choice-grid{
+    grid-template-columns:1fr !important;
+    width:min(360px,calc(100vw - 28px)) !important;
+    gap:30px !important;
+    margin:0 auto !important;
+    padding-bottom:42px !important;
+  }
+
+  body.upv-final-listo
+  .upv-company-choice{
+    min-height:168px !important;
+    padding:
+      58px
+      16px
+      24px
+      !important;
+    border-radius:18px !important;
+  }
+
+  body.upv-final-listo
+  .upv-card-top-label{
+    top:17px !important;
+  }
+
+  body.upv-final-listo
+  .upv-card-top-dot{
+    width:12px !important;
+    height:12px !important;
+  }
+
+  body.upv-final-listo
+  .upv-card-top-name{
+    font-size:13px !important;
+  }
+
+  body.upv-final-listo
+  .upv-company-choice::before{
+    top:50px !important;
+    width:62px !important;
+    height:62px !important;
+    font-size:30px !important;
+  }
+
+  body.upv-final-listo
+  .upv-company-choice::after{
+    bottom:22px !important;
+    font-size:25px !important;
+  }
+
+  body.upv-final-listo
+  .upv-card-final-arrow{
+    bottom:-19px !important;
+    width:42px !important;
+    height:42px !important;
+    border-width:3px !important;
+    font-size:25px !important;
+  }
+
+  /*
+   * Subir la curva blanca para que toda la sección
+   * de beneficios quede sobre fondo blanco.
+   */
+  body.upv-final-listo
+  .upv-portada-final-activa::after{
+    right:-30vw !important;
+    bottom:-135px !important;
+    left:-30vw !important;
+    height:430px !important;
+    border-radius:
+      50% 50% 0 0 /
+      18% 18% 0 0
+      !important;
+  }
+
+  /*
+   * Beneficios dentro de una tarjeta blanca móvil.
+   */
+  body.upv-final-listo
+  .upv-beneficios-final{
+    position:relative !important;
+    z-index:15 !important;
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:0 !important;
+    width:min(360px,calc(100vw - 28px)) !important;
+    margin:30px auto 0 !important;
+    padding:8px 14px !important;
+    border:1px solid #dbe5f1 !important;
+    border-radius:18px !important;
+    color:#17365f !important;
+    background:
+      rgba(255,255,255,.98)
+      !important;
+    box-shadow:
+      0 12px 28px rgba(15,45,90,.12)
+      !important;
+  }
+
+  body.upv-final-listo
+  .upv-beneficio-final{
+    display:grid !important;
+    grid-template-columns:42px 1fr !important;
+    align-items:center !important;
+    justify-content:initial !important;
+    gap:11px !important;
+    min-height:61px !important;
+    padding:8px 4px !important;
+    border-right:0 !important;
+    border-bottom:1px solid #e4ebf4 !important;
+    text-align:left !important;
+  }
+
+  body.upv-final-listo
+  .upv-beneficio-final:last-child{
+    border-bottom:0 !important;
+  }
+
+  body.upv-final-listo
+  .upv-beneficio-icono{
+    width:40px !important;
+    height:40px !important;
+    font-size:19px !important;
+  }
+
+  body.upv-final-listo
+  .upv-beneficio-contenido{
+    min-width:0 !important;
+  }
+
+  body.upv-final-listo
+  .upv-beneficio-contenido strong{
+    display:block !important;
+    color:#17365f !important;
+    font-size:13px !important;
+    line-height:1.15 !important;
+    font-weight:900 !important;
+  }
+
+  body.upv-final-listo
+  .upv-beneficio-contenido small{
+    display:block !important;
+    margin-top:3px !important;
+    color:#70829b !important;
+    font-size:11px !important;
+    line-height:1.2 !important;
+  }
+
+  /*
+   * Pie compacto y legible.
+   */
+  body.upv-final-listo
+  .upv-footer-final{
+    position:relative !important;
+    z-index:15 !important;
+    width:min(360px,calc(100vw - 28px)) !important;
+    margin:16px auto 0 !important;
+    padding:0 8px 82px !important;
+    color:#647a98 !important;
+    font-size:11px !important;
+  }
+
+  body.upv-final-listo
+  .upv-footer-final strong{
+    color:#4f6b8e !important;
+    font-size:12px !important;
+  }
+
+  /*
+   * Botón instalar móvil más bajo y compacto.
+   */
+  body.upv-final-listo
+  .upv-install-renovado,
+  body.upv-final-listo
+  #installBtn{
+    right:14px !important;
+    left:14px !important;
+    bottom:max(10px,env(safe-area-inset-bottom)) !important;
+    width:auto !important;
+    min-width:0 !important;
+    min-height:54px !important;
+    padding:10px 18px !important;
+    border-radius:15px !important;
+    font-size:16px !important;
+  }
+
+  /*
+   * El fondo industrial debe ser discreto en móvil.
+   */
+  body.upv-final-listo
+  .upv-industrial-final{
+    top:60px !important;
+    right:-80px !important;
+    width:90% !important;
+    height:300px !important;
+    opacity:.10 !important;
+  }
+}
