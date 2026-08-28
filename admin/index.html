@@ -3,25 +3,76 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Admin | Pozos Cuichapa</title>
-  <link rel="stylesheet" href="./css/admin.css">
+  <title>Cuichapa Control | Centro de Operaciones</title>
+  <link rel="stylesheet" href="./css/admin.css?v=20260805161251">
+>
+    <link rel="stylesheet" href="./css/dashboard-v2.css?v=1784348754">
+<link rel="stylesheet" href="./css/reportes-v2.css?v=1784314915">
 
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js?v=1784301243" defer></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js" defer></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js" defer></script>
 
-  <script src="./js/config.js" defer></script>
-  <script src="./js/utils.js" defer></script>
-  <script src="./js/firebase.js" defer></script>
+  <script src="../config.js" defer></script>
+<script src="./js/config.js" defer></script>
+  <script src="./js/utils.js?v=1784566076" defer></script>
+  <script src="./js/firebase.js?v=20260805013816" defer></script>
   <script src="./js/auth.js" defer></script>
-  <script src="./js/ui.js" defer></script>
-  <script src="./js/dashboard.js" defer></script>
-  <script src="./js/reportes.js" defer></script>
+  <script src="./js/ui.js?v=20260805020055" defer></script>
+  <script src="./js/dashboard.js?v=1784312497" defer></script>
+  <script src="./js/aforo-utils.js?v=20260806005857" defer></script>
+<script src="./js/reportes.js?v=20260812233209" defer></script>
+  <script src="./js/reportes-v2.js?v=1784314540" defer></script>
   <script src="./js/alarmas.js" defer></script>
   <script src="./js/exportar.js" defer></script>
-  <script src="./js/exportaciones.js" defer></script>
-  <script src="./js/app.js" defer></script>
+  <script src="./js/exportaciones.js?v=20260813232116" defer></script>
+  <script src="./js/catalogo-pozos.js?v=1" defer></script>
+  <script src="./js/dashboard-mensual.js?v=20260806011408" defer></script>
+  <script src="./js/dashboard-indicador.js?v=20260806005857" defer></script>
+  <script src="./js/pozos.js?v=1784567781" defer></script>
+  <script src="./js/graficas-pozos.js?v=20260804151709" defer></script>
+<script src="./js/firebase-upv-admin.js" defer></script>
+  <script src="./js/upv-admin.js" defer></script>
+  <script src="./js/config-center.js?v=1784657401" defer></script>
+
+  <script src="./js/app.js?v=20260805013816" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <link rel="stylesheet" href="./css/produccion-v2.css?v=1784347568">
+  <link rel="stylesheet" href="./css/tema-cuichapa.css?v=1784394705">
+  <link rel="stylesheet" href="./css/sidebar-vistas.css?v=1784351461">
+  <link rel="stylesheet" href="./css/dashboard-produccion.css?v=1784393750">
+  <meta name="theme-color" content="#082f5f">
+  <meta name="application-name" content="Cuichapa Control">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Cuichapa">
+  <link rel="manifest" href="./manifest.json?v=2026.07.19.045207">
+  <link rel="stylesheet" href="./css/admin-pwa.css?v=2026.07.19.045207">
+
+  <link rel="icon"
+        type="image/x-icon"
+        href="./icons/favicon.ico?v=1784400459">
+  <link rel="icon"
+        type="image/png"
+        sizes="192x192"
+        href="./icons/icon-192.png?v=2026.07.19.045207">
+  <link rel="apple-touch-icon"
+        sizes="180x180"
+        href="./icons/apple-touch-icon.png?v=1784400459">
+
+  <link rel="stylesheet" href="./css/config-center.css?v=1784657401">
+
+  <link rel="stylesheet" href="./css/dashboard-mensual.css?v=1784664016">
+  <link rel="stylesheet" href="./css/ia-cuichapa.css?v=20260723">
+
+  <link rel="stylesheet" href="./css/pozos-legible.css?v=20260805164850">
+
+  <link rel="stylesheet" href="./css/graficas-claras.css?v=20260805224258">
+
+<link rel="stylesheet" href="./css/balance-ft.css?v=20260810230156">
+  <link rel="stylesheet" href="./css/recorridos.css?v=20260822183909">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="./css/muestras.css?v=20260824162610">
 </head>
 
 <body>
@@ -30,16 +81,35 @@
       <div class="login-logo">
         <span>PC</span>
       </div>
-      <h1>Plataforma Pozos Cuichapa</h1>
-      <p>Centro de control administrativo para reportes, alarmas y operación de campo.</p>
+      <h1>Cuichapa Control</h1>
+      <p>Información operativa clara, segura y en tiempo real.</p>
 
       <label for="loginUser">Usuario</label>
-      <input id="loginUser" autocomplete="username" placeholder="Ej. Admin">
+      <select id="loginUser" autocomplete="username">
+        <option value="">Seleccionar usuario</option>
+        <option value="Admin">Administrador</option>
+        <option value="Jaime">Jaime</option>
+        <option value="Antonio">Antonio</option>
+      </select>
 
       <label for="loginPass">Contraseña</label>
-      <input id="loginPass" type="password" autocomplete="current-password" placeholder="Contraseña">
+      <div class="login-password-wrap">
+        <input
+          id="loginPass"
+          type="password"
+          autocomplete="current-password"
+          placeholder="Contraseña">
+        <button
+          id="loginTogglePass"
+          class="login-toggle-pass"
+          type="button"
+          aria-label="Mostrar contraseña"
+          title="Mostrar contraseña">
+          Ver
+        </button>
+      </div>
 
-      <button id="loginBtn" class="primary-btn">Entrar</button>
+      <button id="loginBtn" class="primary-btn">Ingresar a la plataforma</button>
       <div id="loginError" class="form-error"></div>
     </div>
   </section>
@@ -47,18 +117,56 @@
   <section id="appView" class="shell hidden">
     <aside class="sidebar">
       <div class="side-brand">
-        <div class="brand-mark">PC</div>
-        <div>
-          <strong>Pozos Cuichapa</strong>
-          <span>Admin v2</span>
+        <div class="brand-mark" aria-hidden="true">
+          <span>CC</span>
+        </div>
+
+        <div class="side-brand-copy">
+          <strong>Cuichapa Control</strong>
+          <span>Centro de Operaciones</span>
         </div>
       </div>
 
-      <nav class="side-nav">
-        <button class="nav-btn active" data-view="dashboard">Dashboard</button>
-        <button class="nav-btn" data-view="reportes">Reportes</button>
-        <button class="nav-btn" data-view="alarmas">Alarmas</button>
-        <button class="nav-btn" data-view="exportaciones">Exportaciones</button>
+      <nav class="side-nav" aria-label="Navegación principal">
+        <button class="nav-btn active" data-view="dashboard">
+          <span class="nav-icon" aria-hidden="true">⌂</span>
+          <span class="nav-label">Inicio</span>
+        </button>
+
+        <button class="nav-btn" data-view="reportes">
+          <span class="nav-icon" aria-hidden="true">▤</span>
+          <span class="nav-label">Reportes</span>
+        </button>
+
+        <button class="nav-btn" data-view="pozos">
+          <span class="nav-icon" aria-hidden="true">◉</span>
+          <span class="nav-label">Producción</span>
+        </button>
+
+        <button class="nav-btn" data-view="alarmas">
+          <span class="nav-icon" aria-hidden="true">!</span>
+          <span class="nav-label">Alertas</span>
+        </button>
+
+        <button class="nav-btn" data-view="ia">
+          <span class="nav-icon" aria-hidden="true">🤖</span>
+          <span class="nav-label">IA Cuichapa</span>
+        </button>
+
+        <button class="nav-btn" data-view="exportaciones">
+          <span class="nav-icon" aria-hidden="true">▣</span>
+          <span class="nav-label">Documentos</span>
+        </button>
+
+        <button class="nav-btn" data-view="upv">
+          <span class="nav-icon" aria-hidden="true">↔</span>
+          <span class="nav-label">UPV</span>
+        </button>
+
+        <button class="nav-btn" data-view="configuracion">
+          <span class="nav-icon" aria-hidden="true">⚙</span>
+          <span class="nav-label">Configuración</span>
+        </button>
       </nav>
 
       <div class="side-footer">
@@ -70,47 +178,182 @@
     <main class="main">
       <header class="main-header">
         <div>
-          <h1 id="viewTitle">Dashboard</h1>
-          <p id="viewSubtitle">Resumen operativo en tiempo real.</p>
+          <h1 id="viewTitle">Inicio</h1>
+          <p id="viewSubtitle">Resumen claro de la operación de hoy.</p>
         </div>
         <div id="connStatus" class="conn-pill">Conectando...</div>
       </header>
 
       <section id="dashboardView" class="view">
-        <div class="kpi-grid">
-          <article class="kpi-card">
-            <span>Reportes hoy</span>
-            <strong id="kpiReportesHoy">0</strong>
+        <div id="dashboardLoading" class="dashboard-loading">
+          <div class="dashboard-loader-ring"></div>
+
+          <div>
+            <b>Sincronizando datos operativos</b>
+            <span>Consultando reportes, alertas y estado del sistema...</span>
+          </div>
+        </div>
+
+        <header id="operationsHeader" class="operations-header">
+          <div class="operations-identity">
+            <span class="operations-eyebrow">CENTRO DE OPERACIONES</span>
+            <h1>Campo Cuichapa</h1>
+            <p>Así se encuentra la operación de hoy.</p>
+          </div>
+
+          <div class="operations-info">
+            <div class="operations-date-card">
+              <div class="operations-date-top">
+                <span class="operations-date-icon">▣</span>
+
+                <div>
+                  <span id="operationsWeekday">—</span>
+                  <b id="operationsDate">—</b>
+                </div>
+              </div>
+
+              <div class="operations-time-row">
+                <strong id="operationsTime">--:--:--</strong>
+                <span id="operationsMeridiem">--</span>
+              </div>
+            </div>
+
+            <div class="operations-sync-card">
+              <div class="operations-sync">
+                <i id="operationsSyncDot"></i>
+
+                <span>
+                  <b id="operationsSyncLabel">Sincronizando</b>
+                  <small>Última actualización</small>
+                  <strong id="operationsSyncAgo">Esperando datos...</strong>
+                </span>
+              </div>
+
+              <div class="operations-cloud-icon">⇧</div>
+            </div>
+          </div>
+        </header>
+
+        <div class="kpi-grid dashboard-main-kpis">
+          <article class="kpi-card kpi-reportes">
+            <div class="kpi-icon">▣</div>
+
+            <div class="kpi-content">
+              <span>Reportes recibidos</span>
+              <small>hoy</small>
+              <strong id="kpiReportesHoy">0</strong>
+              <em>Información operativa recibida</em>
+            </div>
+
+            <div class="kpi-wave"></div>
           </article>
-          <article class="kpi-card">
-            <span>Alarmas hoy</span>
-            <strong id="kpiAlarmasHoy">0</strong>
+
+          <article class="kpi-card kpi-alertas">
+            <div class="kpi-icon">!</div>
+
+            <div class="kpi-content">
+              <span>Alertas de hoy</span>
+              <small>incidencias registradas</small>
+              <strong id="kpiAlarmasHoy">0</strong>
+              <em>Requieren seguimiento operativo</em>
+            </div>
+
+            <div class="kpi-wave"></div>
           </article>
-          <article class="kpi-card">
-            <span>Pendientes WhatsApp</span>
-            <strong id="kpiPendientes">0</strong>
+
+          <article class="kpi-card kpi-pendientes">
+            <div class="kpi-icon">WA</div>
+
+            <div class="kpi-content">
+              <span>Envíos pendientes</span>
+              <small>WhatsApp</small>
+              <strong id="kpiPendientes">0</strong>
+              <em>Reportes pendientes del día</em>
+            </div>
+
+            <div class="kpi-wave"></div>
           </article>
-          <article class="kpi-card">
-            <span>Total cargado</span>
-            <strong id="kpiTotal">0</strong>
+
+          <article class="kpi-card kpi-total">
+            <div class="kpi-icon">▤</div>
+
+            <div class="kpi-content">
+              <span>Información disponible</span>
+              <small>reportes + alertas</small>
+              <strong id="kpiTotal">0</strong>
+              <em>Total almacenado en la plataforma</em>
+            </div>
+
+            <div class="kpi-wave"></div>
           </article>
         </div>
 
-        <div class="dashboard-grid">
-          <article class="panel">
+        <div class="dashboard-grid dashboard-activity-grid">
+          <article class="panel dashboard-activity-panel">
             <div class="panel-head">
-              <h2>Últimos reportes</h2>
-              <button class="mini-btn" data-jump="reportes">Ver todos</button>
+              <div class="panel-title">
+                <span class="panel-title-icon">⌁</span>
+                <h2>Actividad reciente</h2>
+              </div>
+
+              <button class="mini-btn" data-jump="reportes">
+                Ver todos los reportes →
+              </button>
             </div>
-            <div id="ultimosReportes" class="list"></div>
+
+            <div id="ultimosReportes" class="list dashboard-list"></div>
+
+            <button class="panel-footer-link" data-jump="reportes">
+              Ir a Reportes →
+            </button>
           </article>
 
-          <article class="panel">
+          <article class="panel dashboard-alert-panel">
             <div class="panel-head">
-              <h2>Últimas alarmas</h2>
-              <button class="mini-btn" data-jump="alarmas">Ver todas</button>
+              <div class="panel-title">
+                <span class="panel-title-icon">!</span>
+                <h2>Alertas recientes</h2>
+              </div>
+
+              <button class="mini-btn" data-jump="alarmas">
+                Ver todas las alertas →
+              </button>
             </div>
-            <div id="ultimasAlarmas" class="list"></div>
+
+            <div id="ultimasAlarmas" class="list dashboard-list"></div>
+
+            <button class="panel-footer-link" data-jump="alarmas">
+              Ir a Alertas →
+            </button>
+          </article>
+        </div>
+
+        <div id="dashboardBottomGrid" class="dashboard-bottom-grid">
+          <article id="hourPanel" class="panel dashboard-hour-panel">
+            <div class="panel-head">
+              <div class="panel-title">
+                <span class="panel-title-icon">⌁</span>
+                <h2>Reportes por hora (hoy)</h2>
+              </div>
+
+              <span class="muted">Cantidad de reportes</span>
+            </div>
+
+            <div id="hourChart" class="hour-chart"></div>
+          </article>
+
+          <article id="recPanel"
+                   class="panel dashboard-recorredores-panel">
+            <div class="panel-head">
+              <div class="panel-title">
+                <span class="panel-title-icon">◌</span>
+                <h2>Recorredores activos hoy</h2>
+              </div>
+
+              <span class="muted">Avance por persona</span>
+            </div>
+
+            <div id="recList" class="rec-list"></div>
           </article>
         </div>
       </section>
@@ -133,8 +376,45 @@
           <button id="repExportar" class="primary-btn">Exportar CSV</button>
         </div>
 
-        <div class="table-card">
-          <table>
+        <div id="reportesControlPanel" class="reports-control-panel">
+          <div class="reports-quick-filters">
+            <button type="button" class="report-quick active" data-report-filter="all">
+              Todos
+            </button>
+
+            <button type="button" class="report-quick" data-report-filter="today">
+              Hoy
+            </button>
+
+            <button type="button" class="report-quick" data-report-filter="photos">
+              Con fotos
+            </button>
+
+            <button type="button" class="report-quick" data-report-filter="no-gps">
+              Sin GPS
+            </button>
+
+            <button type="button" class="report-quick" data-report-filter="pending">
+              Pendientes
+            </button>
+
+            <button type="button" class="report-quick" data-report-filter="notes">
+              Notas
+            </button>
+
+            <button type="button" class="report-quick" data-report-filter="levels">
+              Niveles
+            </button>
+          </div>
+
+          <div class="reports-result-summary">
+            <b id="reportesResultado">0</b>
+            <span id="reportesResultadoTexto">reportes mostrados</span>
+          </div>
+        </div>
+
+        <div class="table-card reports-table-card">
+          <table class="reports-table">
             <thead>
               <tr>
                 <th>Fecha</th>
@@ -154,38 +434,955 @@
         </div>
       </section>
 
-      <section id="alarmasView" class="view hidden">
-        <div class="toolbar">
-          <input id="almDesde" type="date">
-          <input id="almHasta" type="date">
-          <input id="almBuscar" placeholder="Buscar alarma, usuario, pozo...">
-          <button id="almLimpiar" class="ghost-btn">Limpiar</button>
-          <button id="almExportar" class="primary-btn">Exportar CSV</button>
+      <section id="pozosView" class="view hidden">
+
+        <!-- SUBACCESO PRODUCCIÓN → RECORRIDOS -->
+        <div class="recorridos-access-row">
+
+          <button
+            type="button"
+            id="btnAbrirRecorridos"
+            class="recorridos-access-btn">
+
+            <span class="recorridos-access-icon">
+              ↗
+            </span>
+
+            <span>
+              <strong>Seguimiento de recorridos</strong>
+              <small>
+                Orden de visitas, tiempos y velocidad entre puntos
+              </small>
+            </span>
+
+            <b>→</b>
+
+          </button>
+
         </div>
 
-        <div class="table-card">
-          <table>
+<div class="muestras-access-row">
+
+  <button
+    type="button"
+    id="btnAbrirMuestras"
+    class="muestras-access-btn">
+
+    <span class="muestras-access-icon">
+      ◉
+    </span>
+
+    <span class="muestras-access-copy">
+      <strong>Muestras</strong>
+      <small>
+        Control y seguimiento mensual de muestras
+      </small>
+    </span>
+
+    <b>→</b>
+
+  </button>
+
+</div>
+
+
+
+
+
+        <div class="wells-overview">
+          <article class="well-overview-card overview-total">
+            <span>Pozos registrados</span>
+            <strong id="wellKpiTotal">0</strong>
+            <small>Catálogo operativo</small>
+          </article>
+
+          <article class="well-overview-card overview-visited">
+            <span>Visitados hoy</span>
+            <strong id="wellKpiVisited">0</strong>
+            <small id="wellKpiVisitedPct">0% del campo</small>
+          </article>
+
+          <article class="well-overview-card overview-operating">
+            <span>Operando</span>
+            <strong id="wellKpiOperating">0</strong>
+            <small>Último estatus conocido</small>
+          </article>
+
+          <article class="well-overview-card overview-intermittent">
+            <span>Intermitentes</span>
+            <strong id="wellKpiIntermittent">0</strong>
+            <small>Seguimiento operativo</small>
+          </article>
+
+          <article class="well-overview-card overview-closed">
+            <span>Cerrados</span>
+            <strong id="wellKpiClosed">0</strong>
+            <small>Último estatus conocido</small>
+          </article>
+
+          <article class="well-overview-card overview-pending">
+            <span>Sin visita hoy</span>
+            <strong id="wellKpiPending">0</strong>
+            <small>Pendientes del recorrido</small>
+          </article>
+        </div>
+
+        <section class="panel wells-control-panel">
+          <div class="wells-control-main">
+            <input
+              id="wellSearch"
+              type="search"
+              placeholder="Buscar pozo o recorredor..."
+              autocomplete="off">
+
+            <select id="wellStatusFilter">
+              <option value="all">Todos los estados</option>
+              <option value="visited">Visitados hoy</option>
+              <option value="pending">Sin visita hoy</option>
+              <option value="operating">Operando</option>
+              <option value="intermittent">Intermitentes</option>
+              <option value="closed">Cerrados</option>
+              <option value="attention">Requieren atención</option>
+              <option value="gps">Con GPS</option>
+              <option value="no-gps">Sin GPS</option>
+            </select>
+
+            <select id="wellSapFilter">
+              <option value="all">Todos los SAP</option>
+              <option value="BM">BM</option>
+              <option value="BN">BN</option>
+              <option value="FY">FY</option>
+              <option value="none">Sin SAP</option>
+            </select>
+
+            <button
+              id="wellClearFilters"
+              type="button"
+              class="ghost-btn">
+              Limpiar
+            </button>
+          </div>
+
+          <div class="wells-control-side">
+            <span id="wellResultCount">0 pozos</span>
+
+            <div class="well-view-switch">
+              <button
+                type="button"
+                class="well-view-btn active"
+                data-well-view="cards">
+                Tarjetas
+              </button>
+
+              <button
+                type="button"
+                class="well-view-btn"
+                data-well-view="table">
+                Tabla
+              </button>
+
+              <button
+                type="button"
+                class="well-view-btn"
+                data-well-view="map">
+                Mapa
+              </button>
+            </div>
+          </div>
+        </section>
+
+
+
+
+
+
+
+        <div id="wellsCardsView" class="wells-grid"></div>
+
+        <section id="wellsMapView"
+                 class="wells-map-view hidden">
+
+          <div class="wells-map-toolbar">
+            <div>
+              <span class="wells-map-eyebrow">
+                MAPA OPERATIVO
+              </span>
+
+              <h2>Campo Cuichapa</h2>
+
+              <p>
+                Estado consolidado conforme al último reporte disponible.
+              </p>
+            </div>
+
+            <div class="wells-map-legend">
+              <span class="legend-operating">
+                <i></i> Operando
+              </span>
+
+              <span class="legend-warning">
+                <i></i> Vigilancia
+              </span>
+
+              <span class="legend-intermittent">
+                <i></i> Intermitente
+              </span>
+
+              <span class="legend-closed">
+                <i></i> Cerrado
+              </span>
+
+              <span class="legend-pending">
+                <i></i> Sin visita
+              </span>
+
+              <span class="legend-unknown">
+                <i></i> Sin información
+              </span>
+            </div>
+          </div>
+
+          <div class="wells-map-layout">
+            <div id="wellsOperationalMap"
+                 class="wells-operational-map">
+
+              <div class="wells-map-background">
+                <div class="map-grid-lines"></div>
+
+                <span class="map-orientation-north">N</span>
+
+                <div id="wellsMapMarkers"
+                     class="wells-map-markers">
+                </div>
+
+                <div id="wellsMapEmpty"
+                     class="wells-map-empty hidden">
+                  No hay pozos con coordenadas para los filtros actuales.
+                </div>
+              </div>
+            </div>
+
+            <aside id="wellMapInspector"
+                   class="well-map-inspector">
+
+              <div class="well-map-inspector-empty">
+                <div class="well-map-empty-icon">⌖</div>
+
+                <b>Selecciona un pozo</b>
+
+                <span>
+                  Presiona un marcador para consultar su estado operativo.
+                </span>
+              </div>
+            </aside>
+          </div>
+
+          <div class="wells-map-footer">
+            <span id="wellMapVisibleCount">0 pozos visibles</span>
+            <span id="wellMapMissingCount">0 sin coordenadas</span>
+          </div>
+        </section>
+
+        <div id="wellsTableView"
+             class="table-card wells-table-card hidden">
+          <table class="wells-table">
+            <thead>
+              <tr>
+                <th>Pozo</th>
+                <th>Estado</th>
+                <th>SAP</th>
+                <th>Fluye</th>
+                <th>Última visita</th>
+                <th>Recorredor</th>
+                <th>GPS</th>
+                <th>Reportes</th>
+                <th>Alarmas</th>
+                <th>Riesgo</th>
+                <th></th>
+              </tr>
+            </thead>
+
+            <tbody id="wellsTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+
+<section
+  id="recorridosSubView"
+  class="view hidden">
+
+  <div class="recorridos-shell">
+
+    <!-- =====================================================
+         CABECERA
+         ===================================================== -->
+
+    <div class="recorridos-head">
+
+      <button
+        type="button"
+        id="btnVolverProduccionRecorridos"
+        class="recorridos-back-btn">
+        ← Producción
+      </button>
+
+      <div>
+        <span class="recorridos-eyebrow">
+          PRODUCCIÓN
+        </span>
+
+        <h2>
+          Seguimiento de recorridos
+        </h2>
+
+        <p>
+          Orden cronológico de los reportes realizados en campo.
+        </p>
+      </div>
+
+      <div class="recorridos-status">
+        <span class="recorridos-status-dot"></span>
+        En tiempo real
+      </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         FILTROS PRINCIPALES
+         ===================================================== -->
+
+    <div class="recorridos-toolbar">
+
+      <div class="recorridos-field">
+
+        <label>
+          Fecha
+        </label>
+
+        <input
+          type="date"
+          id="recorridosFecha">
+
+      </div>
+
+
+      <div class="recorridos-field">
+
+        <label>
+          Recorredor
+        </label>
+
+        <select id="recorridosPersona">
+
+          <option value="">
+            Todos los recorredores
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <div class="recorridos-field recorridos-tipo">
+
+        <label>
+          Tipo de recorrido
+        </label>
+
+        <div class="recorridos-segmented">
+
+          <button
+            type="button"
+            id="recorridosBtnOtros"
+            class="active"
+            data-recorridos-modo="otros">
+
+            Otros reportes
+
+            <small>
+              Visita · Aforo · Cabezal · Estación · Nota
+            </small>
+
+          </button>
+
+
+          <button
+            type="button"
+            id="recorridosBtnNivel"
+            data-recorridos-modo="nivel">
+
+            Niveles de Guardia
+
+            <small>
+              Solo reportes de nivel
+            </small>
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         FILTRO DETALLADO + LEYENDA
+         ===================================================== -->
+
+    <div
+      id="recorridosExtraTools"
+      class="recorridos-extra-tools">
+
+      <div class="recorridos-subtipos">
+
+        <span class="recorridos-tools-label">
+          Mostrar
+        </span>
+
+        <div
+          id="recorridosSubtipoFiltros"
+          class="recorridos-subtipo-buttons">
+
+          <button
+            type="button"
+            class="active"
+            data-recorridos-subtipo="todos">
+            Todos
+          </button>
+
+          <button
+            type="button"
+            data-recorridos-subtipo="visita">
+            Visitas
+          </button>
+
+          <button
+            type="button"
+            data-recorridos-subtipo="aforo">
+            Aforos
+          </button>
+
+          <button
+            type="button"
+            data-recorridos-subtipo="nota">
+            Notas
+          </button>
+
+          <button
+            type="button"
+            data-recorridos-subtipo="cabezal">
+            Cabezales
+          </button>
+
+          <button
+            type="button"
+            data-recorridos-subtipo="estacion">
+            Estaciones
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <div class="recorridos-leyenda">
+
+        <span class="recorridos-tools-label">
+          Identificación
+        </span>
+
+        <div class="recorridos-leyenda-items">
+
+          <span>
+            <i style="background:#2563eb"></i>
+            Visita
+          </span>
+
+          <span>
+            <i style="background:#f59e0b"></i>
+            Aforo
+          </span>
+
+          <span>
+            <i style="background:#111827"></i>
+            Nota
+          </span>
+
+          <span>
+            <i style="background:#16a34a"></i>
+            Cabezal
+          </span>
+
+          <span>
+            <i style="background:#7c3aed"></i>
+            Estación
+          </span>
+
+          <span>
+            <i style="background:#dc2626"></i>
+            Nivel
+          </span>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         MAPA
+         ===================================================== -->
+
+    <div
+      id="recorridosMapaWrap"
+      class="recorridos-map-wrap">
+
+      <div
+        id="recorridosMapa"
+        class="recorridos-map">
+      </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         RESUMEN
+         ===================================================== -->
+
+    <div
+      id="recorridosResumen"
+      class="recorridos-summary">
+
+      <div class="recorridos-summary-card">
+
+        <span>
+          Puntos visitados
+        </span>
+
+        <strong id="recorridosTotalPuntos">
+          0
+        </strong>
+
+      </div>
+
+
+      <div class="recorridos-summary-card">
+
+        <span>
+          Último punto
+        </span>
+
+        <strong id="recorridosUltimoPunto">
+          —
+        </strong>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+
+
+<section
+  id="muestrasSubView"
+  class="view hidden">
+
+  <div class="muestras-shell">
+
+    <header class="muestras-head">
+
+      <button
+        type="button"
+        id="btnVolverProduccionMuestras"
+        class="muestras-back">
+        ← Producción
+      </button>
+
+      <div class="muestras-title">
+        <span>PRODUCCIÓN</span>
+        <h2>Muestras</h2>
+        <p>
+          Seguimiento mensual de muestras realizadas en campo.
+        </p>
+      </div>
+
+    </header>
+
+
+    <div class="muestras-monthbar">
+
+      <button
+        type="button"
+        id="muestrasMesAnterior">
+        ←
+      </button>
+
+      <strong id="muestrasMesTitulo">
+        —
+      </strong>
+
+      <button
+        type="button"
+        id="muestrasMesSiguiente">
+        →
+      </button>
+
+    </div>
+
+
+    <div class="muestras-kpis">
+
+      <article>
+        <strong id="muestrasKpiTotal">0</strong>
+        <span>Muestras realizadas</span>
+      </article>
+
+      <article>
+        <strong id="muestrasKpiPozos">0</strong>
+        <span>Pozos muestreados</span>
+      </article>
+
+      <article>
+        <strong id="muestrasKpiUltima">—</strong>
+        <span>Última muestra</span>
+      </article>
+
+    </div>
+
+
+    <div class="muestras-filtros">
+
+      <div>
+        <label>Recorredor</label>
+
+        <select id="muestrasFiltroRecorredor">
+          <option value="">
+            Todos los recorredores
+          </option>
+        </select>
+      </div>
+
+
+      <div>
+        <label>Pozo</label>
+
+        <select id="muestrasFiltroPozo">
+          <option value="">
+            Todos los pozos
+          </option>
+        </select>
+      </div>
+
+    </div>
+
+
+    <div class="muestras-leyenda">
+
+      <span>
+        <i class="muestras-dot realizada"></i>
+        Muestra realizada
+      </span>
+
+      <span>
+        <i class="muestras-dot obs"></i>
+        Con observación
+      </span>
+
+    </div>
+
+
+    <div
+      id="muestrasTimeline"
+      class="muestras-timeline">
+
+      <div class="muestras-empty">
+        Cargando muestras…
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<section id="alarmasView" class="view hidden">
+
+        <div class="alarm-kpi-grid">
+          <article class="alarm-kpi-card alarm-kpi-today">
+            <span>Alarmas hoy</span>
+            <strong id="alarmKpiToday">0</strong>
+            <small>Eventos registrados</small>
+          </article>
+
+          <article class="alarm-kpi-card alarm-kpi-active">
+            <span>Activas</span>
+            <strong id="alarmKpiActive">0</strong>
+            <small>Nuevas o sin atender</small>
+          </article>
+
+          <article class="alarm-kpi-card alarm-kpi-review">
+            <span>En revisión</span>
+            <strong id="alarmKpiReview">0</strong>
+            <small>Seguimiento iniciado</small>
+          </article>
+
+          <article class="alarm-kpi-card alarm-kpi-resolved">
+            <span>Atendidas / cerradas</span>
+            <strong id="alarmKpiResolved">0</strong>
+            <small>Eventos gestionados</small>
+          </article>
+
+          <article class="alarm-kpi-card alarm-kpi-age">
+            <span>Mayor antigüedad</span>
+            <strong id="alarmKpiOldest">—</strong>
+            <small>Entre alarmas activas</small>
+          </article>
+        </div>
+
+        <details id="alarmAnalyticsPanel"
+                 class="alarm-analytics-panel">
+
+          <summary>
+            <div>
+              <span class="alarm-analytics-eyebrow">
+                ANÁLISIS OPERATIVO
+              </span>
+
+              <b>Analítica de alarmas</b>
+
+              <small>
+                Tendencias, recurrencia y tiempos de atención.
+              </small>
+            </div>
+
+            <span class="alarm-analytics-toggle">
+              Ver gráficas
+            </span>
+          </summary>
+
+          <div class="alarm-analytics-content">
+
+            <article class="alarm-chart-card">
+              <div class="alarm-chart-head">
+                <div>
+                  <h3>Alarmas por día</h3>
+                  <span>Últimos 7 días</span>
+                </div>
+
+                <strong id="alarmChartWeekTotal">0</strong>
+              </div>
+
+              <div id="alarmDailyChart"
+                   class="alarm-bar-chart alarm-daily-chart">
+              </div>
+            </article>
+
+            <article class="alarm-chart-card">
+              <div class="alarm-chart-head">
+                <div>
+                  <h3>Alarmas por tipo</h3>
+                  <span>Categorías principales</span>
+                </div>
+              </div>
+
+              <div id="alarmTypeChart"
+                   class="alarm-ranking-chart">
+              </div>
+            </article>
+
+            <article class="alarm-chart-card">
+              <div class="alarm-chart-head">
+                <div>
+                  <h3>Pozos con recurrencia</h3>
+                  <span>Mayor cantidad de alarmas</span>
+                </div>
+              </div>
+
+              <div id="alarmWellChart"
+                   class="alarm-ranking-chart">
+              </div>
+            </article>
+
+            <article class="alarm-chart-card">
+              <div class="alarm-chart-head">
+                <div>
+                  <h3>Tiempo de atención</h3>
+                  <span>Alarmas atendidas o cerradas</span>
+                </div>
+              </div>
+
+              <div id="alarmResolutionChart"
+                   class="alarm-resolution-chart">
+              </div>
+            </article>
+
+          </div>
+        </details>
+
+        <section id="alarmPriorityPanel"
+                 class="alarm-priority-panel">
+          <div class="alarm-priority-head">
+            <div>
+              <span>ATENCIÓN OPERATIVA</span>
+              <h2>Alarmas que requieren revisión</h2>
+              <p>
+                Ordenadas por prioridad y antigüedad.
+              </p>
+            </div>
+
+            <span id="alarmPriorityCount"
+                  class="alarm-priority-count">
+              0 eventos
+            </span>
+          </div>
+
+          <div id="alarmPriorityList"
+               class="alarm-priority-list">
+          </div>
+        </section>
+
+        <section class="panel alarm-control-panel">
+          <div class="alarm-control-main">
+            <input id="almDesde" type="date">
+
+            <input id="almHasta" type="date">
+
+            <input id="almBuscar"
+                   type="search"
+                   placeholder="Buscar tipo, pozo, usuario o mensaje..."
+                   autocomplete="off">
+
+            <select id="almEstado">
+              <option value="">Todos los estados</option>
+              <option value="new">Nuevas</option>
+              <option value="review">En revisión</option>
+              <option value="resolved">Atendidas</option>
+              <option value="closed">Cerradas</option>
+            </select>
+
+            <select id="almPrioridad">
+              <option value="">Todas las prioridades</option>
+              <option value="critical">Crítica</option>
+              <option value="high">Alta</option>
+              <option value="medium">Media</option>
+              <option value="low">Baja</option>
+            </select>
+
+            <button id="almLimpiar"
+                    class="ghost-btn"
+                    type="button">
+              Limpiar
+            </button>
+
+            <button id="almExportar"
+                    class="primary-btn"
+                    type="button">
+              Exportar CSV
+            </button>
+          </div>
+
+          <div class="alarm-result-summary">
+            <strong id="alarmResultCount">0</strong>
+            <span>resultados</span>
+          </div>
+        </section>
+
+        <div class="table-card alarm-table-card">
+          <table class="alarm-table">
             <thead>
               <tr>
                 <th>Fecha</th>
                 <th>Hora</th>
-                <th>Usuario</th>
                 <th>Pozo/Lugar</th>
                 <th>Tipo</th>
+                <th>Prioridad</th>
+                <th>Estado</th>
+                <th>Usuario</th>
+                <th>Antigüedad</th>
                 <th>WhatsApp</th>
                 <th>Mensaje</th>
                 <th></th>
               </tr>
             </thead>
+
             <tbody id="alarmasTable"></tbody>
           </table>
         </div>
       </section>
-    
-      <section id="exportacionesView" class="view hidden">
+
+      
+      
+      <section id="iaView" class="view hidden">
+        <div class="panel">
+
+          <div class="panel-head">
+            <h2>🤖 IA Cuichapa</h2>
+            <span class="muted">
+              Centro inteligente de análisis operativo
+            </span>
+          </div>
+
+          <div class="ia-home">
+
+            <h1>¿Qué deseas analizar hoy?</h1>
+
+            <p class="muted">
+              Consulta producción, recorridos, reportes, alarmas y comportamiento histórico del campo.
+            </p>
+
+            <div class="ia-grid">
+
+              <button class="ia-card">📈 Indicadores</button>
+
+              <button class="ia-card">🛢 Producción</button>
+
+              <button class="ia-card">🚨 Alarmas</button>
+
+              <button class="ia-card">👷 Recorredores</button>
+
+              <button class="ia-card">📄 Reportes</button>
+
+              <button class="ia-card">🔎 Buscar pozo</button>
+
+              <button class="ia-card">📊 Tendencias</button>
+
+              <button class="ia-card">🧠 Diagnóstico IA</button>
+
+            </div>
+
+            <div class="ia-chat-box">
+
+              <input
+                id="iaPrompt"
+                type="text"
+                placeholder="Escribe una pregunta...">
+
+              <button id="iaSend">
+                Preguntar
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+
+
+<section id="exportacionesView" class="view hidden">
         <div class="panel">
           <div class="panel-head">
-            <h2>Reportes automáticos</h2>
+            <h2>Documentos operativos</h2>
             <span class="muted">Plantillas oficiales Excel</span>
           </div>
 
@@ -197,11 +1394,12 @@
                 <option value="">Seleccionar recorredor</option>
                 <option>Manrique</option>
                 <option>Juan Carlos</option>
-                <option>Cirilo</option>
+                  <option>Luis Carlos</option>
               </select>
               <input id="expDesde" type="date">
               <input id="expHasta" type="date">
-              <button id="btnDiarioPreview" class="primary-btn">Preparar diario</button>
+              <button id="btnDiarioPreview" class="primary-btn">Preparar diario Excel</button>
+              <button id="btnDiarioPDF" class="primary-btn">Preparar diario PDF</button>
               <div id="diarioStatus" class="export-status"></div>
             </article>
 
@@ -211,6 +1409,26 @@
               <input id="supMes" type="month">
               <button id="btnSoportePreview" class="primary-btn">Preparar soporte</button>
               <div id="soporteStatus" class="export-status"></div>
+            </article>
+
+            <article class="export-card">
+              <h3>Balance de Frac Tank</h3>
+              <p>Genera el balance operativo diario de Frac Tank en formato Excel.</p>
+
+              <input
+                id="balanceFtExcelFecha"
+                type="date">
+
+              <button
+                id="btnBalanceFtExcel"
+                class="primary-btn">
+                Descargar Balance FT Excel
+              </button>
+
+              <div
+                id="balanceFtExcelStatus"
+                class="export-status">
+              </div>
             </article>
 
             <article class="export-card">
@@ -224,8 +1442,850 @@
         </div>
       </section>
 
+
+      <section id="upvView" class="view hidden">
+        <div class="upv-admin-header">
+          <div>
+            <span class="upv-admin-eyebrow">
+              UNIDADES DE PRODUCCIÓN Y VOLUMEN
+            </span>
+            <h2>Centro de control UPV</h2>
+            <p>
+              Información recibida desde PETROSMART,
+              ATO e IPEP.
+            </p>
+          </div>
+
+          <div id="upvConnectionStatus"
+               class="conn-pill">
+            Conectando a Pozos-UPV...
+          </div>
+        </div>
+
+        <div class="upv-kpi-grid">
+          <article class="upv-kpi-card">
+            <span>Total de reportes</span>
+            <strong id="upvKpiTotal">0</strong>
+          </article>
+
+          <article class="upv-kpi-card">
+            <span>Reportes hoy</span>
+            <strong id="upvKpiHoy">0</strong>
+          </article>
+
+          <article class="upv-kpi-card">
+            <span>Cargas</span>
+            <strong id="upvKpiCargas">0</strong>
+          </article>
+
+          <article class="upv-kpi-card">
+            <span>Descargas</span>
+            <strong id="upvKpiDescargas">0</strong>
+          </article>
+        </div>
+
+        <div class="upv-admin-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Actividad por empresa</h2>
+                <span class="muted">
+                  Reportes acumulados en Firebase UPV
+                </span>
+              </div>
+            </div>
+
+            <div class="upv-company-list">
+              <article class="upv-company-card petrosmart">
+                <span>PETROSMART</span>
+                <strong id="upvEmpresaPetrosmart">0</strong>
+              </article>
+
+              <article class="upv-company-card ato">
+                <span>ATO</span>
+                <strong id="upvEmpresaAto">0</strong>
+              </article>
+
+              <article class="upv-company-card ipep">
+                <span>IPEP</span>
+                <strong id="upvEmpresaIpep">0</strong>
+              </article>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Estado del módulo</h2>
+                <span class="muted">
+                  Proyecto Firebase independiente
+                </span>
+              </div>
+            </div>
+
+            <div class="upv-system-info">
+              <div>
+                <span>Proyecto</span>
+                <strong>pozos-upv</strong>
+              </div>
+
+              <div>
+                <span>Ruta activa</span>
+                <strong>/upvReportesPrueba</strong>
+              </div>
+
+              <div>
+                <span>Aplicación Firebase</span>
+                <strong>upvAdminApp</strong>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <section class="panel upv-recent-panel">
+          <div class="panel-head">
+            <div>
+              <h2>Últimos reportes UPV</h2>
+              <span class="muted">
+                Los 20 registros más recientes
+              </span>
+            </div>
+          </div>
+
+          <div id="upvEmptyState"
+               class="empty-state hidden">
+            Aún no hay reportes UPV disponibles.
+          </div>
+
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Empresa</th>
+                  <th>Unidad</th>
+                  <th>Operación</th>
+                  <th>Origen</th>
+                  <th>Cantidad</th>
+                  <th>Fotos</th>
+                </tr>
+              </thead>
+
+              <tbody id="upvRecentTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+    
+      <section id="configuracionView" class="view hidden">
+        <div class="config-center">
+
+          <header class="config-hero">
+            <div class="config-hero-copy">
+              <span class="config-eyebrow">
+                ADMINISTRACIÓN DEL SISTEMA
+              </span>
+
+              <h2>Centro de Configuración</h2>
+
+              <p>
+                Parámetros operativos, GPS, fotografías,
+                sincronización, WhatsApp, mantenimiento y
+                control de versiones desde una sola pantalla.
+              </p>
+            </div>
+
+            
+            <div class="config-state">
+              <div class="config-state-head">
+                <span>Estado</span>
+                <strong id="configStateTitle">
+                  Esperando Firebase
+                </strong>
+              </div>
+
+              <small id="configStateSubtitle">
+                Consultando configuración
+              </small>
+
+              <div class="config-state-details">
+                <div>
+                  <span>Usuario</span>
+                  <b id="configStateUser">—</b>
+                </div>
+
+                <div>
+                  <span>Último cambio</span>
+                  <b id="configStateUpdated">—</b>
+                </div>
+
+                <div>
+                  <span>Versión</span>
+                  <b id="configStateVersion">—</b>
+                </div>
+              </div>
+            </div>
+
+          </header>
+
+          
+          <div class="config-system-strip">
+            <div class="config-system-strip-icon">✓</div>
+
+            <div class="config-system-strip-copy">
+              <strong>Sistema operativo</strong>
+              <span>
+                Configuración sincronizada con Firebase.
+                Los parámetros todavía se aplican de forma controlada.
+              </span>
+            </div>
+
+            <span class="config-system-strip-badge">
+              CONECTADO
+            </span>
+          </div>
+
+
+          
+          <nav
+            class="config-category-nav"
+            aria-label="Categorías de configuración">
+
+            <button
+              type="button"
+              class="config-category-btn active"
+              data-config-section="all">
+              General
+            </button>
+
+            <button
+              type="button"
+              class="config-category-btn"
+              data-config-section="gps">
+              GPS
+            </button>
+
+            <button
+              type="button"
+              class="config-category-btn"
+              data-config-section="modules">
+              Módulos
+            </button>
+
+            <button
+              type="button"
+              class="config-category-btn"
+              data-config-section="sync">
+              Sincronización
+            </button>
+
+            <button
+              type="button"
+              class="config-category-btn"
+              data-config-section="whatsapp">
+              WhatsApp
+            </button>
+
+            <button
+              type="button"
+              class="config-category-btn"
+              data-config-section="maintenance">
+              PWA y mantenimiento
+            </button>
+
+            <button
+              type="button"
+              class="config-category-btn"
+              data-config-section="audit">
+              Auditoría
+            </button>
+          </nav>
+
+          <div class="config-grid">
+
+            <article class="config-card" data-config-card="general">
+              <header class="config-card-head">
+                <h3>Operación de campo</h3>
+                <p>
+                  Límites generales para reportes y evidencias.
+                </p>
+              </header>
+
+              <div class="config-card-body config-fields-2">
+                <div class="config-field">
+                  <label for="cfgRadioGps">
+                    Radio GPS general (metros)
+                  </label>
+                  <input
+                    id="cfgRadioGps"
+                    type="number"
+                    min="20"
+                    max="500"
+                    step="5">
+                  <span class="config-help">
+                    Valor actual de respaldo: 80 metros.
+                  </span>
+                </div>
+
+                <div class="config-field">
+                  <label for="cfgHistorialVisible">
+                    Reportes visibles en historial
+                  </label>
+                  <input
+                    id="cfgHistorialVisible"
+                    type="number"
+                    min="5"
+                    max="200"
+                    step="5">
+                  <span class="config-help">
+                    Valor actual de respaldo: 20.
+                  </span>
+                </div>
+
+                <div class="config-field">
+                  <label for="cfgMaxFotos">
+                    Máximo de fotografías
+                  </label>
+                  <input
+                    id="cfgMaxFotos"
+                    type="number"
+                    min="0"
+                    max="10"
+                    step="1">
+                </div>
+
+                <div class="config-field">
+                  <label for="cfgCorreccionMinutos">
+                    Ventana de corrección (minutos)
+                  </label>
+                  <input
+                    id="cfgCorreccionMinutos"
+                    type="number"
+                    min="0"
+                    max="1440"
+                    step="5">
+                </div>
+              </div>
+            </article>
+
+            <article class="config-card" data-config-card="gps">
+              <header class="config-card-head">
+                <h3>GPS y geocerca</h3>
+                <p>
+                  Control de tiempos, precisión y validaciones.
+                </p>
+              </header>
+
+              <div class="config-card-body config-fields-2">
+                <div class="config-field">
+                  <label for="cfgGpsAndroid">
+                    Timeout Android (ms)
+                  </label>
+                  <input
+                    id="cfgGpsAndroid"
+                    type="number"
+                    min="5000"
+                    max="120000"
+                    step="1000">
+                </div>
+
+                <div class="config-field">
+                  <label for="cfgGpsIos">
+                    Timeout iPhone (ms)
+                  </label>
+                  <input
+                    id="cfgGpsIos"
+                    type="number"
+                    min="3000"
+                    max="60000"
+                    step="1000">
+                </div>
+
+                <div class="config-field">
+                  <label for="cfgGpsPrecision">
+                    Precisión máxima aceptada (m)
+                  </label>
+                  <input
+                    id="cfgGpsPrecision"
+                    type="number"
+                    min="5"
+                    max="500"
+                    step="5">
+                </div>
+              </div>
+
+              <div class="config-card-body config-switch-list">
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Segunda lectura automática</strong>
+                    <span>
+                      Repetir la medición antes de marcar fuera de radio.
+                    </span>
+                  </div>
+
+                  <label class="config-toggle">
+                    <input
+                      id="cfgGpsSegundaLectura"
+                      type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Foto obligatoria fuera del radio</strong>
+                    <span>
+                      Solicitar evidencia cuando la ubicación no coincida.
+                    </span>
+                  </div>
+
+                  <label class="config-toggle">
+                    <input
+                      id="cfgGpsFotoFuera"
+                      type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Justificación fuera del radio</strong>
+                    <span>
+                      Registrar el motivo antes de enviar.
+                    </span>
+                  </div>
+
+                  <label class="config-toggle">
+                    <input
+                      id="cfgGpsJustificacion"
+                      type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+              </div>
+            </article>
+
+            <article class="config-card" data-config-card="modules">
+              <header class="config-card-head">
+                <h3>Módulos de campo</h3>
+                <p>
+                  Disponibilidad de funciones para los recorredores.
+                </p>
+              </header>
+
+              <div class="config-card-body config-switch-list">
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Control Operativo</strong>
+                    <span>Captura técnica de pozos.</span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgModuloCo" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Nivel de Guardia</strong>
+                    <span>Niveles y registros operativos.</span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgModuloNivel" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Alarmas</strong>
+                    <span>Eventos e incidencias desde campo.</span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgModuloAlarmas" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Historial</strong>
+                    <span>Consulta de reportes recientes.</span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgModuloHistorial" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Correcciones</strong>
+                    <span>Edición controlada de reportes.</span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgModuloCorrecciones" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Fotografías</strong>
+                    <span>Evidencia fotográfica.</span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgModuloFotos" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+              </div>
+            </article>
+
+            <article class="config-card" data-config-card="sync">
+              <header class="config-card-head">
+                <h3>Sincronización</h3>
+                <p>
+                  Continuidad del servicio con señal débil.
+                </p>
+              </header>
+
+              <div class="config-card-body config-switch-list">
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Sincronizar al recuperar señal</strong>
+                    <span>
+                      Enviar automáticamente los reportes pendientes.
+                    </span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgSyncSenal" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Reintentos automáticos</strong>
+                    <span>
+                      Reprocesar fallas temporales.
+                    </span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgSyncReintentos" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Reconciliar pendientes</strong>
+                    <span>
+                      Verificar reportes atorados sin duplicar WhatsApp.
+                    </span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgSyncReconciliar" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+              </div>
+            </article>
+
+            <article class="config-card" data-config-card="whatsapp">
+              <header class="config-card-head">
+                <h3>WhatsApp</h3>
+                <p>
+                  Opciones operativas sin exponer tokens ni credenciales.
+                </p>
+              </header>
+
+              <div class="config-card-body">
+                <div class="config-field">
+                  <label for="cfgWhatsappEntorno">
+                    Entorno
+                  </label>
+
+                  <select id="cfgWhatsappEntorno">
+                    <option value="produccion">
+                      Producción
+                    </option>
+                    <option value="pruebas">
+                      Pruebas
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="config-card-body config-switch-list">
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Mensajes</strong>
+                    <span>Envío del texto operativo.</span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgWhatsappMensajes" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Fotografías</strong>
+                    <span>Envío de evidencia adjunta.</span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgWhatsappFotos" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Alarmas</strong>
+                    <span>Envío de eventos críticos.</span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgWhatsappAlarmas" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Correcciones</strong>
+                    <span>Notificación de cambios de reportes.</span>
+                  </div>
+                  <label class="config-toggle">
+                    <input id="cfgWhatsappCorrecciones" type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+              </div>
+            </article>
+
+            <article class="config-card" data-config-card="maintenance">
+              <header class="config-card-head">
+                <h3>Mantenimiento y versiones</h3>
+                <p>
+                  Avisos controlados y actualización de la PWA.
+                </p>
+              </header>
+
+              <div class="config-card-body">
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Modo mantenimiento</strong>
+                    <span>
+                      Mantendrá disponible la captura offline.
+                    </span>
+                  </div>
+                  <label class="config-toggle">
+                    <input
+                      id="cfgMantenimientoActivo"
+                      type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+
+                <div class="config-field">
+                  <label for="cfgMantenimientoMensaje">
+                    Mensaje de mantenimiento
+                  </label>
+                  <textarea
+                    id="cfgMantenimientoMensaje"
+                    placeholder="Ej. Se realizará una actualización. Puedes seguir capturando sin conexión."></textarea>
+                </div>
+
+                <div class="config-field">
+                  <label for="cfgVersionMinima">
+                    Versión mínima
+                  </label>
+                  <input
+                    id="cfgVersionMinima"
+                    type="text"
+                    placeholder="Ej. 2026.07.21.1">
+                </div>
+
+                <div class="config-switch">
+                  <div class="config-switch-copy">
+                    <strong>Aviso de actualización</strong>
+                    <span>
+                      Mostrar una nueva versión disponible.
+                    </span>
+                  </div>
+                  <label class="config-toggle">
+                    <input
+                      id="cfgAvisoActualizacion"
+                      type="checkbox">
+                    <span class="config-toggle-track"></span>
+                  </label>
+                </div>
+              </div>
+            </article>
+
+            <article class="config-card config-card-wide" data-config-card="audit">
+              <header class="config-card-head">
+                <h3>Bitácora de cambios</h3>
+                <p>
+                  Usuario, fecha y parámetros modificados.
+                </p>
+              </header>
+
+              <div class="config-card-body">
+                
+                <div
+                  id="configAuditList"
+                  class="config-audit-list">
+
+                  <div class="config-empty">
+                    Consultando bitácora...
+                  </div>
+                </div>
+
+              </div>
+            </article>
+
+          </div>
+
+          <footer class="config-actions">
+            <span
+              id="configSaveStatus"
+              class="config-save-status">
+              Sin cambios pendientes
+            </span>
+
+            <button
+              id="configReloadBtn"
+              type="button"
+              class="ghost-btn">
+              Recargar
+            </button>
+
+            <button
+              id="configDefaultsBtn"
+              type="button"
+              class="ghost-btn config-btn-danger">
+              Valores predeterminados
+            </button>
+
+            <button
+              id="configSaveBtn"
+              type="button"
+              class="primary-btn">
+              Guardar configuración
+            </button>
+          </footer>
+
+        </div>
+      </section>
+
     </main>
   </section>
+
+  <!-- INSPECTOR OPERATIVO DE REPORTES -->
+  <div id="reportInspectorRail"
+       class="report-inspector-rail"
+       aria-hidden="true">
+  </div>
+
+  <aside id="reportInspector"
+         class="report-inspector"
+         aria-hidden="true"
+         aria-labelledby="reportInspectorTitle">
+
+    <header class="report-inspector-header">
+      <div class="report-inspector-heading">
+        <span class="report-inspector-eyebrow">
+          INSPECTOR OPERATIVO
+        </span>
+
+        <h2 id="reportInspectorTitle">
+          Detalle de reporte
+        </h2>
+
+        <p id="reportInspectorSubtitle"></p>
+      </div>
+
+      <button id="reportInspectorClose"
+              type="button"
+              class="report-inspector-close"
+              aria-label="Cerrar inspector">
+        ✕
+      </button>
+    </header>
+
+    <div class="report-inspector-navigation">
+      <button id="reportInspectorPrev"
+              type="button"
+              class="inspector-nav-btn">
+        ← Anterior
+      </button>
+
+      <span id="reportInspectorPosition"
+            class="inspector-position">
+        Reporte 0 de 0
+      </span>
+
+      <button id="reportInspectorNext"
+              type="button"
+              class="inspector-nav-btn">
+        Siguiente →
+      </button>
+    </div>
+
+    <nav id="reportInspectorTabs"
+         class="report-inspector-tabs"
+         aria-label="Secciones del reporte">
+
+      <button type="button"
+              class="inspector-tab active"
+              data-inspector-tab="summary">
+        Resumen
+      </button>
+
+      <button type="button"
+              class="inspector-tab"
+              data-inspector-tab="operation">
+        Operación
+      </button>
+
+      <button type="button"
+              class="inspector-tab"
+              data-inspector-tab="evidence">
+        Evidencias
+        <span id="inspectorEvidenceCount"
+              class="inspector-tab-count">0</span>
+      </button>
+
+      <button type="button"
+              class="inspector-tab"
+              data-inspector-tab="history">
+        Historial
+        <span id="inspectorHistoryCount"
+              class="inspector-tab-count">0</span>
+      </button>
+
+      <button type="button"
+              class="inspector-tab"
+              data-inspector-tab="compare">
+        Comparar
+      </button>
+
+      <button type="button"
+              class="inspector-tab"
+              data-inspector-tab="corrections">
+        Correcciones
+        <span id="inspectorCorrectionsCount"
+              class="inspector-tab-count">0</span>
+      </button>
+    </nav>
+
+    <div id="reportInspectorBody"
+         class="report-inspector-body">
+    </div>
+  </aside>
 
   <dialog id="detailDialog">
     <div class="dialog-head">
@@ -238,5 +2298,140 @@
     <div id="detailBody" class="detail-body"></div>
   </dialog>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="./js/reporte-campo-excel.js?v=20260828232841"></script>
+
+  <!-- VISOR INDIVIDUAL DE GRÁFICAS -->
+  <div
+    id="wellChartExpandedModal"
+    class="well-chart-expanded-modal hidden"
+    aria-hidden="true">
+
+    <div
+      class="well-chart-expanded-backdrop"
+      data-close-expanded-chart>
+    </div>
+
+    <section
+      class="well-chart-expanded-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="wellChartExpandedTitle">
+
+      <header class="well-chart-expanded-header">
+        <div>
+          <span>GRÁFICA AMPLIADA</span>
+          <h2 id="wellChartExpandedTitle">
+            Análisis operativo
+          </h2>
+          <p id="wellChartExpandedSubtitle"></p>
+        </div>
+
+        <button
+          type="button"
+          class="well-chart-expanded-close"
+          data-close-expanded-chart
+          aria-label="Cerrar gráfica ampliada">
+          ✕
+        </button>
+      </header>
+
+      <div
+        id="wellChartExpandedBody"
+        class="well-chart-expanded-body">
+      </div>
+
+    </section>
+  </div>
+
+  <aside id="wellChartsDrawer"
+         class="well-charts-drawer hidden"
+         aria-hidden="true">
+
+    <div class="well-charts-backdrop"
+         data-close-well-charts></div>
+
+    <section class="well-charts-panel">
+
+      <header class="well-charts-panel-header">
+        <div>
+          <span>ANÁLISIS OPERATIVO</span>
+          <h2 id="wellChartsTitle">Gráficas del pozo</h2>
+          <p id="wellChartsSubtitle">Historial operativo semanal</p>
+        </div>
+
+        <button type="button"
+                class="well-charts-close"
+                data-close-well-charts
+                aria-label="Cerrar">
+          ×
+        </button>
+      </header>
+
+      <div class="well-charts-week-toolbar">
+        <div class="well-charts-date-filter">
+              <label>
+                <span>Desde</span>
+                <input id="wellChartsDateFrom" type="date">
+              </label>
+
+              <label>
+                <span>Hasta</span>
+                <input id="wellChartsDateTo" type="date">
+              </label>
+
+              <button type="button" data-well-chart-apply>
+                Aplicar
+              </button>
+            </div>
+
+            <div class="well-charts-date-presets">
+              <button type="button" data-well-chart-range="7">
+                7 días
+              </button>
+
+              <button type="button" data-well-chart-range="30">
+                30 días
+              </button>
+
+              <button type="button" data-well-chart-range="month">
+                Este mes
+              </button>
+
+              <button type="button" data-well-chart-range="all">
+                Todo
+              </button>
+            </div>
+
+            <strong id="wellChartsWeekRange">—</strong>
+      </div>
+
+      <div id="wellChartsContent"
+           class="well-charts-content">
+      </div>
+
+    </section>
+  </aside>
+
+  <script src="./js/ia-knowledge.js?v=20260723" defer></script>
+  <script src="./js/ia-engine.js?v=20260723" defer></script>
+  <script src="./js/ia-nlu.js?v=20260723" defer></script>
+  <script src="./js/ia-planner.js?v=20260723" defer></script>
+  <script src="./js/ia-reasoner.js?v=20260723" defer></script>
+  <script src="./js/ia-followup.js?v=20260723" defer></script>
+  <script src="./js/ia-proactive.js?v=20260723" defer></script>
+  <script src="./js/ia-context.js?v=20260723" defer></script>
+  <script src="./js/ia-cuichapa.js?v=20260723" defer></script>
+  <script src="./js/dashboard-produccion.js?v=1784393750" defer></script>
+  <script src="./js/login-v2.js?v=1784394705" defer></script>
+  <script src="./js/admin-pwa.js?v=2026.07.19.045207" defer></script>
+
+<script src="../health-monitor.js?v=20260804235010"></script>
+
+<script defer src="./js/balance-ft.js?v=20260812190655"></script>
+
+  <!-- Leaflet debe existir antes de recorridos.js -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="./js/recorridos.js?v=20260822183909" defer></script>
+  <script src="./js/muestras.js?v=20260824175110" defer></script>
 </body>
 </html>
