@@ -148,6 +148,25 @@ function capturarGPS(){
 
 const COORD_POZOS_FT = Object.freeze({
 
+  /*
+   * BATERÍA DE SEPARACIÓN CUICHAPA.
+   * Se valida con el mismo radio operativo de 80 metros.
+   */
+  'BSC': {
+    lat:17.942389,
+    lng:-94.297432
+  },
+
+  'PIA': {
+    lat:17.940260,
+    lng:-94.301605
+  },
+
+  'ECO': {
+    lat:17.946119,
+    lng:-94.283073
+  },
+
   '19': {
     lat:17.955136,
     lng:-94.263964

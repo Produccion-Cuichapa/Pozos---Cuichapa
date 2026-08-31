@@ -1179,6 +1179,7 @@ function mensajeInicioDescargaSeleccionada(config){
 
   const dentro =
     (
+      gps?.dentro === true ||
       gps?.dentroRango === true ||
       gps?.dentroDeRango === true ||
       gps?.enRango === true ||
@@ -1191,6 +1192,7 @@ function mensajeInicioDescargaSeleccionada(config){
 
   const fuera =
     (
+      gps?.dentro === false ||
       gps?.dentroRango === false ||
       gps?.dentroDeRango === false ||
       gps?.enRango === false ||
@@ -2482,13 +2484,35 @@ async function validarGPSOperacionUPV(
     }
 
 
-    if(
+    const ubicacionNormalizada =
       String(ubicacion || '')
-        .toUpperCase() === 'POZO'
+        .trim()
+        .toUpperCase();
+
+    if(
+      ubicacionNormalizada === 'POZO'
     ){
 
       return await window.UPVGPS
         .validarPozo(pozo);
+    }
+
+    /*
+     * BSC tiene coordenadas oficiales y debe calcular
+     * distancia para determinar si está dentro o fuera
+     * del radio permitido.
+     *
+     * Se reutiliza validarPozo porque ya contiene toda
+     * la lógica de distancia, radio y mensajes visuales.
+     */
+    if(
+      ubicacionNormalizada === 'BSC' ||
+      ubicacionNormalizada === 'PIA' ||
+      ubicacionNormalizada === 'ECO'
+    ){
+
+      return await window.UPVGPS
+        .validarPozo(ubicacionNormalizada);
     }
 
 
