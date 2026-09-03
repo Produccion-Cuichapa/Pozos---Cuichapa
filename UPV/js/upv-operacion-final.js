@@ -1267,8 +1267,9 @@ function mensajeInicioDescargaSeleccionada(config){
     '',
 
     '🚛 *Proveedor:* ' +
-      String(
-        empresaActiva() || ''
+      proveedorWhatsappUPV(
+        empresaActiva(),
+        leerUnidadSeleccionada()?.capacidadM3
       ),
 
     '🚚 *Unidad:* ' +
@@ -2539,6 +2540,26 @@ async function validarGPSOperacionUPV(
 }
 
 
+/*
+ * GPS OBLIGATORIO EN TODAS LAS ETAPAS:
+ * Carga Inicio, Carga Finalizó,
+ * Descarga Inicio y Descarga Finalizó.
+ */
+function gpsValidoOperacionUPV(gps){
+
+  return Boolean(
+    gps &&
+    !gps.error &&
+    Number.isFinite(
+      Number(gps.lat)
+    ) &&
+    Number.isFinite(
+      Number(gps.lng)
+    )
+  );
+}
+
+
 function lineasGpsWhatsappUPV(gps){
 
   if(!gps){
@@ -2681,6 +2702,34 @@ function resumenGpsHtmlUPV(gps){
 }
 
 
+
+/* ==========================================================
+   UPV — IDENTIFICADOR VISUAL PROVEEDOR WHATSAPP
+   SOLO FORMATO DE MENSAJES / VISTA PREVIA
+   ========================================================== */
+function proveedorWhatsappUPV(empresa, capacidadM3){
+
+  const emp = String(empresa || '')
+    .trim()
+    .toUpperCase();
+
+  const cap = Number(capacidadM3);
+
+  if(emp === 'PETROSMART'){
+    return '🔵 ' + emp + ' 🔵';
+  }
+
+  if(emp === 'IPEP' && cap === 20){
+    return '🟢 ' + emp + ' 🟢';
+  }
+
+  if(emp === 'IPEP' && cap === 30){
+    return '🟠 ' + emp + ' 🟠';
+  }
+
+  return emp;
+}
+
 function mensajeWhatsappInicio(config){
 
   const {
@@ -2718,7 +2767,10 @@ function mensajeWhatsappInicio(config){
     '',
 
     'Proveedor: *' +
-      empresa +
+      proveedorWhatsappUPV(
+        empresa,
+        leerUnidadSeleccionada()?.capacidadM3
+      ) +
       '*',
 
     'Unidad: *' +
@@ -2818,7 +2870,10 @@ function mensajeWhatsappTermino(config){
     '',
 
     'Proveedor: *' +
-      empresa +
+      proveedorWhatsappUPV(
+        empresa,
+        leerUnidadSeleccionada()?.capacidadM3
+      ) +
       '*',
 
     'Unidad: *' +
@@ -2949,45 +3004,6 @@ function confirmarUPVVisual(config){
         class="upv-confirm-modal"
         role="dialog"
         aria-modal="true">
-
-        <div class="upv-confirm-top">
-
-          <div
-            class="upv-confirm-icon ${esInicio ? 'inicio' : 'termino'}">
-            ${icono}
-          </div>
-
-          <div>
-            <span>
-              VERIFICACIÓN DE REPORTE
-            </span>
-
-            <h2>
-              ${escaparHtml(titulo)}
-            </h2>
-
-            <p>
-              ${escaparHtml(subtitulo)}
-            </p>
-          </div>
-
-        </div>
-
-
-        <div class="upv-confirm-data">
-
-          ${config.resumenHtml || ''}
-
-          ${resumenGpsHtmlUPV(
-            config.gps
-          )}
-
-          ${observacionResumenHtmlUPV(
-            config.observacionesOperacion
-          )}
-
-        </div>
-
 
         <div class="upv-wa-preview">
 
@@ -3665,11 +3681,28 @@ function renderInicio(tipo){
           );
 
 
+        /*
+         * Captura GPS independiente para el INICIO.
+         * No se permite continuar sin coordenadas válidas.
+         */
         const gpsValidacion =
           await validarGPSOperacionUPV(
             origen,
             pozo
           );
+
+        if(
+          !gpsValidoOperacionUPV(
+            gpsValidacion
+          )
+        ){
+          error(
+            'No fue posible obtener una ubicación GPS válida. ' +
+            'Activa la ubicación y vuelve a intentar.'
+          );
+
+          return;
+        }
 
 
         const esInicioDescarga =
@@ -5326,11 +5359,33 @@ function renderTermino(tipo){
             inicio
           );
 
+        /*
+         * Captura GPS nueva e independiente para FINALIZAR.
+         * Nunca se reutiliza la ubicación capturada al iniciar.
+         */
+        const ubicacionReferenciaGPS =
+          esTerminoDescarga
+            ? destino
+            : ubicacionTermino;
+
         const gpsValidacionTermino =
           await validarGPSOperacionUPV(
-            destino,
+            ubicacionReferenciaGPS,
             pozo
           );
+
+        if(
+          !gpsValidoOperacionUPV(
+            gpsValidacionTermino
+          )
+        ){
+          error(
+            'No fue posible obtener una ubicación GPS válida para finalizar. ' +
+            'Activa la ubicación y vuelve a intentar.'
+          );
+
+          return;
+        }
 
 
         const mensajeWA =

@@ -69,7 +69,82 @@ function distanciaMetros(
    GPS DEL DISPOSITIVO
    ========================================================== */
 
+let _upvGpsCache = null;
+let _upvGpsWatchGlobal = null;
+
+function iniciarGPSContinuoUPV(){
+
+  if(
+    _upvGpsWatchGlobal !== null ||
+    !navigator.geolocation
+  ){
+    return;
+  }
+
+  _upvGpsWatchGlobal =
+    navigator.geolocation.watchPosition(
+
+      pos => {
+
+        const lectura = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: Number(pos.coords.accuracy),
+          timestamp: pos.timestamp || Date.now()
+        };
+
+        if(
+          !_upvGpsCache ||
+          lectura.timestamp >= _upvGpsCache.timestamp ||
+          lectura.accuracy < _upvGpsCache.accuracy
+        ){
+          _upvGpsCache = lectura;
+        }
+      },
+
+      () => {},
+
+      {
+        enableHighAccuracy:true,
+        maximumAge:0,
+        timeout:10000
+      }
+    );
+}
+
+function gpsCacheValidoUPV(){
+
+  if(!_upvGpsCache){
+    return null;
+  }
+
+  const edad =
+    Date.now() -
+    Number(_upvGpsCache.timestamp || 0);
+
+  if(
+    edad <= 15000 &&
+    Number.isFinite(_upvGpsCache.accuracy) &&
+    _upvGpsCache.accuracy <= 80
+  ){
+    return _upvGpsCache;
+  }
+
+  return null;
+}
+
+iniciarGPSContinuoUPV();
+
 function capturarGPS(){
+
+  const cache =
+    gpsCacheValidoUPV();
+
+  if(cache){
+    return Promise.resolve({
+      ...cache
+    });
+  }
 
   return new Promise(
     (resolve,reject) => {
@@ -86,12 +161,56 @@ function capturarGPS(){
       }
 
 
-      navigator.geolocation
-        .getCurrentPosition(
+      let mejorPosicion = null;
+      let watchId = null;
+      let terminado = false;
+
+
+      function finalizarConError(){
+
+        if(terminado){
+          return;
+        }
+
+        terminado = true;
+
+        if(watchId !== null){
+          navigator.geolocation.clearWatch(watchId);
+        }
+
+        if(mejorPosicion){
+
+          resolve(mejorPosicion);
+
+          return;
+        }
+
+        reject(
+          new Error(
+            'No fue posible obtener una ubicación GPS precisa'
+          )
+        );
+      }
+
+
+      const temporizador =
+        setTimeout(
+          finalizarConError,
+          7000
+        );
+
+
+      watchId =
+        navigator.geolocation.watchPosition(
 
           pos => {
 
-            resolve({
+            if(terminado){
+              return;
+            }
+
+
+            const lectura = {
 
               lat:
                 pos.coords.latitude,
@@ -100,28 +219,82 @@ function capturarGPS(){
                 pos.coords.longitude,
 
               accuracy:
-                pos.coords.accuracy,
+                Number(
+                  pos.coords.accuracy
+                ),
 
               timestamp:
                 pos.timestamp || Date.now()
 
-            });
+            };
+
+
+            if(
+              !mejorPosicion ||
+              lectura.accuracy <
+                mejorPosicion.accuracy
+            ){
+              mejorPosicion = lectura;
+            }
+
+
+            /*
+             * Para un radio operativo de 80 m,
+             * no aceptar una lectura claramente imprecisa.
+             */
+            if(
+              Number.isFinite(
+                lectura.accuracy
+              ) &&
+              lectura.accuracy <= 80
+            ){
+
+              terminado = true;
+
+              clearTimeout(
+                temporizador
+              );
+
+              navigator.geolocation
+                .clearWatch(watchId);
+
+              resolve(lectura);
+            }
+
           },
 
 
           error => {
 
-            reject(error);
+            if(
+              !mejorPosicion
+            ){
+
+              clearTimeout(
+                temporizador
+              );
+
+              terminado = true;
+
+              if(watchId !== null){
+                navigator.geolocation
+                  .clearWatch(watchId);
+              }
+
+              reject(error);
+            }
 
           },
 
 
           {
             enableHighAccuracy:true,
-            timeout:15000,
-            maximumAge:5000
+            timeout:7000,
+            maximumAge:0
           }
+
         );
+
     }
   );
 }
