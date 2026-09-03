@@ -4897,7 +4897,7 @@ function hcCargar(){
 
   if(typeof fbDB !== 'undefined' && fbDB){
     if(statusEl) statusEl.textContent = '🔄 Sincronizando todos los dispositivos...';
-    fbDB.ref('reportes').orderByChild('fecha').limitToLast(15).once('value', function(snap){
+    fbDB.ref('reportes').orderByChild('fecha').limitToLast(10).once('value', function(snap){
       try{
         var localIds={};
         locales.forEach(function(r){ if(r.id) localIds[r.id]=true; });
@@ -6909,7 +6909,7 @@ function escucharFirebase(){
   try{ fbDB.ref('reportes').off('value'); }catch(e){}
 
   var _fbReportesInit = false;
-  fbDB.ref('reportes').orderByChild('fecha').limitToLast(15).on('value', function(snapshot){
+  fbDB.ref('reportes').orderByChild('fecha').limitToLast(10).on('value', function(snapshot){
     actualizarSyncBar('conectado');
     if(_fbReportesInit){
       // Find the newest report to show who sent it
@@ -6986,7 +6986,7 @@ function escucharFirebase(){
     var merged = Object.values(localMap);
     merged.sort(function(a,b){ return new Date(b.fecha)-new Date(a.fecha); });
     if(merged.length > 15){
-      merged = merged.slice(0, 15);
+      merged = merged.slice(0, 10);
     }
     saveHistorial(merged);
     renderHistorial();
@@ -7419,7 +7419,7 @@ function guardarReporte(reporte){
   }
 
   if(arr.length > 15){
-    arr = arr.slice(0, 15);
+    arr = arr.slice(0, 10);
   }
 
   saveHistorial(arr);
@@ -9211,7 +9211,7 @@ function filtrarHist(f, btn){
 
 function renderHistorial(){
   var arr = getHistorial();
-  if(arr.length > 15) arr = arr.slice(0, 15); // mostrar solo los últimos 15 reportes
+  if(arr.length > 10) arr = arr.slice(0, 10); // mostrar solo los últimos 10 reportes
   var pendientes = getPendientes();
   if(histFiltro === 'alarmas'){
     arr = arr.filter(function(r){ return r.esAlarma; });
