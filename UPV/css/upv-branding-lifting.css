@@ -1,0 +1,671 @@
+/* ==========================================================
+   UPV — BRANDING DEFINITIVO MOBILE FIRST
+   ========================================================== */
+
+body.upv-branding-definitivo-listo
+.upv-original-title-hidden,
+body.upv-branding-definitivo-listo
+.upv-brand-old-text-hidden{
+  display:none !important;
+}
+
+
+/* ==========================================================
+   RELOJ
+   ========================================================== */
+
+.upv-clock-definitivo{
+  position:absolute;
+  top:max(24px,env(safe-area-inset-top));
+  left:22px;
+  z-index:40;
+
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+
+  pointer-events:none;
+}
+
+.upv-clock-definitivo strong{
+  color:#fff;
+
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    monospace;
+
+  font-size:26px;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:.035em;
+
+  text-shadow:
+    0 4px 14px rgba(0,0,0,.25);
+}
+
+.upv-clock-definitivo span{
+  margin-top:7px;
+
+  color:#c0d3ef;
+
+  font-size:11px;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:.09em;
+}
+
+
+/* ==========================================================
+   BRANDING PRINCIPAL
+   ========================================================== */
+
+.upv-branding-definitivo{
+  position:relative;
+  z-index:15;
+
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+
+  width:100%;
+
+  margin:
+    90px auto
+    0;
+
+  text-align:center;
+}
+
+
+/* Logo */
+
+.upv-brand-logo-card{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  width:min(290px,72vw);
+
+  margin:0 auto;
+
+  border-radius:24px;
+
+  background:#fff;
+
+  box-shadow:
+    0 18px 38px rgba(0,13,52,.34),
+    0 0 28px rgba(38,112,229,.28);
+}
+
+.upv-brand-logo{
+  display:block;
+
+  width:100%;
+  height:auto;
+
+  border-radius:24px;
+}
+
+
+/* UPV */
+
+.upv-brand-upv-line{
+  display:grid;
+
+  grid-template-columns:
+    minmax(38px,88px)
+    auto
+    minmax(38px,88px);
+
+  align-items:center;
+
+  gap:17px;
+
+  width:min(390px,88vw);
+
+  margin:
+    32px auto
+    0;
+}
+
+.upv-brand-upv-line span{
+  display:block;
+
+  width:100%;
+  height:2px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      #62aaf7
+    );
+}
+
+.upv-brand-upv-line span:last-child{
+  transform:scaleX(-1);
+}
+
+.upv-brand-upv-line h1{
+  margin:0;
+
+  color:#fff;
+
+  font-size:54px;
+  line-height:.9;
+  font-weight:950;
+  letter-spacing:-.045em;
+
+  text-shadow:
+    0 10px 24px rgba(0,0,0,.22);
+}
+
+
+/* Recuperación */
+
+.upv-brand-main-subtitle{
+  margin:
+    18px auto
+    0 !important;
+
+  color:#fff !important;
+
+  font-size:23px !important;
+  line-height:1.15 !important;
+  font-weight:650 !important;
+  letter-spacing:0 !important;
+}
+
+
+/* Campo */
+
+.upv-brand-location{
+  margin:
+    11px auto
+    0 !important;
+
+  color:#a9c2e4 !important;
+
+  font-size:17px !important;
+  line-height:1.15 !important;
+  font-weight:500 !important;
+}
+
+
+/* ==========================================================
+   SELECCIÓN EMPRESA
+   ========================================================== */
+
+body.upv-branding-definitivo-listo
+.upv-selector-titulo{
+  margin:
+    67px auto
+    24px !important;
+
+  font-size:14px !important;
+  letter-spacing:.17em !important;
+}
+
+
+/*
+ * Prioridad móvil:
+ * PETROSMART e IPEP permanecen lado a lado.
+ */
+body.upv-branding-definitivo-listo
+.upv-company-choice-grid{
+  display:grid !important;
+
+  grid-template-columns:
+    repeat(2,minmax(0,1fr))
+    !important;
+
+  gap:18px !important;
+
+  width:
+    min(
+      760px,
+      calc(100vw - 30px)
+    )
+    !important;
+
+  margin:0 auto !important;
+
+  padding:
+    0 0
+    65px
+    !important;
+}
+
+
+body.upv-branding-definitivo-listo
+.upv-company-choice{
+  min-height:285px !important;
+
+  padding:
+    75px
+    14px
+    37px
+    !important;
+
+  border-radius:20px !important;
+}
+
+
+body.upv-branding-definitivo-listo
+.upv-company-choice::before{
+  top:78px !important;
+
+  width:88px !important;
+  height:88px !important;
+
+  font-size:42px !important;
+}
+
+
+body.upv-branding-definitivo-listo
+.upv-company-choice::after{
+  bottom:39px !important;
+
+  font-size:28px !important;
+}
+
+
+body.upv-branding-definitivo-listo
+.upv-card-top-label{
+  top:25px !important;
+}
+
+
+body.upv-branding-definitivo-listo
+.upv-card-top-name{
+  font-size:15px !important;
+}
+
+
+/* ==========================================================
+   ZONA BLANCA
+   ========================================================== */
+
+body.upv-branding-definitivo-listo
+.upv-portada-final-activa::after{
+  bottom:-195px !important;
+
+  height:470px !important;
+
+  border-radius:
+    50% 50% 0 0 /
+    13% 13% 0 0
+    !important;
+}
+
+
+body.upv-branding-definitivo-listo
+.upv-beneficios-final{
+  z-index:15 !important;
+
+  grid-template-columns:
+    repeat(3,minmax(0,1fr))
+    !important;
+
+  gap:0 !important;
+
+  width:
+    min(
+      740px,
+      calc(100vw - 25px)
+    )
+    !important;
+
+  margin:
+    54px auto
+    0 !important;
+
+  padding:
+    23px 3px
+    0 !important;
+
+  border:0 !important;
+  border-radius:0 !important;
+
+  background:
+    transparent !important;
+
+  box-shadow:none !important;
+}
+
+
+body.upv-branding-definitivo-listo
+.upv-beneficio-final{
+  display:flex !important;
+
+  flex-direction:column !important;
+
+  align-items:center !important;
+  justify-content:flex-start !important;
+
+  gap:10px !important;
+
+  min-height:175px !important;
+
+  padding:
+    0 13px
+    !important;
+
+  border-right:
+    1px solid #d7e2ef !important;
+
+  border-bottom:0 !important;
+
+  text-align:center !important;
+}
+
+
+body.upv-branding-definitivo-listo
+.upv-beneficio-final:last-child{
+  border-right:0 !important;
+}
+
+
+body.upv-branding-definitivo-listo
+.upv-beneficio-icono{
+  width:60px !important;
+  height:60px !important;
+
+  font-size:27px !important;
+}
+
+
+body.upv-branding-definitivo-listo
+.upv-beneficio-contenido strong{
+  font-size:14px !important;
+  line-height:1.22 !important;
+}
+
+
+body.upv-branding-definitivo-listo
+.upv-beneficio-contenido small{
+  margin-top:8px !important;
+
+  font-size:12px !important;
+  line-height:1.35 !important;
+}
+
+
+/* ==========================================================
+   PIE
+   ========================================================== */
+
+body.upv-branding-definitivo-listo
+.upv-footer-final{
+  width:
+    min(
+      400px,
+      calc(100vw - 40px)
+    )
+    !important;
+
+  margin:
+    12px auto
+    0 !important;
+
+  padding:
+    0 0
+    90px
+    !important;
+
+  color:#657b99 !important;
+
+  font-size:13px !important;
+}
+
+
+body.upv-branding-definitivo-listo
+.upv-footer-final strong{
+  color:#173968 !important;
+
+  font-size:14px !important;
+}
+
+
+/* ==========================================================
+   INSTALAR
+   ========================================================== */
+
+body.upv-branding-definitivo-listo
+#installBtn,
+body.upv-branding-definitivo-listo
+.upv-install-renovado{
+  min-height:62px !important;
+
+  border-radius:17px !important;
+
+  font-size:17px !important;
+}
+
+
+/* ==========================================================
+   CELULARES PEQUEÑOS
+   ========================================================== */
+
+@media (max-width:480px){
+
+  .upv-clock-definitivo{
+    top:max(20px,env(safe-area-inset-top));
+    left:18px;
+  }
+
+  .upv-clock-definitivo strong{
+    font-size:24px;
+  }
+
+  .upv-clock-definitivo span{
+    font-size:10px;
+  }
+
+  .upv-branding-definitivo{
+    margin-top:90px;
+  }
+
+  .upv-brand-logo-card{
+    width:min(255px,69vw);
+  }
+
+  .upv-brand-logo,
+  .upv-brand-logo-card{
+    border-radius:20px;
+  }
+
+  .upv-brand-upv-line{
+    grid-template-columns:
+      minmax(34px,66px)
+      auto
+      minmax(34px,66px);
+
+    gap:13px;
+
+    margin-top:27px;
+  }
+
+  .upv-brand-upv-line h1{
+    font-size:48px;
+  }
+
+  .upv-brand-main-subtitle{
+    margin-top:15px !important;
+
+    font-size:20px !important;
+  }
+
+  .upv-brand-location{
+    margin-top:9px !important;
+
+    font-size:15px !important;
+  }
+
+  body.upv-branding-definitivo-listo
+  .upv-selector-titulo{
+    margin:
+      56px auto
+      20px !important;
+
+    font-size:11px !important;
+  }
+
+  body.upv-branding-definitivo-listo
+  .upv-company-choice-grid{
+    gap:12px !important;
+
+    width:
+      calc(100vw - 22px)
+      !important;
+
+    padding-bottom:
+      52px !important;
+  }
+
+  body.upv-branding-definitivo-listo
+  .upv-company-choice{
+    min-height:205px !important;
+
+    padding:
+      57px
+      8px
+      26px
+      !important;
+
+    border-radius:17px !important;
+  }
+
+  body.upv-branding-definitivo-listo
+  .upv-card-top-label{
+    top:16px !important;
+  }
+
+  body.upv-branding-definitivo-listo
+  .upv-card-top-dot{
+    width:11px !important;
+    height:11px !important;
+  }
+
+  body.upv-branding-definitivo-listo
+  .upv-card-top-name{
+    font-size:11px !important;
+  }
+
+  body.upv-branding-definitivo-listo
+  .upv-company-choice::before{
+    top:52px !important;
+
+    width:65px !important;
+    height:65px !important;
+
+    font-size:31px !important;
+  }
+
+  body.upv-branding-definitivo-listo
+  .upv-company-choice::after{
+    bottom:24px !important;
+
+    font-size:20px !important;
+  }
+
+  body.upv-branding-definitivo-listo
+  .upv-portada-final-activa::after{
+    bottom:-160px !important;
+
+    height:400px !important;
+  }
+
+  body.upv-branding-definitivo-listo
+  .upv-beneficios-final{
+    margin-top:40px !important;
+
+    padding-top:18px !important;
+  }
+
+  body.upv-branding-definitivo-listo
+  .upv-beneficio-final{
+    min-height:155px !important;
+
+    padding:
+      0 7px
+      !important;
+  }
+
+  body.upv-branding-definitivo-listo
+  .upv-beneficio-icono{
+    width:48px !important;
+    height:48px !important;
+
+    font-size:22px !important;
+  }
+
+  body.upv-branding-definitivo-listo
+  .upv-beneficio-contenido strong{
+    font-size:11px !important;
+  }
+
+  body.upv-branding-definitivo-listo
+  .upv-beneficio-contenido small{
+    font-size:10px !important;
+  }
+
+  body.upv-branding-definitivo-listo
+  .upv-footer-final{
+    padding-bottom:
+      83px !important;
+
+    font-size:11px !important;
+  }
+
+  body.upv-branding-definitivo-listo
+  .upv-footer-final strong{
+    font-size:12px !important;
+  }
+}
+
+
+/* ==========================================================
+   DESKTOP
+   ========================================================== */
+
+@media (min-width:901px){
+
+  .upv-branding-definitivo{
+    margin-top:38px;
+  }
+
+  .upv-brand-logo-card{
+    width:300px;
+  }
+
+  .upv-brand-upv-line{
+    margin-top:25px;
+  }
+
+  .upv-brand-upv-line h1{
+    font-size:58px;
+  }
+
+  .upv-brand-main-subtitle{
+    font-size:22px !important;
+  }
+
+  .upv-brand-location{
+    font-size:15px !important;
+  }
+
+  body.upv-branding-definitivo-listo
+  .upv-selector-titulo{
+    margin-top:48px !important;
+  }
+
+  body.upv-branding-definitivo-listo
+  .upv-company-choice-grid{
+    max-width:900px !important;
+  }
+}

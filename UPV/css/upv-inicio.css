@@ -1,0 +1,221 @@
+/* ==========================================================
+   UPV — INICIO DE ACTIVIDAD
+   ========================================================== */
+
+#upvInicioWrap{
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+
+  width:auto !important;
+  height:auto !important;
+
+  margin:14px 10px !important;
+  padding:20px 22px !important;
+
+  box-sizing:border-box !important;
+
+  border:
+    1px solid
+    rgba(65,91,126,.72) !important;
+
+  border-radius:18px !important;
+
+  background:#162136 !important;
+}
+
+
+/* Encabezado */
+
+.upv-inicio-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  margin-bottom:15px;
+}
+
+.upv-inicio-head span{
+  display:block;
+
+  margin-bottom:4px;
+
+  color:#8397b3;
+
+  font-size:10px;
+  font-weight:900;
+
+  letter-spacing:.12em;
+}
+
+.upv-inicio-head h3{
+  margin:0;
+
+  color:#f5f8fc;
+
+  font-size:18px;
+  font-weight:900;
+}
+
+
+/* Botón */
+
+#upvInicioBtn{
+  display:block !important;
+
+  width:100% !important;
+  min-height:64px !important;
+
+  border:0 !important;
+  border-radius:14px !important;
+
+  color:#fff !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #2563eb,
+      #174cb8
+    ) !important;
+
+  box-shadow:
+    0 10px 24px
+    rgba(37,99,235,.25);
+
+  font-size:20px !important;
+  font-weight:950 !important;
+
+  letter-spacing:.06em;
+
+  cursor:pointer;
+}
+
+
+#upvInicioBtn.is-confirmed{
+  background:
+    linear-gradient(
+      135deg,
+      #22a447,
+      #16813a
+    ) !important;
+}
+
+
+/* Estado */
+
+.upv-inicio-estado{
+  display:flex !important;
+
+  align-items:center;
+  justify-content:space-between;
+
+  gap:12px;
+
+  margin-top:12px;
+
+  padding:11px 14px;
+
+  border:
+    1px solid
+    rgba(148,163,184,.14);
+
+  border-radius:11px;
+
+  background:
+    rgba(255,255,255,.035);
+}
+
+.upv-inicio-estado strong{
+  color:#e5edf8;
+
+  font-size:12px;
+}
+
+.upv-inicio-estado span{
+  color:#8fa4bf;
+
+  font-size:12px;
+}
+
+
+/* ==========================================================
+   SCROLL DE LA VISTA OPERATIVA
+   ========================================================== */
+
+html.upv-formulario-activo,
+body.upv-formulario-activo{
+  height:auto !important;
+
+  min-height:100% !important;
+
+  overflow-x:hidden !important;
+  overflow-y:auto !important;
+
+  touch-action:pan-y !important;
+}
+
+body.upv-formulario-activo
+.upv-contenido-operativo{
+  height:auto !important;
+
+  max-height:none !important;
+
+  min-height:100dvh !important;
+
+  overflow:visible !important;
+
+  padding-bottom:
+    120px !important;
+}
+
+
+/* ==========================================================
+   CELULAR
+   ========================================================== */
+
+@media(max-width:620px){
+
+  #upvInicioWrap{
+    margin:
+      11px 8px
+      !important;
+
+    padding:
+      16px 14px
+      !important;
+
+    border-radius:
+      16px !important;
+  }
+
+  .upv-inicio-head{
+    margin-bottom:12px;
+  }
+
+  .upv-inicio-head h3{
+    font-size:16px;
+  }
+
+  #upvInicioBtn{
+    min-height:58px !important;
+
+    font-size:18px !important;
+  }
+
+  .upv-inicio-estado{
+    flex-direction:column;
+    align-items:flex-start;
+
+    gap:4px;
+  }
+
+  body.upv-formulario-activo
+  .upv-contenido-operativo{
+    padding-bottom:
+      calc(
+        120px +
+        env(safe-area-inset-bottom)
+      )
+      !important;
+  }
+}

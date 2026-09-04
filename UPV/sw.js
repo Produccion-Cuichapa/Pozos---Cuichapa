@@ -1,17 +1,19 @@
 // UPV Service Worker v2
-// Scope: relativo al directorio donde está registrado (./UPV/)
-// Cache: upv-pwa-v3  — no toca cachés de la app principal de recorredores
-const UPV_CACHE = 'upv-pwa-v3';
+// Cache exclusivo upv-pwa-v9-sync-prueba. No toca caches de la app de recorredores.
+// Usa rutas relativas. No depende de /upv/ en minusculas.
+const UPV_CACHE = 'upv-pwa-v33-gps-obligatorio-20260829202842';
 
 const UPV_ASSETS = [
   './',
   './index.html',
   './css/upv.css',
+  './js/firebase-upv.js',
   './js/upv.js',
-  './manifest.json'
+  './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png'
 ];
 
-// INSTALL — precaché de assets locales
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(UPV_CACHE)
@@ -20,29 +22,21 @@ self.addEventListener('install', event => {
   );
 });
 
-// ACTIVATE — limpiar únicamente cachés upv-pwa-* anteriores
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
         keys
           .filter(k => k.startsWith('upv-pwa-') && k !== UPV_CACHE)
-          .map(k => { console.log('[UPV-SW] eliminando caché antiguo:', k); return caches.delete(k); })
+          .map(k => caches.delete(k))
       )
     ).then(() => self.clients.claim())
   );
 });
 
-// FETCH — network-first con fallback a caché; solo recursos del scope
 self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
-
-  // No interceptar peticiones a dominios externos (Firebase, APIs, etc.)
-  if (url.origin !== location.origin) return;
-
-  // No interceptar peticiones que no pertenezcan a este scope
-  // (el navegador ya garantiza el scope, esto es defensa adicional)
   if (event.request.method !== 'GET') return;
+  if (new URL(event.request.url).origin !== location.origin) return;
 
   event.respondWith(
     fetch(event.request)
@@ -55,13 +49,27 @@ self.addEventListener('fetch', event => {
       })
       .catch(() =>
         caches.match(event.request).then(cached => {
-          // Fallback a index.html para rutas de navegación dentro de UPV
           if (cached) return cached;
           if (event.request.mode === 'navigate') {
             return caches.match('./index.html');
           }
-          return new Response('Sin conexión', { status: 503 });
+          return new Response('Sin conexion', { status: 503 });
         })
       )
   );
+});
+
+// Permite activar inmediatamente una versión nueva cuando el usuario
+// presiona el botón Actualizar.
+self.addEventListener('message', function(event) {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+// Activa inmediatamente la nueva versión cuando el usuario pulsa Actualizar.
+self.addEventListener('message', function(event) {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });

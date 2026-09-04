@@ -1,0 +1,641 @@
+/* ==========================================================
+   UPV — HISTORIAL LATERAL
+   ========================================================== */
+
+.upv-reportes-recientes-ocultos{
+  display:none !important;
+}
+
+
+/* ACCESO EN PANTALLA PRINCIPAL */
+
+.upv-historial-acceso{
+  width:min(100%, 760px);
+  margin:22px auto 32px;
+  padding:0 18px;
+  box-sizing:border-box;
+}
+
+
+.upv-historial-acceso-btn{
+  width:100%;
+  min-height:92px;
+
+  display:grid;
+  grid-template-columns:
+    58px
+    minmax(0,1fr)
+    auto
+    26px;
+
+  align-items:center;
+  gap:14px;
+
+  padding:16px 20px;
+
+  border:1.5px solid #d8e3f2;
+  border-radius:20px;
+
+  background:#ffffff;
+
+  box-shadow:
+    0 8px 24px
+    rgba(25,59,113,.07);
+
+  cursor:pointer;
+
+  text-align:left;
+
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    border-color .18s ease;
+}
+
+
+.upv-historial-acceso-btn:hover{
+  transform:translateY(-1px);
+
+  border-color:#b9cce8;
+
+  box-shadow:
+    0 12px 28px
+    rgba(25,59,113,.11);
+}
+
+
+.upv-historial-acceso-btn:active{
+  transform:scale(.995);
+}
+
+
+.upv-historial-acceso-icon{
+  width:54px;
+  height:54px;
+
+  display:grid;
+  place-items:center;
+
+  border-radius:50%;
+
+  background:#edf3fc;
+
+  font-size:27px;
+}
+
+
+.upv-historial-acceso-texto{
+  min-width:0;
+
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+
+.upv-historial-acceso-texto strong{
+  color:#142c56;
+
+  font-size:19px;
+  line-height:1.15;
+
+  font-weight:900;
+}
+
+
+.upv-historial-acceso-texto small{
+  color:#71819d;
+
+  font-size:14px;
+  line-height:1.35;
+
+  font-weight:600;
+}
+
+
+.upv-historial-acceso-limite{
+  padding:8px 12px;
+
+  border-radius:11px;
+
+  background:#eef8ef;
+
+  color:#348148;
+
+  font-size:12px;
+
+  font-weight:900;
+
+  white-space:nowrap;
+}
+
+
+.upv-historial-acceso-arrow{
+  color:#245aa7;
+
+  font-size:32px;
+  line-height:1;
+
+  font-weight:400;
+}
+
+
+
+/* OVERLAY */
+
+.upv-historial-overlay{
+  position:fixed;
+  inset:0;
+
+  z-index:99980;
+
+  background:
+    rgba(10,24,48,.48);
+
+  backdrop-filter:
+    blur(3px);
+
+  opacity:0;
+
+  transition:
+    opacity .25s ease;
+}
+
+
+.upv-historial-overlay.show{
+  opacity:1;
+}
+
+
+
+/* PANEL LATERAL */
+
+.upv-historial-drawer{
+  position:fixed;
+
+  top:0;
+  right:0;
+  bottom:0;
+
+  z-index:99990;
+
+  width:min(480px, 94vw);
+
+  display:flex;
+  flex-direction:column;
+
+  background:#f7faff;
+
+  box-shadow:
+    -18px 0 48px
+    rgba(13,34,69,.19);
+
+  transform:
+    translateX(105%);
+
+  transition:
+    transform .28s
+    cubic-bezier(.22,.8,.3,1);
+
+  overflow:hidden;
+}
+
+
+.upv-historial-drawer.show{
+  transform:
+    translateX(0);
+}
+
+
+body.upv-historial-abierto{
+  overflow:hidden;
+}
+
+
+
+/* ENCABEZADO */
+
+.upv-historial-head{
+  min-height:92px;
+
+  padding:
+    calc(18px + env(safe-area-inset-top))
+    20px
+    18px;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #132f62 0%,
+      #2857aa 100%
+    );
+
+  color:#fff;
+}
+
+
+.upv-historial-head > div{
+  display:flex;
+  align-items:center;
+  gap:13px;
+}
+
+
+.upv-historial-head-icon{
+  width:48px;
+  height:48px;
+
+  display:grid;
+  place-items:center;
+
+  border-radius:15px;
+
+  background:
+    rgba(255,255,255,.14);
+
+  font-size:24px;
+}
+
+
+.upv-historial-head strong{
+  display:block;
+
+  font-size:22px;
+
+  font-weight:950;
+
+  letter-spacing:.5px;
+}
+
+
+.upv-historial-head small{
+  display:block;
+
+  margin-top:3px;
+
+  color:
+    rgba(255,255,255,.74);
+
+  font-size:12px;
+
+  font-weight:700;
+}
+
+
+.upv-historial-cerrar{
+  width:44px;
+  height:44px;
+
+  display:grid;
+  place-items:center;
+
+  border:1px solid
+    rgba(255,255,255,.2);
+
+  border-radius:13px;
+
+  background:
+    rgba(255,255,255,.1);
+
+  color:#fff;
+
+  font-size:30px;
+  line-height:1;
+
+  cursor:pointer;
+}
+
+
+.upv-historial-ayuda{
+  padding:13px 20px;
+
+  border-bottom:
+    1px solid #dfe8f4;
+
+  background:#fff;
+
+  color:#71819d;
+
+  font-size:13px;
+
+  font-weight:650;
+}
+
+
+
+/* LISTADO */
+
+.upv-historial-lista{
+  flex:1;
+
+  padding:
+    14px
+    14px
+    calc(22px + env(safe-area-inset-bottom));
+
+  overflow-y:auto;
+
+  overscroll-behavior:contain;
+}
+
+
+.upv-historial-item{
+  margin-bottom:11px;
+
+  display:grid;
+
+  grid-template-columns:
+    48px
+    minmax(0,1fr);
+
+  gap:12px;
+
+  padding:15px;
+
+  border:1px solid #dae4f1;
+  border-radius:17px;
+
+  background:#fff;
+
+  box-shadow:
+    0 4px 13px
+    rgba(28,58,103,.05);
+}
+
+
+.upv-historial-item-icon{
+  width:46px;
+  height:46px;
+
+  display:grid;
+  place-items:center;
+
+  border-radius:14px;
+
+  background:#edf3fc;
+
+  font-size:22px;
+}
+
+
+.upv-historial-item-main{
+  min-width:0;
+}
+
+
+.upv-historial-item-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+}
+
+
+.upv-historial-item-top > div{
+  min-width:0;
+}
+
+
+.upv-historial-item-top strong{
+  display:block;
+
+  margin-top:5px;
+
+  color:#142c56;
+
+  font-size:15px;
+
+  font-weight:950;
+
+  line-height:1.25;
+}
+
+
+.upv-historial-item-top time{
+  flex:0 0 auto;
+
+  max-width:105px;
+
+  color:#8794aa;
+
+  font-size:10px;
+  line-height:1.25;
+
+  text-align:right;
+}
+
+
+.upv-historial-empresa{
+  display:inline-flex;
+
+  padding:4px 8px;
+
+  border-radius:8px;
+
+  background:#e8f1ff;
+
+  color:#2d60ad;
+
+  font-size:9px;
+
+  font-weight:950;
+
+  letter-spacing:.5px;
+}
+
+
+.upv-historial-datos{
+  margin-top:10px;
+
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+
+
+.upv-historial-datos span{
+  padding:6px 8px;
+
+  border-radius:8px;
+
+  background:#f4f7fb;
+
+  color:#536680;
+
+  font-size:11px;
+
+  font-weight:750;
+}
+
+
+.upv-historial-estados{
+  margin-top:10px;
+
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+
+
+.upv-historial-estados span{
+  padding:4px 7px;
+
+  border-radius:7px;
+
+  font-size:9px;
+
+  font-weight:900;
+}
+
+
+.upv-historial-estados .ok{
+  background:#eaf8ed;
+  color:#2e8445;
+}
+
+
+.upv-historial-estados .pendiente{
+  background:#fff5dd;
+  color:#987021;
+}
+
+
+.upv-historial-estados .wa{
+  background:#e8f7ed;
+  color:#23844a;
+}
+
+
+
+/* VACÍO / CARGANDO */
+
+.upv-historial-vacio,
+.upv-historial-cargando{
+  min-height:260px;
+
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+
+  padding:30px;
+
+  color:#71819d;
+
+  text-align:center;
+}
+
+
+.upv-historial-vacio > div{
+  font-size:40px;
+}
+
+
+.upv-historial-vacio strong{
+  color:#223d68;
+
+  font-size:17px;
+
+  font-weight:900;
+}
+
+
+.upv-historial-vacio span{
+  max-width:260px;
+
+  font-size:13px;
+
+  line-height:1.45;
+}
+
+
+
+/* MÓVIL */
+
+@media(max-width:600px){
+
+  .upv-historial-acceso{
+    margin-top:18px;
+    padding:0 12px;
+  }
+
+
+  .upv-historial-acceso-btn{
+    grid-template-columns:
+      50px
+      minmax(0,1fr)
+      20px;
+
+    min-height:82px;
+
+    padding:13px 14px;
+  }
+
+
+  .upv-historial-acceso-icon{
+    width:48px;
+    height:48px;
+
+    font-size:23px;
+  }
+
+
+  .upv-historial-acceso-texto strong{
+    font-size:17px;
+  }
+
+
+  .upv-historial-acceso-texto small{
+    font-size:12px;
+  }
+
+
+  .upv-historial-acceso-limite{
+    display:none;
+  }
+
+
+  .upv-historial-drawer{
+    width:96vw;
+  }
+
+}
+
+
+/* ==========================================================
+   UPV — PROTECCION PANTALLA PRINCIPAL V2
+   El historial jamás controla las pantallas de UPV.
+   ========================================================== */
+
+#screen-upv.upv-screen.active{
+  display:block;
+}
+
+#upvHistorialOverlay[hidden]{
+  display:none !important;
+}
+
+/*
+ * El listado original permanece disponible para JS,
+ * pero su presentación se sustituye por el acceso central.
+ */
+#upv-historial{
+  box-sizing:border-box;
+}
+
+/*
+ * El acceso Historial nunca debe convertirse
+ * en una pantalla completa.
+ */
+#upvHistorialAcceso{
+  position:relative;
+  inset:auto;
+  z-index:auto;
+}
+

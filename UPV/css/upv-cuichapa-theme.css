@@ -1,0 +1,592 @@
+/* ==========================================================
+   UPV — IDENTIDAD VISUAL CUICHAPA
+   Solo modifica presentación. No altera lógica ni Firebase.
+   ========================================================== */
+
+body.upv-cuichapa-theme{
+  --upv-navy:#12345d;
+  --upv-navy-dark:#0b2443;
+  --upv-blue:#416fe5;
+  --upv-blue-dark:#315bcc;
+  --upv-blue-soft:#edf4ff;
+  --upv-sky:#dce9ff;
+  --upv-text:#11213d;
+  --upv-text-soft:#5f7392;
+  --upv-border:#d7e2f0;
+  --upv-surface:#ffffff;
+  --upv-surface-soft:#f5f8fc;
+  --upv-success:#35a95a;
+  --upv-danger:#d94747;
+  --upv-warning:#e2a52c;
+
+  min-height:100vh;
+  margin:0;
+  color:var(--upv-text);
+  background:
+    linear-gradient(
+      180deg,
+      #eef4fc 0,
+      #f8fafc 330px,
+      #f8fafc 100%
+    );
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* Normalización */
+body.upv-cuichapa-theme *,
+body.upv-cuichapa-theme *::before,
+body.upv-cuichapa-theme *::after{
+  box-sizing:border-box;
+}
+
+body.upv-cuichapa-theme h1,
+body.upv-cuichapa-theme h2,
+body.upv-cuichapa-theme h3,
+body.upv-cuichapa-theme p{
+  overflow-wrap:anywhere;
+}
+
+/* ==========================================================
+   ENCABEZADOS
+   ========================================================== */
+
+body.upv-cuichapa-theme header,
+body.upv-cuichapa-theme .header,
+body.upv-cuichapa-theme .app-header,
+body.upv-cuichapa-theme .top-header,
+body.upv-cuichapa-theme .hero,
+body.upv-cuichapa-theme .hero-card{
+  color:#fff;
+}
+
+body.upv-cuichapa-theme .app-header,
+body.upv-cuichapa-theme .top-header,
+body.upv-cuichapa-theme .hero,
+body.upv-cuichapa-theme .hero-card{
+  position:relative;
+  overflow:hidden;
+  border:0;
+  border-radius:0 0 28px 28px;
+  background:
+    linear-gradient(
+      135deg,
+      var(--upv-navy-dark),
+      #204b82 58%,
+      #4776d6
+    );
+  box-shadow:0 14px 35px rgba(17,42,78,.16);
+}
+
+body.upv-cuichapa-theme .app-header::after,
+body.upv-cuichapa-theme .top-header::after,
+body.upv-cuichapa-theme .hero::after,
+body.upv-cuichapa-theme .hero-card::after{
+  position:absolute;
+  right:-90px;
+  bottom:-120px;
+  width:300px;
+  height:300px;
+  border:1px solid rgba(255,255,255,.11);
+  border-radius:50%;
+  content:"";
+  pointer-events:none;
+}
+
+body.upv-cuichapa-theme h1{
+  margin:0;
+  font-size:clamp(30px,5vw,44px);
+  line-height:1.05;
+  font-weight:900;
+  letter-spacing:-.025em;
+}
+
+body.upv-cuichapa-theme h2{
+  color:var(--upv-text);
+  font-size:clamp(23px,4vw,32px);
+  line-height:1.15;
+  font-weight:850;
+}
+
+body.upv-cuichapa-theme h3{
+  color:var(--upv-text);
+  font-size:20px;
+  line-height:1.2;
+  font-weight:800;
+}
+
+body.upv-cuichapa-theme .subtitle,
+body.upv-cuichapa-theme .subtitulo,
+body.upv-cuichapa-theme .description,
+body.upv-cuichapa-theme .muted{
+  color:var(--upv-text-soft);
+  font-size:15px;
+  line-height:1.5;
+}
+
+/* ==========================================================
+   CONTENEDORES Y TARJETAS
+   ========================================================== */
+
+body.upv-cuichapa-theme main,
+body.upv-cuichapa-theme .main,
+body.upv-cuichapa-theme .main-content,
+body.upv-cuichapa-theme .content,
+body.upv-cuichapa-theme .container{
+  width:min(920px,calc(100% - 28px));
+  margin-right:auto;
+  margin-left:auto;
+}
+
+body.upv-cuichapa-theme .card,
+body.upv-cuichapa-theme .panel,
+body.upv-cuichapa-theme .section-card,
+body.upv-cuichapa-theme .form-card,
+body.upv-cuichapa-theme .option-card,
+body.upv-cuichapa-theme .menu-card,
+body.upv-cuichapa-theme .status-card,
+body.upv-cuichapa-theme .photo-card,
+body.upv-cuichapa-theme .gps-card,
+body.upv-cuichapa-theme fieldset{
+  border:1px solid var(--upv-border);
+  border-radius:20px;
+  background:var(--upv-surface);
+  box-shadow:0 8px 24px rgba(15,38,72,.07);
+}
+
+body.upv-cuichapa-theme .card,
+body.upv-cuichapa-theme .panel,
+body.upv-cuichapa-theme .section-card,
+body.upv-cuichapa-theme .form-card,
+body.upv-cuichapa-theme .status-card,
+body.upv-cuichapa-theme .photo-card,
+body.upv-cuichapa-theme .gps-card{
+  padding:22px;
+}
+
+body.upv-cuichapa-theme fieldset{
+  margin:0 0 18px;
+  padding:20px;
+}
+
+body.upv-cuichapa-theme legend{
+  padding:0 8px;
+  color:#34517c;
+  font-size:14px;
+  font-weight:850;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+/* Opciones PETROSMART / ATO / IPEP */
+body.upv-cuichapa-theme .option-card,
+body.upv-cuichapa-theme .menu-card,
+body.upv-cuichapa-theme [data-option],
+body.upv-cuichapa-theme [data-company],
+body.upv-cuichapa-theme [data-operador]{
+  min-height:118px;
+  padding:22px;
+  border:1px solid var(--upv-border);
+  border-radius:19px;
+  color:var(--upv-text);
+  background:#fff;
+  box-shadow:0 7px 20px rgba(15,38,72,.06);
+  transition:
+    transform .16s ease,
+    border-color .16s ease,
+    box-shadow .16s ease;
+}
+
+body.upv-cuichapa-theme .option-card:hover,
+body.upv-cuichapa-theme .menu-card:hover,
+body.upv-cuichapa-theme [data-option]:hover,
+body.upv-cuichapa-theme [data-company]:hover,
+body.upv-cuichapa-theme [data-operador]:hover{
+  border-color:#8fb0f7;
+  box-shadow:0 12px 28px rgba(35,78,155,.12);
+  transform:translateY(-2px);
+}
+
+body.upv-cuichapa-theme .selected,
+body.upv-cuichapa-theme .active,
+body.upv-cuichapa-theme [aria-selected="true"]{
+  border-color:var(--upv-blue) !important;
+  background:var(--upv-blue-soft) !important;
+  box-shadow:0 0 0 3px rgba(65,111,229,.1) !important;
+}
+
+/* ==========================================================
+   FORMULARIOS
+   ========================================================== */
+
+body.upv-cuichapa-theme label,
+body.upv-cuichapa-theme .label,
+body.upv-cuichapa-theme .field-label{
+  display:block;
+  margin-bottom:8px;
+  color:#3c5273;
+  font-size:15px;
+  line-height:1.3;
+  font-weight:800;
+}
+
+body.upv-cuichapa-theme input,
+body.upv-cuichapa-theme select,
+body.upv-cuichapa-theme textarea{
+  width:100%;
+  min-height:58px;
+  padding:14px 16px;
+  border:1.5px solid #cad8e9;
+  border-radius:14px;
+  outline:none;
+  color:var(--upv-text);
+  background:#fff;
+  font:inherit;
+  font-size:17px;
+  line-height:1.35;
+  transition:
+    border-color .15s ease,
+    box-shadow .15s ease,
+    background .15s ease;
+}
+
+body.upv-cuichapa-theme textarea{
+  min-height:128px;
+  resize:vertical;
+}
+
+body.upv-cuichapa-theme input::placeholder,
+body.upv-cuichapa-theme textarea::placeholder{
+  color:#93a3b8;
+}
+
+body.upv-cuichapa-theme input:focus,
+body.upv-cuichapa-theme select:focus,
+body.upv-cuichapa-theme textarea:focus{
+  border-color:var(--upv-blue);
+  background:#fff;
+  box-shadow:0 0 0 4px rgba(65,111,229,.11);
+}
+
+body.upv-cuichapa-theme input:disabled,
+body.upv-cuichapa-theme select:disabled,
+body.upv-cuichapa-theme textarea:disabled{
+  color:#76869b;
+  background:#eef2f7;
+  cursor:not-allowed;
+}
+
+body.upv-cuichapa-theme .form-group,
+body.upv-cuichapa-theme .field,
+body.upv-cuichapa-theme .input-group{
+  margin-bottom:18px;
+}
+
+/* Carga / Descarga y opciones de selección */
+body.upv-cuichapa-theme .segmented,
+body.upv-cuichapa-theme .toggle-group,
+body.upv-cuichapa-theme .choice-group,
+body.upv-cuichapa-theme .radio-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+body.upv-cuichapa-theme .segmented button,
+body.upv-cuichapa-theme .toggle-group button,
+body.upv-cuichapa-theme .choice,
+body.upv-cuichapa-theme .radio-card{
+  min-height:60px;
+  padding:13px 16px;
+  border:1.5px solid #cedaea;
+  border-radius:14px;
+  color:#334b6e;
+  background:#fff;
+  font-size:16px;
+  font-weight:800;
+}
+
+/* ==========================================================
+   BOTONES
+   ========================================================== */
+
+body.upv-cuichapa-theme button,
+body.upv-cuichapa-theme .btn,
+body.upv-cuichapa-theme [role="button"]{
+  min-height:52px;
+  border-radius:13px;
+  font-family:inherit;
+  font-size:16px;
+  font-weight:850;
+  cursor:pointer;
+  transition:
+    transform .15s ease,
+    box-shadow .15s ease,
+    border-color .15s ease,
+    background .15s ease;
+}
+
+body.upv-cuichapa-theme button:active,
+body.upv-cuichapa-theme .btn:active{
+  transform:translateY(1px);
+}
+
+/* Principal */
+body.upv-cuichapa-theme .btn-primary,
+body.upv-cuichapa-theme .primary,
+body.upv-cuichapa-theme .submit-btn,
+body.upv-cuichapa-theme button[type="submit"]{
+  padding:14px 22px;
+  border:1px solid var(--upv-blue);
+  color:#fff;
+  background:
+    linear-gradient(
+      135deg,
+      #4777e8,
+      var(--upv-blue)
+    );
+  box-shadow:0 8px 18px rgba(65,111,229,.21);
+}
+
+body.upv-cuichapa-theme .btn-primary:hover,
+body.upv-cuichapa-theme .primary:hover,
+body.upv-cuichapa-theme .submit-btn:hover,
+body.upv-cuichapa-theme button[type="submit"]:hover{
+  background:var(--upv-blue-dark);
+  box-shadow:0 11px 23px rgba(65,111,229,.27);
+  transform:translateY(-1px);
+}
+
+/* Secundario */
+body.upv-cuichapa-theme .btn-secondary,
+body.upv-cuichapa-theme .secondary,
+body.upv-cuichapa-theme .outline-btn{
+  padding:13px 20px;
+  border:1.5px solid #bdcce0;
+  color:#27466f;
+  background:#fff;
+}
+
+body.upv-cuichapa-theme .btn-secondary:hover,
+body.upv-cuichapa-theme .secondary:hover,
+body.upv-cuichapa-theme .outline-btn:hover{
+  border-color:var(--upv-blue);
+  color:var(--upv-blue-dark);
+  background:var(--upv-blue-soft);
+}
+
+/* Peligro */
+body.upv-cuichapa-theme .danger,
+body.upv-cuichapa-theme .btn-danger{
+  border-color:#efb4b4;
+  color:#b83232;
+  background:#fff4f4;
+}
+
+/* ==========================================================
+   GPS Y SINCRONIZACIÓN
+   ========================================================== */
+
+body.upv-cuichapa-theme .gps-card,
+body.upv-cuichapa-theme .sync-card,
+body.upv-cuichapa-theme .status-card{
+  position:relative;
+  overflow:hidden;
+}
+
+body.upv-cuichapa-theme .gps-ok,
+body.upv-cuichapa-theme .sync-ok,
+body.upv-cuichapa-theme .success,
+body.upv-cuichapa-theme .online{
+  color:var(--upv-success) !important;
+}
+
+body.upv-cuichapa-theme .gps-error,
+body.upv-cuichapa-theme .sync-error,
+body.upv-cuichapa-theme .error,
+body.upv-cuichapa-theme .offline{
+  color:var(--upv-danger) !important;
+}
+
+body.upv-cuichapa-theme .pending,
+body.upv-cuichapa-theme .warning{
+  color:var(--upv-warning) !important;
+}
+
+/* Pills */
+body.upv-cuichapa-theme .badge,
+body.upv-cuichapa-theme .pill,
+body.upv-cuichapa-theme .status-badge,
+body.upv-cuichapa-theme .sync-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:32px;
+  padding:7px 13px;
+  border:1px solid #cad8e8;
+  border-radius:999px;
+  color:#415a7d;
+  background:#f6f9fd;
+  font-size:13px;
+  line-height:1;
+  font-weight:800;
+}
+
+/* ==========================================================
+   FOTOGRAFÍAS
+   ========================================================== */
+
+body.upv-cuichapa-theme .photos-grid,
+body.upv-cuichapa-theme .photo-grid,
+body.upv-cuichapa-theme .preview-grid,
+body.upv-cuichapa-theme .evidence-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+}
+
+body.upv-cuichapa-theme .photo-preview,
+body.upv-cuichapa-theme .photo-item,
+body.upv-cuichapa-theme .evidence-item{
+  position:relative;
+  min-height:140px;
+  overflow:hidden;
+  border:1px solid var(--upv-border);
+  border-radius:15px;
+  background:var(--upv-surface-soft);
+}
+
+body.upv-cuichapa-theme .photo-preview img,
+body.upv-cuichapa-theme .photo-item img,
+body.upv-cuichapa-theme .evidence-item img{
+  width:100%;
+  height:100%;
+  min-height:140px;
+  object-fit:cover;
+}
+
+body.upv-cuichapa-theme input[type="file"]{
+  min-height:auto;
+  padding:13px;
+  border-style:dashed;
+  background:#f8fbff;
+}
+
+/* ==========================================================
+   MODALES Y MENÚ LATERAL
+   ========================================================== */
+
+body.upv-cuichapa-theme dialog,
+body.upv-cuichapa-theme .modal,
+body.upv-cuichapa-theme .drawer,
+body.upv-cuichapa-theme .sidebar{
+  border:1px solid var(--upv-border);
+  color:var(--upv-text);
+  background:#fff;
+  box-shadow:0 24px 65px rgba(15,29,55,.22);
+}
+
+body.upv-cuichapa-theme dialog,
+body.upv-cuichapa-theme .modal{
+  border-radius:22px;
+}
+
+body.upv-cuichapa-theme .sidebar,
+body.upv-cuichapa-theme .drawer{
+  background:
+    linear-gradient(
+      180deg,
+      var(--upv-navy-dark),
+      var(--upv-navy)
+    );
+  color:#fff;
+}
+
+body.upv-cuichapa-theme .sidebar a,
+body.upv-cuichapa-theme .drawer a{
+  color:#dce9fb;
+}
+
+body.upv-cuichapa-theme .sidebar .active,
+body.upv-cuichapa-theme .drawer .active{
+  color:#fff;
+  background:rgba(94,143,239,.25) !important;
+}
+
+/* ==========================================================
+   HISTORIAL
+   ========================================================== */
+
+body.upv-cuichapa-theme .history-item,
+body.upv-cuichapa-theme .report-item,
+body.upv-cuichapa-theme .registro-item{
+  margin-bottom:12px;
+  padding:17px;
+  border:1px solid var(--upv-border);
+  border-radius:16px;
+  background:#fff;
+  box-shadow:0 5px 16px rgba(15,38,72,.05);
+}
+
+/* ==========================================================
+   RESPONSIVE
+   ========================================================== */
+
+@media (max-width:720px){
+  body.upv-cuichapa-theme main,
+  body.upv-cuichapa-theme .main,
+  body.upv-cuichapa-theme .main-content,
+  body.upv-cuichapa-theme .content,
+  body.upv-cuichapa-theme .container{
+    width:min(100% - 20px,920px);
+  }
+
+  body.upv-cuichapa-theme .card,
+  body.upv-cuichapa-theme .panel,
+  body.upv-cuichapa-theme .section-card,
+  body.upv-cuichapa-theme .form-card,
+  body.upv-cuichapa-theme .status-card,
+  body.upv-cuichapa-theme .photo-card,
+  body.upv-cuichapa-theme .gps-card{
+    padding:17px;
+    border-radius:17px;
+  }
+
+  body.upv-cuichapa-theme input,
+  body.upv-cuichapa-theme select,
+  body.upv-cuichapa-theme textarea{
+    min-height:56px;
+    font-size:16px;
+  }
+
+  body.upv-cuichapa-theme .photos-grid,
+  body.upv-cuichapa-theme .photo-grid,
+  body.upv-cuichapa-theme .preview-grid,
+  body.upv-cuichapa-theme .evidence-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media (max-width:430px){
+  body.upv-cuichapa-theme .segmented,
+  body.upv-cuichapa-theme .toggle-group,
+  body.upv-cuichapa-theme .choice-group,
+  body.upv-cuichapa-theme .radio-grid{
+    grid-template-columns:1fr;
+  }
+
+  body.upv-cuichapa-theme .photos-grid,
+  body.upv-cuichapa-theme .photo-grid,
+  body.upv-cuichapa-theme .preview-grid,
+  body.upv-cuichapa-theme .evidence-grid{
+    grid-template-columns:1fr 1fr;
+    gap:9px;
+  }
+}

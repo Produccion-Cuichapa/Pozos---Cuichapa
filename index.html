@@ -98,6 +98,55 @@
 .nivel-ep-btn.nivel-ep-sel-green  { border-color: #16a34a; background: rgba(22,163,74,.15); }
 .nivel-ep-btn.nivel-ep-sel-red    { border-color: #dc2626; background: rgba(220,38,38,.15); }
 .nivel-ep-btn.nivel-ep-sel-amber  { border-color: #d97706; background: rgba(217,119,6,.15); }
+
+/* PERA ACCIONES V1 */
+
+.pera-acciones-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:9px;
+}
+
+.pera-accion-btn{
+  width:100%;
+  min-height:48px;
+  padding:10px 12px;
+  border:1.5px solid #d7e1ef;
+  border-radius:11px;
+  background:#f8fafc;
+  color:#17233c;
+  font-family:'Inter',sans-serif;
+  font-size:12px;
+  font-weight:800;
+  text-align:left;
+  cursor:pointer;
+  transition:.15s ease;
+}
+
+.pera-accion-btn.sel{
+  border-color:#2563eb;
+  background:#dbeafe;
+  color:#1e40af;
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(37,99,235,.12);
+}
+
+#regObs.pera-obs-error{
+  border-color:#dc2626 !important;
+  background:#fff7f7 !important;
+  box-shadow:
+    0 0 0 3px
+    rgba(220,38,38,.08);
+}
+
+@media(min-width:520px){
+  .pera-acciones-grid{
+    grid-template-columns:
+      repeat(3,minmax(0,1fr));
+  }
+}
+
 </style>
 
 <meta charset="UTF-8">
@@ -148,16 +197,76 @@
 <script>
 // ══ DIAGNÓSTICO GLOBAL DE ERRORES ════════════════════════════
 window.onerror = function(msg, src, line, col, err){
-  var info = '[ERROR] '+msg+' | '+src+':'+line+':'+col;
-  console.error(info, err||'');
+
+  var texto =
+    String(msg || '').trim();
+
+  var info =
+    '[ERROR] ' +
+    texto +
+    ' | ' +
+    (src || 'sin origen') +
+    ':' +
+    (line || 0) +
+    ':' +
+    (col || 0);
+
+  /*
+   * Siempre conservar el diagnóstico en consola.
+   */
+  console.error(
+    info,
+    err || ''
+  );
+
+  /*
+   * Algunos scripts externos/CDN reportan únicamente
+   * "Script error." por restricciones cross-origin.
+   *
+   * Ese mensaje no aporta información al operador y
+   * no significa necesariamente que la aplicación
+   * tenga un fallo funcional.
+   *
+   * No mostramos toast únicamente para ese caso.
+   */
+  if(
+    texto === 'Script error.' ||
+    texto === 'Script error'
+  ){
+    return false;
+  }
+
   try{
-    var body = document.body;
-    if(body && !body.dataset.errToastShown){
+
+    var body =
+      document.body;
+
+    if(
+      body &&
+      !body.dataset.errToastShown
+    ){
+
       body.dataset.errToastShown = '1';
-      setTimeout(function(){ delete body.dataset.errToastShown; }, 5000);
-      if(typeof showToast === 'function') showToast('⚠️ Error JS: '+String(msg).slice(0,60));
+
+      setTimeout(
+        function(){
+          delete body.dataset.errToastShown;
+        },
+        5000
+      );
+
+      if(
+        typeof showToast === 'function'
+      ){
+        showToast(
+          '⚠️ Error JS: ' +
+          texto.slice(0,60)
+        );
+      }
     }
+
   }catch(e2){}
+
   return false;
 };
 window.addEventListener('unhandledrejection', function(e){
@@ -165,6 +274,10 @@ window.addEventListener('unhandledrejection', function(e){
   try{ if(typeof showToast === 'function') showToast('⚠️ Error async: '+String(e.reason).slice(0,50)); }catch(ex){}
 });
 </script>
+
+<style>
+</style>
+
 </head>
 <body style="padding-bottom:env(safe-area-inset-bottom,0px)">
 
@@ -1514,7 +1627,36 @@ function ppToggle(id){
       </div>
     </div>
 
-    <textarea id="regObs" placeholder="Observaciones adicionales..." style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--surface2);color:var(--txt);resize:none;height:64px;margin-top:12px;font-family:'Inter',sans-serif"></textarea>
+
+
+    <div
+      id="peraObsLabel"
+      style="
+        margin-top:14px;
+        margin-bottom:6px;
+        font-size:12px;
+        font-weight:800;
+        color:#334155;
+      ">
+      📝 Observaciones de Condición de Pera
+      <span
+        id="peraObsReqMark"
+        style="color:#dc2626;display:none"
+      >*</span>
+    </div>
+
+    <textarea id="regObs" placeholder="Escribe una observación sobre la condición de la pera..." style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--surface2);color:var(--txt);resize:none;height:64px;margin-top:12px;font-family:'Inter',sans-serif"></textarea>
+
+    <div
+      id="peraObsHint"
+      style="
+        margin-top:7px;
+        font-size:11px;
+        color:#64748b;
+        line-height:1.35;
+      ">
+      ❌ Si marcas una X, escribe una observación.
+    </div>
   </div>
 
 </div><!-- /tabs-wrapper -->
@@ -2617,6 +2759,90 @@ function volverAlPicker(){
  * Selector reutilizable para Maniobra y Estado
  * en Guardia y Aforo.
  */
+function actualizarExclusionModuloPozo(maniobraId, estadoId, maniobraWrapId, estadoWrapId){
+
+  var inputManiobra =
+    document.getElementById(maniobraId);
+
+  var inputEstado =
+    document.getElementById(estadoId);
+
+  var maniobra =
+    inputManiobra
+      ? String(inputManiobra.value || '').trim()
+      : '';
+
+  var estado =
+    inputEstado
+      ? String(inputEstado.value || '').trim()
+      : '';
+
+  var hayManiobra =
+    maniobra === 'Apertura' ||
+    maniobra === 'Cierre';
+
+  var hayEstado =
+    estado === 'Abierto' ||
+    estado === 'Cerrado' ||
+    estado === 'Intermitente';
+
+
+  var wrapManiobra =
+    document.getElementById(maniobraWrapId);
+
+  var wrapEstado =
+    document.getElementById(estadoWrapId);
+
+
+  if(wrapManiobra){
+    wrapManiobra
+      .querySelectorAll('.big-status-btn')
+      .forEach(function(btn){
+
+        btn.disabled = hayEstado;
+
+        btn.style.opacity =
+          hayEstado ? '0.35' : '';
+
+        btn.style.pointerEvents =
+          hayEstado ? 'none' : '';
+
+        btn.style.filter =
+          hayEstado ? 'grayscale(0.65)' : '';
+
+        btn.setAttribute(
+          'aria-disabled',
+          hayEstado ? 'true' : 'false'
+        );
+      });
+  }
+
+
+  if(wrapEstado){
+    wrapEstado
+      .querySelectorAll('.big-status-btn')
+      .forEach(function(btn){
+
+        btn.disabled = hayManiobra;
+
+        btn.style.opacity =
+          hayManiobra ? '0.35' : '';
+
+        btn.style.pointerEvents =
+          hayManiobra ? 'none' : '';
+
+        btn.style.filter =
+          hayManiobra ? 'grayscale(0.65)' : '';
+
+        btn.setAttribute(
+          'aria-disabled',
+          hayManiobra ? 'true' : 'false'
+        );
+      });
+  }
+}
+
+
 function selOpcionPozoModulo(btn, inputId, wrapId, valor){
   var input = document.getElementById(inputId);
   var wrap = document.getElementById(wrapId);
@@ -2662,6 +2888,33 @@ function selOpcionPozoModulo(btn, inputId, wrapId, valor){
       btn.classList.add('sel-c');
     }
   }
+
+
+  if(
+    inputId === 'guardiaManiobra' ||
+    inputId === 'guardiaEstado'
+  ){
+    actualizarExclusionModuloPozo(
+      'guardiaManiobra',
+      'guardiaEstado',
+      'guardiaManiobraWrap',
+      'guardiaEstadoWrap'
+    );
+  }
+
+
+  if(
+    inputId === 'aforoManiobra' ||
+    inputId === 'aforoEstado'
+  ){
+    actualizarExclusionModuloPozo(
+      'aforoManiobra',
+      'aforoEstado',
+      'aforoManiobraWrap',
+      'aforoEstadoWrap'
+    );
+  }
+
 
   if(typeof actualizarEnviarBtn === 'function'){
     actualizarEnviarBtn();
@@ -2725,6 +2978,125 @@ function lineaManiobraEstado(maniobraId, estadoId){
   return texto;
 }
 
+
+/* ==========================================================
+   CO_EXCLUSION_MUTUA_V1
+
+   CONTROL OPERATIVO
+
+   Grupo A:
+     Apertura / Cierre
+
+   Grupo B:
+     Abierto / Cerrado / Intermitente
+
+   REGLA:
+   Solo uno de los dos grupos puede utilizarse.
+   ========================================================== */
+
+function actualizarExclusionControlOperativo(){
+
+  /*
+   * Fuente real del estado:
+   * #coManiobra = Apertura / Cierre
+   * #coEstatus  = Abierto / Cerrado / Intermitente
+   */
+
+  var inputManiobra =
+    document.getElementById('coManiobra');
+
+  var inputEstado =
+    document.getElementById('coEstatus');
+
+
+  var maniobra =
+    inputManiobra
+      ? String(inputManiobra.value || '').trim()
+      : '';
+
+  var estado =
+    inputEstado
+      ? String(inputEstado.value || '').trim()
+      : '';
+
+
+  var hayManiobra =
+    maniobra === 'Apertura' ||
+    maniobra === 'Cierre';
+
+  var hayEstado =
+    estado === 'Abierto' ||
+    estado === 'Cerrado' ||
+    estado === 'Intermitente';
+
+
+  /*
+   * APERTURA / CIERRE
+   *
+   * Se bloquean solamente cuando ya existe
+   * un Estado del Pozo seleccionado.
+   */
+
+  document
+    .querySelectorAll(
+      '#coManiobraWrap .big-status-btn'
+    )
+    .forEach(function(btn){
+
+      btn.disabled =
+        hayEstado;
+
+      btn.style.opacity =
+        hayEstado ? '0.35' : '';
+
+      btn.style.pointerEvents =
+        hayEstado ? 'none' : '';
+
+      btn.style.filter =
+        hayEstado ? 'grayscale(0.65)' : '';
+
+      btn.setAttribute(
+        'aria-disabled',
+        hayEstado ? 'true' : 'false'
+      );
+
+    });
+
+
+  /*
+   * ABIERTO / CERRADO / INTERMITENTE
+   *
+   * Se bloquean solamente cuando ya existe
+   * Apertura o Cierre.
+   */
+
+  document
+    .querySelectorAll(
+      '[onclick*="selBigStatus(this,\'coEstatus\'"]'
+    )
+    .forEach(function(btn){
+
+      btn.disabled =
+        hayManiobra;
+
+      btn.style.opacity =
+        hayManiobra ? '0.35' : '';
+
+      btn.style.pointerEvents =
+        hayManiobra ? 'none' : '';
+
+      btn.style.filter =
+        hayManiobra ? 'grayscale(0.65)' : '';
+
+      btn.setAttribute(
+        'aria-disabled',
+        hayManiobra ? 'true' : 'false'
+      );
+
+    });
+
+}
+
 function selManiobraPozo(btn, valor){
   var input = document.getElementById('coManiobra');
   if(!input) return;
@@ -2760,15 +3132,83 @@ function selManiobraPozo(btn, valor){
   if(typeof actualizarEnviarBtn === 'function'){
     actualizarEnviarBtn();
   }
+
+
+  actualizarExclusionControlOperativo();
 }
 
 function selBigStatus(btn, hiddenId, val){
-  // Deselect siblings in same group
-  var siblings = btn.parentElement.querySelectorAll('.big-status-btn');
-  siblings.forEach(function(b){ b.classList.remove('active'); });
-  btn.classList.add('active');
-  var hidden = document.getElementById(hiddenId);
-  if(hidden) hidden.value = val;
+
+  var hidden =
+    document.getElementById(hiddenId);
+
+  if(!hidden){
+    return;
+  }
+
+
+  /*
+   * Saber si estamos tocando nuevamente
+   * la opción que ya estaba seleccionada.
+   */
+  var yaSeleccionado =
+    hidden.value === val &&
+    btn.classList.contains('active');
+
+
+  /*
+   * Limpiar solamente los botones
+   * pertenecientes al mismo grupo.
+   */
+  var siblings =
+    btn.parentElement
+      .querySelectorAll('.big-status-btn');
+
+  siblings.forEach(
+    function(b){
+      b.classList.remove('active');
+    }
+  );
+
+
+  /*
+   * Segundo toque = desmarcar.
+   */
+  if(yaSeleccionado){
+
+    hidden.value = '';
+
+  }else{
+
+    hidden.value = val;
+
+    btn.classList.add('active');
+
+  }
+
+
+  /*
+   * Exclusión únicamente para
+   * Estado del Pozo de Control Operativo.
+   */
+  if(
+    hiddenId === 'coEstatus' &&
+    typeof actualizarExclusionControlOperativo === 'function'
+  ){
+
+    actualizarExclusionControlOperativo();
+
+  }
+
+
+  if(
+    typeof actualizarEnviarBtn === 'function'
+  ){
+
+    actualizarEnviarBtn();
+
+  }
+
 }
 
 // ── Modo de registro ──────────────────────────────
@@ -2863,29 +3303,242 @@ function selFluye(btn, val){
 }
 
 // ── Condición de Pera ─────────────────────────────
-var peraState = {areaPozo:'', contrapeso:'', cerco:'', bayoneta:''};
 
-function setPera(key, estado){
-  // Toggle — si ya está seleccionado lo deselecciona
-  if(peraState[key] === estado){
-    peraState[key] = '';
-    document.getElementById('pera-'+key+'-ok').classList.remove('sel');
-    document.getElementById('pera-'+key+'-bad').classList.remove('sel');
-  } else {
-    peraState[key] = estado;
-    document.getElementById('pera-'+key+'-ok').classList.toggle('sel', estado==='ok');
-    document.getElementById('pera-'+key+'-bad').classList.toggle('sel', estado==='bad');
+var peraState = {
+  areaPozo:'',
+  contrapeso:'',
+  cerco:'',
+  bayoneta:''
+};
+
+
+/*
+ * Acciones correctivas seleccionadas.
+ */
+var peraAcciones = {
+  chapeo:false,
+  limpiezaContrapozo:false,
+  otro:false
+};
+
+
+function peraTieneFalla(){
+
+  return Object.keys(
+    peraState
+  ).some(function(k){
+
+    return (
+      peraState[k] === 'bad'
+    );
+  });
+}
+
+
+function actualizarAccionesPera(){
+
+  var hayFalla = peraTieneFalla();
+
+  var mark =
+    document.getElementById('peraObsReqMark');
+
+  var obs =
+    document.getElementById('regObs');
+
+  var hint =
+    document.getElementById('peraObsHint');
+
+  if(mark){
+    mark.style.display =
+      hayFalla ? 'inline' : 'none';
+  }
+
+  if(obs){
+    obs.setAttribute(
+      'aria-required',
+      hayFalla ? 'true' : 'false'
+    );
+
+    if(!hayFalla){
+      obs.classList.remove('pera-obs-error');
+    }
+  }
+
+  if(hint){
+    hint.style.color =
+      hayFalla ? '#b45309' : '#64748b';
   }
 }
 
-function peraLinea(){
-  var map = {areaPozo:'Área', contrapeso:'Contrapozo', cerco:'Cerco', bayoneta:'Bayoneta'};
-  var parts = [];
-  Object.keys(peraState).forEach(function(k){
-    if(peraState[k]) parts.push(map[k]+': '+(peraState[k]==='ok'?'✓':'✗'));
-  });
-  return parts.length ? '🛢 *Cond. de Pera*\n'+parts.map(function(p){ return (p.includes('✓')?'✅':'❌')+' '+p.replace(': ✓','').replace(': ✗',''); }).join('\n') : '';
+
+
+function setPera(key, estado){
+
+  if(
+    peraState[key] === estado
+  ){
+
+    peraState[key] = '';
+
+    document
+      .getElementById(
+        'pera-' + key + '-ok'
+      )
+      ?.classList
+      .remove('sel');
+
+    document
+      .getElementById(
+        'pera-' + key + '-bad'
+      )
+      ?.classList
+      .remove('sel');
+
+  }else{
+
+    peraState[key] =
+      estado;
+
+    document
+      .getElementById(
+        'pera-' + key + '-ok'
+      )
+      ?.classList
+      .toggle(
+        'sel',
+        estado === 'ok'
+      );
+
+    document
+      .getElementById(
+        'pera-' + key + '-bad'
+      )
+      ?.classList
+      .toggle(
+        'sel',
+        estado === 'bad'
+      );
+  }
+
+
+  actualizarAccionesPera();
 }
+
+
+function peraLinea(){
+
+  var map = {
+    areaPozo: 'Área de pozo',
+    contrapeso: 'Contrapozo',
+    cerco: 'Cerco perimetral',
+    bayoneta: 'Bayoneta'
+  };
+
+  var parts = [];
+
+  Object.keys(peraState).forEach(function(k){
+
+    if(peraState[k] !== 'bad'){
+      return;
+    }
+
+    parts.push('❌ ' + map[k]);
+  });
+
+  if(!parts.length){
+    return '';
+  }
+
+  return '🛢 *COND. DE PERA*\n' +
+    parts.join('\n');
+}
+
+
+function validarCondicionPera(){
+
+  var algunoMarcado =
+    Object.keys(
+      peraState
+    ).some(function(k){
+
+      return !!peraState[k];
+
+    });
+
+
+  /*
+   * Si todavía no están usando este bloque,
+   * no interferimos con otros tipos de reporte.
+   */
+  if(!algunoMarcado){
+    return true;
+  }
+
+
+  var obs =
+    document.getElementById(
+      'regObs'
+    );
+
+
+  var textoObs =
+    obs
+      ? String(obs.value || '').trim()
+      : '';
+
+
+  /*
+   * Observación obligatoria ÚNICAMENTE
+   * cuando exista al menos una condición en X.
+   */
+  var hayFalla = peraTieneFalla();
+
+  if(hayFalla && !textoObs){
+
+    if(obs){
+
+      obs.classList.add(
+        'pera-obs-error'
+      );
+
+      obs.focus();
+
+      obs.scrollIntoView({
+        behavior:'smooth',
+        block:'center'
+      });
+    }
+
+    if(
+      typeof showToast ===
+      'function'
+    ){
+
+      showToast(
+        '⚠️ Hay una condición en X. Escribe una observación.'
+      );
+
+    }else{
+
+      alert(
+        'Hay una condición en X. Escribe una observación.'
+      );
+    }
+
+    return false;
+  }
+
+  if(obs){
+    obs.classList.remove(
+      'pera-obs-error'
+    );
+  }
+
+
+  return true;
+}
+
+
 
 function selEstado(btn, val){
   document.querySelectorAll('#btn-estable,#btn-inestable').forEach(function(b){
@@ -3199,7 +3852,7 @@ function _continuarEnvio(){
   }
 
   // ── MODO COMPLETO ──
-  var msg='📋 *REPORTE DE VISITA*\n🛢 Pozo: *C-'+W+'*\n👷 Recorredor: '+decorarRecorredorMensaje(REC)+'\n📅 '+now()+'\n';
+  var msg='🛢 *C-'+W+'* 🛢\n*REPORTE DE VISITA*\n'+decorarRecorredorMensaje(REC)+'\n📅 '+now()+'\n';
   var ok=false;
   var est=v('coEstatus'),flu=v('coFlujo'),sis=v('coSistema');
   var maniobraPozo=v('coManiobra');
@@ -3248,19 +3901,77 @@ function _continuarEnvio(){
     ok = true;
 
   }else if(est||flu||sis){
-    if(!est){showToast('⚠️ C.O.: Selecciona Estatus');return}
+    if(!est && !maniobraPozo){
+      showToast('⚠️ C.O.: Selecciona Apertura/Cierre o el Estado del pozo');
+      return;
+    }
     if(!flu){showToast('⚠️ C.O.: Selecciona Fluye');return}
     if(!sis){showToast('⚠️ C.O.: Selecciona SAP');return}
     var d='';
-    if(sis==='BN'||sis==='FY'){var tp=v('coTP'),ld=v('coLDD'),tr=v('coTR');var lbn=v('coLBN');var kimray=v('coKimray'),conico=v('coConico'),starpack=v('coStarpack'),trVuelta=v('coTrVuelta');var _dp=[];if(tp)_dp.push('PTP: '+tp+' kg/cm²');if(ld)_dp.push('LDD: '+ld+' kg/cm²');if(tr)_dp.push('PTR: '+tr+' kg/cm²');if(lbn&&sis==='BN')_dp.push('LBN: '+lbn+' kg/cm²');d=_dp.join(' · ');if(sis==='BN'&&(kimray||conico||starpack||trVuelta))d+='\n'+(kimray?'KIMRAY # VUELTAS: '+kimray+' ':'')+(conico?'CAMCO: '+conico+' ':'')+(starpack?'STARPACK: '+starpack+' ':'')+(trVuelta?'TR#VUELTA: '+trVuelta:'');}
+    if(sis==='BN'||sis==='FY'){
+      var tp=v('coTP'),ld=v('coLDD'),tr=v('coTR');
+      var lbn=v('coLBN');
+      var kimray=v('coKimray'),conico=v('coConico'),
+          starpack=v('coStarpack'),trVuelta=v('coTrVuelta');
+
+      var _dp=[];
+
+      if(tp || tr){
+        _dp.push(
+          (tp ? 'PTP '+tp : '') +
+          (tp && tr ? '  |  ' : '') +
+          (tr ? 'PTR '+tr : '')
+        );
+      }
+
+      if(ld || (lbn && sis==='BN')){
+        _dp.push(
+          (ld ? 'LDD '+ld : '') +
+          (ld && lbn && sis==='BN' ? '  |  ' : '') +
+          (lbn && sis==='BN' ? 'LBN '+lbn : '')
+        );
+      }
+
+      if(_dp.length){
+        d='📊 *PRESIONES (KG/CM²)*\n'+_dp.join('\n');
+      }
+
+      var _acc=[];
+
+      if(kimray) _acc.push('KIMRAY #Vueltas: '+kimray);
+      if(conico) _acc.push('CAMCO: '+conico);
+      if(starpack) _acc.push('STARPACK: '+starpack);
+      if(trVuelta) _acc.push('TR #Vueltas: '+trVuelta);
+
+      if(_acc.length){
+        d+=(d?'\n':'')+_acc.join('\n');
+      }
+    }
     else if(sis==='BM'){var p2=v('coPresion'),ptr2=v('coPTR_bm'),e2=v('coEmb'),c2=v('coCarrera');var _dbm=[];if(p2)_dbm.push('PTP: '+p2+' kg/cm²');if(ptr2)_dbm.push('PTR: '+ptr2+' kg/cm²');if(e2)_dbm.push('Vel: '+e2+' EPM');if(c2)_dbm.push('Car: '+c2+' pulg');d=_dbm.join(' · ');}
     var flujoTipo = v('coFlujoTipo');
     var vueltasTP = flujoTipo==='estrangulador' ? v('coVueltasTP_est') : v('coVueltasTP_fra');
     var estrangLine = '';
     if(flujoTipo==='estrangulador'){
-      estrangLine = '🔩 Estrangulador: '+(v('coEstrangulador')||'—')+' pulg - TP #Vueltas: '+(vueltasTP||'—')+'\n';
+      var estrangPulg = v('coEstrangulador');
+      var estrangPartes = [];
+
+      if(estrangPulg){
+        estrangPartes.push('🔩 Estrangulador: '+estrangPulg+' pulg');
+      }
+
+      if(vueltasTP){
+        estrangPartes.push('🔄 TP #Vueltas: '+vueltasTP);
+      }
+
+      if(estrangPartes.length){
+        estrangLine = estrangPartes.join('\n')+'\n';
+      }
+
     } else if(flujoTipo==='franco'){
-      estrangLine = '⚙️ Franco - TP #Vueltas: '+(vueltasTP||'—')+'\n';
+      estrangLine =
+        '⚙️ Franco' +
+        (vueltasTP ? '\n🔄 TP #Vueltas: '+vueltasTP : '') +
+        '\n';
     }
     msg+='══════════════════\n🔧 *CONTROL OPERATIVO*\n'
       +(maniobraPozo
@@ -3268,7 +3979,7 @@ function _continuarEnvio(){
             ? '🔓 Maniobra realizada: APERTURA\n'
             : '🔒 Maniobra realizada: CIERRE\n')
         : '')
-      +'📌 Estado actual: '+est+'\n'
+      +(est ? '📌 Estado: '+est+'\n' : '')
       +'💧 Fluye: '+flu+'\n'
       +estrangLine
       +'⚙️ SAP: '+sis+'\n'
@@ -3291,8 +4002,19 @@ function _continuarEnvio(){
     if(!ctm||!bls){showToast('⚠️ Nivel: Falta CTM o BLS');return}
     var hr=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
     document.getElementById('horaBox').textContent='⏱ '+hr;
-    msg+='══════════════════\n📊 *'+(_nivTipo==='pm'?'NIVEL PRESA METÁLICA':'NIVEL FRAC TANK')+'*\n📏 CTM: '+ctm+' cm · 🛢 BLS: '+bls+' bls · 🕐 '+hr+'\n'+(v('nivObs')?'📝 '+v('nivObs')+'\n':'');ok=true;
+    msg+='══════════════════\n🛢 *'+(_nivTipo==='pm'?'NIVEL PRESA METÁLICA':'NIVEL FRAC TANK')+'*\n'
+      +'CTM: '+ctm+' cm  |  BLS: '+bls+'\n'
+      +'🕐 '+hr+'\n'
+      +(v('nivObs')?'📝 '+v('nivObs')+'\n':'');
+    ok=true;
   }
+  /*
+   * Validación obligatoria de Condición de Pera.
+   */
+  if(!validarCondicionPera()){
+    return;
+  }
+
   var peraMsg = peraLinea();
   if(checks.trabajo||checks.drenar||checks.aforo||checks.intermitente){
     if(checks.aforo&&!v('regAforo')){showToast('⚠️ Falta cantidad de Aforo');return}
@@ -3425,6 +4147,7 @@ function resetFormulario(){
   renderFotos();
   // Limpiar condición de pera
   peraState = {areaPozo:'', contrapeso:'', cerco:'', bayoneta:''};
+
   ['areaPozo','contrapeso','cerco','bayoneta'].forEach(function(k){
     var ok = document.getElementById('pera-'+k+'-ok');
     var bad = document.getElementById('pera-'+k+'-bad');
@@ -4174,7 +4897,7 @@ function hcCargar(){
 
   if(typeof fbDB !== 'undefined' && fbDB){
     if(statusEl) statusEl.textContent = '🔄 Sincronizando todos los dispositivos...';
-    fbDB.ref('reportes').orderByChild('fecha').limitToLast(15).once('value', function(snap){
+    fbDB.ref('reportes').orderByChild('fecha').limitToLast(10).once('value', function(snap){
       try{
         var localIds={};
         locales.forEach(function(r){ if(r.id) localIds[r.id]=true; });
@@ -5861,6 +6584,58 @@ function guardarEnFirebase(reporte){
     return Promise.resolve(false);
   }
 
+  /*
+   * Un reporte recuperado del historial local ya no lleva
+   * Base64 en localStorage. Si sabemos que tenía fotografías,
+   * reconstruirlas desde IndexedDB antes de escribir Firebase.
+   */
+  var fotosActuales =
+    Array.isArray(reporte.fotos)
+      ? reporte.fotos
+      : [];
+
+  var fotosEsperadas =
+    Number(reporte.nFotos || 0);
+
+  if(
+    !fotosActuales.length &&
+    fotosEsperadas > 0 &&
+    !reporte._fotosIDBRecuperadas &&
+    typeof cargarFotosReporteIDB === 'function'
+  ){
+    var reporteHidratado =
+      Object.assign({}, reporte);
+
+    reporteHidratado._fotosIDBRecuperadas = true;
+
+    return cargarFotosReporteIDB(reporte.id)
+      .then(function(fotosIDB){
+        reporteHidratado.fotos =
+          Array.isArray(fotosIDB)
+            ? fotosIDB
+            : [];
+
+        console.log(
+          '[FOTOS_IDB] recuperadas para Firebase:',
+          reporte.id,
+          reporteHidratado.fotos.length
+        );
+
+        return guardarEnFirebase(
+          reporteHidratado
+        );
+      })
+      .catch(function(error){
+        console.error(
+          '[FOTOS_IDB] error recuperando reporte:',
+          reporte.id,
+          error
+        );
+
+        return false;
+      });
+  }
+
   var reportId = String(reporte.id);
   var reporteRef =
     fbDB.ref('reportes/' + reportId);
@@ -6134,7 +6909,7 @@ function escucharFirebase(){
   try{ fbDB.ref('reportes').off('value'); }catch(e){}
 
   var _fbReportesInit = false;
-  fbDB.ref('reportes').orderByChild('fecha').limitToLast(15).on('value', function(snapshot){
+  fbDB.ref('reportes').orderByChild('fecha').limitToLast(10).on('value', function(snapshot){
     actualizarSyncBar('conectado');
     if(_fbReportesInit){
       // Find the newest report to show who sent it
@@ -6211,7 +6986,7 @@ function escucharFirebase(){
     var merged = Object.values(localMap);
     merged.sort(function(a,b){ return new Date(b.fecha)-new Date(a.fecha); });
     if(merged.length > 15){
-      merged = merged.slice(0, 15);
+      merged = merged.slice(0, 10);
     }
     saveHistorial(merged);
     renderHistorial();
@@ -6583,15 +7358,79 @@ function buscarUltimoNivelAforo(pozo,tipoDeposito){
 }
 
 function guardarReporte(reporte){
+  if(!reporte || reporte.id === undefined || reporte.id === null){
+    return;
+  }
+
+  /*
+   * Las evidencias pesadas NO deben vivir en localStorage.
+   * Se conservan en IndexedDB para que sobrevivan sin señal,
+   * recargas y cierres de la PWA.
+   */
+  var fotosReporte =
+    Array.isArray(reporte.fotos)
+      ? reporte.fotos.slice()
+      : [];
+
+  var nFotosReporte =
+    fotosReporte.length ||
+    Number(reporte.nFotos || 0);
+
+  if(
+    fotosReporte.length &&
+    typeof guardarFotosReporteIDB === 'function'
+  ){
+    guardarFotosReporteIDB(
+      reporte.id,
+      fotosReporte
+    ).then(function(ok){
+      if(!ok){
+        console.warn(
+          '[REPORTE] No fue posible persistir evidencias en IndexedDB:',
+          reporte.id
+        );
+      }
+    });
+  }
+
+  /*
+   * Copia ligera para historial local.
+   * No almacenar Base64 dentro de localStorage.
+   */
+  var reporteLocal = Object.assign({}, reporte);
+
+  reporteLocal.nFotos = nFotosReporte;
+  reporteLocal.fotos = [];
+
   var arr = getHistorial();
   var idx = -1;
-  for(var i=0;i<arr.length;i++){ if(arr[i].id===reporte.id){ idx=i; break; } }
-  if(idx >= 0) arr[idx] = reporte;
-  else arr.unshift(reporte);
-  if(arr.length > 15) arr = arr.slice(0, 15); // máximo 15 reportes en historial local
+
+  for(var i=0;i<arr.length;i++){
+    if(arr[i].id === reporte.id){
+      idx = i;
+      break;
+    }
+  }
+
+  if(idx >= 0){
+    arr[idx] = reporteLocal;
+  }else{
+    arr.unshift(reporteLocal);
+  }
+
+  if(arr.length > 15){
+    arr = arr.slice(0, 10);
+  }
+
   saveHistorial(arr);
-  // Sincronizar a Firebase si hay señal
-  if(fbDB) guardarEnFirebase(reporte);
+
+  /*
+   * Si Firebase está disponible, usar el objeto ORIGINAL,
+   * que todavía contiene las fotografías en memoria.
+   */
+  if(fbDB){
+    guardarEnFirebase(reporte);
+  }
 }
 
 // ── Actualizar estado de un reporte ──────────────
@@ -8372,7 +9211,7 @@ function filtrarHist(f, btn){
 
 function renderHistorial(){
   var arr = getHistorial();
-  if(arr.length > 15) arr = arr.slice(0, 15); // mostrar solo los últimos 15 reportes
+  if(arr.length > 10) arr = arr.slice(0, 10); // mostrar solo los últimos 10 reportes
   var pendientes = getPendientes();
   if(histFiltro === 'alarmas'){
     arr = arr.filter(function(r){ return r.esAlarma; });
@@ -9394,77 +10233,6 @@ function initMapChips(){ initMapaView(); }
 
 
 
-
-// ── Badge en ícono de historial ───────────────────
-
-
-// Arrancar badge y revisión periódica
-actualizarBadgeHistorial();
-setInterval(actualizarBadgeHistorial, 5000);
-
-// ══ PWA SERVICE WORKER ══
-var APP_VERSION = 'v5'; // Cambiar con cada actualización
-
-if('serviceWorker' in navigator){
-  window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js').then(function(reg){
-
-      // Verificar actualizaciones inmediatamente
-      reg.update();
-
-      // Cuando haya un nuevo SW esperando → forzar activación
-      reg.addEventListener('updatefound', function(){
-        var newWorker = reg.installing;
-        if(!newWorker) return;
-        newWorker.addEventListener('statechange', function(){
-          if(newWorker.state === 'installed' && navigator.serviceWorker.controller){
-            // Hay nueva versión — forzar recarga silenciosa
-            newWorker.postMessage({ type: 'SKIP_WAITING' });
-          }
-        });
-      });
-
-      // Background Sync
-      if('SyncManager' in window){
-        reg.sync.register('enviar-reportes-pendientes').catch(function(){});
-      }
-    }).catch(function(){});
-
-    // Cuando el SW tome control → recargar para usar versión nueva
-    var refreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', function(){
-      if(!refreshing){
-        refreshing = true;
-        window.location.reload();
-      }
-    });
-
-    // Escuchar mensajes del SW
-    navigator.serviceWorker.addEventListener('message', function(e){
-      if(e.data && e.data.type === 'PROCESAR_COLA'){
-        procesarCola();
-      }
-    });
-  });
-
-  // Verificar actualizaciones cada 5 minutos (útil para celulares que dejan la app abierta)
-  setInterval(function(){
-    navigator.serviceWorker.getRegistration().then(function(reg){
-      if(reg) reg.update();
-    });
-  }, 5 * 60 * 1000);
-}
-
-// ══ INSTALL BANNER ══
-var deferredPrompt=null;
-window.addEventListener('beforeinstallprompt',function(e){
-  e.preventDefault(); deferredPrompt=e;
-  if(!window.matchMedia('(display-mode: standalone)').matches){
-    var dismissed=false;
-    try{dismissed=localStorage.getItem('pwa_dismissed')==='1';}catch(e2){}
-    if(!dismissed) document.getElementById('installBanner').classList.add('show');
-  }
-});
 
 
 
@@ -11318,107 +12086,297 @@ function ubiFiltrar(){ /* replaced by filter buttons */ }
 </div>
 
 <script>
-// ══ ANDROID: teclado virtual, textarea, viewport ════════════
+// ══ ANDROID: teclado virtual — FIX SCROLL ESTABLE ════════════
 (function(){
-  var isAndroid = /android/i.test(navigator.userAgent);
-  var isChrome  = /chrome/i.test(navigator.userAgent);
 
-  // ── Scroll al textarea activo cuando el teclado sube ───────
-  function scrollToActive(){
-    var el = document.activeElement;
-    if(!el || (el.tagName!=='TEXTAREA' && el.tagName!=='INPUT')) return;
-    console.log('[ANDROID] scrollToActive:', el.id||el.tagName);
-    try{ el.scrollIntoView({behavior:'smooth', block:'center'}); }catch(e){}
-  }
+  /*
+   * FIX 2026-08:
+   *
+   * Problema anterior:
+   * al cerrar el teclado Android se ejecutaba
+   * window.scrollTo(0,0), enviando al recorredor
+   * hasta el selector de pozo.
+   *
+   * También existían varios scrollIntoView()
+   * automáticos que peleaban contra el viewport
+   * del teclado.
+   *
+   * Nueva regla:
+   * - cerrar teclado NO mueve la página;
+   * - blur NO mueve la página;
+   * - resize NO mueve la página;
+   * - solo corregimos suavemente el foco si
+   *   el campo queda realmente oculto.
+   */
 
-  // ── visualViewport API (Android Chrome ≥ 56) ───────────────
-  // Más confiable que window.resize para detectar teclado
-  if(window.visualViewport){
-    var lastVVH = window.visualViewport.height;
-    window.visualViewport.addEventListener('resize', function(){
-      var newH = window.visualViewport.height;
-      var diff = lastVVH - newH;
-      lastVVH = newH;
-      if(diff > 100){
-        // Teclado subió
-        console.log('[ANDROID] teclado ABIERTO, altura reducida:', Math.round(diff)+'px');
-        setTimeout(scrollToActive, 200);
-      } else if(diff < -100){
-        // Teclado bajó
-        console.log('[ANDROID] teclado CERRADO, altura restaurada');
-        setTimeout(function(){
-          try{ window.scrollTo(0, 0); }catch(e){}
-        }, 100);
+
+  var isAndroid =
+    /Android/i.test(
+      navigator.userAgent || ''
+    );
+
+
+  var tecladoAbierto = false;
+
+  var focoActivo = null;
+
+
+  /*
+   * Guardar cuál campo está siendo editado.
+   */
+  document.addEventListener(
+    'focusin',
+    function(e){
+
+      var el = e.target;
+
+      if(
+        !el ||
+        (
+          el.tagName !== 'TEXTAREA' &&
+          !(
+            el.tagName === 'INPUT' &&
+            (
+              el.type === 'text' ||
+              el.type === 'number' ||
+              el.type === 'tel'
+            )
+          )
+        )
+      ){
+        return;
       }
-    });
-    console.log('[ANDROID] visualViewport API activa');
-  } else {
-    // Fallback: window.resize (menos preciso en Android)
-    var lastWH = window.innerHeight;
-    window.addEventListener('resize', function(){
-      var newH = window.innerHeight;
-      var diff = lastWH - newH;
-      lastWH = newH;
-      console.log('[ANDROID] resize: diff='+Math.round(diff)+'px innerH='+newH);
-      if(diff > 100){ setTimeout(scrollToActive, 200); }
-    });
-  }
 
-  // ── Focus/blur logging en todos los textareas ──────────────
-  function attachTextareaListeners(ta){
-    if(!ta || ta._androidFixed) return;
-    ta._androidFixed = true;
-    ta.addEventListener('focus', function(){
-      console.log('[ANDROID] FOCUS textarea:', this.id||'?', 'val len:', this.value.length);
-      // Quitar pointer-events:none si quedó bloqueado
-      if(getComputedStyle(this).pointerEvents === 'none'){
-        console.warn('[ANDROID] textarea tenía pointer-events:none — corrigiendo');
-        this.style.pointerEvents = 'auto';
+      focoActivo = el;
+
+    },
+    true
+  );
+
+
+  /*
+   * Al perder foco NO hacemos scroll.
+   */
+  document.addEventListener(
+    'focusout',
+    function(e){
+
+      if(
+        focoActivo === e.target
+      ){
+        focoActivo = null;
       }
-      setTimeout(function(){ try{ ta.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){} }, 300);
-    });
-    ta.addEventListener('blur', function(){
-      console.log('[ANDROID] BLUR textarea:', this.id||'?');
-    });
-    ta.addEventListener('input', function(){
-      console.log('[ANDROID] INPUT textarea:', this.id||'?', 'chars:', this.value.length);
-    });
-  }
 
-  // Aplicar a los textareas existentes
-  function attachAll(){
-    document.querySelectorAll('textarea, input[type="text"]').forEach(attachTextareaListeners);
-  }
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', attachAll);
-  } else {
-    attachAll();
-  }
+    },
+    true
+  );
 
-  // MutationObserver para elementos dinámicos
-  if(typeof MutationObserver !== 'undefined'){
-    var _obs = new MutationObserver(function(muts){
-      muts.forEach(function(m){
-        m.addedNodes.forEach(function(n){
-          if(!n.querySelectorAll) return;
-          n.querySelectorAll('textarea, input[type="text"]').forEach(attachTextareaListeners);
-        });
-      });
-    });
-    if(document.body){
-      _obs.observe(document.body, {childList:true, subtree:true});
-    } else {
-      document.addEventListener('DOMContentLoaded', function(){
-        _obs.observe(document.body, {childList:true, subtree:true});
-      });
+
+  /*
+   * Solo reposicionamos si el elemento queda
+   * físicamente fuera del viewport visible.
+   *
+   * NO se ejecuta al cerrar teclado.
+   */
+  function asegurarCampoVisible(){
+
+    var el =
+      document.activeElement;
+
+    if(
+      !el ||
+      (
+        el.tagName !== 'TEXTAREA' &&
+        el.tagName !== 'INPUT'
+      )
+    ){
+      return;
     }
+
+
+    var r =
+      el.getBoundingClientRect();
+
+
+    var altoVisible =
+      window.visualViewport
+        ? window.visualViewport.height
+        : window.innerHeight;
+
+
+    /*
+     * Dejamos margen inferior para el teclado,
+     * pero no recentramos campos que ya son visibles.
+     */
+    var limiteInferior =
+      altoVisible - 24;
+
+
+    if(
+      r.bottom > limiteInferior
+    ){
+
+      try{
+
+        el.scrollIntoView({
+          behavior:'smooth',
+          block:'nearest'
+        });
+
+      }catch(e){}
+
+    }
+
   }
 
-  console.log('[ANDROID] keyboard fix instalado. isAndroid='+isAndroid+' visualViewport='+(!!window.visualViewport));
+
+  /*
+   * Android + visualViewport.
+   */
+  if(
+    isAndroid &&
+    window.visualViewport
+  ){
+
+    var ultimaAltura =
+      window.visualViewport.height;
+
+
+    window.visualViewport.addEventListener(
+      'resize',
+      function(){
+
+        var nuevaAltura =
+          window.visualViewport.height;
+
+
+        var diferencia =
+          ultimaAltura - nuevaAltura;
+
+
+        /*
+         * Teclado ABRIENDO.
+         */
+        if(
+          diferencia > 100
+        ){
+
+          tecladoAbierto = true;
+
+          setTimeout(
+            asegurarCampoVisible,
+            180
+          );
+
+        }
+
+
+        /*
+         * Teclado CERRANDO.
+         *
+         * MUY IMPORTANTE:
+         * no hacer scrollTo(0,0)
+         * ni scrollIntoView().
+         */
+        else if(
+          diferencia < -100
+        ){
+
+          tecladoAbierto = false;
+
+        }
+
+
+        ultimaAltura =
+          nuevaAltura;
+
+      }
+    );
+
+  }
+
+
+  /*
+   * Fallback para Android sin visualViewport.
+   *
+   * Solo registramos cambio de tamaño.
+   * NO forzamos scroll.
+   */
+  else if(isAndroid){
+
+    var ultimaVentana =
+      window.innerHeight;
+
+
+    window.addEventListener(
+      'resize',
+      function(){
+
+        var nuevaAltura =
+          window.innerHeight;
+
+        var diferencia =
+          ultimaVentana - nuevaAltura;
+
+
+        if(
+          diferencia > 100
+        ){
+
+          tecladoAbierto = true;
+
+          setTimeout(
+            asegurarCampoVisible,
+            180
+          );
+
+        }
+
+        else if(
+          diferencia < -100
+        ){
+
+          tecladoAbierto = false;
+
+        }
+
+
+        ultimaVentana =
+          nuevaAltura;
+
+      }
+    );
+
+  }
+
+
+  console.log(
+    '[ANDROID] keyboard fix estable instalado. isAndroid=' +
+    isAndroid +
+    ' visualViewport=' +
+    (!!window.visualViewport)
+  );
+
 })();
 // ═════════════════════════════════════════════════════════════
 </script>
 
 <script src="./health-monitor.js?v=20260804235010"></script>
+
+<script>
+// PERA_OBS_INPUT_V1
+document.addEventListener('input', function(e){
+
+  if(
+    e.target &&
+    e.target.id === 'regObs'
+  ){
+    if(String(e.target.value || '').trim()){
+      e.target.classList.remove('pera-obs-error');
+    }
+  }
+
+});
+</script>
 </body>
 </html>

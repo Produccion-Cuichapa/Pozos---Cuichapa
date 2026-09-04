@@ -4,6 +4,203 @@
 // ── Clave localStorage ─────────────────────────────────────
 var FOTOS_KEY = 'cuichapa_fotos_temp';
 
+// ═══════════════════════════════════════════════════════════
+// EVIDENCIAS OFFLINE ROBUSTAS — IndexedDB
+// localStorage queda solo para datos pequeños.
+// Las fotografías de cada reporte se conservan aquí aunque
+// la app se cierre o el teléfono permanezca sin señal.
+// ═══════════════════════════════════════════════════════════
+var FOTOS_IDB_DB    = 'cuichapa_evidencias_db';
+var FOTOS_IDB_STORE = 'reportes_fotos';
+var FOTOS_IDB_VER   = 1;
+
+function abrirFotosIDB(){
+  return new Promise(function(resolve, reject){
+    if(!window.indexedDB){
+      reject(new Error('IndexedDB no disponible'));
+      return;
+    }
+
+    var req = indexedDB.open(FOTOS_IDB_DB, FOTOS_IDB_VER);
+
+    req.onupgradeneeded = function(ev){
+      var db = ev.target.result;
+
+      if(!db.objectStoreNames.contains(FOTOS_IDB_STORE)){
+        db.createObjectStore(FOTOS_IDB_STORE, {
+          keyPath: 'reporteId'
+        });
+      }
+    };
+
+    req.onsuccess = function(){
+      resolve(req.result);
+    };
+
+    req.onerror = function(){
+      reject(req.error || new Error('No fue posible abrir IndexedDB'));
+    };
+  });
+}
+
+function guardarFotosReporteIDB(reporteId, listaFotos){
+  if(
+    reporteId === undefined ||
+    reporteId === null ||
+    !Array.isArray(listaFotos)
+  ){
+    return Promise.resolve(false);
+  }
+
+  var copia = listaFotos.map(function(f){
+    if(typeof f === 'string'){
+      return {
+        data: f,
+        nombre: ''
+      };
+    }
+
+    return {
+      data: f && f.data ? f.data : '',
+      nombre: f && f.nombre ? f.nombre : '',
+      size: f && f.size ? f.size : null
+    };
+  });
+
+  return abrirFotosIDB()
+    .then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction(
+          FOTOS_IDB_STORE,
+          'readwrite'
+        );
+
+        var store = tx.objectStore(FOTOS_IDB_STORE);
+
+        store.put({
+          reporteId: String(reporteId),
+          fotos: copia,
+          nFotos: copia.length,
+          actualizadoEn: new Date().toISOString()
+        });
+
+        tx.oncomplete = function(){
+          try{ db.close(); }catch(e){}
+          console.log(
+            '[FOTOS_IDB] guardadas:',
+            reporteId,
+            copia.length
+          );
+          resolve(true);
+        };
+
+        tx.onerror = function(){
+          try{ db.close(); }catch(e){}
+          reject(
+            tx.error ||
+            new Error('Error guardando evidencias')
+          );
+        };
+
+        tx.onabort = function(){
+          try{ db.close(); }catch(e){}
+          reject(
+            tx.error ||
+            new Error('Guardado de evidencias cancelado')
+          );
+        };
+      });
+    })
+    .catch(function(err){
+      console.error(
+        '[FOTOS_IDB] error guardando:',
+        reporteId,
+        err
+      );
+      return false;
+    });
+}
+
+function cargarFotosReporteIDB(reporteId){
+  if(reporteId === undefined || reporteId === null){
+    return Promise.resolve([]);
+  }
+
+  return abrirFotosIDB()
+    .then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction(
+          FOTOS_IDB_STORE,
+          'readonly'
+        );
+
+        var req = tx
+          .objectStore(FOTOS_IDB_STORE)
+          .get(String(reporteId));
+
+        req.onsuccess = function(){
+          var item = req.result;
+          try{ db.close(); }catch(e){}
+
+          resolve(
+            item && Array.isArray(item.fotos)
+              ? item.fotos
+              : []
+          );
+        };
+
+        req.onerror = function(){
+          try{ db.close(); }catch(e){}
+          reject(
+            req.error ||
+            new Error('Error leyendo evidencias')
+          );
+        };
+      });
+    })
+    .catch(function(err){
+      console.error(
+        '[FOTOS_IDB] error leyendo:',
+        reporteId,
+        err
+      );
+      return [];
+    });
+}
+
+function borrarFotosReporteIDB(reporteId){
+  if(reporteId === undefined || reporteId === null){
+    return Promise.resolve(false);
+  }
+
+  return abrirFotosIDB()
+    .then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction(
+          FOTOS_IDB_STORE,
+          'readwrite'
+        );
+
+        tx.objectStore(FOTOS_IDB_STORE)
+          .delete(String(reporteId));
+
+        tx.oncomplete = function(){
+          try{ db.close(); }catch(e){}
+          resolve(true);
+        };
+
+        tx.onerror = function(){
+          try{ db.close(); }catch(e){}
+          reject(tx.error);
+        };
+      });
+    })
+    .catch(function(){
+      return false;
+    });
+}
+
+
 // ── Restaurar fotos si la app se recargó durante el turno ──
 (function(){
   try{

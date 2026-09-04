@@ -1,0 +1,528 @@
+/* ==========================================================
+   UPV — FLUJO OPERATIVO MOBILE FIRST
+   ========================================================== */
+
+.upv-menu-operativo{
+  display:grid !important;
+
+  grid-template-columns:
+    repeat(2,minmax(0,1fr));
+
+  gap:10px !important;
+
+  padding:4px !important;
+}
+
+
+/* TARJETAS PRINCIPALES */
+
+.upv-opcion{
+  position:relative;
+
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+
+  min-height:118px;
+
+  padding:16px 10px;
+
+  border:
+    2px solid
+    #cfdaec;
+
+  border-radius:18px;
+
+  color:#14233c;
+
+  background:
+    linear-gradient(
+      145deg,
+      #f7faff,
+      #e8effb
+    );
+
+  box-shadow:
+    0 5px 15px
+    rgba(17,39,75,.07);
+
+  cursor:pointer;
+
+  transition:
+    transform .14s ease,
+    border-color .14s ease,
+    box-shadow .14s ease;
+}
+
+.upv-opcion:active{
+  transform:scale(.985);
+}
+
+.upv-opcion-icono{
+  margin-bottom:8px;
+
+  font-size:28px;
+  line-height:1;
+}
+
+.upv-opcion strong{
+  font-size:15px;
+  line-height:1.1;
+  font-weight:900;
+}
+
+.upv-opcion small{
+  margin-top:5px;
+
+  color:#6f829e;
+
+  font-size:11px;
+  font-weight:700;
+}
+
+
+/* CARGA */
+
+.upv-opcion-carga.active{
+  border-color:#36b46b;
+
+  background:
+    linear-gradient(
+      145deg,
+      #effcf4,
+      #def5e7
+    );
+
+  box-shadow:
+    0 0 0 3px
+    rgba(54,180,107,.10);
+}
+
+
+/* DESCARGA */
+
+.upv-opcion-descarga.active{
+  border-color:#4382eb;
+
+  background:
+    linear-gradient(
+      145deg,
+      #f1f6ff,
+      #e1ebff
+    );
+
+  box-shadow:
+    0 0 0 3px
+    rgba(67,130,235,.10);
+}
+
+
+/* OBSERVACIONES */
+
+.upv-opcion-observaciones{
+  grid-column:1 / -1;
+
+  min-height:92px;
+}
+
+.upv-opcion-observaciones.active{
+  border-color:#e4aa33;
+}
+
+
+/* ==========================================================
+   PANEL DEL FORMULARIO
+   ========================================================== */
+
+.upv-flujo-panel{
+  margin-top:14px;
+
+  padding:18px;
+
+  border:
+    1px solid
+    #d4dfef;
+
+  border-radius:20px;
+
+  background:#fff;
+
+  box-shadow:
+    0 9px 24px
+    rgba(23,50,90,.07);
+}
+
+.upv-flujo-titulo{
+  padding-bottom:15px;
+
+  border-bottom:
+    2px solid
+    #dbe5f3;
+}
+
+.upv-flujo-titulo > span{
+  display:block;
+
+  margin-bottom:5px;
+
+  color:#4775c8;
+
+  font-size:10px;
+  font-weight:950;
+
+  letter-spacing:.13em;
+}
+
+.upv-flujo-titulo h2{
+  margin:0;
+
+  color:#10294d;
+
+  font-size:22px;
+  font-weight:950;
+}
+
+.upv-flujo-titulo p{
+  margin:
+    5px 0
+    0;
+
+  color:#778aa6;
+
+  font-size:12px;
+}
+
+
+/* CAMPOS */
+
+.upv-flujo-campo{
+  margin-top:16px;
+}
+
+.upv-flujo-campo label{
+  display:flex;
+  align-items:center;
+
+  gap:8px;
+
+  margin-bottom:8px;
+
+  color:#617895;
+
+  font-size:10px;
+  font-weight:950;
+
+  letter-spacing:.09em;
+}
+
+.upv-flujo-select,
+.upv-flujo-input{
+  width:100% !important;
+
+  min-height:56px !important;
+
+  border:
+    2px solid
+    #cfdbee !important;
+
+  border-radius:14px !important;
+
+  color:#172742 !important;
+
+  background:#fff !important;
+
+  font-size:16px !important;
+}
+
+.upv-flujo-select:focus,
+.upv-flujo-input:focus{
+  border-color:#3f7be5 !important;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(63,123,229,.10);
+}
+
+
+/* ESTADO */
+
+.upv-flujo-estado,
+.upv-inicio-resumen{
+  display:flex;
+
+  align-items:center;
+  justify-content:space-between;
+
+  gap:10px;
+
+  margin-top:10px;
+
+  padding:11px 13px;
+
+  border:
+    1px solid
+    #d8e2f0;
+
+  border-radius:11px;
+
+  background:#f7f9fd;
+}
+
+.upv-flujo-estado strong,
+.upv-inicio-resumen span{
+  color:#1f3657;
+
+  font-size:11px;
+}
+
+.upv-flujo-estado span,
+.upv-inicio-resumen strong{
+  color:#7286a4;
+
+  font-size:11px;
+}
+
+
+/* ALERTA */
+
+.upv-alerta-flujo{
+  margin-top:15px;
+
+  padding:12px 13px;
+
+  border:
+    1px solid
+    #efd99c;
+
+  border-radius:11px;
+
+  color:#8a671b;
+
+  background:#fff9e8;
+
+  font-size:11px;
+  font-weight:700;
+}
+
+
+/* BOTONES */
+
+.upv-flujo-confirmar{
+  width:100%;
+
+  min-height:58px;
+
+  margin-top:17px;
+
+  border:0;
+
+  border-radius:14px;
+
+  color:#fff;
+
+  font-size:17px;
+  font-weight:950;
+
+  letter-spacing:.04em;
+
+  cursor:pointer;
+}
+
+.upv-flujo-confirmar-inicio{
+  background:
+    linear-gradient(
+      135deg,
+      #326be0,
+      #2354bb
+    );
+}
+
+.upv-flujo-confirmar-termina{
+  background:
+    linear-gradient(
+      135deg,
+      #43aa55,
+      #318c43
+    );
+}
+
+.upv-flujo-confirmar.registrado{
+  background:
+    linear-gradient(
+      135deg,
+      #40a653,
+      #2d873e
+    );
+}
+
+
+/* BOTONES FOTO/GPS */
+
+.upv-flujo-secundario{
+  width:100%;
+
+  min-height:52px;
+
+  border:
+    1px solid
+    #c8d6eb;
+
+  border-radius:13px;
+
+  color:#21426f;
+
+  background:#edf3fc;
+
+  font-size:13px;
+  font-weight:850;
+}
+
+.upv-flujo-fotos-preview{
+  margin-top:10px;
+}
+
+
+/* VACÍO */
+
+.upv-flujo-vacio{
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+  justify-content:center;
+
+  min-height:105px;
+
+  margin-top:14px;
+
+  padding:20px;
+
+  border:
+    1px dashed
+    #cbd8ea;
+
+  border-radius:18px;
+
+  text-align:center;
+
+  background:#f7f9fc;
+}
+
+.upv-flujo-vacio strong{
+  color:#17335c;
+
+  font-size:14px;
+}
+
+.upv-flujo-vacio span{
+  margin-top:5px;
+
+  color:#8697af;
+
+  font-size:11px;
+}
+
+
+/* ==========================================================
+   SCROLL — PRIORIDAD MÓVIL
+   ========================================================== */
+
+body.upv-flujo-operativo-activo,
+body.upv-flujo-operativo-activo #upv-app,
+body.upv-flujo-operativo-activo #upv-main-layout,
+body.upv-flujo-operativo-activo #upv-content,
+body.upv-flujo-operativo-activo #screen-upv{
+  height:auto !important;
+
+  min-height:0 !important;
+
+  max-height:none !important;
+}
+
+body.upv-flujo-operativo-activo{
+  overflow-y:auto !important;
+}
+
+body.upv-flujo-operativo-activo #upv-main-layout{
+  overflow:visible !important;
+}
+
+body.upv-flujo-operativo-activo #upv-content{
+  overflow:visible !important;
+
+  padding-bottom:
+    calc(
+      100px +
+      env(safe-area-inset-bottom)
+    ) !important;
+}
+
+
+/* ==========================================================
+   MÓVIL
+   ========================================================== */
+
+@media(max-width:620px){
+
+  .upv-menu-operativo{
+    gap:8px !important;
+  }
+
+  .upv-opcion{
+    min-height:104px;
+
+    padding:13px 7px;
+
+    border-radius:16px;
+  }
+
+  .upv-opcion-icono{
+    font-size:24px;
+  }
+
+  .upv-opcion strong{
+    font-size:13px;
+  }
+
+  .upv-opcion small{
+    font-size:10px;
+  }
+
+  .upv-opcion-observaciones{
+    min-height:82px;
+  }
+
+  .upv-flujo-panel{
+    padding:15px 13px;
+
+    border-radius:17px;
+  }
+
+  .upv-flujo-titulo h2{
+    font-size:19px;
+  }
+
+  .upv-flujo-select,
+  .upv-flujo-input{
+    min-height:54px !important;
+
+    font-size:15px !important;
+  }
+
+  .upv-flujo-confirmar{
+    min-height:56px;
+
+    font-size:16px;
+  }
+
+  .upv-flujo-estado,
+  .upv-inicio-resumen{
+    flex-direction:column;
+
+    align-items:flex-start;
+
+    gap:4px;
+  }
+}

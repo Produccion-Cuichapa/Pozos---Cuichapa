@@ -1,0 +1,67 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 620 430"
+  role="img"
+  aria-labelledby="title">
+
+  <title id="title">Lifting</title>
+
+  <rect
+    x="8"
+    y="8"
+    width="604"
+    height="414"
+    rx="58"
+    fill="#ffffff"/>
+
+  <path
+    d="M92 55 H528"
+    stroke="#191919"
+    stroke-width="7"
+    stroke-linecap="square"/>
+
+  <path
+    d="M92 367 H528"
+    stroke="#191919"
+    stroke-width="7"
+    stroke-linecap="square"/>
+
+  <!-- Símbolo -->
+  <rect
+    x="239"
+    y="106"
+    width="42"
+    height="85"
+    fill="#30247f"/>
+
+  <path
+    d="M291 106
+       C322 119 341 140 341 165
+       V191
+       H291
+       Z"
+    fill="#a4a4a6"/>
+
+  <path
+    d="M238 211
+       H366
+       C393 211 408 223 424 242
+       L461 284
+       H325
+       C291 284 264 264 247 240
+       Z"
+    fill="#a74518"/>
+
+  <!-- Nombre -->
+  <text
+    x="310"
+    y="346"
+    text-anchor="middle"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="102"
+    font-weight="800"
+    letter-spacing="-5"
+    fill="#30247f">
+    Lifting
+  </text>
+</svg>

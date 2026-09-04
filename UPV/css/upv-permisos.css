@@ -1,0 +1,336 @@
+/* ==========================================================
+   UPV — ESTADO DE PERMISOS
+   Mobile first.
+   ========================================================== */
+
+.upv-permisos-panel{
+  position:relative;
+  z-index:25;
+
+  width:
+    min(
+      760px,
+      calc(100vw - 28px)
+    );
+
+  margin:
+    22px auto
+    100px;
+
+  padding:
+    22px;
+
+  border:
+    1px solid
+    rgba(148,163,184,.18);
+
+  border-radius:22px;
+
+  color:#fff;
+
+  background:
+    linear-gradient(
+      145deg,
+      #121d31,
+      #101929
+    );
+
+  box-shadow:
+    0 15px 35px
+    rgba(10,24,48,.18);
+}
+
+
+/* CABECERA */
+
+.upv-permisos-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:15px;
+
+  margin-bottom:18px;
+}
+
+.upv-permisos-kicker{
+  display:block;
+
+  margin-bottom:5px;
+
+  color:#8292aa;
+
+  font-size:10px;
+  font-weight:900;
+
+  letter-spacing:.13em;
+}
+
+.upv-permisos-head h2{
+  margin:0;
+
+  color:#f8fafc;
+
+  font-size:18px;
+  line-height:1;
+
+  font-weight:900;
+
+  letter-spacing:.06em;
+}
+
+
+/* VERIFICAR */
+
+.upv-permisos-verify{
+  flex:none;
+
+  min-height:39px;
+
+  padding:
+    8px 15px;
+
+  border:
+    1px solid
+    rgba(148,163,184,.30);
+
+  border-radius:12px;
+
+  color:#e2e8f0;
+
+  background:
+    rgba(255,255,255,.06);
+
+  font-size:13px;
+  font-weight:800;
+
+  cursor:pointer;
+}
+
+.upv-permisos-verify:disabled{
+  opacity:.55;
+  cursor:default;
+}
+
+
+/* GRID */
+
+.upv-permisos-grid{
+  display:grid;
+
+  grid-template-columns:
+    repeat(3,minmax(0,1fr));
+
+  gap:11px;
+}
+
+
+/* CARD */
+
+.upv-perm-card{
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+  justify-content:center;
+
+  min-height:125px;
+
+  padding:
+    15px 8px;
+
+  border:
+    1px solid
+    rgba(148,163,184,.17);
+
+  border-radius:16px;
+
+  background:
+    rgba(255,255,255,.035);
+
+  text-align:center;
+
+  transition:
+    border-color .18s ease,
+    background .18s ease,
+    transform .18s ease;
+}
+
+.upv-perm-icon{
+  display:block;
+
+  margin-bottom:10px;
+
+  font-size:31px;
+  line-height:1;
+}
+
+.upv-perm-card strong{
+  display:block;
+
+  color:#d4dbe6;
+
+  font-size:12px;
+  line-height:1.15;
+
+  font-weight:900;
+
+  letter-spacing:.04em;
+}
+
+.upv-perm-card small{
+  display:block;
+
+  margin-top:6px;
+
+  font-size:12px;
+  line-height:1.15;
+
+  font-weight:700;
+}
+
+
+/* ESTADOS */
+
+.upv-perm-card.is-ok{
+  border-color:
+    rgba(34,197,94,.23);
+
+  background:
+    rgba(34,197,94,.055);
+}
+
+.upv-perm-card.is-ok small{
+  color:#63df85;
+}
+
+
+.upv-perm-card.is-warn{
+  border-color:
+    rgba(245,158,11,.28);
+
+  background:
+    rgba(245,158,11,.055);
+}
+
+.upv-perm-card.is-warn small{
+  color:#fbbf24;
+}
+
+
+.upv-perm-card.is-error{
+  border-color:
+    rgba(239,68,68,.25);
+
+  background:
+    rgba(239,68,68,.055);
+}
+
+.upv-perm-card.is-error small{
+  color:#f87171;
+}
+
+
+.upv-perm-card.is-checking small{
+  color:#94a3b8;
+}
+
+
+/* ==========================================================
+   TELÉFONO
+   ========================================================== */
+
+@media (max-width:620px){
+
+  .upv-permisos-panel{
+    width:
+      calc(100vw - 24px);
+
+    margin:
+      18px auto
+      92px;
+
+    padding:
+      18px 14px;
+
+    border-radius:20px;
+  }
+
+  .upv-permisos-head{
+    margin-bottom:14px;
+  }
+
+  .upv-permisos-kicker{
+    font-size:8px;
+  }
+
+  .upv-permisos-head h2{
+    font-size:15px;
+  }
+
+  .upv-permisos-verify{
+    min-height:36px;
+
+    padding:
+      7px 11px;
+
+    font-size:11px;
+  }
+
+  .upv-permisos-grid{
+    gap:7px;
+  }
+
+  .upv-perm-card{
+    min-height:108px;
+
+    padding:
+      12px 5px;
+
+    border-radius:14px;
+  }
+
+  .upv-perm-icon{
+    margin-bottom:8px;
+
+    font-size:27px;
+  }
+
+  .upv-perm-card strong{
+    font-size:10px;
+  }
+
+  .upv-perm-card small{
+    margin-top:5px;
+
+    font-size:10px;
+  }
+}
+
+
+/* TELÉFONOS MUY ESTRECHOS */
+
+@media (max-width:370px){
+
+  .upv-permisos-panel{
+    padding:
+      16px 10px;
+  }
+
+  .upv-permisos-grid{
+    gap:5px;
+  }
+
+  .upv-perm-card{
+    min-height:101px;
+  }
+
+  .upv-perm-card strong{
+    font-size:9px;
+  }
+
+  .upv-perm-card small{
+    font-size:9px;
+  }
+}

@@ -1,0 +1,6508 @@
+/* ==========================================================
+   UPV OPERACIÓN — DISEÑO FINAL
+   Prioridad absoluta: móvil
+   ========================================================== */
+
+body.upv-operacion-final-activa{
+  overflow-y:auto !important;
+}
+
+
+/* Ocultar flujo viejo */
+
+.upv-bloque-viejo-oculto{
+  display:none !important;
+}
+
+.upv-campos-viejos-ocultos{
+  display:none !important;
+}
+
+
+/* ==========================================================
+   MENÚ PRINCIPAL
+   ========================================================== */
+
+.upv-menu-final{
+  width:min(720px,calc(100% - 20px));
+
+  margin:14px auto;
+
+  padding:18px 16px;
+
+  box-sizing:border-box;
+
+  border:1px solid #d5dfed;
+  border-radius:20px;
+
+  background:#fff;
+
+  box-shadow:
+    0 9px 25px
+    rgba(25,52,87,.06);
+}
+
+.upv-menu-final-head{
+  margin-bottom:15px;
+
+  padding-bottom:12px;
+
+  border-bottom:
+    2px solid #d9e4f2;
+}
+
+.upv-menu-final-head span{
+  color:#142f56;
+
+  font-size:17px;
+  font-weight:950;
+}
+
+.upv-menu-final-grid{
+  display:grid;
+
+  grid-template-columns:
+    repeat(2,minmax(0,1fr));
+
+  gap:10px;
+}
+
+.upv-menu-card{
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+  justify-content:center;
+
+  min-height:130px;
+
+  border:
+    2px solid
+    #cedbef;
+
+  border-radius:17px;
+
+  color:#162845;
+
+  background:
+    linear-gradient(
+      145deg,
+      #f4f8ff,
+      #e9f0fb
+    );
+
+  cursor:pointer;
+}
+
+.upv-menu-card .ico{
+  margin-bottom:10px;
+
+  font-size:29px;
+}
+
+.upv-menu-card strong{
+  font-size:14px;
+  font-weight:950;
+}
+
+.upv-menu-card small{
+  margin-top:5px;
+
+  color:#536e96;
+
+  font-size:11px;
+  font-weight:850;
+}
+
+.upv-menu-card.obs{
+  grid-column:1 / -1;
+
+  min-height:105px;
+}
+
+.upv-menu-card.active{
+  border-color:#3b73d9;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(59,115,217,.10);
+}
+
+
+/* ==========================================================
+   FORMULARIO
+   ========================================================== */
+
+.upv-flow-final{
+  width:min(720px,calc(100% - 20px));
+
+  margin:0 auto 100px;
+}
+
+.upv-panel-final{
+  position:relative;
+
+  padding:22px 18px;
+
+  border:
+    1px solid #d6e0ed;
+
+  border-radius:20px;
+
+  background:#fff;
+
+  box-shadow:
+    0 10px 28px
+    rgba(20,49,86,.07);
+}
+
+.upv-back-final{
+  position:absolute;
+
+  top:15px;
+  left:15px;
+
+  width:38px;
+  height:38px;
+
+  border:0;
+
+  border-radius:50%;
+
+  color:#153567;
+
+  background:#edf3fb;
+
+  font-size:20px;
+
+  font-weight:900;
+}
+
+
+/* TÍTULO */
+
+.upv-panel-title{
+  padding:
+    5px 20px
+    18px;
+
+  border-bottom:
+    2px solid #dde6f2;
+
+  text-align:center;
+}
+
+.upv-panel-title > strong{
+  display:block;
+
+  color:#12366b;
+
+  font-size:20px;
+  font-weight:950;
+}
+
+.upv-panel-title h2{
+  margin:3px 0 0;
+
+  color:#12366b;
+
+  font-size:20px;
+  font-weight:950;
+}
+
+.upv-panel-title p{
+  margin:
+    8px 0
+    0;
+
+  color:#7286a3;
+
+  font-size:12px;
+}
+
+
+/* CAMPOS */
+
+.upv-final-field{
+  margin-top:20px;
+}
+
+.upv-final-field label{
+  display:block;
+
+  margin-bottom:9px;
+
+  color:#173567;
+
+  font-size:11px;
+
+  font-weight:950;
+
+  letter-spacing:.03em;
+}
+
+.upv-final-control{
+  display:block;
+
+  width:100%;
+
+  min-height:56px;
+
+  padding:
+    0 14px;
+
+  box-sizing:border-box;
+
+  border:
+    2px solid
+    #d3dfef;
+
+  border-radius:12px;
+
+  outline:none;
+
+  color:#172b4c;
+
+  background:#fff;
+
+  font-size:15px;
+}
+
+.upv-final-control:focus{
+  border-color:#3979e3;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(57,121,227,.09);
+}
+
+.upv-final-textarea{
+  min-height:135px;
+
+  padding:14px;
+
+  resize:vertical;
+}
+
+
+/* BOTONES */
+
+.upv-action-final{
+  width:100%;
+
+  min-height:58px;
+
+  margin-top:24px;
+
+  border:0;
+
+  border-radius:10px;
+
+  color:#fff;
+
+  font-size:16px;
+
+  font-weight:950;
+
+  cursor:pointer;
+}
+
+.upv-action-final.inicio{
+  background:
+    linear-gradient(
+      135deg,
+      #3777e3,
+      #2862c8
+    );
+}
+
+.upv-action-final.termino{
+  background:
+    linear-gradient(
+      135deg,
+      #44b35b,
+      #30a048
+    );
+}
+
+.upv-action-final.observacion{
+  color:#5c4610;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f9c328,
+      #eeb516
+    );
+}
+
+
+/* INICIO REGISTRADO */
+
+.upv-registro-ok{
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+
+  margin-top:24px;
+
+  padding:
+    25px 15px;
+
+  border:
+    2px solid
+    #73c981;
+
+  border-radius:11px;
+
+  color:#267a38;
+
+  background:#f1fff4;
+}
+
+.upv-registro-ok .check{
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  width:58px;
+  height:58px;
+
+  margin-bottom:12px;
+
+  border-radius:50%;
+
+  color:#fff;
+
+  background:#3eb759;
+
+  font-size:35px;
+}
+
+.upv-registro-ok strong{
+  font-size:16px;
+  font-weight:950;
+}
+
+.upv-registro-ok span{
+  margin-top:7px;
+
+  font-size:13px;
+}
+
+.upv-nuevo-registro{
+  width:100%;
+
+  min-height:54px;
+
+  margin-top:15px;
+
+  border:
+    2px solid #4f85dc;
+
+  border-radius:10px;
+
+  color:#3165b6;
+
+  background:#fff;
+
+  font-size:13px;
+
+  font-weight:900;
+}
+
+
+/* INICIO PREVIO */
+
+.upv-inicio-previo{
+  display:flex;
+
+  align-items:center;
+
+  gap:12px;
+
+  margin-top:20px;
+
+  padding:13px;
+
+  border:
+    1px solid #87d293;
+
+  border-radius:10px;
+
+  color:#26763a;
+
+  background:#f2fff4;
+}
+
+.upv-inicio-previo > span{
+  font-size:24px;
+}
+
+.upv-inicio-previo small,
+.upv-inicio-previo strong{
+  display:block;
+}
+
+.upv-inicio-previo small{
+  font-size:10px;
+  font-weight:900;
+}
+
+.upv-inicio-previo strong{
+  margin-top:3px;
+
+  font-size:12px;
+}
+
+
+/* EVIDENCIA */
+
+.upv-evidencia-final{
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+  justify-content:center;
+
+  width:100%;
+
+  min-height:100px;
+
+  gap:7px;
+
+  border:
+    2px dashed
+    #cfdced;
+
+  border-radius:12px;
+
+  color:#355c96;
+
+  background:#fbfdff;
+
+  font-size:12px;
+
+  font-weight:850;
+}
+
+.upv-evidencia-final > span{
+  font-size:27px;
+}
+
+.upv-gps-final-status{
+  display:block;
+
+  margin-top:7px;
+
+  color:#4a9a5e;
+
+  font-size:11px;
+
+  text-align:center;
+}
+
+
+/* WARNING */
+
+.upv-warning-final{
+  margin-top:20px;
+
+  padding:12px;
+
+  border:
+    1px solid #efc968;
+
+  border-radius:9px;
+
+  color:#765813;
+
+  background:#fff9e8;
+
+  font-size:11px;
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media(max-width:620px){
+
+  .upv-menu-final{
+    width:
+      calc(100% - 16px);
+
+    padding:
+      16px 12px;
+  }
+
+  .upv-menu-final-head span{
+    font-size:15px;
+  }
+
+  .upv-menu-final-grid{
+    gap:8px;
+  }
+
+  .upv-menu-card{
+    min-height:112px;
+
+    border-radius:15px;
+  }
+
+  .upv-menu-card .ico{
+    font-size:25px;
+  }
+
+  .upv-menu-card strong{
+    font-size:12px;
+  }
+
+  .upv-menu-card small{
+    font-size:10px;
+  }
+
+  .upv-menu-card.obs{
+    min-height:91px;
+  }
+
+  .upv-flow-final{
+    width:
+      calc(100% - 16px);
+
+    margin-bottom:
+      calc(
+        90px +
+        env(safe-area-inset-bottom)
+      );
+  }
+
+  .upv-panel-final{
+    padding:
+      18px 13px;
+
+    border-radius:17px;
+  }
+
+  .upv-panel-title > strong,
+  .upv-panel-title h2{
+    font-size:18px;
+  }
+
+  .upv-final-field{
+    margin-top:17px;
+  }
+
+  .upv-final-control{
+    min-height:54px;
+
+    font-size:14px;
+  }
+
+  .upv-action-final{
+    min-height:56px;
+
+    font-size:15px;
+  }
+}
+
+
+/* SCROLL */
+
+body.upv-operacion-final-activa,
+body.upv-operacion-final-activa #upv-app,
+body.upv-operacion-final-activa #upv-main-layout,
+body.upv-operacion-final-activa #upv-content,
+body.upv-operacion-final-activa #screen-upv{
+  height:auto !important;
+
+  max-height:none !important;
+
+  overflow:visible !important;
+}
+
+body.upv-operacion-final-activa{
+  overflow-y:auto !important;
+}
+
+
+/* ==========================================================
+   FIX — EL FORMULARIO NUEVO SIEMPRE DEBAJO DEL MENÚ
+   ========================================================== */
+
+body.upv-operacion-final-activa
+#upvFlowFinal{
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+
+  position:relative !important;
+  z-index:20 !important;
+
+  width:min(
+    720px,
+    calc(100% - 20px)
+  ) !important;
+
+  height:auto !important;
+  max-height:none !important;
+
+  margin:
+    14px auto
+    100px
+    !important;
+
+  overflow:visible !important;
+}
+
+
+/* El constructor anterior ya no se utiliza visualmente */
+
+body.upv-operacion-final-activa
+#campos-dinamicos{
+  display:none !important;
+}
+
+body.upv-operacion-final-activa
+.upv-bloque-viejo-oculto{
+  display:none !important;
+}
+
+
+/* Asegurar que ningún padre recorte el nuevo formulario */
+
+body.upv-operacion-final-activa
+#screen-upv,
+body.upv-operacion-final-activa
+#upv-content,
+body.upv-operacion-final-activa
+#upv-main-layout,
+body.upv-operacion-final-activa
+#upv-app{
+  height:auto !important;
+  min-height:0 !important;
+  max-height:none !important;
+
+  overflow:visible !important;
+}
+
+
+/* MENSAJE AL NO HABER SELECCIÓN */
+
+.upv-flow-final:empty::before{
+  display:block;
+
+  padding:24px 18px;
+
+  border:
+    1px dashed
+    #cbd8e8;
+
+  border-radius:17px;
+
+  color:#7186a4;
+
+  background:#f7f9fc;
+
+  content:
+    'Selecciona una opción para continuar';
+
+  font-size:13px;
+  font-weight:700;
+
+  text-align:center;
+}
+
+
+@media(max-width:620px){
+
+  body.upv-operacion-final-activa
+  #upvFlowFinal{
+    width:
+      calc(100% - 16px)
+      !important;
+
+    margin:
+      10px auto
+      calc(
+        90px +
+        env(safe-area-inset-bottom)
+      )
+      !important;
+  }
+}
+
+
+/* ==========================================================
+   CONTROL FINAL — EL LEGACY NO PUEDE APARECER
+   ========================================================== */
+
+#campos-dinamicos{
+  display:none !important;
+}
+
+#upvMenuFinal{
+  display:block !important;
+}
+
+#upvFlowFinal{
+  display:block !important;
+
+  visibility:visible !important;
+
+  opacity:1 !important;
+
+  height:auto !important;
+
+  min-height:0 !important;
+
+  max-height:none !important;
+
+  overflow:visible !important;
+}
+
+
+/* Cuando se abre un formulario */
+
+#upvFlowFinal:not(:empty){
+  margin-top:14px !important;
+}
+
+
+/* El menú queda arriba y el formulario debajo */
+
+#upvMenuFinal + #upvFlowFinal{
+  position:relative !important;
+
+  z-index:30 !important;
+}
+
+
+/* ==========================================================
+   SELECCIÓN DE UNIDAD
+   ========================================================== */
+
+.upv-unidad-vieja-oculta{
+  display:none !important;
+}
+
+
+.upv-seleccion-unidad{
+  width:min(
+    720px,
+    calc(100% - 20px)
+  );
+
+  margin:
+    18px auto;
+
+  padding:
+    20px 18px;
+
+  box-sizing:border-box;
+
+  border:
+    1px solid
+    #d5dfed;
+
+  border-radius:20px;
+
+  background:#fff;
+
+  box-shadow:
+    0 10px 28px
+    rgba(23,50,90,.07);
+}
+
+
+.upv-seleccion-unidad-head{
+  padding-bottom:15px;
+
+  border-bottom:
+    2px solid #dce6f3;
+}
+
+
+.upv-seleccion-unidad-head span{
+  display:block;
+
+  color:#173867;
+
+  font-size:17px;
+
+  font-weight:950;
+}
+
+
+.upv-seleccion-unidad-head p{
+  margin:
+    6px 0
+    0;
+
+  color:#6d82a0;
+
+  font-size:12px;
+
+  font-weight:800;
+}
+
+
+.upv-unidades-grid{
+  display:grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0,1fr)
+    );
+
+  gap:12px;
+
+  margin-top:17px;
+}
+
+
+.upv-unidad-card{
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+  justify-content:center;
+
+  min-height:165px;
+
+  padding:18px;
+
+  border:
+    2px solid
+    #d0ddf0;
+
+  border-radius:18px;
+
+  color:#18345d;
+
+  background:
+    linear-gradient(
+      145deg,
+      #f6f9ff,
+      #e9f1fd
+    );
+
+  box-shadow:
+    0 7px 18px
+    rgba(30,61,101,.06);
+
+  cursor:pointer;
+}
+
+
+.upv-unidad-card:active{
+  transform:scale(.985);
+}
+
+
+.upv-unidad-icono{
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  width:65px;
+  height:65px;
+
+  margin-bottom:13px;
+
+  border-radius:18px;
+
+  background:#dfebff;
+
+  font-size:34px;
+}
+
+
+.upv-unidad-card strong{
+  font-size:20px;
+
+  font-weight:950;
+}
+
+
+.upv-unidad-card small{
+  margin-top:6px;
+
+  color:#7890ae;
+
+  font-size:11px;
+
+  font-weight:850;
+}
+
+
+/* PETROSMART solo tiene una unidad:
+   centrar la tarjeta */
+.upv-unidades-grid
+.upv-unidad-card:only-child{
+  grid-column:1 / -1;
+
+  width:min(
+    340px,
+    100%
+  );
+
+  justify-self:center;
+}
+
+
+/* ==========================================================
+   UNIDAD ACTIVA
+   ========================================================== */
+
+.upv-unidad-activa-bar{
+  display:flex;
+
+  align-items:center;
+  justify-content:space-between;
+
+  width:min(
+    720px,
+    calc(100% - 20px)
+  );
+
+  margin:
+    15px auto
+    0;
+
+  padding:
+    12px 15px;
+
+  box-sizing:border-box;
+
+  border:
+    1px solid
+    #cddbee;
+
+  border-radius:13px;
+
+  background:#f6f9fe;
+}
+
+
+.upv-unidad-activa-info{
+  display:flex;
+
+  align-items:center;
+
+  gap:10px;
+}
+
+
+.upv-unidad-activa-info span{
+  color:#8294ac;
+
+  font-size:9px;
+
+  font-weight:900;
+}
+
+
+.upv-unidad-activa-info strong{
+  color:#143967;
+
+  font-size:16px;
+}
+
+
+.upv-unidad-activa-info small{
+  color:#6881a2;
+
+  font-size:10px;
+}
+
+
+#upvCambiarUnidad{
+  padding:
+    8px 12px;
+
+  border:
+    1px solid
+    #bacee9;
+
+  border-radius:9px;
+
+  color:#2b5da7;
+
+  background:#fff;
+
+  font-size:11px;
+
+  font-weight:900;
+}
+
+
+/* ==========================================================
+   VOLUMEN M³ + BBLS
+   ========================================================== */
+
+.upv-volumen-grid{
+  display:grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0,1fr)
+    );
+
+  gap:10px;
+}
+
+
+.upv-volumen-box{
+  padding:12px;
+
+  border:
+    2px solid
+    #d1deef;
+
+  border-radius:14px;
+
+  background:#fff;
+}
+
+
+.upv-volumen-box.calculado{
+  border-color:#bcd6ff;
+
+  background:#f3f7ff;
+}
+
+
+.upv-volumen-box > span{
+  display:block;
+
+  margin-bottom:8px;
+
+  color:#7187a5;
+
+  font-size:9px;
+
+  font-weight:950;
+
+  letter-spacing:.05em;
+}
+
+
+.upv-volumen-input-wrap{
+  display:flex;
+
+  align-items:center;
+
+  gap:8px;
+}
+
+
+.upv-volumen-input{
+  width:100%;
+
+  min-width:0;
+
+  border:0;
+
+  outline:0;
+
+  color:#153764;
+
+  background:transparent;
+
+  font-size:22px;
+
+  font-weight:900;
+}
+
+
+.upv-volumen-input-wrap strong{
+  color:#52729f;
+
+  font-size:12px;
+}
+
+
+.upv-conversion-info{
+  display:block;
+
+  margin-top:8px;
+
+  color:#8194ac;
+
+  font-size:9px;
+
+  text-align:right;
+}
+
+
+.upv-volumen-resumen{
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+
+  margin-top:15px;
+
+  padding:12px 20px;
+
+  border-radius:12px;
+
+  background:
+    rgba(
+      52,
+      165,
+      80,
+      .08
+    );
+}
+
+
+.upv-volumen-resumen b{
+  color:#247339;
+
+  font-size:21px;
+}
+
+
+.upv-volumen-resumen small{
+  margin-top:3px;
+
+  color:#4e8660;
+
+  font-size:12px;
+}
+
+
+/* ==========================================================
+   MÓVIL
+   ========================================================== */
+
+@media(max-width:620px){
+
+  .upv-seleccion-unidad{
+    width:
+      calc(100% - 16px);
+
+    padding:
+      17px 13px;
+
+    border-radius:17px;
+  }
+
+
+  .upv-seleccion-unidad-head span{
+    font-size:15px;
+  }
+
+
+  .upv-unidades-grid{
+    gap:8px;
+  }
+
+
+  .upv-unidad-card{
+    min-height:135px;
+
+    padding:13px 8px;
+
+    border-radius:15px;
+  }
+
+
+  .upv-unidad-icono{
+    width:55px;
+    height:55px;
+
+    font-size:28px;
+  }
+
+
+  .upv-unidad-card strong{
+    font-size:16px;
+  }
+
+
+  .upv-unidad-activa-bar{
+    width:
+      calc(100% - 16px);
+
+    gap:8px;
+  }
+
+
+  .upv-unidad-activa-info{
+    flex-wrap:wrap;
+
+    gap:
+      3px 8px;
+  }
+
+
+  .upv-unidad-activa-info span{
+    width:100%;
+  }
+
+
+  .upv-volumen-grid{
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0,1fr)
+      );
+
+    gap:7px;
+  }
+
+
+  .upv-volumen-box{
+    padding:10px 8px;
+  }
+
+
+  .upv-volumen-input{
+    font-size:19px;
+  }
+
+
+  .upv-volumen-input-wrap strong{
+    font-size:10px;
+  }
+}
+
+
+/* ==========================================================
+   QUITAR ACCESO LATERAL OBSERVACIONES
+   Se conserva únicamente la opción OBSERVACIONES
+   del menú operativo nuevo.
+   ========================================================== */
+
+body.upv-operacion-final-activa
+#upv-nav [data-screen="observaciones"],
+
+body.upv-operacion-final-activa
+#upv-nav [data-view="observaciones"],
+
+body.upv-operacion-final-activa
+#upv-nav [href*="observ"],
+
+body.upv-operacion-final-activa
+.upv-nav-observaciones,
+
+body.upv-operacion-final-activa
+.nav-observaciones{
+  display:none !important;
+}
+
+
+/* ==========================================================
+   UNIDAD OBLIGATORIA
+   ========================================================== */
+
+#upvMenuFinal[hidden],
+#upvMenuFinal.upv-menu-bloqueado{
+  display:none !important;
+}
+
+#upvSeleccionUnidad{
+  display:block !important;
+}
+
+body.upv-operacion-final-activa
+#upvSeleccionUnidad{
+  position:relative;
+  z-index:40;
+}
+
+
+/* ==========================================================
+   MODAL DE CONFIRMACIÓN UPV
+   ========================================================== */
+
+body.upv-confirm-open{
+  overflow:hidden !important;
+}
+
+
+.upv-confirm-overlay{
+  position:fixed;
+
+  inset:0;
+
+  z-index:99999;
+
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  padding:18px;
+
+  box-sizing:border-box;
+
+  background:
+    rgba(8,20,39,.72);
+
+  backdrop-filter:
+    blur(8px);
+
+  animation:
+    upvConfirmFade
+    .16s ease;
+}
+
+
+.upv-confirm-overlay.closing{
+  opacity:0;
+
+  transition:
+    opacity .14s ease;
+}
+
+
+.upv-confirm-modal{
+  width:min(
+    510px,
+    100%
+  );
+
+  max-height:
+    calc(100dvh - 30px);
+
+  overflow-y:auto;
+
+  padding:20px;
+
+  box-sizing:border-box;
+
+  border:
+    1px solid
+    #d5e0ef;
+
+  border-radius:24px;
+
+  background:#fff;
+
+  box-shadow:
+    0 28px 80px
+    rgba(0,0,0,.30);
+
+  animation:
+    upvConfirmUp
+    .20s ease;
+}
+
+
+/* CABECERA */
+
+.upv-confirm-top{
+  display:flex;
+
+  align-items:center;
+
+  gap:14px;
+
+  padding-bottom:17px;
+
+  border-bottom:
+    1px solid #e1e8f2;
+}
+
+
+.upv-confirm-icon{
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  width:58px;
+  height:58px;
+
+  flex:none;
+
+  border-radius:17px;
+
+  color:#fff;
+
+  font-size:25px;
+
+  font-weight:950;
+}
+
+
+.upv-confirm-icon.inicio{
+  background:
+    linear-gradient(
+      145deg,
+      #3978e5,
+      #2459bc
+    );
+}
+
+
+.upv-confirm-icon.termino{
+  background:
+    linear-gradient(
+      145deg,
+      #48b45d,
+      #2f9143
+    );
+}
+
+
+.upv-confirm-top span{
+  display:block;
+
+  margin-bottom:4px;
+
+  color:#7090bb;
+
+  font-size:9px;
+
+  font-weight:950;
+
+  letter-spacing:.12em;
+}
+
+
+.upv-confirm-top h2{
+  margin:0;
+
+  color:#132f57;
+
+  font-size:20px;
+
+  font-weight:950;
+}
+
+
+.upv-confirm-top p{
+  margin:
+    5px 0 0;
+
+  color:#7b8ea8;
+
+  font-size:11px;
+}
+
+
+/* DATOS */
+
+.upv-confirm-data{
+  display:grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0,1fr)
+    );
+
+  gap:8px;
+
+  margin-top:15px;
+}
+
+
+.upv-confirm-row{
+  min-width:0;
+
+  padding:11px 12px;
+
+  border:
+    1px solid #dbe4ef;
+
+  border-radius:12px;
+
+  background:#f7f9fc;
+}
+
+
+.upv-confirm-row span,
+.upv-confirm-row strong,
+.upv-confirm-row small{
+  display:block;
+}
+
+
+.upv-confirm-row span{
+  margin-bottom:4px;
+
+  color:#8294ac;
+
+  font-size:8px;
+
+  font-weight:950;
+
+  letter-spacing:.08em;
+}
+
+
+.upv-confirm-row strong{
+  overflow:hidden;
+
+  color:#173965;
+
+  font-size:13px;
+
+  text-overflow:ellipsis;
+
+  white-space:nowrap;
+}
+
+
+.upv-confirm-row small{
+  margin-top:3px;
+
+  color:#6e84a3;
+
+  font-size:9px;
+}
+
+
+/* ==========================================================
+   WHATSAPP PREVIEW
+   ========================================================== */
+
+.upv-wa-preview{
+  margin-top:16px;
+
+  overflow:hidden;
+
+  border:
+    1px solid #cfddd7;
+
+  border-radius:16px;
+}
+
+
+.upv-wa-head{
+  display:flex;
+
+  align-items:center;
+
+  gap:10px;
+
+  padding:
+    11px 13px;
+
+  background:#f1f8f4;
+}
+
+
+.upv-wa-logo{
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  width:35px;
+  height:35px;
+
+  flex:none;
+
+  border-radius:50%;
+
+  color:#fff;
+
+  background:#25a965;
+
+  font-size:10px;
+
+  font-weight:950;
+}
+
+
+.upv-wa-head strong,
+.upv-wa-head span{
+  display:block;
+}
+
+
+.upv-wa-head strong{
+  color:#204c39;
+
+  font-size:11px;
+}
+
+
+.upv-wa-head span{
+  margin-top:2px;
+
+  color:#719084;
+
+  font-size:9px;
+}
+
+
+/* fondo similar chat */
+
+.upv-wa-chat{
+  padding:
+    17px 13px;
+
+  background:
+    linear-gradient(
+      rgba(239,234,226,.94),
+      rgba(239,234,226,.94)
+    );
+}
+
+
+.upv-wa-bubble{
+  position:relative;
+
+  width:
+    min(88%,365px);
+
+  margin-left:auto;
+
+  padding:
+    10px 11px
+    7px;
+
+  box-sizing:border-box;
+
+  border-radius:
+    11px
+    3px
+    11px
+    11px;
+
+  color:#26362e;
+
+  background:#d9fdd3;
+
+  box-shadow:
+    0 1px 2px
+    rgba(0,0,0,.12);
+
+  font-size:11px;
+
+  line-height:1.45;
+}
+
+
+.upv-wa-bubble small{
+  display:block;
+
+  margin-top:7px;
+
+  color:#718378;
+
+  font-size:8px;
+
+  text-align:right;
+}
+
+
+.upv-wa-bubble small b{
+  margin-left:3px;
+
+  color:#53a9e8;
+}
+
+
+/* BOTONES */
+
+.upv-confirm-actions{
+  display:grid;
+
+  grid-template-columns:
+    .8fr 1.2fr;
+
+  gap:9px;
+
+  margin-top:17px;
+}
+
+
+.upv-confirm-actions button{
+  min-height:52px;
+
+  border:0;
+
+  border-radius:12px;
+
+  font-size:11px;
+
+  font-weight:950;
+
+  cursor:pointer;
+}
+
+
+.upv-confirm-cancel{
+  color:#51657f;
+
+  background:#eef2f7;
+}
+
+
+.upv-confirm-accept{
+  color:#fff;
+}
+
+
+.upv-confirm-accept.inicio{
+  background:
+    linear-gradient(
+      135deg,
+      #3978e5,
+      #2459bd
+    );
+}
+
+
+.upv-confirm-accept.termino{
+  background:
+    linear-gradient(
+      135deg,
+      #47b55d,
+      #309044
+    );
+}
+
+
+/* ANIMACIONES */
+
+@keyframes upvConfirmFade{
+
+  from{
+    opacity:0;
+  }
+
+  to{
+    opacity:1;
+  }
+}
+
+
+@keyframes upvConfirmUp{
+
+  from{
+    opacity:0;
+
+    transform:
+      translateY(12px)
+      scale(.975);
+  }
+
+  to{
+    opacity:1;
+
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+
+/* ==========================================================
+   MÓVIL
+   ========================================================== */
+
+@media(max-width:620px){
+
+  .upv-confirm-overlay{
+    align-items:flex-end;
+
+    padding:
+      10px
+      10px
+      calc(
+        10px +
+        env(safe-area-inset-bottom)
+      );
+  }
+
+
+  .upv-confirm-modal{
+    width:100%;
+
+    max-height:
+      calc(
+        94dvh -
+        env(safe-area-inset-bottom)
+      );
+
+    padding:
+      16px 13px;
+
+    border-radius:
+      23px
+      23px
+      17px
+      17px;
+  }
+
+
+  .upv-confirm-icon{
+    width:50px;
+    height:50px;
+
+    border-radius:14px;
+
+    font-size:22px;
+  }
+
+
+  .upv-confirm-top h2{
+    font-size:18px;
+  }
+
+
+  .upv-confirm-data{
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0,1fr)
+      );
+  }
+
+
+  .upv-confirm-row{
+    padding:
+      10px 9px;
+  }
+
+
+  .upv-wa-chat{
+    padding:
+      13px 9px;
+  }
+
+
+  .upv-wa-bubble{
+    width:94%;
+
+    font-size:10.5px;
+  }
+
+
+  .upv-confirm-actions{
+    position:sticky;
+
+    bottom:0;
+
+    padding-top:10px;
+
+    background:#fff;
+  }
+
+
+  .upv-confirm-actions button{
+    min-height:54px;
+  }
+}
+
+
+/* ==========================================================
+   UPV CONFIRMACIÓN — VALIDACIÓN GPS
+   ========================================================== */
+
+.upv-confirm-gps-dentro{
+  border-color:#bde3c7 !important;
+  background:#eefaf1 !important;
+}
+
+.upv-confirm-gps-dentro span{
+  color:#568264 !important;
+}
+
+.upv-confirm-gps-dentro strong{
+  color:#21843a !important;
+}
+
+
+.upv-confirm-gps-fuera{
+  border-color:#efc1c4 !important;
+  background:#fff0f1 !important;
+}
+
+.upv-confirm-gps-fuera span{
+  color:#9b6268 !important;
+}
+
+.upv-confirm-gps-fuera strong{
+  color:#c52e37 !important;
+}
+
+
+.upv-confirm-gps-error{
+  border-color:#efd4ad !important;
+  background:#fff8ed !important;
+}
+
+.upv-confirm-gps-error strong{
+  color:#b97617 !important;
+}
+
+
+/* ==========================================================
+   SELECTOR POZOS — ESTILO RECORREDORES
+   ========================================================== */
+
+
+/*
+ * El SELECT original sigue existiendo para la lógica,
+ * simplemente no se muestra.
+ */
+.upv-pozo-native-hidden{
+  position:absolute !important;
+  width:1px !important;
+  height:1px !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+  overflow:hidden !important;
+}
+
+
+/* Contenedor */
+
+.upv-pozo-picker{
+  width:100%;
+  box-sizing:border-box;
+}
+
+
+/* ==========================================================
+   CABECERA
+   ========================================================== */
+
+.upv-pozo-picker-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  width:100%;
+  min-height:66px;
+
+  padding:
+    0 18px;
+
+  box-sizing:border-box;
+
+  border:
+    2px solid
+    #315fa9;
+
+  border-radius:
+    15px;
+
+  background:
+    #fff;
+
+  color:
+    #122849;
+
+  cursor:pointer;
+
+  text-align:left;
+
+  transition:
+    border-radius .16s ease,
+    box-shadow .16s ease;
+}
+
+
+.upv-pozo-picker.open
+.upv-pozo-picker-head{
+  border-radius:
+    15px 15px 0 0;
+
+  box-shadow:
+    0 5px 15px
+    rgba(26,61,110,.07);
+}
+
+
+.upv-pozo-picker-title{
+  display:flex;
+  align-items:center;
+
+  gap:14px;
+
+  min-width:0;
+
+  font-size:
+    18px;
+
+  font-weight:
+    800;
+}
+
+
+.upv-pozo-picker-icon{
+  font-size:
+    21px;
+}
+
+
+.upv-pozo-picker-arrow{
+  flex:0 0 auto;
+
+  margin-left:
+    12px;
+
+  color:
+    #153868;
+
+  font-size:
+    24px;
+
+  font-weight:
+    800;
+}
+
+
+/* ==========================================================
+   PANEL DESPLEGABLE
+   ========================================================== */
+
+.upv-pozo-picker-list{
+  width:100%;
+
+  box-sizing:border-box;
+
+  overflow:hidden;
+
+  border:
+    2px solid
+    #315fa9;
+
+  border-top:0;
+
+  border-radius:
+    0 0 15px 15px;
+
+  background:#fff;
+
+  box-shadow:
+    0 12px 28px
+    rgba(17,46,88,.09);
+}
+
+
+/* Título */
+
+.upv-pozo-picker-list-title{
+  display:flex;
+  align-items:center;
+
+  gap:13px;
+
+  min-height:58px;
+
+  padding:
+    0 18px;
+
+  box-sizing:border-box;
+
+  border-bottom:
+    1px solid
+    #cedbef;
+
+  color:
+    #122849;
+}
+
+
+.upv-pozo-picker-list-title span{
+  font-size:
+    20px;
+}
+
+
+.upv-pozo-picker-list-title strong{
+  font-size:
+    17px;
+
+  font-weight:
+    950;
+
+  letter-spacing:
+    .15px;
+}
+
+
+/* ==========================================================
+   SCROLL DE POZOS
+   ========================================================== */
+
+.upv-pozo-picker-scroll{
+  max-height:
+    350px;
+
+  overflow-y:auto;
+
+  overscroll-behavior:
+    contain;
+
+  scrollbar-width:
+    auto;
+
+  scrollbar-color:
+    #858585
+    #f3f5f8;
+}
+
+
+.upv-pozo-picker-scroll::-webkit-scrollbar{
+  width:12px;
+}
+
+
+.upv-pozo-picker-scroll::-webkit-scrollbar-track{
+  background:
+    #f4f5f7;
+}
+
+
+.upv-pozo-picker-scroll::-webkit-scrollbar-thumb{
+  border:
+    3px solid
+    #f4f5f7;
+
+  border-radius:
+    20px;
+
+  background:
+    #858585;
+}
+
+
+/* ==========================================================
+   FILA DE POZO
+   ========================================================== */
+
+.upv-pozo-picker-option{
+  display:flex;
+  align-items:center;
+
+  width:100%;
+  min-height:59px;
+
+  padding:
+    0 18px;
+
+  box-sizing:border-box;
+
+  gap:17px;
+
+  border:0;
+  border-bottom:
+    1px solid
+    #d4deec;
+
+  background:#fff;
+
+  color:
+    #091d3c;
+
+  cursor:pointer;
+
+  text-align:left;
+}
+
+
+.upv-pozo-picker-option:last-child{
+  border-bottom:0;
+}
+
+
+.upv-pozo-picker-option:hover{
+  background:
+    #f2f6fc;
+}
+
+
+.upv-pozo-picker-option.selected{
+  background:
+    #edf4ff;
+}
+
+
+.upv-pozo-picker-option strong{
+  font-size:
+    17px;
+
+  font-weight:
+    900;
+}
+
+
+/*
+ * Pequeña marca vertical gris
+ * como la lista de Recorridores.
+ */
+.upv-pozo-mini-icon{
+  display:block;
+
+  flex:
+    0 0 9px;
+
+  width:9px;
+  height:18px;
+
+  border-radius:
+    3px;
+
+  background:
+    #90959e;
+}
+
+
+.upv-pozo-picker-option.selected
+.upv-pozo-mini-icon{
+  background:
+    #315fa9;
+}
+
+
+/* ==========================================================
+   LIMPIAR EL LABEL VIEJO
+   ========================================================== */
+
+#upvFinalPozoWrap > label{
+  display:none !important;
+}
+
+
+/* ==========================================================
+   MÓVIL
+   ========================================================== */
+
+@media(max-width:600px){
+
+  .upv-pozo-picker-head{
+    min-height:
+      60px;
+
+    padding:
+      0 15px;
+  }
+
+
+  .upv-pozo-picker-title{
+    gap:
+      11px;
+
+    font-size:
+      16px;
+  }
+
+
+  .upv-pozo-picker-list-title{
+    min-height:
+      54px;
+
+    padding:
+      0 15px;
+  }
+
+
+  .upv-pozo-picker-list-title strong{
+    font-size:
+      15px;
+  }
+
+
+  .upv-pozo-picker-scroll{
+    max-height:
+      330px;
+  }
+
+
+  .upv-pozo-picker-option{
+    min-height:
+      56px;
+
+    padding:
+      0 15px;
+  }
+
+
+  .upv-pozo-picker-option strong{
+    font-size:
+      16px;
+  }
+}
+
+
+/* ==========================================================
+   OBSERVACIONES DE LA OPERACIÓN
+   CARGA / DESCARGA
+   ========================================================== */
+
+.upv-obs-operacion{
+  position:relative;
+
+  width:100%;
+
+  margin:
+    20px 0;
+
+  padding:
+    18px;
+
+  box-sizing:
+    border-box;
+
+  border:
+    1px solid #cfdbec;
+
+  border-radius:
+    17px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #f8fbff 100%
+    );
+}
+
+
+.upv-obs-operacion-head{
+  display:flex;
+
+  align-items:flex-start;
+
+  gap:11px;
+
+  margin-bottom:
+    13px;
+}
+
+
+.upv-obs-operacion-head > span{
+  flex:
+    0 0 auto;
+
+  font-size:
+    22px;
+}
+
+
+.upv-obs-operacion-head div{
+  display:flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    3px;
+}
+
+
+.upv-obs-operacion-head strong{
+  color:
+    #122e58;
+
+  font-size:
+    13px;
+
+  font-weight:
+    950;
+
+  letter-spacing:
+    .2px;
+}
+
+
+.upv-obs-operacion-head small{
+  color:
+    #7c8da5;
+
+  font-size:
+    10px;
+
+  line-height:
+    1.35;
+}
+
+
+/* textarea */
+
+.upv-obs-operacion-textarea{
+  display:block;
+
+  width:100%;
+
+  min-height:
+    112px;
+
+  resize:
+    vertical;
+
+  padding:
+    14px 15px;
+
+  box-sizing:
+    border-box;
+
+  border:
+    2px solid
+    #d3dfef;
+
+  border-radius:
+    13px;
+
+  outline:
+    none;
+
+  background:
+    #fff;
+
+  color:
+    #142c50;
+
+  font-family:
+    inherit;
+
+  font-size:
+    14px;
+
+  line-height:
+    1.5;
+
+  transition:
+    border-color .15s ease,
+    box-shadow .15s ease;
+}
+
+
+.upv-obs-operacion-textarea::placeholder{
+  color:
+    #98a8bb;
+}
+
+
+.upv-obs-operacion-textarea:focus{
+  border-color:
+    #3568cb;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(53,104,203,.10);
+}
+
+
+/* contador */
+
+.upv-obs-operacion-counter{
+  margin-top:
+    7px;
+
+  color:
+    #8899ad;
+
+  font-size:
+    9px;
+
+  font-weight:
+    700;
+
+  text-align:
+    right;
+}
+
+
+/* modal */
+
+.upv-confirm-observacion{
+  grid-column:
+    1 / -1;
+}
+
+
+.upv-confirm-observacion strong{
+  white-space:
+    pre-wrap;
+
+  line-height:
+    1.45;
+}
+
+
+/* móvil */
+
+@media(max-width:600px){
+
+  .upv-obs-operacion{
+    margin:
+      15px 0;
+
+    padding:
+      15px;
+
+    border-radius:
+      14px;
+  }
+
+
+  .upv-obs-operacion-textarea{
+    min-height:
+      100px;
+
+    font-size:
+      13px;
+  }
+
+}
+
+
+/* ==========================================================
+   UPV — MENÚ OPERATIVO DISEÑO 1
+   Aplicado: 19-08-2026
+   ========================================================== */
+
+body.upv-operacion-final-activa #upvMenuFinal{
+  position:relative;
+  overflow:hidden;
+
+  width:100%;
+  max-width:620px;
+  margin:18px auto 22px;
+
+  padding:0 22px 24px;
+
+  background:#ffffff;
+  border:1px solid #dbe5f2;
+  border-radius:24px;
+
+  box-shadow:
+    0 8px 28px rgba(15,42,82,.08);
+}
+
+
+/* CABECERA AZUL */
+
+body.upv-operacion-final-activa
+#upvMenuFinal .upv-menu-final-head{
+
+  position:relative;
+
+  margin:
+    0 -22px
+    28px;
+
+  min-height:138px;
+
+  padding:
+    40px 24px
+    54px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  text-align:center;
+
+  background:
+    linear-gradient(
+      135deg,
+      #071f50 0%,
+      #0b347d 55%,
+      #1257bd 100%
+    );
+
+  border:0;
+
+  color:#ffffff;
+}
+
+
+/* CURVA INFERIOR */
+
+body.upv-operacion-final-activa
+#upvMenuFinal .upv-menu-final-head::after{
+
+  content:"";
+
+  position:absolute;
+
+  left:-5%;
+  bottom:-32px;
+
+  width:110%;
+  height:62px;
+
+  background:#ffffff;
+
+  border-radius:
+    50% 50% 0 0 /
+    75% 75% 0 0;
+}
+
+
+/* ICONO CENTRAL */
+
+body.upv-operacion-final-activa
+#upvMenuFinal .upv-menu-final-head::before{
+
+  content:"✓";
+
+  position:absolute;
+
+  z-index:3;
+
+  left:50%;
+  bottom:-24px;
+
+  transform:translateX(-50%);
+
+  width:58px;
+  height:58px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:50%;
+
+  background:#ffffff;
+
+  border:1px solid #dce7f5;
+
+  color:#168a5b;
+
+  font-size:29px;
+  font-weight:900;
+
+  box-shadow:
+    0 7px 20px
+    rgba(15,42,82,.15);
+}
+
+
+body.upv-operacion-final-activa
+#upvMenuFinal .upv-menu-final-head span{
+
+  position:relative;
+  z-index:2;
+
+  font-size:20px;
+  line-height:1.25;
+
+  font-weight:900;
+
+  letter-spacing:.01em;
+
+  color:#ffffff;
+}
+
+
+/* TEXTO AUXILIAR */
+
+body.upv-operacion-final-activa
+#upvMenuFinal .upv-menu-final-head span::after{
+
+  content:"Selecciona el tipo de operación";
+
+  display:block;
+
+  margin-top:9px;
+
+  font-size:12px;
+  font-weight:500;
+
+  letter-spacing:0;
+
+  color:rgba(255,255,255,.78);
+}
+
+
+/* GRID 2 X 2 */
+
+body.upv-operacion-final-activa
+#upvMenuFinal .upv-menu-final-grid{
+
+  display:grid;
+
+  grid-template-columns:
+    repeat(2,minmax(0,1fr));
+
+  gap:13px;
+
+  padding-top:10px;
+}
+
+
+/* TARJETAS */
+
+body.upv-operacion-final-activa
+#upvMenuFinal .upv-menu-card{
+
+  position:relative;
+
+  min-width:0;
+  min-height:142px;
+
+  padding:
+    18px 10px
+    15px;
+
+  display:flex;
+  flex-direction:column;
+
+  align-items:center;
+  justify-content:center;
+
+  gap:5px;
+
+  border:
+    1px solid #e1e8f2;
+
+  border-radius:18px;
+
+  background:#ffffff;
+
+  color:#0a234c;
+
+  box-shadow:
+    0 5px 16px
+    rgba(18,48,89,.07);
+
+  cursor:pointer;
+
+  -webkit-tap-highlight-color:
+    transparent;
+
+  transition:
+    transform .15s ease,
+    box-shadow .15s ease,
+    border-color .15s ease;
+}
+
+
+/* INTERACCIÓN */
+
+body.upv-operacion-final-activa
+#upvMenuFinal .upv-menu-card:active{
+
+  transform:scale(.965);
+
+  box-shadow:
+    0 2px 8px
+    rgba(18,48,89,.08);
+}
+
+
+/* ICONOS */
+
+body.upv-operacion-final-activa
+#upvMenuFinal .upv-menu-card .ico{
+
+  width:54px;
+  height:54px;
+
+  margin-bottom:5px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:16px;
+
+  font-size:29px;
+  line-height:1;
+
+  background:#edf4ff;
+}
+
+
+/* CARGA INICIO */
+
+body.upv-operacion-final-activa
+#upvMenuFinal
+.upv-menu-card[data-flow="CARGA_INICIO"]
+.ico{
+
+  background:#eaf2ff;
+}
+
+
+/* CARGA TÉRMINO */
+
+body.upv-operacion-final-activa
+#upvMenuFinal
+.upv-menu-card[data-flow="CARGA_TERMINO"]
+.ico{
+
+  background:#e8f8ef;
+}
+
+
+/* DESCARGA INICIO */
+
+body.upv-operacion-final-activa
+#upvMenuFinal
+.upv-menu-card[data-flow="DESCARGA_INICIO"]
+.ico{
+
+  background:#f0edff;
+}
+
+
+/* DESCARGA TÉRMINO */
+
+body.upv-operacion-final-activa
+#upvMenuFinal
+.upv-menu-card[data-flow="DESCARGA_TERMINO"]
+.ico{
+
+  background:#fff1e8;
+}
+
+
+/* TÍTULOS */
+
+body.upv-operacion-final-activa
+#upvMenuFinal .upv-menu-card strong{
+
+  margin-top:3px;
+
+  font-size:14px;
+  line-height:1.15;
+
+  font-weight:900;
+
+  color:#081f47;
+}
+
+
+/* SUBTÍTULOS */
+
+body.upv-operacion-final-activa
+#upvMenuFinal .upv-menu-card small{
+
+  font-size:10px;
+
+  line-height:1.2;
+
+  font-weight:700;
+
+  letter-spacing:.03em;
+
+  color:#60718b;
+}
+
+
+/* COLORES POR OPERACIÓN */
+
+body.upv-operacion-final-activa
+#upvMenuFinal
+.upv-menu-card[data-flow="CARGA_INICIO"]
+strong{
+
+  color:#075dc5;
+}
+
+
+body.upv-operacion-final-activa
+#upvMenuFinal
+.upv-menu-card[data-flow="CARGA_TERMINO"]
+strong{
+
+  color:#087649;
+}
+
+
+body.upv-operacion-final-activa
+#upvMenuFinal
+.upv-menu-card[data-flow="DESCARGA_INICIO"]
+strong{
+
+  color:#5140b8;
+}
+
+
+body.upv-operacion-final-activa
+#upvMenuFinal
+.upv-menu-card[data-flow="DESCARGA_TERMINO"]
+strong{
+
+  color:#c44b10;
+}
+
+
+/* OBSERVACIONES — FILA COMPLETA */
+
+body.upv-operacion-final-activa
+#upvMenuFinal .upv-menu-card.obs{
+
+  grid-column:1 / -1;
+
+  min-height:84px;
+
+  padding:14px 18px;
+
+  display:grid;
+
+  grid-template-columns:
+    52px 1fr 24px;
+
+  grid-template-rows:auto auto;
+
+  column-gap:12px;
+
+  text-align:left;
+
+  align-items:center;
+
+  justify-items:start;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f7faff,
+      #eef5ff
+    );
+}
+
+
+body.upv-operacion-final-activa
+#upvMenuFinal .upv-menu-card.obs .ico{
+
+  grid-column:1;
+  grid-row:1 / 3;
+
+  width:48px;
+  height:48px;
+
+  margin:0;
+
+  border-radius:50%;
+
+  background:#e6f0ff;
+
+  font-size:24px;
+}
+
+
+body.upv-operacion-final-activa
+#upvMenuFinal .upv-menu-card.obs strong{
+
+  grid-column:2;
+  grid-row:1;
+
+  align-self:end;
+
+  margin:0;
+
+  color:#0b2c5d;
+}
+
+
+body.upv-operacion-final-activa
+#upvMenuFinal .upv-menu-card.obs small{
+
+  grid-column:2;
+  grid-row:2;
+
+  align-self:start;
+
+  margin-top:2px;
+}
+
+
+/* FLECHA DE OBSERVACIONES */
+
+body.upv-operacion-final-activa
+#upvMenuFinal .upv-menu-card.obs::after{
+
+  content:"›";
+
+  grid-column:3;
+  grid-row:1 / 3;
+
+  align-self:center;
+
+  color:#174c91;
+
+  font-size:30px;
+  font-weight:400;
+}
+
+
+/* ==========================================================
+   CELULAR
+   ========================================================== */
+
+@media (max-width:600px){
+
+  body.upv-operacion-final-activa
+  #upvMenuFinal{
+
+    margin:
+      12px auto
+      18px;
+
+    padding:
+      0 14px
+      18px;
+
+    border-radius:20px;
+  }
+
+
+  body.upv-operacion-final-activa
+  #upvMenuFinal .upv-menu-final-head{
+
+    margin:
+      0 -14px
+      25px;
+
+    min-height:120px;
+
+    padding:
+      32px 18px
+      48px;
+  }
+
+
+  body.upv-operacion-final-activa
+  #upvMenuFinal .upv-menu-final-head span{
+
+    font-size:18px;
+  }
+
+
+  body.upv-operacion-final-activa
+  #upvMenuFinal .upv-menu-final-grid{
+
+    gap:10px;
+  }
+
+
+  body.upv-operacion-final-activa
+  #upvMenuFinal .upv-menu-card{
+
+    min-height:130px;
+
+    border-radius:16px;
+  }
+
+
+  body.upv-operacion-final-activa
+  #upvMenuFinal .upv-menu-card .ico{
+
+    width:50px;
+    height:50px;
+
+    font-size:27px;
+  }
+
+
+  body.upv-operacion-final-activa
+  #upvMenuFinal .upv-menu-card.obs{
+
+    min-height:78px;
+  }
+
+}
+
+
+
+/* ==========================================================
+   UPV — PREVIEW FINAL DE CARGA
+   Destino/pozo como centro absoluto de atención
+   ========================================================== */
+
+
+.upv-preview-carga-overlay{
+
+  position:fixed;
+
+  inset:0;
+
+  z-index:99999;
+
+  display:flex;
+
+  align-items:flex-start;
+
+  justify-content:center;
+
+  padding:
+    max(12px, env(safe-area-inset-top))
+    10px
+    24px;
+
+  overflow-y:auto;
+
+  background:
+    rgba(3,15,36,.76);
+
+  backdrop-filter:
+    blur(7px);
+
+  -webkit-backdrop-filter:
+    blur(7px);
+}
+
+
+.upv-preview-carga-card{
+
+  width:min(
+    100%,
+    460px
+  );
+
+  margin:auto;
+
+  overflow:hidden;
+
+  border-radius:22px;
+
+  background:#ffffff;
+
+  box-shadow:
+    0 25px 70px
+    rgba(0,0,0,.30);
+}
+
+
+/* ===========================
+   PARTE SUPERIOR
+   =========================== */
+
+.upv-preview-carga-hero{
+
+  position:relative;
+
+  min-height:270px;
+
+  padding:
+    24px 16px
+    32px;
+
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+
+  justify-content:center;
+
+  text-align:center;
+
+  color:white;
+}
+
+
+.upv-preview-carga-card.finalizar
+.upv-preview-carga-hero{
+
+  background:
+    radial-gradient(
+      circle at 78% 35%,
+      rgba(52,145,255,.55),
+      transparent 36%
+    ),
+    linear-gradient(
+      145deg,
+      #071c52,
+      #0740ad 52%,
+      #0871e6
+    );
+}
+
+
+.upv-preview-carga-card.rellenar
+.upv-preview-carga-hero{
+
+  background:
+    radial-gradient(
+      circle at 78% 35%,
+      rgba(53,224,135,.44),
+      transparent 36%
+    ),
+    linear-gradient(
+      145deg,
+      #064126,
+      #078040 52%,
+      #08ad57
+    );
+}
+
+
+/* ACTIVIDAD FINALIZADA */
+
+.upv-preview-carga-ok{
+
+  padding:
+    7px 15px;
+
+  margin-bottom:13px;
+
+  border-radius:999px;
+
+  background:
+    rgba(255,255,255,.15);
+
+  border:
+    1px solid
+    rgba(255,255,255,.22);
+
+  font-size:14px;
+
+  font-weight:950;
+
+  letter-spacing:.03em;
+}
+
+
+.upv-preview-carga-tipo{
+
+  font-size:14px;
+
+  font-weight:850;
+
+  letter-spacing:.09em;
+
+  opacity:.92;
+}
+
+
+/* ==========================================================
+   POZO / DESTINO — ELEMENTO MÁS VISIBLE
+   ========================================================== */
+
+.upv-preview-carga-pozo{
+
+  width:100%;
+
+  margin:
+    7px auto
+    8px;
+
+  font-size:
+    clamp(
+      58px,
+      18vw,
+      88px
+    );
+
+  line-height:.94;
+
+  font-weight:1000;
+
+  letter-spacing:
+    -.045em;
+
+  color:#ffffff;
+
+  white-space:nowrap;
+
+  overflow:hidden;
+
+  text-overflow:ellipsis;
+
+  text-shadow:
+    0 8px 28px
+    rgba(0,0,0,.25);
+}
+
+
+.upv-preview-carga-destino{
+
+  position:absolute;
+
+  bottom:-1px;
+
+  left:50%;
+
+  transform:
+    translate(-50%,50%);
+
+  min-width:max-content;
+
+  padding:
+    8px 20px;
+
+  border-radius:999px;
+
+  background:#ffffff;
+
+  color:#1550a0;
+
+  font-size:12px;
+
+  font-weight:950;
+
+  letter-spacing:.04em;
+
+  box-shadow:
+    0 5px 16px
+    rgba(0,0,0,.15);
+}
+
+
+.upv-preview-carga-card.rellenar
+.upv-preview-carga-destino{
+
+  color:#08743d;
+}
+
+
+/* X */
+
+.upv-preview-carga-x{
+
+  position:absolute;
+
+  top:12px;
+
+  right:13px;
+
+  width:38px;
+
+  height:38px;
+
+  border:0;
+
+  border-radius:50%;
+
+  background:
+    rgba(255,255,255,.10);
+
+  color:#ffffff;
+
+  font-size:28px;
+
+  cursor:pointer;
+}
+
+
+/* ===========================
+   DATOS
+   =========================== */
+
+.upv-preview-carga-datos{
+
+  padding:
+    30px 17px
+    17px;
+}
+
+
+.upv-preview-fila{
+
+  min-height:46px;
+
+  padding:
+    9px 2px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  gap:12px;
+
+  border-bottom:
+    1px solid #edf1f6;
+}
+
+
+.upv-preview-fila span{
+
+  flex:0 0 auto;
+
+  font-size:13px;
+
+  font-weight:650;
+
+  color:#566983;
+}
+
+
+.upv-preview-fila strong{
+
+  min-width:0;
+
+  text-align:right;
+
+  font-size:14px;
+
+  font-weight:900;
+
+  color:#10294e;
+}
+
+
+.upv-preview-divisor{
+
+  height:8px;
+
+  margin:
+    4px -17px;
+
+  background:#f4f7fb;
+}
+
+
+.upv-preview-fila
+.gps-ok{
+
+  padding:
+    5px 10px;
+
+  border-radius:999px;
+
+  background:#dff6e9;
+
+  color:#08783f;
+}
+
+
+.upv-preview-fila
+.gps-no{
+
+  padding:
+    5px 10px;
+
+  border-radius:999px;
+
+  background:#fde7e5;
+
+  color:#a73b31;
+}
+
+
+/* ===========================
+   ACCIONES
+   =========================== */
+
+.upv-preview-carga-enviar{
+
+  width:100%;
+
+  min-height:52px;
+
+  margin-top:15px;
+
+  border:0;
+
+  border-radius:11px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #0645b8,
+      #0873e8
+    );
+
+  color:white;
+
+  font-size:14px;
+
+  font-weight:950;
+
+  cursor:pointer;
+}
+
+
+.upv-preview-carga-card.rellenar
+.upv-preview-carga-enviar{
+
+  background:
+    linear-gradient(
+      135deg,
+      #067c40,
+      #09aa57
+    );
+}
+
+
+.upv-preview-carga-editar{
+
+  width:100%;
+
+  min-height:47px;
+
+  margin-top:8px;
+
+  border:
+    1px solid #b9c6d7;
+
+  border-radius:11px;
+
+  background:#ffffff;
+
+  color:#304762;
+
+  font-size:13px;
+
+  font-weight:850;
+
+  cursor:pointer;
+}
+
+
+/* BOTÓN PRINCIPAL */
+
+#upvFinalTerminoBtn.upv-btn-rellenar{
+
+  background:
+    linear-gradient(
+      135deg,
+      #087b40,
+      #0aad59
+    ) !important;
+
+  color:#ffffff !important;
+
+  border-color:#087b40 !important;
+
+  box-shadow:
+    0 7px 20px
+    rgba(7,143,73,.20);
+}
+
+
+/* ===========================
+   MÓVIL
+   =========================== */
+
+@media(max-width:520px){
+
+  .upv-preview-carga-overlay{
+
+    padding:
+      max(
+        7px,
+        env(safe-area-inset-top)
+      )
+      6px
+      15px;
+  }
+
+
+  .upv-preview-carga-card{
+
+    border-radius:18px;
+  }
+
+
+  .upv-preview-carga-hero{
+
+    min-height:235px;
+
+    padding:
+      20px 11px
+      27px;
+  }
+
+
+  .upv-preview-carga-pozo{
+
+    font-size:
+      clamp(
+        54px,
+        20vw,
+        76px
+      );
+  }
+
+
+  .upv-preview-carga-datos{
+
+    padding:
+      28px 12px
+      13px;
+  }
+
+
+  .upv-preview-fila{
+
+    min-height:43px;
+  }
+
+
+  .upv-preview-fila span{
+
+    font-size:12px;
+  }
+
+
+  .upv-preview-fila strong{
+
+    font-size:13px;
+  }
+
+}
+
+
+/* ==========================================================
+   UPV — POZOS CARGADOS / INICIO DE DESCARGA
+   ========================================================== */
+
+.upv-descarga-cargas{
+  margin:20px 0 24px;
+  padding:18px;
+  border:1px solid #dbe4f0;
+  border-radius:20px;
+  background:#f8fbff;
+}
+
+.upv-descarga-cargas-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:14px;
+}
+
+.upv-descarga-cargas-head strong{
+  display:block;
+  font-size:14px;
+  font-weight:800;
+  letter-spacing:.04em;
+}
+
+.upv-descarga-cargas-head small{
+  display:block;
+  margin-top:4px;
+  opacity:.7;
+}
+
+.upv-descarga-contador{
+  min-width:34px;
+  height:34px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  background:#e6eefc;
+  font-weight:800;
+}
+
+.upv-descarga-cargas-lista{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.upv-descarga-carga-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:14px;
+  background:#fff;
+  border:1px solid #dce4ef;
+  border-radius:15px;
+  transition:.15s ease;
+}
+
+.upv-descarga-carga-item.seleccionado{
+  border-color:#9bc8ad;
+  background:#f6fcf8;
+}
+
+.upv-descarga-carga-info{
+  min-width:0;
+}
+
+.upv-descarga-carga-info strong{
+  display:block;
+  font-size:16px;
+  font-weight:800;
+}
+
+.upv-descarga-carga-info small{
+  display:block;
+  margin-top:3px;
+  opacity:.68;
+}
+
+.upv-descarga-decision{
+  display:flex;
+  gap:7px;
+  flex-shrink:0;
+}
+
+.upv-descarga-decision button{
+  width:42px;
+  height:42px;
+  border-radius:12px;
+  border:1px solid #d9e1ec;
+  background:#fff;
+  font-size:20px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.upv-descarga-si.activo{
+  background:#e8f7ed;
+  border-color:#7cc394;
+}
+
+.upv-descarga-no.activo{
+  background:#fff0f0;
+  border-color:#e39a9a;
+}
+
+.upv-descarga-cargas-vacia{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  margin:18px 0;
+  padding:16px;
+  border:1px dashed #cbd7e7;
+  border-radius:16px;
+  background:#f8fbff;
+}
+
+.upv-descarga-cargas-vacia span{
+  font-size:22px;
+}
+
+.upv-descarga-cargas-vacia strong,
+.upv-descarga-cargas-vacia small{
+  display:block;
+}
+
+.upv-descarga-cargas-vacia small{
+  margin-top:3px;
+  opacity:.7;
+}
+
+
+
+/* ==========================================================
+   UPV — DISEÑO 3 / MANIFIESTO DE DESCARGA
+   ========================================================== */
+
+.upv-manifiesto-descarga{
+  margin:20px 0 25px;
+}
+
+.upv-manifiesto-head{
+  display:flex;
+  align-items:center;
+  gap:13px;
+
+  margin-bottom:14px;
+  padding:15px 16px;
+
+  border:1px solid #d9e5f5;
+  border-radius:15px;
+
+  background:#f6f9ff;
+}
+
+.upv-manifiesto-head-icon{
+  width:42px;
+  height:42px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  flex:0 0 42px;
+
+  border-radius:11px;
+
+  background:#eef4ff;
+
+  font-size:21px;
+}
+
+.upv-manifiesto-head strong{
+  display:block;
+
+  color:#122e61;
+
+  font-size:14px;
+  font-weight:900;
+
+  letter-spacing:.04em;
+}
+
+.upv-manifiesto-head small{
+  display:block;
+
+  margin-top:3px;
+
+  color:#71809b;
+
+  font-size:12px;
+}
+
+
+.upv-manifiesto-lista{
+  display:flex;
+  flex-direction:column;
+
+  gap:11px;
+}
+
+
+.upv-manifiesto-pozo{
+  width:100%;
+
+  display:grid;
+
+  grid-template-columns:
+    48px
+    minmax(0,1fr)
+    24px;
+
+  align-items:center;
+
+  gap:12px;
+
+  padding:16px;
+
+  border:1.5px solid #dce4ef;
+  border-radius:16px;
+
+  background:#ffffff;
+
+  color:#142b53;
+
+  font-family:inherit;
+
+  text-align:left;
+
+  cursor:pointer;
+
+  transition:
+    background .16s ease,
+    border-color .16s ease,
+    box-shadow .16s ease,
+    transform .12s ease;
+}
+
+
+.upv-manifiesto-pozo:active{
+  transform:scale(.992);
+}
+
+
+.upv-manifiesto-pozo.seleccionado{
+  border-color:#8dc49b;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fbfffc,
+      #f0faf3
+    );
+
+  box-shadow:
+    0 5px 18px
+    rgba(45,126,70,.08);
+}
+
+
+.upv-manifiesto-check{
+  width:42px;
+  height:42px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border:2px solid #b8c3d2;
+  border-radius:50%;
+
+  background:#ffffff;
+
+  color:transparent;
+
+  font-size:23px;
+  font-weight:900;
+}
+
+
+.upv-manifiesto-pozo.seleccionado
+.upv-manifiesto-check{
+
+  border-color:#349357;
+
+  background:#349357;
+
+  color:#ffffff;
+}
+
+
+.upv-manifiesto-info{
+  min-width:0;
+
+  display:flex;
+  flex-direction:column;
+}
+
+
+.upv-manifiesto-info > strong{
+  color:#102a56;
+
+  font-size:18px;
+  font-weight:900;
+}
+
+
+.upv-manifiesto-info small{
+  margin-top:4px;
+
+  color:#70809a;
+
+  font-size:12px;
+}
+
+
+.upv-manifiesto-volumen{
+  color:#263e68 !important;
+
+  font-weight:800;
+}
+
+
+.upv-manifiesto-arrow{
+  color:#15366c;
+
+  font-size:29px;
+  font-weight:500;
+}
+
+
+.upv-manifiesto-resumen{
+  display:grid;
+
+  grid-template-columns:
+    1fr
+    1fr;
+
+  margin-top:14px;
+
+  padding:16px 12px;
+
+  border:1px solid #dde6f2;
+  border-radius:15px;
+
+  background:#f7f9fd;
+}
+
+
+.upv-manifiesto-resumen > div{
+  min-width:0;
+
+  padding:0 14px;
+}
+
+
+.upv-manifiesto-resumen > div + div{
+  border-left:
+    1px solid #dce4ef;
+}
+
+
+.upv-manifiesto-resumen span{
+  display:block;
+
+  color:#6c7b93;
+
+  font-size:11px;
+  font-weight:700;
+}
+
+
+.upv-manifiesto-resumen strong{
+  display:block;
+
+  margin-top:5px;
+
+  color:#163d7b;
+
+  font-size:20px;
+  font-weight:900;
+}
+
+
+.upv-manifiesto-vacio{
+  display:flex;
+  align-items:center;
+  gap:12px;
+
+  margin:20px 0;
+
+  padding:16px;
+
+  border:1px dashed #cad6e7;
+  border-radius:15px;
+
+  background:#f8faff;
+}
+
+
+.upv-manifiesto-vacio-icon{
+  font-size:22px;
+}
+
+
+.upv-manifiesto-vacio strong,
+.upv-manifiesto-vacio small{
+  display:block;
+}
+
+
+.upv-manifiesto-vacio small{
+  margin-top:3px;
+  color:#76849b;
+}
+
+
+/* VISTA PREVIA */
+
+.upv-preview-descarga{
+  padding:15px;
+
+  border:1px solid #d9e4f3;
+  border-radius:15px;
+
+  background:#f7faff;
+}
+
+
+.upv-preview-descarga-titulo{
+  margin-bottom:14px;
+
+  color:#153b77;
+
+  font-size:15px;
+  font-weight:900;
+}
+
+
+.upv-preview-descarga-item{
+  padding:9px 0;
+
+  border-top:
+    1px solid #e0e7f0;
+}
+
+
+.upv-preview-descarga-item span{
+  display:block;
+
+  color:#71809a;
+
+  font-size:10px;
+  font-weight:800;
+
+  letter-spacing:.04em;
+}
+
+
+.upv-preview-descarga-item strong{
+  display:block;
+
+  margin-top:3px;
+
+  color:#152d56;
+
+  font-size:15px;
+  font-weight:850;
+}
+
+
+@media(max-width:480px){
+
+  .upv-manifiesto-pozo{
+    grid-template-columns:
+      44px
+      minmax(0,1fr)
+      18px;
+
+    padding:14px;
+  }
+
+  .upv-manifiesto-check{
+    width:38px;
+    height:38px;
+  }
+
+  .upv-manifiesto-info > strong{
+    font-size:17px;
+  }
+
+  .upv-manifiesto-resumen strong{
+    font-size:17px;
+  }
+
+}
+
+
+
+/* ==========================================================
+   PREVIEW DESCARGA — MISMO ESTILO OPERATIVO UPV
+   ========================================================== */
+
+.upv-descarga-preview-pro{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.upv-descarga-preview-pozos{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:16px 17px;
+  border:1.5px solid #bdd1ee;
+  border-radius:16px;
+  background:linear-gradient(135deg,#f7faff,#edf4ff);
+}
+
+.upv-descarga-preview-pozos-icon{
+  width:46px;
+  height:46px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 46px;
+  border-radius:13px;
+  background:#dfeaff;
+  font-size:23px;
+}
+
+.upv-descarga-preview-pozos small{
+  display:block;
+  color:#7182a0;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.08em;
+}
+
+.upv-descarga-preview-pozos strong{
+  display:block;
+  margin-top:3px;
+  color:#112e60;
+  font-size:20px;
+  font-weight:900;
+}
+
+.upv-descarga-preview-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.upv-descarga-preview-dato{
+  padding:13px 14px;
+  border:1px solid #dce5f0;
+  border-radius:14px;
+  background:#f8faff;
+}
+
+.upv-descarga-preview-dato span{
+  display:block;
+  color:#7685a0;
+  font-size:10px;
+  font-weight:800;
+}
+
+.upv-descarga-preview-dato strong{
+  display:block;
+  margin-top:4px;
+  color:#203d6c;
+  font-size:14px;
+  font-weight:900;
+}
+
+
+.upv-descarga-preview-operacion{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 15px;
+  border-radius:14px;
+  background:#173b76;
+  color:#ffffff;
+}
+
+.upv-descarga-preview-operacion > span{
+  font-size:20px;
+}
+
+.upv-descarga-preview-operacion small{
+  display:block;
+  opacity:.72;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.06em;
+}
+
+.upv-descarga-preview-operacion strong{
+  display:block;
+  margin-top:2px;
+  font-size:18px;
+  font-weight:900;
+}
+
+.upv-descarga-preview-volumen{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:13px 15px;
+  border:1px solid #dce5f0;
+  border-radius:14px;
+  background:#ffffff;
+}
+
+.upv-descarga-preview-volumen span{
+  color:#70809a;
+  font-size:11px;
+  font-weight:800;
+}
+
+.upv-descarga-preview-volumen strong{
+  color:#163d7b;
+  font-size:18px;
+  font-weight:900;
+}
+
+
+.upv-descarga-preview-gps{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:13px 15px;
+  border:1px solid #dce5ef;
+  border-radius:14px;
+  background:#f8fafc;
+}
+
+.upv-descarga-preview-gps.ok{
+  border-color:#a9d7b5;
+  background:#f2fbf5;
+}
+
+.upv-descarga-preview-gps.bad{
+  border-color:#efb0b0;
+  background:#fff5f5;
+}
+
+.upv-descarga-preview-gps-icon{
+  width:38px;
+  height:38px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 38px;
+  border-radius:50%;
+  background:#ffffff;
+  font-size:20px;
+}
+
+.upv-descarga-preview-gps small{
+  display:block;
+  color:#78879e;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.08em;
+}
+
+.upv-descarga-preview-gps strong{
+  display:block;
+  margin-top:2px;
+  color:#223b64;
+  font-size:14px;
+  font-weight:900;
+}
+
+.upv-descarga-preview-gps.ok strong{
+  color:#277644;
+}
+
+.upv-descarga-preview-gps.bad strong{
+  color:#b52f3b;
+}
+
+@media(max-width:480px){
+  .upv-descarga-preview-pozos strong{
+    font-size:18px;
+  }
+
+  .upv-descarga-preview-operacion strong{
+    font-size:16px;
+  }
+}
+
+
+
+/* ==========================================================
+   UPV — TÉRMINO FÁCIL Y AMIGABLE
+   Sin pasos, sin saturación visual
+   ========================================================== */
+
+.upv-final-amigable{
+  max-width:760px;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+
+/* ESPACIADO GENERAL */
+
+.upv-final-amigable .upv-final-field{
+  margin-bottom:18px;
+}
+
+
+/* TÍTULOS DE ACCIÓN */
+
+.upv-final-amigable .upv-amigable-titulo{
+  display:block;
+
+  margin-bottom:4px;
+
+  color:#173765;
+
+  font-size:17px;
+  font-weight:900;
+
+  letter-spacing:0;
+}
+
+
+.upv-final-amigable .upv-amigable-ayuda{
+  display:block;
+
+  margin:0 0 11px;
+
+  color:#71809a;
+
+  font-size:13px;
+  font-weight:500;
+}
+
+
+/* DESTINO */
+
+.upv-final-amigable #upvFinalDestino{
+  min-height:64px;
+
+  padding-left:18px;
+
+  border:1.5px solid #cbd9ed;
+  border-radius:15px;
+
+  background:#ffffff;
+
+  font-size:17px;
+  font-weight:650;
+
+  color:#172d54;
+}
+
+
+/* VOLUMEN: UNA SOLA DECISIÓN */
+
+.upv-final-amigable .upv-volumen-grid{
+  display:grid !important;
+
+  grid-template-columns:1fr !important;
+
+  gap:10px !important;
+}
+
+
+.upv-final-amigable
+.upv-volumen-box:not(.calculado){
+
+  padding:15px;
+
+  border:1.5px solid #d9cbea;
+  border-radius:17px;
+
+  background:#fbf8ff;
+}
+
+
+.upv-final-amigable
+.upv-volumen-box:not(.calculado) > span{
+
+  display:block;
+
+  margin-bottom:8px;
+
+  color:#74419b;
+
+  font-size:11px;
+  font-weight:850;
+
+  text-align:center;
+}
+
+
+.upv-final-amigable
+#upvFinalCantidadM3{
+
+  min-height:72px;
+
+  text-align:center;
+
+  font-size:30px !important;
+  font-weight:900 !important;
+
+  color:#152d55;
+}
+
+
+/* BBLS COMO RESULTADO, NO COMO OTRO CAMPO */
+
+.upv-final-amigable
+.upv-volumen-box.calculado{
+
+  padding:9px 14px;
+
+  border:0;
+
+  border-radius:12px;
+
+  background:#f4f2f8;
+
+  text-align:center;
+}
+
+
+.upv-final-amigable
+.upv-volumen-box.calculado > span{
+
+  display:block;
+
+  margin-bottom:0;
+
+  color:#68758d;
+
+  font-size:10px;
+  font-weight:750;
+}
+
+
+.upv-final-amigable
+.upv-volumen-box.calculado
+.upv-volumen-input-wrap{
+
+  display:flex;
+
+  justify-content:center;
+  align-items:center;
+
+  gap:5px;
+}
+
+
+.upv-final-amigable
+#upvFinalCantidadBbl{
+
+  width:110px;
+
+  height:auto;
+
+  padding:3px 0;
+
+  border:0 !important;
+
+  background:transparent !important;
+
+  text-align:right;
+
+  font-size:17px !important;
+  font-weight:850 !important;
+
+  color:#334766;
+}
+
+
+.upv-final-amigable
+.upv-volumen-box.calculado
+.upv-volumen-input-wrap strong{
+
+  font-size:14px;
+
+  color:#334766;
+}
+
+
+.upv-final-amigable
+.upv-conversion-info{
+
+  display:block;
+
+  margin-top:4px;
+
+  text-align:center;
+
+  color:#8290a5;
+
+  font-size:11px;
+}
+
+
+/* OBSERVACIONES — TRANQUILO Y OPCIONAL */
+
+.upv-final-amigable
+.upv-obs-operacion{
+
+  margin-top:8px;
+  margin-bottom:20px;
+
+  padding:16px;
+
+  border:1px solid #f0ddc6;
+  border-radius:17px;
+
+  background:#fffaf5;
+}
+
+
+.upv-final-amigable
+.upv-obs-operacion-head strong{
+
+  color:#b85b12;
+
+  font-size:16px;
+  font-weight:900;
+}
+
+
+.upv-final-amigable
+.upv-obs-operacion-head small{
+
+  color:#8a7c70;
+
+  font-size:12px;
+}
+
+
+.upv-final-amigable
+.upv-obs-operacion-textarea{
+
+  min-height:105px;
+
+  margin-top:10px;
+
+  border-radius:13px;
+
+  font-size:15px;
+  line-height:1.45;
+}
+
+
+/* FOTO */
+
+.upv-final-amigable
+.upv-evidencia-foto-card{
+
+  padding:16px;
+
+  border:1.5px solid #b9ddbf;
+  border-radius:17px;
+
+  background:#f5fcf6;
+}
+
+
+.upv-final-amigable
+.upv-evidencia-foto-card label{
+
+  display:block;
+
+  color:#28763b;
+
+  font-size:16px;
+  font-weight:900;
+}
+
+
+.upv-final-amigable
+.upv-evidencia-foto-card
+.upv-evidencia-final{
+
+  width:100%;
+
+  min-height:62px;
+
+  margin-top:8px;
+
+  border:0;
+  border-radius:13px;
+
+  background:#36a04c;
+
+  color:#ffffff;
+
+  font-size:15px;
+  font-weight:900;
+}
+
+
+/* GPS */
+
+.upv-final-amigable
+.upv-evidencia-gps-card{
+
+  padding:16px;
+
+  border:1.5px solid #bdd7f4;
+  border-radius:17px;
+
+  background:#f5f9ff;
+}
+
+
+.upv-final-amigable
+.upv-evidencia-gps-card label{
+
+  display:block;
+
+  color:#1764aa;
+
+  font-size:16px;
+  font-weight:900;
+}
+
+
+.upv-final-amigable
+.upv-evidencia-gps-card
+.upv-evidencia-final{
+
+  width:100%;
+
+  min-height:62px;
+
+  margin-top:8px;
+
+  border:0;
+  border-radius:13px;
+
+  background:#1478d4;
+
+  color:#ffffff;
+
+  font-size:15px;
+  font-weight:900;
+}
+
+
+/* ESTADO GPS */
+
+.upv-final-amigable
+.upv-gps-final-status{
+
+  display:block;
+
+  margin-top:10px;
+
+  font-size:13px;
+  font-weight:800;
+
+  text-align:center;
+}
+
+
+/* BOTÓN FINAL */
+
+.upv-final-amigable
+#upvFinalTerminoBtn{
+
+  width:100%;
+
+  min-height:68px;
+
+  margin-top:8px;
+
+  border-radius:15px;
+
+  background:#3aa34c;
+
+  color:#ffffff;
+
+  font-size:17px;
+  font-weight:900;
+
+  box-shadow:
+    0 8px 18px
+    rgba(42,143,65,.16);
+}
+
+
+/* TELÉFONOS */
+
+@media(max-width:520px){
+
+  .upv-final-amigable{
+    padding-left:12px;
+    padding-right:12px;
+  }
+
+  .upv-final-amigable
+  #upvFinalCantidadM3{
+
+    font-size:27px !important;
+  }
+
+}
+
+
+
+/* ==========================================================
+   UPV — DISEÑO AMIGABLE UNIFICADO EN LOS 4 FLUJOS
+   ========================================================== */
+
+.upv-final-amigable{
+  max-width:760px;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+
+/* Evitar demasiadas cajas visuales */
+
+.upv-final-amigable .upv-final-field{
+  margin-bottom:20px;
+}
+
+
+.upv-amigable-card{
+  padding:0;
+  border:0;
+  background:transparent;
+}
+
+
+/* Textos principales */
+
+.upv-final-amigable
+.upv-amigable-titulo{
+
+  display:block;
+
+  margin-bottom:3px;
+
+  color:#173765;
+
+  font-size:17px;
+  font-weight:900;
+}
+
+
+.upv-final-amigable
+.upv-amigable-ayuda{
+
+  display:block;
+
+  margin-bottom:10px;
+
+  color:#77859b;
+
+  font-size:13px;
+  font-weight:500;
+}
+
+
+/* Observaciones menos protagonistas */
+
+.upv-final-amigable
+.upv-obs-operacion{
+
+  padding:16px;
+
+  border:1px solid #efddc7;
+  border-radius:17px;
+
+  background:#fffaf5;
+}
+
+
+.upv-final-amigable
+.upv-obs-operacion-textarea{
+
+  min-height:100px;
+
+  font-size:15px;
+}
+
+
+/* Foto */
+
+.upv-final-amigable
+.upv-evidencia-foto-card{
+
+  padding:16px;
+
+  border:1px solid #b9ddbf;
+  border-radius:17px;
+
+  background:#f6fcf7;
+}
+
+
+.upv-final-amigable
+.upv-evidencia-foto-card label{
+
+  display:block;
+
+  color:#317944;
+
+  font-size:16px;
+  font-weight:900;
+}
+
+
+/* GPS siempre como última acción */
+
+.upv-final-amigable
+.upv-evidencia-gps-card{
+
+  margin-top:8px;
+  margin-bottom:18px;
+
+  padding:16px;
+
+  border:1px solid #b9d6f4;
+  border-radius:17px;
+
+  background:#f5f9ff;
+}
+
+
+.upv-final-amigable
+.upv-evidencia-gps-card label{
+
+  display:block;
+
+  color:#2369ad;
+
+  font-size:16px;
+  font-weight:900;
+}
+
+
+/* Botones grandes y fáciles */
+
+.upv-final-amigable
+.upv-evidencia-final{
+
+  width:100%;
+
+  min-height:62px;
+
+  margin-top:8px;
+
+  border-radius:14px;
+
+  font-size:15px;
+  font-weight:900;
+}
+
+
+.upv-final-amigable
+.upv-evidencia-foto-card
+.upv-evidencia-final{
+
+  background:#53a655;
+
+  color:#fff;
+}
+
+
+.upv-final-amigable
+.upv-evidencia-gps-card
+.upv-evidencia-final{
+
+  background:#377dcc;
+
+  color:#fff;
+}
+
+
+/* Botón principal */
+
+.upv-final-amigable
+.upv-action-final{
+
+  width:100%;
+
+  min-height:68px;
+
+  border-radius:15px;
+
+  font-size:17px;
+  font-weight:900;
+}
+
+
+/* Separación clara entre GPS y botón final */
+
+.upv-final-amigable
+.upv-evidencia-gps-card
++ .upv-action-final{
+
+  margin-top:14px;
+}
+
+
+/* Móvil */
+
+@media(max-width:520px){
+
+  .upv-final-amigable{
+    padding-left:11px;
+    padding-right:11px;
+  }
+
+  .upv-final-amigable
+  .upv-amigable-titulo{
+    font-size:16px;
+  }
+
+}
+
+
+
+/* ==========================================================
+   GPS — ÚLTIMO BLOQUE DE LOS 4 FLUJOS
+   ========================================================== */
+
+.upv-final-amigable
+.upv-evidencia-gps-card{
+
+  margin-top:22px !important;
+  margin-bottom:0 !important;
+
+  padding:17px;
+
+  border:1.5px solid #b8d4f5;
+  border-radius:18px;
+
+  background:#f5f9ff;
+}
+
+
+.upv-final-amigable
+.upv-evidencia-gps-card
+.upv-evidencia-final{
+
+  min-height:64px;
+
+  border-radius:14px;
+
+  background:#397dcc;
+
+  color:#fff;
+
+  font-size:16px;
+  font-weight:900;
+}
+
+
+/* separar claramente el botón principal del GPS */
+
+.upv-final-amigable
+.upv-action-final
++ .upv-evidencia-gps-card{
+
+  margin-top:24px !important;
+}
+
+
+/* GPS sin espacio innecesario al final */
+
+.upv-final-amigable
+.upv-evidencia-gps-card:last-child{
+
+  margin-bottom:0 !important;
+}
+
+
+
+
+/* ==========================================================
+   UPV — ESTADO DE PERMISOS EN OPERACIÓN
+   ========================================================== */
+
+.upv-permisos-operacion{
+
+  margin-top:24px;
+
+  padding:20px;
+
+  border:1px solid #263957;
+  border-radius:20px;
+
+  background:#111b2f;
+
+  color:#fff;
+}
+
+
+.upv-permisos-operacion-head{
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:15px;
+
+  margin-bottom:17px;
+}
+
+
+.upv-permisos-operacion-head small{
+
+  display:block;
+
+  color:#9fb1d0;
+
+  font-size:10px;
+  font-weight:900;
+
+  letter-spacing:.13em;
+}
+
+
+.upv-permisos-operacion-head strong{
+
+  display:block;
+
+  margin-top:4px;
+
+  color:#ffffff;
+
+  font-size:20px;
+  font-weight:900;
+}
+
+
+.upv-permisos-verificar{
+
+  min-height:46px;
+
+  padding:0 17px;
+
+  border:1px solid #4a5870;
+  border-radius:13px;
+
+  background:#202b40;
+
+  color:#fff;
+
+  font-size:13px;
+  font-weight:900;
+
+  cursor:pointer;
+}
+
+
+.upv-permisos-verificar:disabled{
+  opacity:.6;
+}
+
+
+.upv-permisos-grid{
+
+  display:grid;
+
+  grid-template-columns:
+    repeat(3,minmax(0,1fr));
+
+  gap:12px;
+}
+
+
+.upv-permiso-card{
+
+  min-height:125px;
+
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+
+  padding:14px;
+
+  border:1px solid #39465e;
+  border-radius:16px;
+
+  background:#192338;
+
+  text-align:center;
+}
+
+
+.upv-permiso-icon{
+
+  display:block;
+
+  margin-bottom:7px;
+
+  font-size:29px;
+}
+
+
+.upv-permiso-card strong{
+
+  color:#fff;
+
+  font-size:12px;
+  font-weight:900;
+}
+
+
+.upv-permiso-card small{
+
+  display:block;
+
+  margin-top:6px;
+
+  font-size:11px;
+  font-weight:800;
+}
+
+
+/* OK */
+
+.upv-permiso-card.ok{
+
+  border-color:#267c49;
+
+  background:#152b28;
+}
+
+
+.upv-permiso-card.ok small{
+  color:#63d98c;
+}
+
+
+/* ERROR */
+
+.upv-permiso-card.error{
+
+  border-color:#7a343d;
+
+  background:#27202e;
+}
+
+
+.upv-permiso-card.error small{
+  color:#ff747b;
+}
+
+
+/* PENDIENTE */
+
+.upv-permiso-card.pendiente small{
+  color:#f2c75c;
+}
+
+
+.upv-permisos-resultado{
+
+  margin-top:13px;
+
+  color:#bdc9dc;
+
+  font-size:11px;
+  font-weight:700;
+
+  text-align:center;
+}
+
+
+@media(max-width:560px){
+
+  .upv-permisos-operacion{
+    padding:15px;
+  }
+
+
+  .upv-permisos-operacion-head{
+    align-items:flex-start;
+  }
+
+
+  .upv-permisos-operacion-head strong{
+    font-size:17px;
+  }
+
+
+  .upv-permisos-grid{
+    gap:7px;
+  }
+
+
+  .upv-permiso-card{
+    min-height:110px;
+    padding:10px 5px;
+  }
+
+
+  .upv-permiso-card strong{
+    font-size:10px;
+  }
+
+
+  .upv-permiso-card small{
+    font-size:9px;
+  }
+
+}
+
+
+
+
+/* ==========================================================
+   UPV — SELECTORES AMIGABLES DE UBICACIÓN
+   ========================================================== */
+
+.upv-final-amigable .upv-amigable-destino,
+.upv-final-amigable .upv-final-field:has(#upvFinalDestino){
+
+  padding:22px;
+
+  border:1.5px solid #d4e0f1;
+
+  border-radius:20px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #f8fbff 100%
+    );
+
+  box-sizing:border-box;
+}
+
+
+.upv-final-amigable .upv-amigable-titulo{
+
+  display:block;
+
+  margin:0 0 5px;
+
+  color:#173666;
+
+  font-size:20px;
+
+  line-height:1.25;
+
+  font-weight:900;
+}
+
+
+.upv-final-amigable .upv-amigable-ayuda{
+
+  display:block;
+
+  margin:0 0 14px;
+
+  color:#7b8aa5;
+
+  font-size:14px;
+
+  font-weight:600;
+}
+
+
+.upv-final-amigable #upvFinalOrigen,
+.upv-final-amigable #upvFinalDestino{
+
+  width:100%;
+
+  min-height:70px;
+
+  padding:0 54px 0 20px;
+
+  border:2px solid #c8d8ee;
+
+  border-radius:17px;
+
+  background-color:#ffffff;
+
+  color:#172d52;
+
+  font-size:19px;
+
+  font-weight:700;
+
+  cursor:pointer;
+
+  box-sizing:border-box;
+
+  transition:
+    border-color .18s ease,
+    box-shadow .18s ease,
+    background-color .18s ease;
+}
+
+
+.upv-final-amigable #upvFinalOrigen:focus,
+.upv-final-amigable #upvFinalDestino:focus{
+
+  outline:none;
+
+  border-color:#4779dc;
+
+  box-shadow:
+    0 0 0 4px rgba(71,121,220,.12);
+
+  background:#ffffff;
+}
+
+
+.upv-final-amigable #upvFinalOrigen:hover,
+.upv-final-amigable #upvFinalDestino:hover{
+
+  border-color:#9db9e5;
+}
+
+
+@media(max-width:600px){
+
+  .upv-final-amigable .upv-amigable-destino,
+  .upv-final-amigable .upv-final-field:has(#upvFinalDestino){
+
+    padding:17px;
+
+    border-radius:17px;
+  }
+
+
+  .upv-final-amigable .upv-amigable-titulo{
+
+    font-size:18px;
+  }
+
+
+  .upv-final-amigable #upvFinalOrigen,
+  .upv-final-amigable #upvFinalDestino{
+
+    min-height:64px;
+
+    font-size:17px;
+  }
+
+}
+
+
+
+/* ==========================================================
+   DESCARGA — VOLUMEN CAPTURADO EN EL INICIO
+   ========================================================== */
+
+.upv-final-amigable
+.upv-descarga-inicio-volumen{
+
+  margin-bottom:22px;
+}
+
+
+.upv-final-amigable
+.upv-descarga-inicio-volumen
+.upv-volumen-grid{
+
+  display:grid;
+
+  grid-template-columns:1fr;
+
+  gap:10px;
+}
+
+
+.upv-final-amigable
+.upv-descarga-inicio-volumen
+.upv-volumen-box:not(.calculado){
+
+  padding:16px;
+
+  border:1.5px solid #d9c5ed;
+
+  border-radius:18px;
+
+  background:#fcf9ff;
+}
+
+
+.upv-final-amigable
+#upvFinalDescargaInicioM3{
+
+  min-height:74px;
+
+  text-align:center;
+
+  font-size:30px;
+
+  font-weight:900;
+
+  color:#17345f;
+}
+
+
+.upv-final-amigable
+.upv-descarga-inicio-volumen
+.upv-volumen-box.calculado{
+
+  padding:12px;
+
+  border:0;
+
+  border-radius:14px;
+
+  background:#f5f2f7;
+
+  text-align:center;
+}
+
+
+.upv-final-amigable
+#upvFinalDescargaInicioBbl{
+
+  border:0;
+
+  background:transparent;
+
+  text-align:center;
+
+  font-size:17px;
+
+  font-weight:850;
+
+  color:#304669;
+}
+
+
+
+
+/* ==========================================================
+   UPV — EVIDENCIA FOTOGRÁFICA ESTILO RECORREDORES
+   ========================================================== */
+
+.upv-evidencia-rec{
+
+  margin:22px 0;
+
+  padding:22px 24px 24px;
+
+  border:1.5px solid #cbd9ed;
+
+  border-radius:20px;
+
+  background:#ffffff;
+
+  box-shadow:
+    0 8px 22px
+    rgba(31,55,92,.06);
+}
+
+
+.upv-evidencia-rec-head{
+
+  display:flex;
+
+  align-items:center;
+
+  min-height:34px;
+}
+
+
+.upv-evidencia-rec-head strong{
+
+  color:#173765;
+
+  font-size:20px;
+
+  font-weight:900;
+
+  letter-spacing:.04em;
+}
+
+
+.upv-evidencia-rec-line{
+
+  width:100%;
+
+  height:2px;
+
+  margin:10px 0 18px;
+
+  background:#cbd8ea;
+}
+
+
+.upv-evidencia-rec-actions{
+
+  display:grid;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap:12px;
+}
+
+
+.upv-evidencia-rec-btn{
+
+  min-height:76px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  gap:9px;
+
+  border-radius:16px;
+
+  font-size:18px;
+
+  font-weight:900;
+
+  cursor:pointer;
+
+  transition:
+    transform .08s ease,
+    box-shadow .15s ease,
+    border-color .15s ease;
+}
+
+
+.upv-evidencia-rec-btn:active{
+
+  transform:scale(.98);
+}
+
+
+/* CÁMARA */
+
+.upv-evidencia-rec-btn.camara{
+
+  border:0;
+
+  background:#244b86;
+
+  color:#ffffff;
+
+  box-shadow:
+    0 8px 16px
+    rgba(36,75,134,.16);
+}
+
+
+/* GALERÍA */
+
+.upv-evidencia-rec-btn.galeria{
+
+  border:1.5px solid #c6d3e7;
+
+  background:#edf3fc;
+
+  color:#172645;
+}
+
+
+.upv-evidencia-rec-btn span{
+
+  font-size:21px;
+}
+
+
+.upv-evidencia-rec-status{
+
+  min-height:18px;
+
+  margin-top:12px;
+
+  color:#3f7b4e;
+
+  font-size:12px;
+
+  font-weight:800;
+
+  text-align:center;
+}
+
+
+@media(max-width:520px){
+
+  .upv-evidencia-rec{
+
+    padding:17px;
+  }
+
+
+  .upv-evidencia-rec-head strong{
+
+    font-size:17px;
+  }
+
+
+  .upv-evidencia-rec-btn{
+
+    min-height:68px;
+
+    font-size:16px;
+  }
+
+}
+
+
+
+/* ==========================================================
+   INICIO DESCARGA — DESTINO HEREDADO DE FINALIZÓ CARGA
+   ========================================================== */
+
+.upv-descarga-destino-auto{
+  display:none !important;
+}
+
+
+/* Destino destacado dentro de cada carga */
+
+.upv-manifiesto-destino{
+
+  display:inline-flex;
+
+  align-items:center;
+
+  gap:4px;
+
+  margin-top:6px;
+
+  padding:5px 9px;
+
+  border-radius:8px;
+
+  background:#eaf2ff;
+
+  color:#244b83;
+
+  font-size:11px;
+
+  font-weight:800;
+}
+
+
+.upv-manifiesto-destino strong{
+
+  color:#173765;
+
+  font-weight:900;
+}
+
+
+.upv-manifiesto-destino.pendiente{
+
+  background:#fff5df;
+
+  color:#96671c;
+}
+
+
+
+/* ==========================================================
+   UPV — SELECTORES OPERATIVOS MÁS CLAROS
+   Personas poco familiarizadas con tecnología
+   ========================================================== */
+
+.upv-final-amigable select.upv-final-control,
+.upv-final-amigable #upvFinalOrigen,
+.upv-final-amigable #upvFinalDestino{
+
+  min-height:72px;
+
+  padding:
+    0 54px
+    0 22px;
+
+  border:2px solid #b8ccec;
+
+  border-radius:18px;
+
+  background:#ffffff;
+
+  color:#172e59;
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  font-size:20px;
+
+  font-weight:800;
+
+  line-height:1.3;
+
+  letter-spacing:.01em;
+
+  cursor:pointer;
+
+  box-shadow:
+    0 3px 0
+    rgba(44,91,160,.05);
+
+  transition:
+    border-color .15s ease,
+    box-shadow .15s ease;
+}
+
+
+.upv-final-amigable select.upv-final-control:focus,
+.upv-final-amigable #upvFinalOrigen:focus,
+.upv-final-amigable #upvFinalDestino:focus{
+
+  outline:none;
+
+  border-color:#3e74d8;
+
+  box-shadow:
+    0 0 0 5px
+    rgba(62,116,216,.12);
+}
+
+
+/*
+ * Opciones del desplegable.
+ * Android/Chrome respeta principalmente
+ * fuente, tamaño y espaciado.
+ */
+
+.upv-final-amigable select option{
+
+  min-height:52px;
+
+  padding:14px 18px;
+
+  background:#ffffff;
+
+  color:#172c52;
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  font-size:20px;
+
+  font-weight:700;
+
+  line-height:1.8;
+}
+
+
+.upv-final-amigable select option:first-child{
+
+  color:#74829a;
+
+  font-weight:600;
+}
+
+
+@media(max-width:600px){
+
+  .upv-final-amigable select.upv-final-control,
+  .upv-final-amigable #upvFinalOrigen,
+  .upv-final-amigable #upvFinalDestino{
+
+    min-height:66px;
+
+    font-size:18px;
+  }
+
+
+  .upv-final-amigable select option{
+
+    font-size:18px;
+
+    font-weight:700;
+  }
+
+}
+
+
+
+/* ==========================================================
+   UPV — EMPRESA ACTIVA PREMIUM V1
+   Solo presentación
+   ========================================================== */
+
+body.upv-cuichapa-theme #upv-header{
+  min-height:86px !important;
+
+  padding:
+    calc(13px + env(safe-area-inset-top))
+    20px
+    13px !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #111d33 0%,
+      #172844 55%,
+      #1c3153 100%
+    ) !important;
+
+  border-bottom:
+    1px solid rgba(255,255,255,.08) !important;
+
+  box-shadow:
+    0 8px 24px rgba(10,25,48,.14) !important;
+
+  overflow:hidden;
+}
+
+
+/* Línea decorativa superior */
+
+body.upv-cuichapa-theme #upv-header::before{
+  content:"";
+
+  position:absolute;
+  left:0;
+  top:0;
+
+  width:100%;
+  height:3px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #4c84df,
+      #83b6ff,
+      #4c84df
+    );
+
+  opacity:.9;
+}
+
+
+/* Bloque izquierdo */
+
+body.upv-cuichapa-theme
+#upv-header > div:first-child{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+
+  gap:7px;
+
+  min-width:0;
+}
+
+
+/* "Empresa activa" */
+
+body.upv-cuichapa-theme
+#upv-header > div:first-child
+.fs13{
+  color:#9dafc9 !important;
+
+  font-size:12px !important;
+  line-height:1 !important;
+
+  font-weight:700 !important;
+
+  letter-spacing:.035em;
+}
+
+
+/* PETROSMART / IPEP */
+
+body.upv-cuichapa-theme
+#upv-empresa-label{
+  display:inline-flex;
+  align-items:center;
+
+  min-height:32px;
+
+  padding:7px 16px !important;
+
+  border:
+    1px solid rgba(113,166,255,.20);
+
+  border-radius:12px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(53,101,180,.48),
+      rgba(39,76,137,.62)
+    );
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.07),
+    0 4px 12px rgba(0,0,0,.10);
+
+  color:#8dbaff !important;
+
+  font-size:15px !important;
+  line-height:1 !important;
+
+  font-weight:900 !important;
+
+  letter-spacing:.055em !important;
+}
+
+
+/* Indicador visual antes del nombre */
+
+body.upv-cuichapa-theme
+#upv-empresa-label::before{
+  content:"";
+
+  width:7px;
+  height:7px;
+
+  margin-right:9px;
+
+  border-radius:50%;
+
+  background:#68a4ff;
+
+  box-shadow:
+    0 0 0 4px rgba(104,164,255,.10);
+}
+
+
+/* Estado EN LÍNEA */
+
+body.upv-cuichapa-theme
+#upv-header .conn-badge{
+  padding:6px 10px !important;
+
+  border-radius:9px !important;
+
+  font-size:10px !important;
+  font-weight:800 !important;
+
+  letter-spacing:.03em;
+}
+
+
+/* Botón regresar */
+
+body.upv-cuichapa-theme
+#upv-header button[onclick*="cerrarSesion"]{
+  width:34px;
+  height:34px;
+
+  display:grid;
+  place-items:center;
+
+  padding:0 !important;
+
+  border:
+    1px solid rgba(255,255,255,.10) !important;
+
+  border-radius:10px !important;
+
+  background:
+    rgba(255,255,255,.055) !important;
+
+  color:#c5d2e5 !important;
+
+  font-size:17px !important;
+}
+
+
+/* Móvil */
+
+@media (max-width:620px){
+
+  body.upv-cuichapa-theme #upv-header{
+    min-height:82px !important;
+
+    padding-left:16px !important;
+    padding-right:14px !important;
+  }
+
+  body.upv-cuichapa-theme
+  #upv-empresa-label{
+    min-height:30px;
+
+    padding:6px 13px !important;
+
+    font-size:14px !important;
+  }
+
+}
+
+
+
+
+/* ==========================================================
+   UPV — EMPRESA ACTIVA PREMIUM V1
+   Solo presentación
+   ========================================================== */
+
+body.upv-cuichapa-theme #upv-header{
+  min-height:86px !important;
+
+  padding:
+    calc(13px + env(safe-area-inset-top))
+    20px
+    13px !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #111d33 0%,
+      #172844 55%,
+      #1c3153 100%
+    ) !important;
+
+  border-bottom:
+    1px solid rgba(255,255,255,.08) !important;
+
+  box-shadow:
+    0 8px 24px rgba(10,25,48,.14) !important;
+
+  overflow:hidden;
+}
+
+
+/* Línea decorativa superior */
+
+body.upv-cuichapa-theme #upv-header::before{
+  content:"";
+
+  position:absolute;
+  left:0;
+  top:0;
+
+  width:100%;
+  height:3px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #4c84df,
+      #83b6ff,
+      #4c84df
+    );
+
+  opacity:.9;
+}
+
+
+/* Bloque izquierdo */
+
+body.upv-cuichapa-theme
+#upv-header > div:first-child{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+
+  gap:7px;
+
+  min-width:0;
+}
+
+
+/* "Empresa activa" */
+
+body.upv-cuichapa-theme
+#upv-header > div:first-child
+.fs13{
+  color:#9dafc9 !important;
+
+  font-size:12px !important;
+  line-height:1 !important;
+
+  font-weight:700 !important;
+
+  letter-spacing:.035em;
+}
+
+
+/* PETROSMART / IPEP */
+
+body.upv-cuichapa-theme
+#upv-empresa-label{
+  display:inline-flex;
+  align-items:center;
+
+  min-height:32px;
+
+  padding:7px 16px !important;
+
+  border:
+    1px solid rgba(113,166,255,.20);
+
+  border-radius:12px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(53,101,180,.48),
+      rgba(39,76,137,.62)
+    );
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.07),
+    0 4px 12px rgba(0,0,0,.10);
+
+  color:#8dbaff !important;
+
+  font-size:15px !important;
+  line-height:1 !important;
+
+  font-weight:900 !important;
+
+  letter-spacing:.055em !important;
+}
+
+
+/* Indicador visual antes del nombre */
+
+body.upv-cuichapa-theme
+#upv-empresa-label::before{
+  content:"";
+
+  width:7px;
+  height:7px;
+
+  margin-right:9px;
+
+  border-radius:50%;
+
+  background:#68a4ff;
+
+  box-shadow:
+    0 0 0 4px rgba(104,164,255,.10);
+}
+
+
+/* Estado EN LÍNEA */
+
+body.upv-cuichapa-theme
+#upv-header .conn-badge{
+  padding:6px 10px !important;
+
+  border-radius:9px !important;
+
+  font-size:10px !important;
+  font-weight:800 !important;
+
+  letter-spacing:.03em;
+}
+
+
+/* Botón regresar */
+
+body.upv-cuichapa-theme
+#upv-header button[onclick*="cerrarSesion"]{
+  width:34px;
+  height:34px;
+
+  display:grid;
+  place-items:center;
+
+  padding:0 !important;
+
+  border:
+    1px solid rgba(255,255,255,.10) !important;
+
+  border-radius:10px !important;
+
+  background:
+    rgba(255,255,255,.055) !important;
+
+  color:#c5d2e5 !important;
+
+  font-size:17px !important;
+}
+
+
+/* Móvil */
+
+@media (max-width:620px){
+
+  body.upv-cuichapa-theme #upv-header{
+    min-height:82px !important;
+
+    padding-left:16px !important;
+    padding-right:14px !important;
+  }
+
+  body.upv-cuichapa-theme
+  #upv-empresa-label{
+    min-height:30px;
+
+    padding:6px 13px !important;
+
+    font-size:14px !important;
+  }
+
+}
+
+
+
+
+/* ==========================================================
+   UPV — HEADER PETROSMART + HISTORIAL FINAL
+   ========================================================== */
+
+/* Contenedor izquierdo original */
+#upv-header > div:first-child{
+  display:grid;
+  grid-template-columns:auto auto;
+  grid-template-rows:auto 60px;
+  column-gap:14px;
+  row-gap:7px;
+  align-items:center;
+}
+
+/* "Empresa activa" */
+#upv-header > div:first-child > .fs13.txt2{
+  grid-column:1 / -1;
+  grid-row:1;
+  margin:0;
+  color:#a8b8ce;
+  font-size:12px;
+  font-weight:650;
+  line-height:1;
+}
+
+/* PETROSMART */
+#upv-empresa-label{
+  grid-column:1;
+  grid-row:2;
+
+  min-width:190px;
+  height:60px;
+
+  box-sizing:border-box;
+
+  display:flex;
+  align-items:center;
+
+  padding:0 20px !important;
+
+  border:1.5px solid #3879dc !important;
+  border-radius:15px !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #173563 0%,
+      #172f57 100%
+    ) !important;
+
+  color:#fff !important;
+
+  font-size:18px !important;
+  font-weight:900 !important;
+  letter-spacing:.025em;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.07),
+    0 5px 16px rgba(0,0,0,.12);
+}
+
+/* Punto luminoso */
+#upv-empresa-label::before{
+  content:"";
+
+  width:12px;
+  height:12px;
+
+  flex:0 0 12px;
+
+  margin-right:13px;
+
+  border-radius:50%;
+
+  background:#5cb7ff;
+
+  box-shadow:
+    0 0 9px #5cb7ff,
+    0 0 0 7px rgba(92,183,255,.09);
+}
+
+
+/* HISTORIAL */
+#upv-historial-header-btn{
+  grid-column:2;
+  grid-row:2;
+
+  width:230px;
+  height:60px;
+
+  box-sizing:border-box;
+
+  display:grid;
+  grid-template-columns:43px 1fr 20px;
+  align-items:center;
+  gap:10px;
+
+  padding:7px 13px 7px 9px;
+
+  border:1.5px solid #3879dc;
+  border-radius:15px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #173563 0%,
+      #162f57 100%
+    );
+
+  color:#fff;
+
+  cursor:pointer;
+  text-align:left;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.06),
+    0 5px 16px rgba(0,0,0,.11);
+}
+
+#upv-historial-header-btn:hover{
+  border-color:#58a0ff;
+
+  background:
+    linear-gradient(
+      135deg,
+      #1a3d71,
+      #193665
+    );
+}
+
+.upv-historial-reloj{
+  width:43px;
+  height:43px;
+
+  display:grid;
+  place-items:center;
+
+  border-radius:50%;
+
+  background:rgba(255,255,255,.10);
+
+  font-size:27px;
+  line-height:1;
+}
+
+.upv-historial-info{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:5px;
+}
+
+.upv-historial-info strong{
+  color:#fff;
+  font-size:17px;
+  font-weight:900;
+  line-height:1;
+}
+
+.upv-historial-info small{
+  display:inline-flex;
+  align-items:center;
+
+  padding:4px 8px;
+
+  border-radius:7px;
+
+  background:rgba(65,166,91,.23);
+
+  color:#a9efba;
+
+  font-size:10px;
+  font-weight:850;
+  line-height:1;
+}
+
+.upv-historial-flecha{
+  font-size:29px;
+  line-height:1;
+  color:#fff;
+}
+
+
+/* MÓVIL */
+@media(max-width:700px){
+
+  #upv-header > div:first-child{
+    grid-template-rows:auto 48px;
+    column-gap:7px;
+    row-gap:5px;
+  }
+
+  #upv-empresa-label{
+    min-width:0;
+    height:48px;
+
+    padding:0 12px !important;
+
+    border-radius:12px !important;
+
+    font-size:13px !important;
+  }
+
+  #upv-empresa-label::before{
+    width:8px;
+    height:8px;
+    flex-basis:8px;
+    margin-right:8px;
+  }
+
+  #upv-historial-header-btn{
+    width:150px;
+    height:48px;
+
+    grid-template-columns:32px 1fr 12px;
+
+    gap:6px;
+
+    padding:5px 7px;
+
+    border-radius:12px;
+  }
+
+  .upv-historial-reloj{
+    width:32px;
+    height:32px;
+    font-size:20px;
+  }
+
+  .upv-historial-info strong{
+    font-size:12px;
+  }
+
+  .upv-historial-info small{
+    padding:2px 5px;
+    font-size:8px;
+  }
+
+  .upv-historial-flecha{
+    font-size:19px;
+  }
+}
+
