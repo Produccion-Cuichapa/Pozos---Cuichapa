@@ -1,7 +1,7 @@
 // Service Worker — Campo Cuichapa PWA v9
 // FIX offline-first: cachea también SDK de Firebase y fuentes (antes excluidos),
 // agrega timeout defensivo a fetch de red, y precachea más assets propios.
-const CACHE = 'pozos-cuichapa-guardia-bph-20260731001105';
+const CACHE = 'pozos-cuichapa-recorredores-20260903-v2';
 const ASSETS = [
   '/Pozos---Cuichapa/',
   '/Pozos---Cuichapa/index.html',
