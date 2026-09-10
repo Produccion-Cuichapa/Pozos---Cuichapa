@@ -521,6 +521,45 @@ function ppToggle(id){
   <div id="wpSuggestions" class="well-picker-list"></div>
 </div>
 
+
+<!-- Selector único de pozo principal -->
+<div id="pozoSelectorOverlay"
+     style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.68);align-items:flex-end;justify-content:center">
+
+  <div style="width:100%;max-width:520px;max-height:86vh;background:var(--surface);border-radius:22px 22px 0 0;display:flex;flex-direction:column;overflow:hidden">
+
+    <div style="padding:18px;border-bottom:1px solid var(--border)">
+      <div style="font-size:17px;font-weight:900;color:var(--txt)">
+        🛢 Seleccionar pozo
+      </div>
+
+      <input id="pozoSelectorBuscar"
+             type="search"
+             placeholder="Buscar pozo..."
+             oninput="renderSelectorPozo(this.value)"
+             style="width:100%;box-sizing:border-box;margin-top:12px;padding:12px;border:1.5px solid var(--border);border-radius:11px;background:var(--surface2);color:var(--txt);font-size:14px">
+    </div>
+
+    <div id="pozoSelectorLista"
+         style="padding:12px;overflow-y:auto;flex:1">
+    </div>
+
+    <div style="display:flex;gap:10px;padding:14px;border-top:1px solid var(--border)">
+      <button type="button"
+              onclick="cerrarSelectorPozo()"
+              style="flex:1;padding:13px;border-radius:11px;border:1.5px solid var(--border);background:var(--surface2);color:var(--txt);font-weight:800">
+        Cancelar
+      </button>
+
+      <button type="button"
+              onclick="confirmarSelectorPozo()"
+              style="flex:1;padding:13px;border-radius:11px;border:none;background:#7c3aed;color:#fff;font-weight:800">
+        Confirmar
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- HEADER limpio -->
 <div class="header">
   <div class="header-particles">
@@ -4060,8 +4099,8 @@ function _continuarEnvio(){
     var estado=v('regEstado');
     if(estado) a.push((estado.toLowerCase().includes('estable')&&!estado.toLowerCase().includes('inestable')?'✅':'❌')+' Estado del pozo: '+estado);
     msg+='══════════════════\n📋 *REGISTRO*\n'+a.join('\n')+'\n'+(peraMsg?peraMsg+'\n':'')+(v('regObs')?'📝 '+v('regObs')+'\n':'');ok=true;
-  } else if(peraMsg){
-    msg+='══════════════════\n'+peraMsg+'\n';ok=true;
+  } else if(peraMsg || v('regObs')){
+    msg+='══════════════════\n'+peraMsg+'\n'+(v('regObs')?'📝 '+v('regObs')+'\n':'');ok=true;
   }
   /*
    * AFORO / PROYECCIÓN utiliza su propio formulario,
@@ -4123,7 +4162,202 @@ function cerrarConfirmacion(){
 
 
 
-function limpiarTodo(){ resetFormulario(); }
+
+// ══ BORRADOR AUTOMÁTICO DEL REPORTE ══
+var BORRADOR_REPORTE_KEY = 'cuichapa_borrador_reporte_v1';
+var _borradorRestaurando = false;
+
+function guardarBorradorReporte(){
+  if(_borradorRestaurando) return;
+
+  try{
+    var campos = {};
+
+    document.querySelectorAll('input[id],select[id],textarea[id]').forEach(function(el){
+      if(el.type === 'password') return;
+      if(el.type === 'file') return;
+      if(el.id === 'pozoSelectorBuscar' || el.id === 'muestrasBuscar') return;
+
+      campos[el.id] = el.type === 'checkbox'
+        ? !!el.checked
+        : el.value;
+    });
+
+    var data = {
+      ts: Date.now(),
+      pozo: typeof W !== 'undefined' ? W : '???',
+      modo: typeof modoRegistro !== 'undefined' ? modoRegistro : 'co',
+      campos: campos,
+      checks: typeof checks !== 'undefined' ? Object.assign({}, checks) : {},
+      pera: typeof peraState !== 'undefined' ? Object.assign({}, peraState) : {},
+      nivTipo: typeof _nivTipo !== 'undefined' ? _nivTipo : 'ft',
+      medTipo: typeof _medTipo !== 'undefined' ? _medTipo : 'ft'
+    };
+
+    localStorage.setItem(
+      BORRADOR_REPORTE_KEY,
+      JSON.stringify(data)
+    );
+
+  }catch(e){
+    console.warn('[BORRADOR] No se pudo guardar:', e);
+  }
+}
+
+function borrarBorradorReporte(){
+  try{
+    localStorage.removeItem(BORRADOR_REPORTE_KEY);
+  }catch(e){}
+}
+
+
+function restaurarBorradorReporte(){
+  var raw = null;
+
+  try{
+    raw = localStorage.getItem(BORRADOR_REPORTE_KEY);
+  }catch(e){
+    return;
+  }
+
+  if(!raw) return;
+
+  try{
+    var data = JSON.parse(raw);
+    if(!data) return;
+
+    _borradorRestaurando = true;
+
+    // Restaurar campos normales
+    Object.keys(data.campos || {}).forEach(function(id){
+      var el = document.getElementById(id);
+      if(!el) return;
+
+      if(el.type === 'checkbox'){
+        el.checked = !!data.campos[id];
+      }else{
+        el.value = data.campos[id];
+      }
+    });
+
+    // Restaurar pozo
+    if(data.pozo && data.pozo !== '???'){
+      setWellFromPicker(String(data.pozo));
+    }
+
+    // Restaurar actividades
+    Object.keys(data.checks || {}).forEach(function(k){
+      if(typeof checks === 'undefined') return;
+
+      checks[k] = !!data.checks[k];
+
+      var icon = document.getElementById('icon-' + k);
+      if(icon){
+        icon.textContent = checks[k] ? '\u2713' : '';
+        icon.classList.toggle('checked', checks[k]);
+      }
+
+      var card = document.getElementById('nivel-card-' + k);
+      if(card){
+        card.classList.toggle('nivel-act-sel', checks[k]);
+      }
+    });
+
+    var aforoInput = document.getElementById('aforo-input');
+    if(aforoInput && typeof checks !== 'undefined'){
+      aforoInput.style.display = checks.aforo ? 'block' : 'none';
+    }
+
+    // Restaurar condición de Pera
+    Object.keys(data.pera || {}).forEach(function(k){
+      if(!peraState.hasOwnProperty(k)) return;
+
+      peraState[k] = data.pera[k] || '';
+
+      var ok = document.getElementById('pera-' + k + '-ok');
+      var bad = document.getElementById('pera-' + k + '-bad');
+
+      if(ok){
+        ok.classList.toggle('sel', peraState[k] === 'ok');
+      }
+
+      if(bad){
+        bad.classList.toggle('sel', peraState[k] === 'bad');
+      }
+    });
+
+    actualizarAccionesPera();
+
+    // Restaurar tipo de nivel
+    selTipoNivel(
+      data.nivTipo || 'ft',
+      document.getElementById('btn-niv-' + (data.nivTipo || 'ft'))
+    );
+
+    selTipoGuardia(
+      data.medTipo || 'ft',
+      document.getElementById('btn-med-' + (data.medTipo || 'ft'))
+    );
+
+    // Restaurar modo del reporte
+    if(data.modo){
+      setModoReg(data.modo);
+    }
+
+    actualizarEnviarBtn();
+
+    console.log('[BORRADOR] Avance restaurado');
+
+  }catch(e){
+    console.warn('[BORRADOR] No se pudo restaurar:', e);
+  }finally{
+    _borradorRestaurando = false;
+  }
+}
+
+
+// Activar borrador automático
+(function activarBorradorAutomatico(){
+
+  var timer = null;
+
+  function programarGuardado(){
+    if(_borradorRestaurando) return;
+
+    clearTimeout(timer);
+
+    timer = setTimeout(function(){
+      guardarBorradorReporte();
+    }, 250);
+  }
+
+  document.addEventListener('input', programarGuardado, true);
+  document.addEventListener('change', programarGuardado, true);
+  document.addEventListener('click', function(){
+    setTimeout(programarGuardado, 50);
+  }, true);
+
+  // Guardar inmediatamente antes de pasar a segundo plano
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState === 'hidden'){
+      guardarBorradorReporte();
+    }
+  });
+
+  window.addEventListener('pagehide', function(){
+    guardarBorradorReporte();
+  });
+
+  // Restaurar después de que toda la interfaz haya iniciado
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      restaurarBorradorReporte();
+    }, 1200);
+  });
+
+})();
+
+function limpiarTodo(){ borrarBorradorReporte(); resetFormulario(); }
 
 function resetFormulario(){
   var pb=document.getElementById('progBtnWrap'); if(pb) pb.style.display='none';
@@ -7446,8 +7680,10 @@ function guardarReporte(reporte){
    * que todavía contiene las fotografías en memoria.
    */
   if(fbDB){
-    guardarEnFirebase(reporte);
+    return guardarEnFirebase(reporte);
   }
+
+  return Promise.resolve(false);
 }
 
 // ── Actualizar estado de un reporte ──────────────
@@ -8717,6 +8953,7 @@ function confirmarEnvioMuestras(){
     ' registrada'+(totalMuestras===1?'':'s')
   );
 
+  borrarBorradorReporte();
   resetFormulario();
 }
 
@@ -8936,9 +9173,10 @@ function confirmarEnvio(){
       rango:     (_dist !== null && _dist <= 80) ? 'dentro' : 'fuera'
     };
   }
-  // Observaciones — prioridad: coObs > regObs > medObs
-  var _obs = (document.getElementById('coObs') ||{}).value  ||
-             (document.getElementById('regObs')||{}).value  || null;
+  // Observaciones estructuradas: Registro/Pera tiene prioridad si fue capturado
+  var _obs = ((document.getElementById("regObs") || {}).value || "").trim() ||
+             ((document.getElementById("coObs") || {}).value || "").trim() ||
+             null;
   var reporte = {
     id: Date.now(),
     fecha: ahora,
@@ -9129,7 +9367,7 @@ function confirmarEnvio(){
   console.log('[VISITAS] FOTOS:', nFotos);
 
   // Única persistencia del reporte completo.
-  guardarReporte(reporte);
+  var promesaGuardado = guardarReporte(reporte);
 
   agregarVisita(REC, W);
   mostrarContador(REC);
@@ -9148,28 +9386,66 @@ function confirmarEnvio(){
   _ccSet('foto', nFotos > 0 ? '☁️' : '📷', 'Evidencia fotográfica',
          nFotos > 0 ? nFotos+' foto'+(nFotos>1?'s':'')+' en proceso' : 'Sin fotos adjuntas');
 
-  _dedupMark(_sendKey);
-  actualizarBadgeHistorial();
-  clearTimeout(_envioTimeout);
-  _enviandoAhora = false;
-  console.log('[VISITAS] FIN FLUJO — reporte en Firebase, esperando CF');
+  Promise.resolve(promesaGuardado)
+    .then(function(okFirebase){
+
+      if(okFirebase){
+        console.log('[VISITAS] Firebase confirmado:', reporte.id);
+        _ccSet('msg', '☁️', 'Mensaje WhatsApp', 'Reporte guardado en Firebase · esperando servidor');
+      }else{
+        console.warn('[VISITAS] Firebase no confirmado:', reporte.id);
+        _ccSet('msg', '💾', 'Mensaje WhatsApp', 'Guardado local · pendiente de sincronizar');
+      }
+
+      _dedupMark(_sendKey);
+      actualizarBadgeHistorial();
+      clearTimeout(_envioTimeout);
+      _enviandoAhora = false;
+
+      // Limpiar únicamente después de resolver la persistencia.
+      limpiarFotos();
+
+      setTimeout(function(){
+        borrarBorradorReporte();
+        resetFormulario();
+        mostrarBtnHistorialCentral();
+
+        var _pb = document.getElementById('progBtnWrap');
+        var _qa = document.getElementById('quickAccessWrap');
+
+        if(_pb && typeof REC !== 'undefined' && REC){
+          _pb.style.display = 'block';
+        }
+
+        if(_qa && typeof REC !== 'undefined' && REC){
+          _qa.style.display = 'block';
+        }
+      }, 300);
+
+    })
+    .catch(function(error){
+
+      console.error('[VISITAS] Error esperando Firebase:', error);
+
+      clearTimeout(_envioTimeout);
+      _enviandoAhora = false;
+
+      _ccSet(
+        'msg',
+        '💾',
+        'Mensaje WhatsApp',
+        'Guardado local · pendiente de sincronizar'
+      );
+
+      actualizarBadgeHistorial();
+    });
 
   }catch(e){
     console.error('[VISITAS] ERROR:', e);
     alert('Error en envío: '+e.message);
-    _enviandoAhora = false; // liberar en catch
+    clearTimeout(_envioTimeout);
+    _enviandoAhora = false;
   }
-
-  // 5. Limpiar y resetear DESPUÉS de iniciar el envío y mostrar estado
-  limpiarFotos();
-  setTimeout(function(){
-    resetFormulario();
-    mostrarBtnHistorialCentral();
-    var _pb = document.getElementById('progBtnWrap');
-    var _qa = document.getElementById('quickAccessWrap');
-    if(_pb && typeof REC !== 'undefined' && REC) _pb.style.display = 'block';
-    if(_qa && typeof REC !== 'undefined' && REC) _qa.style.display = 'block';
-  }, 500);
 
 }
 function _ccSet(tipo, icon, titulo, sub){
@@ -9703,12 +9979,88 @@ function toggleCab(){
   if(arrow) arrow.style.transform = open ? '' : 'rotate(90deg)';
 }
 
+var pozoSelectorTemp = null;
+
+function abrirSelectorPozo(){
+  pozoSelectorTemp = (W && W !== '???') ? String(W) : null;
+
+  var overlay = document.getElementById('pozoSelectorOverlay');
+  var buscar = document.getElementById('pozoSelectorBuscar');
+
+  if(buscar){
+    buscar.value = '';
+  }
+
+  renderSelectorPozo('');
+
+  if(overlay){
+    if(overlay.parentNode !== document.body){
+      document.body.appendChild(overlay);
+    }
+    overlay.style.display = 'flex';
+  }
+}
+
+function cerrarSelectorPozo(){
+  var overlay = document.getElementById('pozoSelectorOverlay');
+  if(overlay){
+    overlay.style.display = 'none';
+  }
+}
+
+function seleccionarPozoTemporal(pozo){
+  pozoSelectorTemp = String(pozo);
+
+  var buscar = document.getElementById('pozoSelectorBuscar');
+
+  renderSelectorPozo(
+    buscar ? buscar.value : ''
+  );
+}
+
+function renderSelectorPozo(filtro){
+  var lista = document.getElementById('pozoSelectorLista');
+  if(!lista) return;
+
+  var q = String(filtro || '')
+    .trim()
+    .toLowerCase()
+    .replace(/^c-?/, '');
+
+  var pozos =
+    (typeof WELLS_ALL !== 'undefined' ? WELLS_ALL : [])
+      .filter(function(pozo){
+        return !q ||
+          String(pozo).toLowerCase().includes(q);
+      });
+
+  lista.innerHTML = pozos.map(function(pozo){
+    var seleccionado =
+      String(pozoSelectorTemp || '') === String(pozo);
+
+    return `
+      <button type="button"
+              onclick="seleccionarPozoTemporal('${pozo}')"
+              style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 14px;margin-bottom:8px;border-radius:11px;border:1.5px solid ${seleccionado ? '#7c3aed' : 'var(--border)'};background:${seleccionado ? '#f5f3ff' : 'var(--surface2)'};color:var(--txt);font-weight:800;cursor:pointer">
+        <span>🛢 C-${pozo}</span>
+        <span>${seleccionado ? '✅' : '○'}</span>
+      </button>
+    `;
+  }).join('');
+}
+
+function confirmarSelectorPozo(){
+  if(!pozoSelectorTemp){
+    showToast('⚠️ Selecciona un pozo');
+    return;
+  }
+
+  setWellFromPicker(pozoSelectorTemp);
+  cerrarSelectorPozo();
+}
+
 function toggleWellList(){
-  var list  = document.getElementById('wpSuggestions');
-  var arrow = document.getElementById('wpArrow');
-  if(!list) return;
-  var isOpen = list.classList.toggle('open');
-  if(arrow) arrow.classList.toggle('open', isOpen);
+  abrirSelectorPozo();
 }
 
 
