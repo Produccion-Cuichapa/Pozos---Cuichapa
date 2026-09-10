@@ -1,19 +1,19 @@
 // Service Worker — Campo Cuichapa PWA v9
 // FIX offline-first: cachea también SDK de Firebase y fuentes (antes excluidos),
 // agrega timeout defensivo a fetch de red, y precachea más assets propios.
-const CACHE = 'pozos-cuichapa-recorredores-20260903-v2';
+const CACHE = 'pozos-cuichapa-recorredores-20260910-v3';
 const ASSETS = [
-  '/Pozos---Cuichapa/',
-  '/Pozos---Cuichapa/index.html',
-  '/Pozos---Cuichapa/manifest.json',
-  '/Pozos---Cuichapa/alarma.mp3',
-  '/Pozos---Cuichapa/styles.css',
-  '/Pozos---Cuichapa/config.js',
-  '/Pozos---Cuichapa/utils.js',
-  '/Pozos---Cuichapa/excel.js',
-  '/Pozos---Cuichapa/fotos.js',
-  '/Pozos---Cuichapa/assets/js/alarm-audio.js',
-  '/Pozos---Cuichapa/assets/js/android-fix.js'
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/alarma.mp3',
+  '/styles.css',
+  '/config.js',
+  '/utils.js',
+  '/excel.js',
+  '/fotos.js',
+  '/assets/js/alarm-audio.js',
+  '/assets/js/android-fix.js'
 ];
 
 // Timeout defensivo: si una petición de red tarda más de esto, se da
@@ -64,7 +64,7 @@ self.addEventListener('fetch', function(e){
       return fetchConTimeout(e.request).then(function(r){
         if(r&&r.status===200){var c=r.clone();caches.open(CACHE).then(function(cache){cache.put(e.request,c)});}
         return r;
-      }).catch(function(){ return caches.match('/Pozos---Cuichapa/index.html'); });
+      }).catch(function(){ return caches.match('/index.html'); });
     })
   );
 });
