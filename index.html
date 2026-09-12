@@ -3140,6 +3140,23 @@ function selManiobraPozo(btn, valor){
   var input = document.getElementById('coManiobra');
   if(!input) return;
 
+  var estadoInput = document.getElementById('coEstatus');
+
+  if(estadoInput){
+    estadoInput.value = '';
+  }
+
+  document
+    .querySelectorAll("[onclick*=\"selBigStatus(this,'coEstatus'\"]")
+    .forEach(function(elemento){
+      elemento.classList.remove(
+        'active',
+        'sel-a',
+        'sel-b',
+        'sel-c'
+      );
+    });
+
   var yaSeleccionado =
     input.value === valor &&
     btn.classList.contains('active');
@@ -3230,12 +3247,31 @@ function selBigStatus(btn, hiddenId, val){
    * Exclusión únicamente para
    * Estado del Pozo de Control Operativo.
    */
-  if(
-    hiddenId === 'coEstatus' &&
-    typeof actualizarExclusionControlOperativo === 'function'
-  ){
+  if(hiddenId === 'coEstatus'){
 
-    actualizarExclusionControlOperativo();
+    var maniobraInput =
+      document.getElementById('coManiobra');
+
+    if(maniobraInput){
+      maniobraInput.value = '';
+    }
+
+    document
+      .querySelectorAll('#coManiobraWrap .big-status-btn')
+      .forEach(function(elemento){
+        elemento.classList.remove(
+          'active',
+          'sel-a',
+          'sel-b',
+          'sel-c'
+        );
+      });
+
+    if(
+      typeof actualizarExclusionControlOperativo === 'function'
+    ){
+      actualizarExclusionControlOperativo();
+    }
 
   }
 
@@ -6835,58 +6871,6 @@ function guardarEnFirebase(reporte){
     return Promise.resolve(false);
   }
 
-  /*
-   * Un reporte recuperado del historial local ya no lleva
-   * Base64 en localStorage. Si sabemos que tenía fotografías,
-   * reconstruirlas desde IndexedDB antes de escribir Firebase.
-   */
-  var fotosActuales =
-    Array.isArray(reporte.fotos)
-      ? reporte.fotos
-      : [];
-
-  var fotosEsperadas =
-    Number(reporte.nFotos || 0);
-
-  if(
-    !fotosActuales.length &&
-    fotosEsperadas > 0 &&
-    !reporte._fotosIDBRecuperadas &&
-    typeof cargarFotosReporteIDB === 'function'
-  ){
-    var reporteHidratado =
-      Object.assign({}, reporte);
-
-    reporteHidratado._fotosIDBRecuperadas = true;
-
-    return cargarFotosReporteIDB(reporte.id)
-      .then(function(fotosIDB){
-        reporteHidratado.fotos =
-          Array.isArray(fotosIDB)
-            ? fotosIDB
-            : [];
-
-        console.log(
-          '[FOTOS_IDB] recuperadas para Firebase:',
-          reporte.id,
-          reporteHidratado.fotos.length
-        );
-
-        return guardarEnFirebase(
-          reporteHidratado
-        );
-      })
-      .catch(function(error){
-        console.error(
-          '[FOTOS_IDB] error recuperando reporte:',
-          reporte.id,
-          error
-        );
-
-        return false;
-      });
-  }
-
   var reportId = String(reporte.id);
   var reporteRef =
     fbDB.ref('reportes/' + reportId);
@@ -6944,6 +6928,74 @@ function guardarEnFirebase(reporte){
     var confirmado =
       registroEnviado ||
       remotoEnviado;
+
+
+    /*
+     * Recuperar fotos desde IndexedDB SOLO si:
+     * - el reporte todavía NO está confirmado como enviado,
+     * - Firebase remoto todavía NO conserva fotos,
+     * - la copia local ya no lleva Base64,
+     * - sabemos que originalmente tenía fotografías.
+     *
+     * Esto evita reinsertar Base64 después de que
+     * Cloud Functions ya lo limpió de Realtime Database.
+     */
+    var fotosLocales =
+      Array.isArray(reporte.fotos)
+        ? reporte.fotos
+        : [];
+
+    var fotosRemotasRaw =
+      remoto.fotos || null;
+
+    var remotoTieneFotos =
+      Array.isArray(fotosRemotasRaw)
+        ? fotosRemotasRaw.length > 0
+        : (
+            fotosRemotasRaw &&
+            typeof fotosRemotasRaw === 'object'
+              ? Object.keys(fotosRemotasRaw).length > 0
+              : false
+          );
+
+    var fotosEsperadas =
+      Number(
+        reporte.nFotos ||
+        remoto.nFotos ||
+        0
+      );
+
+    if(
+      !confirmado &&
+      !fotosLocales.length &&
+      !remotoTieneFotos &&
+      fotosEsperadas > 0 &&
+      !reporte._fotosIDBRecuperadas &&
+      typeof cargarFotosReporteIDB === 'function'
+    ){
+      var reporteHidratado =
+        Object.assign({}, reporte);
+
+      reporteHidratado._fotosIDBRecuperadas = true;
+
+      return cargarFotosReporteIDB(reporte.id)
+        .then(function(fotosIDB){
+          reporteHidratado.fotos =
+            Array.isArray(fotosIDB)
+              ? fotosIDB
+              : [];
+
+          console.log(
+            '[FOTOS_IDB] recuperadas para Firebase:',
+            reporte.id,
+            reporteHidratado.fotos.length
+          );
+
+          return guardarEnFirebase(
+            reporteHidratado
+          );
+        });
+    }
 
     var payload = {
       // Identificación
