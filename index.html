@@ -5190,29 +5190,44 @@ function hcCargar(){
 
   if(typeof fbDB !== 'undefined' && fbDB){
     if(statusEl) statusEl.textContent = '🔄 Sincronizando todos los dispositivos...';
-    fbDB.ref('reportes').orderByChild('fecha').limitToLast(10).once('value', function(snap){
+
+    function procesarHistorialRemoto(data){
       try{
         var localIds={};
         locales.forEach(function(r){ if(r.id) localIds[r.id]=true; });
+
         var fbCount = 0;
-        snap.forEach(function(child){
-          var r=child.val();
+
+        Object.values(data || {}).forEach(function(r){
           if(r&&r.id&&!localIds[r.id]) _hcData.push(r);
           if(r&&r.id) fbCount++;
         });
-        // Si Firebase está vacío, es la fuente de verdad: limpiar local también
+
         if(fbCount === 0 && _hcData.length > 0){
           console.log('[HISTORIAL] Firebase vacío — limpiando localStorage');
           saveHistorial([]);
           _hcData = [];
         }
+
         _hcFbLoaded=true;
-        if(statusEl) statusEl.textContent='✅ '+_hcData.length+' reporte'+(_hcData.length!==1?'s':'')+' · Todos los dispositivos';
+
+        if(statusEl){
+          statusEl.textContent='✅ '+_hcData.length+' reporte'+(_hcData.length!==1?'s':'')+' · Todos los dispositivos';
+        }
+
         hcRender();
       }catch(e2){}
-    }, function(){
-      if(statusEl) statusEl.textContent='📱 '+locales.length+' reporte'+(locales.length!==1?'s':'')+' · Este dispositivo';
-    });
+    }
+
+    if(window._reportesSyncData){
+      procesarHistorialRemoto(window._reportesSyncData);
+    } else {
+      fbDB.ref('reportes').orderByChild('fecha').limitToLast(10).once('value', function(snap){
+        procesarHistorialRemoto(snap.val() || {});
+      }, function(){
+        if(statusEl) statusEl.textContent='📱 '+locales.length+' reporte'+(locales.length!==1?'s':'')+' · Este dispositivo';
+      });
+    }
   } else {
     if(statusEl) statusEl.textContent='📱 '+locales.length+' reporte'+(locales.length!==1?'s':'')+' · Este dispositivo (sin conexión Firebase)';
   }
@@ -6890,16 +6905,10 @@ function guardarEnFirebase(reporte){
    * whatsappStatus. El Registry y el reporte remoto
    * son la fuente de verdad para un envío confirmado.
    */
-  return Promise.all([
-    registryRef.once('value'),
-    reporteRef.once('value')
-  ])
-  .then(function(resultados){
+  return registryRef.once('value')
+  .then(function(registrySnap){
     var registry =
-      resultados[0].val() || null;
-
-    var remoto =
-      resultados[1].val() || {};
+      registrySnap.val() || null;
 
     var registryStatus = String(
       registry && (
@@ -6909,11 +6918,6 @@ function guardarEnFirebase(reporte){
       ) || ''
     ).toLowerCase();
 
-    var remotoStatus = String(
-      remoto.whatsappStatus ||
-      ''
-    ).toLowerCase();
-
     var registroEnviado =
       registry === true ||
       registryStatus === 'sent' ||
@@ -6921,12 +6925,46 @@ function guardarEnFirebase(reporte){
       registryStatus === 'success' ||
       registryStatus === 'ok';
 
+    /*
+     * Ruta rápida:
+     * si el Registry ya confirma el envío, no descargar
+     * nuevamente /reportes/{id}. Tampoco tocar evidencias.
+     */
+    if(registroEnviado){
+      return reporteRef.update({
+        estado: 'enviado',
+        whatsappStatus: 'sent',
+        whatsappSent: true,
+        whatsappSentAt:
+          registry && registry.sentAt
+            ? registry.sentAt
+            : null,
+        whatsappDedupeKey: reportId
+      }).then(function(){
+        return true;
+      });
+    }
+
+    /*
+     * Solo si el Registry todavía NO confirma el envío,
+     * consultar el reporte remoto completo.
+     */
+    return reporteRef.once('value')
+      .then(function(remotoSnap){
+
+    var remoto =
+      remotoSnap.val() || {};
+
+    var remotoStatus = String(
+      remoto.whatsappStatus ||
+      ''
+    ).toLowerCase();
+
     var remotoEnviado =
       remotoStatus === 'sent' ||
       remoto.whatsappSent === true;
 
     var confirmado =
-      registroEnviado ||
       remotoEnviado;
 
 
@@ -7135,6 +7173,7 @@ function guardarEnFirebase(reporte){
       .then(function(){
         return true;
       });
+      });
   })
   .catch(function(error){
     console.warn(
@@ -7165,7 +7204,7 @@ function sincronizarAFirebase(){
     return;
   }
 
-  var locales = getHistorial();
+  var locales = getPendientes();
   var indice = 0;
 
   function siguiente(){
@@ -7209,20 +7248,29 @@ function actualizarSyncBar(estado){
 
 function escucharFirebase(){
   if(!fbDB) return;
-  try{ fbDB.ref('reportes').off('value'); }catch(e){}
+  if(window._reportesSyncQuery){
+    try{ window._reportesSyncQuery.off(); }catch(e){}
+  }
+
+  var _reportesQuery =
+    fbDB.ref('reportes').orderByChild('fecha').limitToLast(10);
+
+  window._reportesSyncQuery = _reportesQuery;
 
   var _fbReportesInit = false;
-  fbDB.ref('reportes').orderByChild('fecha').limitToLast(10).on('value', function(snapshot){
+  var _fbReportesData = {};
+
+  function _procesarReportesFirebase(notificarNuevo){
+    window._reportesSyncData = _fbReportesData;
     actualizarSyncBar('conectado');
-    if(_fbReportesInit){
-      // Find the newest report to show who sent it
-      var snap_data = snapshot.val();
+    if(_fbReportesInit && notificarNuevo){
+      var snap_data = _fbReportesData;
       var newest = snap_data ? Object.values(snap_data).sort(function(a,b){ return (b.fecha||'')>(a.fecha||'')?1:-1; })[0] : null;
       var quien = newest && newest.recorredor ? newest.recorredor : '';
       notifCambio('📋 Nuevo reporte' + (quien ? ' de '+quien : '') + ' — Gráficas actualizadas');
     }
     _fbReportesInit = true;
-    var data = snapshot.val();
+    var data = _fbReportesData;
 
     // Obtener locales (solo de ESTE dispositivo, con fotos)
     var locales = getHistorial();
@@ -7297,6 +7345,28 @@ function escucharFirebase(){
     // Auto-actualizar gráficas si el panel está abierto
     var infoPanel = document.getElementById('supInfoPanel');
     if(infoPanel && infoPanel.style.display === 'block') supRenderGraficas();
+
+  }
+
+  _reportesQuery.once('value', function(snapshot){
+    _fbReportesData = snapshot.val() || {};
+    _procesarReportesFirebase(false);
+
+    _reportesQuery.on('child_added', function(snap){
+      if(_fbReportesData[snap.key]) return;
+      _fbReportesData[snap.key] = snap.val();
+      _procesarReportesFirebase(true);
+    });
+
+    _reportesQuery.on('child_changed', function(snap){
+      _fbReportesData[snap.key] = snap.val();
+      _procesarReportesFirebase(false);
+    });
+
+    _reportesQuery.on('child_removed', function(snap){
+      delete _fbReportesData[snap.key];
+      _procesarReportesFirebase(false);
+    });
 
   }, function(err){
     console.warn('Firebase error:', err);
@@ -8979,10 +9049,6 @@ function confirmarEnvioMuestras(){
 
     guardarReporte(reporte);
     agregarVisita(REC,pozo);
-
-    if(fbDB){
-      guardarEnFirebase(reporte);
-    }
   });
 
   _ccLastReporteId=reportePrincipalId;
@@ -9421,6 +9487,29 @@ function confirmarEnvio(){
   // Única persistencia del reporte completo.
   var promesaGuardado = guardarReporte(reporte);
 
+  /*
+   * La captura ya quedó guardada localmente.
+   * Limpiar la interfaz SIN esperar respuesta de Firebase.
+   * Esto debe funcionar igual con señal y sin señal.
+   */
+  setTimeout(function(){
+    borrarBorradorReporte();
+    limpiarFotos();
+    resetFormulario();
+    mostrarBtnHistorialCentral();
+
+    var _pb = document.getElementById('progBtnWrap');
+    var _qa = document.getElementById('quickAccessWrap');
+
+    if(_pb && typeof REC !== 'undefined' && REC){
+      _pb.style.display = 'block';
+    }
+
+    if(_qa && typeof REC !== 'undefined' && REC){
+      _qa.style.display = 'block';
+    }
+  }, 300);
+
   agregarVisita(REC, W);
   mostrarContador(REC);
   var n = getVisitas(REC).length;
@@ -9454,25 +9543,6 @@ function confirmarEnvio(){
       clearTimeout(_envioTimeout);
       _enviandoAhora = false;
 
-      // Limpiar únicamente después de resolver la persistencia.
-      limpiarFotos();
-
-      setTimeout(function(){
-        borrarBorradorReporte();
-        resetFormulario();
-        mostrarBtnHistorialCentral();
-
-        var _pb = document.getElementById('progBtnWrap');
-        var _qa = document.getElementById('quickAccessWrap');
-
-        if(_pb && typeof REC !== 'undefined' && REC){
-          _pb.style.display = 'block';
-        }
-
-        if(_qa && typeof REC !== 'undefined' && REC){
-          _qa.style.display = 'block';
-        }
-      }, 300);
 
     })
     .catch(function(error){
@@ -9490,6 +9560,8 @@ function confirmarEnvio(){
       );
 
       actualizarBadgeHistorial();
+
+
     });
 
   }catch(e){
@@ -11219,7 +11291,7 @@ function buscarUltimoNivelAforoRemoto(pozo, tipoDeposito){
    */
   return fbDB.ref('reportes')
     .orderByChild('fecha')
-    .limitToLast(1000)
+    .limitToLast(200)
     .once('value')
     .then(procesarSnapshot)
     .catch(function(errorOrdenado){
@@ -11233,7 +11305,7 @@ function buscarUltimoNivelAforoRemoto(pozo, tipoDeposito){
        * evita depender del índice .indexOn de fecha.
        */
       return fbDB.ref('reportes')
-        .limitToLast(1000)
+        .limitToLast(200)
         .once('value')
         .then(procesarSnapshot);
     })
