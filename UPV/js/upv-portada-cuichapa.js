@@ -118,8 +118,8 @@
     );
   }
 
-  function encontrarPantalla(petro, ipep){
-    var comun = ancestroComun(petro, ipep);
+  function encontrarPantalla(petro, tc){
+    var comun = ancestroComun(petro, tc);
 
     if(comun){
       var actual = comun;
@@ -152,11 +152,11 @@
     eliminarPortadaArtificial();
 
     var petroElemento = buscarEmpresa('PETROSMART');
-    var ipepElemento = buscarEmpresa('IPEP');
+    var tcElemento = buscarEmpresa('TC');
     var atoElemento = buscarEmpresa('ATO');
 
     var petro = obtenerTarjeta(petroElemento);
-    var ipep = obtenerTarjeta(ipepElemento);
+    var tc = obtenerTarjeta(tcElemento);
     var ato = obtenerTarjeta(atoElemento);
 
     if(ato){
@@ -165,7 +165,7 @@
       ato.classList.add('upv-company-ato-hidden');
     }
 
-    if(!petro || !ipep){
+    if(!petro || !tc){
       return false;
     }
 
@@ -174,7 +174,7 @@
       'upv-company-choice-petrosmart'
     );
 
-    ipep.classList.add(
+    tc.classList.add(
       'upv-company-choice',
       'upv-company-choice-ipep'
     );
@@ -184,18 +184,18 @@
       'PETROSMART'
     );
 
-    ipep.setAttribute(
+    tc.setAttribute(
       'aria-label',
-      'IPEP'
+      'TC'
     );
 
-    var grid = ancestroComun(petro, ipep);
+    var grid = ancestroComun(petro, tc);
 
     if(grid){
       grid.classList.add('upv-company-choice-grid');
     }
 
-    var pantalla = encontrarPantalla(petro, ipep);
+    var pantalla = encontrarPantalla(petro, tc);
 
     pantalla.classList.add('upv-landing-renovada');
 
@@ -245,7 +245,7 @@
     }
 
     console.log(
-      '[UPV] Portada segura instalada: PETROSMART e IPEP.'
+      '[UPV] Portada segura instalada: PETROSMART y TC.'
     );
 
     return true;

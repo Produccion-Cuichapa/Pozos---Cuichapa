@@ -211,12 +211,12 @@
       'PETROSMART'
     );
 
-    var ipep = prepararTarjeta(
+    var tc = prepararTarjeta(
       '.upv-company-choice-ipep',
-      'IPEP'
+      'TC'
     );
 
-    if(!petrosmart || !ipep){
+    if(!petrosmart || !tc){
       return false;
     }
 
