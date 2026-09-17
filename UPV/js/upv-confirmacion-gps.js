@@ -118,19 +118,83 @@ function gpsCacheValidoUPV(){
     return null;
   }
 
-  const edad =
-    Date.now() -
-    Number(_upvGpsCache.timestamp || 0);
+  const lat =
+    Number(_upvGpsCache.lat);
+
+  const lng =
+    Number(_upvGpsCache.lng);
+
+  const timestamp =
+    Number(
+      _upvGpsCache.timestamp || 0
+    );
+
+  /*
+   * MISMO PRINCIPIO OPERATIVO DE RECORREDORES:
+   *
+   * Una posición GPS existe cuando tenemos
+   * coordenadas geográficas válidas.
+   *
+   * La precisión NO determina si el GPS
+   * está disponible o no.
+   *
+   * Ejemplo:
+   * accuracy = 87 m
+   *
+   * Sigue siendo una posición GPS válida.
+   * Los 87 m se conservan como dato de precisión.
+   *
+   * El radio operativo de 80 m se aplica
+   * exclusivamente a la DISTANCIA entre:
+   *
+   * posición actual
+   *        VS
+   * punto de referencia seleccionado.
+   */
 
   if(
-    edad <= 15000 &&
-    Number.isFinite(_upvGpsCache.accuracy) &&
-    _upvGpsCache.accuracy <= 80
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng) ||
+    lat < -90 ||
+    lat > 90 ||
+    lng < -180 ||
+    lng > 180
   ){
-    return _upvGpsCache;
+    return null;
   }
 
-  return null;
+  /*
+   * watchPosition mantiene este dato actualizado.
+   *
+   * Permitimos hasta 5 minutos como respaldo para
+   * que un instante sin nueva lectura no convierta
+   * artificialmente el GPS en "NO DISPONIBLE".
+   *
+   * Esto NO depende de Firebase ni de Internet.
+   */
+  const edad =
+    Date.now() - timestamp;
+
+  if(
+    Number.isFinite(timestamp) &&
+    timestamp > 0 &&
+    edad > 300000
+  ){
+    return null;
+  }
+
+  return {
+    ..._upvGpsCache,
+    lat,
+    lng,
+    accuracy:
+      Number.isFinite(
+        Number(_upvGpsCache.accuracy)
+      )
+        ? Number(_upvGpsCache.accuracy)
+        : null,
+    timestamp
+  };
 }
 
 iniciarGPSContinuoUPV();
@@ -621,9 +685,136 @@ async function validarGeneral(){
 }
 
 
+
+async function validarReferenciaActual(
+  ubicacion,
+  pozo
+){
+
+  /*
+   * NO captura una posición nueva.
+   * Usa exclusivamente el GPS continuo ya disponible.
+   */
+  const gps =
+    gpsCacheValidoUPV();
+
+  if(!gps){
+    return {
+      error:'GPS no disponible',
+      referencia:
+        String(ubicacion || '').trim().toUpperCase(),
+      dentro:null,
+      distancia:null
+    };
+  }
+
+
+  let referenciaNombre =
+    String(ubicacion || '')
+      .trim()
+      .toUpperCase();
+
+
+  if(referenciaNombre === 'POZO'){
+
+    referenciaNombre =
+      limpiarPozo(pozo);
+
+  }
+
+
+  if(!referenciaNombre){
+
+    return {
+      error:'Referencia GPS no disponible',
+      lat:gps.lat,
+      lng:gps.lng,
+      accuracy:gps.accuracy,
+      dentro:null,
+      distancia:null
+    };
+
+  }
+
+
+  const referencia =
+    await coordenadasPozo(
+      referenciaNombre
+    );
+
+
+  if(!referencia){
+
+    return {
+      tipo:'REFERENCIA',
+      referencia:referenciaNombre,
+      lat:gps.lat,
+      lng:gps.lng,
+      accuracy:gps.accuracy,
+      dentro:null,
+      distancia:null,
+      referenciaDisponible:false
+    };
+
+  }
+
+
+  const distancia =
+    distanciaMetros(
+      gps.lat,
+      gps.lng,
+      referencia.lat,
+      referencia.lng
+    );
+
+
+  return {
+    tipo:'REFERENCIA',
+    referencia:referenciaNombre,
+
+    lat:gps.lat,
+    lng:gps.lng,
+    accuracy:gps.accuracy,
+
+    destinoLat:referencia.lat,
+    destinoLng:referencia.lng,
+
+    distancia,
+
+    dentro:
+      distancia <= RADIO_POZO_M,
+
+    referenciaDisponible:true
+  };
+
+}
+
+
+function obtenerGPSActual(){
+
+  const gps =
+    gpsCacheValidoUPV();
+
+  if(!gps){
+    return null;
+  }
+
+  return {
+    lat:Number(gps.lat),
+    lng:Number(gps.lng),
+    accuracy:Number(gps.accuracy),
+    timestamp:Number(gps.timestamp)
+  };
+}
+
+
 window.UPVGPS = {
 
   RADIO_POZO_M,
+
+  obtenerGPSActual,
+
+  validarReferenciaActual,
 
   validarPozo,
 

@@ -144,6 +144,21 @@ function seleccionarEmpresa(empresa) {
   document.getElementById('upv-app').style.display = 'flex';
   actualizarHeaderEmpresa(empresa);
   mostrarPantalla('upv');
+
+  /*
+   * La empresa ya está disponible en UPV.empresa.
+   * Instalar ahora el selector para que opcionesUnidadEmpresa()
+   * pueda construir correctamente la unidad correspondiente.
+   */
+  setTimeout(function(){
+    if(typeof instalarSelectorUnidad === 'function'){
+      try {
+        sessionStorage.removeItem('upv_unidad_operativa');
+      } catch(e) {}
+
+      instalarSelectorUnidad(true);
+    }
+  }, 0);
 }
 
 function recuperarEmpresa() {

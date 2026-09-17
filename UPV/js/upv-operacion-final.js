@@ -791,247 +791,79 @@ function nombrePozosDescarga(lista){
 
 
 function resumenInicioDescargaHTML(
-  origen,
-  cargas,
-  volumen,
+  lugarPreview,
+  cargasSeleccionadas,
+  volumenDescargaM3,
   gps
 ){
 
-  const empresa =
-    String(
-      empresaActiva() || ''
-    ).trim();
-
-
-  const unidadActual =
-    String(
-      unidad() || ''
-    ).trim();
-
-
-  const pozos =
-    nombrePozosDescarga(
-      cargas
-    );
-
-
-  /*
-   * GPS:
-   * soportamos distintas estructuras que
-   * pueda devolver validarGPSOperacionUPV().
-   */
-  const distancia =
-    Number(
-      gps?.distancia ??
-      gps?.distance ??
-      gps?.distanciaMetros ??
-      gps?.metros ??
-      NaN
-    );
-
-
-  const dentro =
-    (
-      gps?.dentroRango === true ||
-      gps?.dentro === true ||
-      gps?.ok === true ||
-      gps?.valido === true ||
-      gps?.status === 'ok' ||
-      gps?.status === 'dentro'
-    );
-
-
-  const fuera =
-    (
-      gps?.dentroRango === false ||
-      gps?.dentro === false ||
-      gps?.ok === false ||
-      gps?.valido === false ||
-      gps?.status === 'fuera'
-    );
-
-
-  let gpsTexto =
-    'GPS disponible';
-
-
-  let gpsClase =
-    'neutral';
-
-
-  let gpsIcono =
-    '📍';
-
-
-  if(dentro){
-
-    gpsTexto =
-      'Dentro de rango';
-
-    gpsClase =
-      'ok';
-
-    gpsIcono =
-      '✅';
-
-  }
-
-  else if(fuera){
-
-    gpsTexto =
-      'Fuera de rango';
-
-    gpsClase =
-      'bad';
-
-    gpsIcono =
-      '❌';
-
-  }
-
-  else if(!gps){
-
-    gpsTexto =
-      'GPS no disponible';
-
-    gpsClase =
-      'bad';
-
-    gpsIcono =
-      '⚠️';
-
-  }
-
-
-  const distanciaHTML =
-    Number.isFinite(distancia)
-      ? `
-        <small>
-          Distancia:
-          ${Math.round(distancia)} m
-        </small>
-      `
-      : '';
-
+  const pozoTitulo =
+    cargasSeleccionadas.length
+      ? formatoPozoUPV(cargasSeleccionadas[0].pozo)
+      : lugarPreview;
 
   return `
-    <div class="upv-descarga-preview-pro">
+    <div style="text-align:center;margin-bottom:18px">
 
-      <!-- POZOS PRIORIDAD -->
-      <div class="upv-descarga-preview-pozos">
-
-        <span class="upv-descarga-preview-pozos-icon">
-          🛢
-        </span>
-
-        <div>
-
-          <small>
-            PRODUCTO DE
-          </small>
-
-          <strong>
-            ${escaparHtml(pozos)}
-          </strong>
-
-        </div>
-
+      <div style="
+        font-size:34px;
+        font-weight:900;
+        color:#1f2937;
+        line-height:1.1;
+        letter-spacing:.5px;
+      ">
+        🛢️ ${escaparHtml(pozoTitulo)} 🛢️
       </div>
 
-
-      <!-- PROVEEDOR / UNIDAD -->
-      <div class="upv-descarga-preview-grid">
-
-        <div class="upv-descarga-preview-dato">
-
-          <span>
-            🚛 PROVEEDOR
-          </span>
-
-          <strong>
-            ${escaparHtml(empresa)}
-          </strong>
-
-        </div>
-
-
-        <div class="upv-descarga-preview-dato">
-
-          <span>
-            🚚 UNIDAD
-          </span>
-
-          <strong>
-            ${escaparHtml(unidadActual)}
-          </strong>
-
-        </div>
-
-      </div>
-
-
-      <!-- OPERACIÓN -->
-      <div class="upv-descarga-preview-operacion">
-
-        <span>
-          ▶️
-        </span>
-
-        <div>
-
-          <small>
-            INICIO DE DESCARGA
-          </small>
-
-          <strong>
-            ${escaparHtml(origen)}
-          </strong>
-
-        </div>
-
-      </div>
-
-
-      <!-- VOLUMEN -->
-      <div class="upv-descarga-preview-volumen">
-
-        <span>
-          💧 VOLUMEN ASOCIADO
-        </span>
-
-        <strong>
-          ${Number(volumen || 0).toFixed(2)}
-          m³
-        </strong>
-
-      </div>
-
-
-      <!-- GPS -->
-      <div
-        class="upv-descarga-preview-gps ${gpsClase}">
-
-        <div class="upv-descarga-preview-gps-icon">
-          ${gpsIcono}
-        </div>
-
-        <div>
-
-          <small>
-            GPS
-          </small>
-
-          <strong>
-            ${escaparHtml(gpsTexto)}
-          </strong>
-
-          ${distanciaHTML}
-
-        </div>
-
+      <div style="
+        margin-top:10px;
+        font-size:18px;
+        font-weight:900;
+        color:#111827;
+        letter-spacing:.8px;
+      ">
+        INICIO DESCARGA
       </div>
 
     </div>
+
+    <div class="upv-confirm-row">
+      <span>🚛 PROVEEDOR</span>
+      <strong>${escaparHtml(empresaActiva())}</strong>
+    </div>
+
+    <div class="upv-confirm-row">
+      <span>🚚 UNIDAD</span>
+      <strong>${escaparHtml(unidad())}</strong>
+    </div>
+
+    <div class="upv-confirm-row">
+      <span>🕒 HORA DE INICIO</span>
+      <strong>${fechaHoraPreview()}</strong>
+    </div>
+
+    <div class="upv-confirm-row">
+      <span>💧 VOLUMEN TOTAL</span>
+      <strong>${Number(volumenDescargaM3).toFixed(2)} m³</strong>
+    </div>
+
+    <div class="upv-confirm-row">
+      <span>📍 UBICACIÓN</span>
+      <strong>${escaparHtml(lugarPreview)}</strong>
+    </div>
+
+    <div class="upv-confirm-row">
+      <span>📍 GPS</span>
+      <strong>${
+        gps &&
+        !gps.error &&
+        Number.isFinite(Number(gps.lat)) &&
+        Number.isFinite(Number(gps.lng))
+          ? 'Disponible'
+          : 'No disponible'
+      }</strong>
+    </div>
+
   `;
 }
 
@@ -1145,102 +977,11 @@ function mensajeInicioDescargaSeleccionada(config){
 
 
   /* ======================================================
-     GPS — DETECTAR DENTRO / FUERA DE RANGO
+     GPS — MISMO FORMATO QUE RECORREDORES
      ====================================================== */
 
-  const distancia =
-    Number(
-      gps?.distancia ??
-      gps?.distance ??
-      gps?.distanciaMetros ??
-      gps?.distanceMeters ??
-      gps?.distanceM ??
-      gps?.metros ??
-      gps?.distance_m ??
-      NaN
-    );
-
-
-  const textoGPS =
-    [
-      gps?.estado,
-      gps?.status,
-      gps?.mensaje,
-      gps?.message,
-      gps?.validacion,
-      gps?.validation,
-      gps?.texto,
-      gps?.label
-    ]
-    .filter(Boolean)
-    .join(' ')
-    .toUpperCase();
-
-
-  const dentro =
-    (
-      gps?.dentro === true ||
-      gps?.dentroRango === true ||
-      gps?.dentroDeRango === true ||
-      gps?.enRango === true ||
-      gps?.withinRange === true ||
-      gps?.isWithinRange === true ||
-      textoGPS.includes('DENTRO DE RANGO') ||
-      textoGPS.includes('EN RANGO')
-    );
-
-
-  const fuera =
-    (
-      gps?.dentro === false ||
-      gps?.dentroRango === false ||
-      gps?.dentroDeRango === false ||
-      gps?.enRango === false ||
-      gps?.withinRange === false ||
-      gps?.isWithinRange === false ||
-      textoGPS.includes('FUERA DE RANGO')
-    );
-
-
-  let lineaEstadoGPS =
-    '📍 *GPS:* Disponible';
-
-
-  if(dentro){
-
-    lineaEstadoGPS =
-      '📍 *GPS:*\n' +
-      '✅ *DENTRO DE RANGO*';
-
-  }
-
-  else if(fuera){
-
-    lineaEstadoGPS =
-      '📍 *GPS:*\n' +
-      '❌ *FUERA DE RANGO*';
-
-  }
-
-  else if(!gps){
-
-    lineaEstadoGPS =
-      '📍 *GPS:*\n' +
-      '⚠️ No disponible';
-
-  }
-
-
-  if(
-    Number.isFinite(distancia)
-  ){
-
-    lineaEstadoGPS +=
-      '\nDistancia: ' +
-      Math.round(distancia) +
-      ' m';
-
-  }
+  const lineaEstadoGPS =
+    formatoGpsWhatsappUPV(gps);
 
 
   /* ======================================================
@@ -1249,20 +990,13 @@ function mensajeInicioDescargaSeleccionada(config){
 
   const lineas = [
 
-    '🛢 *' +
-      tituloPozos +
-      ':*',
-
-    '*' +
+    '🛢️ *' +
       textoPozos +
-      '*',
+      '* 🛢️',
 
     '',
 
-    '▶️ *INICIO DESCARGA EN ' +
-      String(lugar)
-        .toUpperCase() +
-      '*',
+    '▶️ *INICIO DESCARGA*',
 
     '',
 
@@ -1290,6 +1024,12 @@ function mensajeInicioDescargaSeleccionada(config){
     '💧 *Volumen total:* ' +
       volumen.toFixed(2) +
       ' m³',
+
+    '',
+
+    '📍 *Ubicación:* ' +
+      String(lugar)
+        .toUpperCase(),
 
     '',
 
@@ -2469,6 +2209,655 @@ function ubicacionInicioGuardadoUPV(inicio){
 
 
 
+
+
+
+async function gpsReferenciaOperacionUPV(
+  ubicacion,
+  pozo
+){
+
+  try{
+
+    if(
+      !window.UPVGPS ||
+      typeof window.UPVGPS.validarReferenciaActual !==
+        'function'
+    ){
+
+      return gpsDisponibleInmediatoUPV();
+
+    }
+
+
+    return await window.UPVGPS
+      .validarReferenciaActual(
+        ubicacion,
+        pozo
+      );
+
+  }catch(error){
+
+    console.warn(
+      '[UPV GPS REFERENCIA]',
+      error
+    );
+
+    /*
+     * El GPS jamás bloquea la vista previa.
+     */
+    return gpsDisponibleInmediatoUPV();
+
+  }
+
+}
+
+
+
+/*
+ * ==========================================================
+ * GPS — FORMATO VISUAL TIPO RECORREDORES
+ * ==========================================================
+ *
+ * REGLAS:
+ *
+ * - Si existen lat/lng, GPS está DISPONIBLE.
+ * - La precisión NO determina si está dentro/fuera.
+ * - La distancia se calcula contra la referencia operativa.
+ * - <= 80 m  → DENTRO DE RANGO
+ * - > 80 m   → FUERA DE RANGO
+ * - Maps es solamente informativo.
+ */
+/*
+ * ==========================================================
+ * GPS PARA OBSERVACIONES
+ * ==========================================================
+ *
+ * Las observaciones NO tienen punto fijo de referencia.
+ *
+ * Por eso:
+ * - NO calcula radio
+ * - NO calcula distancia
+ * - NO muestra DENTRO/FUERA DE RANGO
+ *
+ * Únicamente documenta desde dónde se realizó el registro.
+ */
+function formatoGpsObservacionWhatsappUPV(gps){
+
+  const lat =
+    Number(
+      gps?.lat
+    );
+
+  const lng =
+    Number(
+      gps?.lng ??
+      gps?.lon
+    );
+
+  const accuracy =
+    Number(
+      gps?.accuracy ??
+      gps?.precision
+    );
+
+  if(
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng)
+  ){
+    return '📍 Ubicación: GPS NO DISPONIBLE';
+  }
+
+  let linea =
+    '📍 Ubicación: ' +
+    lat.toFixed(6) +
+    ', ' +
+    lng.toFixed(6);
+
+  if(Number.isFinite(accuracy)){
+    linea +=
+      ' (±' +
+      Math.round(accuracy) +
+      ' m)';
+  }
+
+  linea +=
+    '\n🗺 https://maps.google.com/?q=' +
+    lat +
+    ',' +
+    lng;
+
+  return linea;
+}
+
+
+
+function formatoGpsWhatsappUPV(gps){
+
+  const lat =
+    Number(gps?.lat);
+
+  const lng =
+    Number(
+      gps?.lng ??
+      gps?.lon
+    );
+
+  const accuracy =
+    Number(
+      gps?.accuracy ??
+      gps?.precision
+    );
+
+  const distancia =
+    Number(
+      gps?.distancia ??
+      gps?.distance ??
+      gps?.distanciaMetros ??
+      gps?.distanceMeters
+    );
+
+  const tieneCoords =
+    Number.isFinite(lat) &&
+    Number.isFinite(lng);
+
+  if(!tieneCoords){
+    return '📍 GPS: NO DISPONIBLE';
+  }
+
+
+  /*
+   * ========================================================
+   * DENTRO DE RANGO
+   * ========================================================
+   *
+   * No mostrar:
+   * - coordenadas
+   * - precisión
+   * - Maps
+   * - distancia
+   *
+   * Únicamente confirmación.
+   */
+  if(
+    Number.isFinite(distancia) &&
+    distancia <= 80
+  ){
+    return '✅ DENTRO DE RANGO';
+  }
+
+
+  /*
+   * ========================================================
+   * FUERA DE RANGO
+   * ========================================================
+   *
+   * Aquí sí mostramos toda la evidencia GPS.
+   */
+  let linea =
+    '📍 GPS: ' +
+    lat.toFixed(6) +
+    ', ' +
+    lng.toFixed(6);
+
+
+  if(Number.isFinite(accuracy)){
+    linea +=
+      ' (±' +
+      Math.round(accuracy) +
+      ' m)';
+  }
+
+
+  linea +=
+    '\n🗺 https://maps.google.com/?q=' +
+    lat +
+    ',' +
+    lng;
+
+
+  if(Number.isFinite(distancia)){
+
+    const textoDistancia =
+      distancia >= 1000
+        ? (distancia / 1000).toFixed(2) + ' km'
+        : Math.round(distancia) + ' m';
+
+    linea +=
+      '\n⚠️ Fuera del rango del punto (' +
+      textoDistancia +
+      ')';
+  }
+
+
+  return linea;
+}
+
+
+/*
+ * Versión HTML para los resúmenes internos de UPV.
+ */
+function formatoGpsHtmlUPV(gps){
+
+  const lat =
+    Number(gps?.lat);
+
+  const lng =
+    Number(
+      gps?.lng ??
+      gps?.lon
+    );
+
+  const accuracy =
+    Number(
+      gps?.accuracy ??
+      gps?.precision
+    );
+
+  const distancia =
+    Number(
+      gps?.distancia ??
+      gps?.distance ??
+      gps?.distanciaMetros ??
+      gps?.distanceMeters
+    );
+
+  if(
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng)
+  ){
+    return `
+      <div class="upv-confirm-row">
+        <span>📍 GPS</span>
+        <strong>NO DISPONIBLE</strong>
+      </div>
+    `;
+  }
+
+
+  let estado = '';
+
+  if(Number.isFinite(distancia)){
+
+    if(distancia <= 80){
+
+      estado = `
+        <div class="upv-confirm-row">
+          <span>VALIDACIÓN</span>
+          <strong>✅ DENTRO DE RANGO</strong>
+        </div>
+      `;
+
+    }else{
+
+      const textoDistancia =
+        distancia >= 1000
+          ? (distancia / 1000).toFixed(2) + ' km'
+          : Math.round(distancia) + ' m';
+
+      estado = `
+        <div class="upv-confirm-row">
+          <span>VALIDACIÓN</span>
+          <strong>
+            ⚠️ Fuera del rango del punto
+            (${escaparHtml(textoDistancia)})
+          </strong>
+        </div>
+      `;
+    }
+
+  }
+
+
+  return `
+    <div class="upv-confirm-row">
+      <span>📍 GPS</span>
+      <strong>
+        ${lat.toFixed(6)},
+        ${lng.toFixed(6)}
+        ${
+          Number.isFinite(accuracy)
+            ? '(±' + Math.round(accuracy) + ' m)'
+            : ''
+        }
+      </strong>
+    </div>
+
+    <div class="upv-confirm-row">
+      <span>🗺 MAPS</span>
+      <strong>
+        https://maps.google.com/?q=${lat},${lng}
+      </strong>
+    </div>
+
+    ${estado}
+  `;
+}
+
+
+function gpsDisponibleInmediatoUPV(){
+
+  try{
+
+    if(
+      !window.UPVGPS ||
+      typeof window.UPVGPS.obtenerGPSActual !== 'function'
+    ){
+      return {
+        error:'GPS no disponible'
+      };
+    }
+
+    const gps =
+      window.UPVGPS.obtenerGPSActual();
+
+    if(!gps){
+      return {
+        error:'GPS no disponible'
+      };
+    }
+
+    return {
+      tipo:'GENERAL',
+      lat:Number(gps.lat),
+      lng:Number(gps.lng),
+      accuracy:Number(gps.accuracy),
+      timestamp:Number(gps.timestamp),
+      fuente:'GPS_CONTINUO'
+    };
+
+  }catch(e){
+
+    console.warn(
+      '[UPV GPS INMEDIATO]',
+      e
+    );
+
+    return {
+      error:'GPS no disponible'
+    };
+  }
+}
+
+
+async function validarGPSOperacionRapidaUPV(
+  ubicacion,
+  pozo
+){
+
+  try{
+
+    if(!window.UPVGPS){
+      return {
+        error:'Servicio GPS no disponible'
+      };
+    }
+
+    /*
+     * MISMO PRINCIPIO DE RECORREDORES:
+     * utilizar primero la ubicación que el GPS continuo
+     * ya mantiene disponible.
+     */
+    const gps =
+      typeof window.UPVGPS.obtenerGPSActual === 'function'
+        ? window.UPVGPS.obtenerGPSActual()
+        : null;
+
+    /*
+     * Si la app acaba de abrir y todavía no existe
+     * una lectura válida del GPS continuo, conservar
+     * el mecanismo anterior como respaldo.
+     */
+    if(!gps){
+      return await validarGPSOperacionUPV(
+        ubicacion,
+        pozo
+      );
+    }
+
+    const ubicacionNormalizada =
+      String(ubicacion || '')
+        .trim()
+        .toUpperCase();
+
+    /*
+     * POZO / BSC / PIA / ECO:
+     * necesitamos coordenadas oficiales para calcular
+     * distancia y radio.
+     *
+     * validarPozo() volvería a capturar GPS, por lo que
+     * aquí usamos las referencias oficiales que ya expone
+     * el propio resultado del sistema cuando corresponda.
+     */
+    const referencias = {
+
+      BSC:{
+        lat:17.942389,
+        lng:-94.297432
+      },
+
+      PIA:{
+        lat:17.940260,
+        lng:-94.301605
+      },
+
+      ECO:{
+        lat:17.946119,
+        lng:-94.283073
+      },
+
+      '19':{
+        lat:17.955136,
+        lng:-94.263964
+      },
+
+      '106D':{
+        lat:17.957444,
+        lng:-94.287753
+      },
+
+      '107':{
+        lat:17.953797,
+        lng:-94.280869
+      },
+
+      '137':{
+        lat:17.967892,
+        lng:-94.287797
+      },
+
+      '138':{
+        lat:17.971828,
+        lng:-94.287369
+      },
+
+      '139':{
+        lat:17.951825,
+        lng:-94.297089
+      },
+
+      '169':{
+        lat:17.935357,
+        lng:-94.274471
+      },
+
+      '172':{
+        lat:17.932064,
+        lng:-94.280831
+      },
+
+      '176':{
+        lat:17.937503,
+        lng:-94.271028
+      },
+
+      '179':{
+        lat:17.966961,
+        lng:-94.284103
+      },
+
+      '180':{
+        lat:17.942889,
+        lng:-94.300467
+      },
+
+      '201':{
+        lat:17.926681,
+        lng:-94.290647
+      },
+
+      '207':{
+        lat:17.924742,
+        lng:-94.293919
+      },
+
+      '376':{
+        lat:17.927106,
+        lng:-94.292572
+      },
+
+      '377':{
+        lat:17.926603,
+        lng:-94.287797
+      },
+
+      '385':{
+        lat:17.923300,
+        lng:-94.292781
+      },
+
+      '401':{
+        lat:17.935633,
+        lng:-94.287222
+      },
+
+      '601':{
+        lat:17.952008,
+        lng:-94.264047
+      },
+
+      '602':{
+        lat:17.951783,
+        lng:-94.263978
+      },
+
+      '603':{
+        lat:17.957717,
+        lng:-94.291701
+      }
+
+    };
+
+    let clave = '';
+
+    if(
+      ubicacionNormalizada === 'POZO'
+    ){
+      clave =
+        String(pozo || '')
+          .trim()
+          .toUpperCase()
+          .replace(/^C-/,'');
+    }
+    else if(
+      ubicacionNormalizada === 'BSC' ||
+      ubicacionNormalizada === 'PIA' ||
+      ubicacionNormalizada === 'ECO'
+    ){
+      clave = ubicacionNormalizada;
+    }
+
+    /*
+     * Ubicación general sin radio específico.
+     */
+    if(!clave){
+
+      return {
+        tipo:'GENERAL',
+        lat:gps.lat,
+        lng:gps.lng,
+        accuracy:gps.accuracy,
+        timestamp:gps.timestamp
+      };
+    }
+
+    const referencia =
+      referencias[clave];
+
+    if(!referencia){
+
+      return {
+        tipo:'POZO',
+        pozo:clave,
+        lat:gps.lat,
+        lng:gps.lng,
+        accuracy:gps.accuracy,
+        dentro:null,
+        distancia:null,
+        referenciaDisponible:false
+      };
+    }
+
+    const distancia =
+      window.UPVGPS.distanciaMetros(
+        gps.lat,
+        gps.lng,
+        referencia.lat,
+        referencia.lng
+      );
+
+    return {
+
+      tipo:'POZO',
+
+      pozo:clave,
+
+      lat:gps.lat,
+      lng:gps.lng,
+
+      accuracy:gps.accuracy,
+
+      destinoLat:
+        referencia.lat,
+
+      destinoLng:
+        referencia.lng,
+
+      distancia,
+
+      dentro:
+        distancia <=
+        Number(
+          window.UPVGPS.RADIO_POZO_M || 80
+        ),
+
+      referenciaDisponible:true,
+
+      timestamp:gps.timestamp,
+
+      fuente:'GPS_CONTINUO'
+
+    };
+
+  }catch(error){
+
+    console.error(
+      '[UPV GPS RAPIDO]',
+      error
+    );
+
+    /*
+     * Si algo excepcional ocurre en el circuito rápido,
+     * conservar el validador anterior.
+     */
+    return await validarGPSOperacionUPV(
+      ubicacion,
+      pozo
+    );
+  }
+}
+
+
 async function validarGPSOperacionUPV(
   ubicacion,
   pozo
@@ -2799,7 +3188,8 @@ function mensajeWhatsappInicio(config){
    * GPS SIEMPRE AL FINAL
    */
   lineas.push(
-    ...lineasGpsWhatsappUPV(
+    '',
+    formatoGpsWhatsappUPV(
       gps
     )
   );
@@ -2835,6 +3225,89 @@ function mensajeWhatsappTermino(config){
       ? 'FINALIZA DESCARGA'
       : 'FINALIZA CARGA';
 
+
+  /*
+   * En FINALIZA DESCARGA conservamos arriba
+   * los mismos pozos/productos seleccionados
+   * durante INICIO DESCARGA.
+   */
+  const cargasDescarga =
+    tipoNormalizado === 'DESCARGA' &&
+    Array.isArray(inicio?.cargasSeleccionadas)
+      ? inicio.cargasSeleccionadas
+      : [];
+
+
+  const nombresProductoDescarga =
+    cargasDescarga
+      .map(function(item){
+
+        const valor =
+          item?.pozo ||
+          item?.nombre ||
+          item?.destinoNombre ||
+          '';
+
+        return valor
+          ? formatoPozoUPV(valor)
+          : '';
+
+      })
+      .filter(Boolean);
+
+
+  let productoDescarga = '';
+
+  if(nombresProductoDescarga.length === 1){
+
+    productoDescarga =
+      nombresProductoDescarga[0];
+
+  }else if(nombresProductoDescarga.length === 2){
+
+    productoDescarga =
+      nombresProductoDescarga[0] +
+      ' y ' +
+      nombresProductoDescarga[1];
+
+  }else if(nombresProductoDescarga.length > 2){
+
+    productoDescarga =
+      nombresProductoDescarga
+        .slice(0,-1)
+        .join(', ') +
+      ' y ' +
+      nombresProductoDescarga[
+        nombresProductoDescarga.length - 1
+      ];
+
+  }
+
+
+  /*
+   * Respaldo para registros anteriores que no tengan
+   * cargasSeleccionadas.
+   */
+  if(
+    tipoNormalizado === 'DESCARGA' &&
+    !productoDescarga
+  ){
+
+    const pozosPrevios =
+      Array.isArray(inicio?.pozosCarga)
+        ? inicio.pozosCarga
+        : [];
+
+    productoDescarga =
+      pozosPrevios
+        .map(function(valor){
+          return formatoPozoUPV(valor);
+        })
+        .filter(Boolean)
+        .join(' y ');
+
+  }
+
   /*
    * Lugar principal.
    * Se muestra únicamente arriba.
@@ -2865,7 +3338,28 @@ function mensajeWhatsappTermino(config){
 
   const lineas = [
 
-    '🛢️ *' + ubicacionFinal + '* 🛢️',
+    /*
+     * DESCARGA:
+     * arriba aparece el producto/pozo.
+     *
+     * CARGA:
+     * conserva exactamente su comportamiento anterior.
+     */
+    tipoNormalizado === 'DESCARGA'
+      ? (
+          '🛢️ *' +
+          (
+            productoDescarga ||
+            'PRODUCTO NO ESPECIFICADO'
+          ) +
+          '* 🛢️'
+        )
+      : (
+          '🛢️ *' +
+          ubicacionFinal +
+          '* 🛢️'
+        ),
+
     '*' + actividad + '*',
     '',
 
@@ -2886,8 +3380,40 @@ function mensajeWhatsappTermino(config){
       Number(cantidadM3).toFixed(2) +
       ' m³*',
 
-    etiquetaDestino +
-      lugarDestino
+    '',
+
+    /*
+     * En descarga mostramos explícitamente
+     * dónde se está realizando la descarga.
+     *
+     * Carga conserva "Se dirige a".
+     */
+    tipoNormalizado === 'DESCARGA'
+      ? (
+          '📍 *Ubicación de descarga:* ' +
+          String(ubicacionFinal)
+            .toUpperCase()
+        )
+      : (
+          etiquetaDestino +
+          lugarDestino
+        ),
+
+    /*
+     * Después de finalizar una DESCARGA,
+     * mostrar también hacia dónde continúa la unidad.
+     *
+     * Ejemplo:
+     * Ubicación de descarga: BSC
+     * Se dirige a: C-107
+     */
+    tipoNormalizado === 'DESCARGA' &&
+    String(lugarDestino || '').trim()
+      ? (
+          '➡️ *Se dirige a:* ' +
+          String(lugarDestino)
+        )
+      : ''
 
   ];
 
@@ -2917,9 +3443,21 @@ function mensajeWhatsappTermino(config){
 
   /*
    * GPS SIEMPRE AL FINAL
+   *
+   * Formato único UPV:
+   *
+   * DENTRO:
+   *   ✅ DENTRO DE RANGO
+   *
+   * FUERA:
+   *   GPS + precisión
+   *   Maps
+   *   distancia
+   *   advertencia
    */
   lineas.push(
-    ...lineasGpsWhatsappUPV(
+    '',
+    formatoGpsWhatsappUPV(
       gps
     )
   );
@@ -3540,59 +4078,141 @@ function renderInicio(tipo){
 
 
           /*
-           * No permitir iniciar una sola descarga
-           * mezclando destinos distintos.
+           * REGLA OPERATIVA DE DESCARGA
+           * ============================
+           *
+           * Una unidad puede realizar varias cargas consecutivas.
+           *
+           * Ejemplo:
+           *
+           * C-19   -> C-106D
+           * C-106D -> BSC
+           *
+           * El destino de la PRIMERA carga representa el siguiente
+           * punto de carga de la unidad, no necesariamente el lugar
+           * donde finalmente descargará todo el producto.
+           *
+           * Por lo tanto:
+           *
+           * - NO bloqueamos destinos diferentes.
+           * - Conservamos TODAS las cargas seleccionadas.
+           * - Conservamos TODO el volumen asociado.
+           * - El destino vigente se toma de la carga MÁS RECIENTE.
+           *
+           * Cada carga ya conserva timestamp.
            */
-          const clavesDestino =
-            [...new Set(
-              cargasDestinoAuto.map(
-                function(item){
-
-                  const tipoDestino =
-                    String(
-                      item.destino || ''
-                    )
-                    .trim()
-                    .toUpperCase();
 
 
-                  const destinoPozo =
-                    String(
-                      item.destinoPozo ||
-                      item.destinoNombre ||
-                      ''
-                    )
-                    .trim()
-                    .toUpperCase()
-                    .replace(
-                      /^C[-\s]*/i,
-                      ''
+          const cargasOrdenadasDestino =
+            cargasDestinoAuto
+              .slice()
+              .sort(function(a,b){
+
+                const ta =
+                  Number(a?.timestamp || 0);
+
+                const tb =
+                  Number(b?.timestamp || 0);
+
+                /*
+                 * Si ambos registros tienen timestamp,
+                 * usamos el orden cronológico real.
+                 */
+                if(ta && tb && ta !== tb){
+                  return ta - tb;
+                }
+
+
+                /*
+                 * Respaldo para registros anteriores:
+                 * intentar construir fecha + hora.
+                 */
+                function fechaCarga(item){
+
+                  const fecha =
+                    String(item?.fecha || '')
+                      .trim();
+
+                  const hora =
+                    String(item?.hora || '')
+                      .trim();
+
+                  if(!fecha && !hora){
+                    return 0;
+                  }
+
+
+                  /*
+                   * Formato habitual:
+                   * DD/MM/YYYY HH:mm:ss
+                   */
+                  const m =
+                    fecha.match(
+                      /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
                     );
 
+                  if(m){
 
-                  return (
-                    tipoDestino === 'POZO'
-                      ? 'POZO:' + destinoPozo
-                      : tipoDestino
-                  );
+                    const iso =
+                      m[3] + '-' +
+                      m[2].padStart(2,'0') + '-' +
+                      m[1].padStart(2,'0') + 'T' +
+                      (hora || '00:00:00');
 
+                    const t =
+                      Date.parse(iso);
+
+                    return Number.isFinite(t)
+                      ? t
+                      : 0;
+                  }
+
+
+                  const t =
+                    Date.parse(
+                      (fecha + ' ' + hora).trim()
+                    );
+
+                  return Number.isFinite(t)
+                    ? t
+                    : 0;
                 }
-              )
-            )];
 
 
-          if(clavesDestino.length > 1){
+                const fa =
+                  fechaCarga(a);
+
+                const fb =
+                  fechaCarga(b);
+
+                if(fa !== fb){
+                  return fa - fb;
+                }
+
+
+                /*
+                 * Si son registros antiguos sin fecha utilizable,
+                 * respetamos el orden en que ya vienen almacenados.
+                 */
+                return 0;
+
+              });
+
+
+          const cargaReferencia =
+            cargasOrdenadasDestino[
+              cargasOrdenadasDestino.length - 1
+            ];
+
+
+          if(!cargaReferencia){
 
             error(
-              'Las cargas seleccionadas tienen destinos diferentes. Selecciona solamente cargas que vayan al mismo lugar.'
+              'No fue posible determinar la última carga seleccionada.'
             );
 
             return;
           }
-
-
-          const cargaReferencia =
-            cargasDestinoAuto[0];
 
 
           origen =
@@ -3682,27 +4302,33 @@ function renderInicio(tipo){
 
 
         /*
-         * Captura GPS independiente para el INICIO.
-         * No se permite continuar sin coordenadas válidas.
+         * GPS NO BLOQUEANTE.
+         *
+         * El botón debe reaccionar inmediatamente.
+         * Se utiliza únicamente la posición que el GPS
+         * continuo ya tenga disponible.
+         *
+         * Si todavía no existe una lectura válida,
+         * la vista previa continúa normalmente.
+         */
+        /*
+         * REFERENCIA GPS DEL INICIO
+         *
+         * CARGA:
+         *   ¿DÓNDE INICIAS?
+         *
+         * DESCARGA:
+         *   ¿A DÓNDE VAS?
+         *   obtenido de la última carga seleccionada.
+         *
+         * No captura GPS nuevo.
+         * No bloquea la vista previa.
          */
         const gpsValidacion =
-          await validarGPSOperacionUPV(
+          await gpsReferenciaOperacionUPV(
             origen,
             pozo
           );
-
-        if(
-          !gpsValidoOperacionUPV(
-            gpsValidacion
-          )
-        ){
-          error(
-            'No fue posible obtener una ubicación GPS válida. ' +
-            'Activa la ubicación y vuelve a intentar.'
-          );
-
-          return;
-        }
 
 
         const esInicioDescarga =
@@ -5360,32 +5986,67 @@ function renderTermino(tipo){
           );
 
         /*
-         * Captura GPS nueva e independiente para FINALIZAR.
-         * Nunca se reutiliza la ubicación capturada al iniciar.
+         * GPS NO BLOQUEANTE EN FINALIZACIÓN.
+         *
+         * No se inicia una captura nueva al tocar el botón.
+         * Se utiliza únicamente la lectura disponible
+         * del GPS continuo.
+         *
+         * Sin lectura GPS, la vista previa continúa.
          */
-        const ubicacionReferenciaGPS =
-          esTerminoDescarga
-            ? destino
-            : ubicacionTermino;
+        /*
+         * REFERENCIA GPS DE FINALIZACIÓN
+         *
+         * CARGA:
+         *   conserva ¿DÓNDE INICIAS? del INICIO.
+         *
+         * DESCARGA:
+         *   conserva ¿A DÓNDE VAS? del INICIO
+         *   de descarga.
+         *
+         * El nuevo destino seleccionado en
+         * FINALIZACIÓN NO cambia la referencia GPS.
+         */
+        let referenciaGpsTipo = '';
+        let referenciaGpsPozo = '';
 
-        const gpsValidacionTermino =
-          await validarGPSOperacionUPV(
-            ubicacionReferenciaGPS,
-            pozo
-          );
 
-        if(
-          !gpsValidoOperacionUPV(
-            gpsValidacionTermino
-          )
-        ){
-          error(
-            'No fue posible obtener una ubicación GPS válida para finalizar. ' +
-            'Activa la ubicación y vuelve a intentar.'
-          );
+        if(inicio){
 
-          return;
+          referenciaGpsTipo =
+            String(
+              inicio.origen ||
+              inicio.ubicacionInicio ||
+              inicio.ubicacionOrigen ||
+              ''
+            )
+            .trim()
+            .toUpperCase();
+
+
+          referenciaGpsPozo =
+            String(
+              inicio.pozo ||
+              inicio.pozoOrigen ||
+              ''
+            )
+            .trim();
+
         }
+
+
+        /*
+         * Respaldo para registros anteriores:
+         * si el INICIO no contiene referencia utilizable,
+         * conservamos GPS informativo sin bloquear.
+         */
+        const gpsValidacionTermino =
+          referenciaGpsTipo
+            ? await gpsReferenciaOperacionUPV(
+                referenciaGpsTipo,
+                referenciaGpsPozo
+              )
+            : gpsDisponibleInmediatoUPV();
 
 
         const mensajeWA =
@@ -5903,7 +6564,255 @@ function renderObs(){
   activarEvidencia();
 
   activarPanelPermisosUPV();
+
+  /*
+   * OBSERVACIONES — BOTÓN DEL FORMULARIO NUEVO
+   */
+  const btnGuardarObs =
+    document.getElementById('upvFinalGuardarObs');
+
+  if(btnGuardarObs){
+
+    btnGuardarObs.addEventListener(
+      'click',
+      guardarObservacionFinalUPV
+    );
+
+  }
 }
+
+
+/*
+ * ==========================================================
+ * GUARDAR OBSERVACIÓN — FORMULARIO NUEVO
+ * ==========================================================
+ */
+async function guardarObservacionFinalUPV(){
+
+  const unidad =
+    String(
+      document.getElementById(
+        'upvFinalObsUnidad'
+      )?.value || ''
+    ).trim();
+
+  const tipo =
+    String(
+      document.getElementById(
+        'upvFinalObsTipo'
+      )?.value || ''
+    ).trim();
+
+  const texto =
+    String(
+      document.getElementById(
+        'upvFinalObsTexto'
+      )?.value || ''
+    ).trim();
+
+
+  if(!unidad){
+
+    alert(
+      'Ingresa la unidad.'
+    );
+
+    return;
+  }
+
+
+  if(!tipo){
+
+    alert(
+      'Selecciona el tipo de observación.'
+    );
+
+    return;
+  }
+
+
+  if(!texto){
+
+    alert(
+      'Escribe la observación.'
+    );
+
+    return;
+  }
+
+
+  /*
+   * GPS NO BLOQUEANTE.
+   *
+   * Tomamos exclusivamente la posición que
+   * el GPS continuo ya tenga disponible.
+   *
+   * NO se realiza validación contra ningún punto.
+   */
+  let gps = null;
+
+  try{
+
+    if(
+      window.UPVGPS &&
+      typeof window.UPVGPS.obtenerGPSActual ===
+        'function'
+    ){
+
+      gps =
+        window.UPVGPS.obtenerGPSActual();
+
+    }
+
+  }catch(e){
+
+    console.warn(
+      '[UPV OBS] GPS continuo no disponible:',
+      e
+    );
+
+  }
+
+
+  /*
+   * Compatibilidad adicional con el estado
+   * GPS existente de UPV.
+   */
+  if(
+    !gps &&
+    typeof UPV !== 'undefined' &&
+    UPV &&
+    UPV.gpsObservacion
+  ){
+
+    gps =
+      UPV.gpsObservacion;
+
+  }
+
+
+  const gpsTexto =
+    formatoGpsObservacionWhatsappUPV(
+      gps
+    );
+
+
+  const ahora =
+    new Date();
+
+  const fecha =
+    ahora.toLocaleDateString(
+      'es-MX',
+      {
+        day:'2-digit',
+        month:'2-digit',
+        year:'numeric'
+      }
+    );
+
+  const hora =
+    ahora.toLocaleTimeString(
+      'es-MX',
+      {
+        hour:'2-digit',
+        minute:'2-digit',
+        hour12:false
+      }
+    );
+
+
+  const mensaje = [
+
+    '📝 *OBSERVACIÓN DE CAMPO*',
+
+    '',
+
+    '🚛 *Unidad:* ' +
+      unidad,
+
+    '📋 *Tipo:* ' +
+      tipo,
+
+    '',
+
+    '📝 *Observación:*',
+    texto,
+
+    '',
+
+    'Fecha: ' +
+      fecha,
+
+    'Hora: ' +
+      hora,
+
+    '',
+
+    gpsTexto
+
+  ].join('\n');
+
+
+  /*
+   * Por ahora dejamos disponible el mensaje
+   * para el circuito actual de UPV.
+   *
+   * No introducimos una segunda ruta de WhatsApp
+   * ni modificamos Carga/Descarga.
+   */
+  console.log(
+    '[UPV OBSERVACIÓN]',
+    {
+      unidad,
+      tipo,
+      texto,
+      gps,
+      mensaje
+    }
+  );
+
+
+  /*
+   * Vista previa.
+   *
+   * Si la aplicación ya dispone del overlay general,
+   * lo reutilizamos.
+   */
+  if(
+    typeof abrirConfirmOverlayUPV ===
+      'function'
+  ){
+
+    abrirConfirmOverlayUPV(
+      mensaje
+    );
+
+    return;
+  }
+
+
+  if(
+    typeof _abrirConfirmOverlay ===
+      'function'
+  ){
+
+    _abrirConfirmOverlay(
+      mensaje
+    );
+
+    return;
+  }
+
+
+  /*
+   * Fallback seguro:
+   * no perdemos la información aunque no exista overlay.
+   */
+  alert(
+    mensaje
+  );
+}
+
 
 
 /* ========================================================
