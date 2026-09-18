@@ -652,7 +652,9 @@ async function renderHistorial() {
     var gpsStr  = r.gps ? 'GPS: +/-' + r.gps.accuracy + ' m (' + r.gps.source + ')' : 'Sin GPS';
     var sync    = r.syncStatus === 'sincronizado' ? 'Sincronizado' : 'Pendiente';
     var syncClr = r.syncStatus === 'sincronizado' ? 'var(--green)' : 'var(--orange)';
-    return '<div class="hist-item">' +
+    return '<div class="hist-item" data-etapa="' +
+      String(r.etapa || r.subtipo || '').replace(/"/g, '&quot;') +
+      '">' +
       '<div class="hist-item-header">' +
         '<span class="emp-tag ' + (r.empresa||'') + '">' + (r.empresa||'') + '</span>' +
         '<span>' + fechaStr + '</span>' +
@@ -763,6 +765,102 @@ async function enviarReporteUpv(id) {
       ? reporte.fotoIds
       : [];
 
+    /*
+     * Recuperar evidencia fotográfica desde IndexedDB.
+     *
+     * Antes solamente se enviaban fotoIds, por lo que
+     * Firebase sabía que existían fotos pero no recibía
+     * el contenido necesario para WhatsApp.
+     */
+    /*
+     * PRIORIDAD 1:
+     * fotografías que ya vienen dentro del reporte,
+     * igual que en la app Recorrredores.
+     */
+    var fotosFirebase =
+      Array.isArray(reporte.fotos)
+        ? reporte.fotos
+            .map(function(f) {
+              if (!f) return null;
+
+              return {
+                data:
+                  f.data ||
+                  f.dataUrl ||
+                  '',
+                nombre:
+                  f.nombre ||
+                  'foto.jpg',
+                tipo:
+                  f.tipo ||
+                  'image/jpeg',
+                size:
+                  f.size ||
+                  f.sizeComprimido ||
+                  0
+              };
+            })
+            .filter(function(f) {
+              return (
+                f &&
+                typeof f.data === 'string' &&
+                f.data.length > 100
+              );
+            })
+        : [];
+
+    console.log(
+      '[UPV-FOTOS] Fotos directas del reporte:',
+      fotosFirebase.length
+    );
+
+    /*
+     * PRIORIDAD 2:
+     * compatibilidad con reportes anteriores.
+     *
+     * Solo recuperar por fotoIds cuando el reporte
+     * no tenga fotos directas.
+     */
+    if (!fotosFirebase.length) {
+
+    for (var fi = 0; fi < fotoIds.length; fi++) {
+      try {
+        var fotoLocal = await idbGet('fotos', fotoIds[fi]);
+
+        if (
+          fotoLocal &&
+          fotoLocal.dataUrl
+        ) {
+          fotosFirebase.push({
+            id: fotoLocal.id,
+
+            /*
+             * La Cloud Function _extractBase64()
+             * reconoce la propiedad "data".
+             */
+            data: fotoLocal.dataUrl,
+
+            nombre: fotoLocal.nombre || null,
+            tipo: fotoLocal.tipo || 'image/jpeg',
+            createdAt: fotoLocal.createdAt || null
+          });
+        }
+      } catch (fotoError) {
+        console.warn(
+          '[UPV-SYNC] No se pudo recuperar foto:',
+          fotoIds[fi],
+          fotoError
+        );
+      }
+    }
+
+    }
+
+    console.log(
+      '[UPV-FOTOS] Fotos que viajarán a Firebase:',
+      fotosFirebase.length
+    );
+
     var payload = {
       id: reporte.id,
       empresa: reporte.empresa || null,
@@ -834,7 +932,12 @@ async function enviarReporteUpv(id) {
         reporte.gps || null,
 
       fotoIds: fotoIds,
-      nFotos: fotoIds.length,
+
+      /*
+       * Evidencia disponible para sendUpvWhatsApp.
+       */
+      fotos: fotosFirebase,
+      nFotos: fotosFirebase.length,
       fecha: reporte.fecha || null,
       createdAt: reporte.createdAt || null,
       origenApp: 'UPV',
@@ -1017,6 +1120,49 @@ async function guardarRegistroFinalUPV(data){
       data.mensajeWhatsapp ||
       data.mensajeWA ||
       null,
+
+    /*
+     * EVIDENCIA FOTOGRÁFICA DIRECTA.
+     *
+     * El registro final ya trae las imágenes comprimidas.
+     * Debemos conservarlas dentro del reporte IndexedDB
+     * para que enviarReporteUpv() pueda mandarlas a Firebase.
+     */
+    fotos:
+      Array.isArray(data.fotos)
+        ? data.fotos
+            .slice(0, 3)
+            .map(function(f){
+              return {
+                data:
+                  f && (
+                    f.data ||
+                    f.dataUrl ||
+                    ''
+                  ),
+                nombre:
+                  f && f.nombre
+                    ? f.nombre
+                    : 'foto.jpg',
+                size:
+                  f && f.size
+                    ? f.size
+                    : 0
+              };
+            })
+            .filter(function(f){
+              return (
+                f &&
+                typeof f.data === 'string' &&
+                f.data.length > 100
+              );
+            })
+        : [],
+
+    fotoIds:
+      Array.isArray(data.fotoIds)
+        ? data.fotoIds.slice(0, 3)
+        : [],
 
     cargasSeleccionadas:
       Array.isArray(
