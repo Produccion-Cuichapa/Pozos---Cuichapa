@@ -1129,7 +1129,7 @@ function empresaActiva(){
 
     return (
       t === 'PETROSMART' ||
-      t === 'IPEP'
+      t === 'TC'
     );
   });
 
@@ -1381,26 +1381,27 @@ function opcionesUnidadEmpresa(){
     return [
       {
         capacidadM3:30,
-        titulo:'UNIDAD 30 m³',
+        titulo:'UNIDAD 93',
         subtitulo:'PETROSMART'
       }
     ];
 
   }
 
-  if(emp === 'IPEP'){
+  if(emp === 'TC'){
 
     return [
       {
         capacidadM3:30,
-        titulo:'UNIDAD 30 m³',
-        subtitulo:'IPEP'
+        titulo:'UNIDAD 184',
+        subtitulo:'TC'
       },
       {
-        capacidadM3:20,
-        titulo:'UNIDAD 20 m³',
-        subtitulo:'IPEP'
+        capacidadM3:22,
+        titulo:'UNIDAD 193',
+        subtitulo:'TC'
       }
+
     ];
 
   }
@@ -3097,23 +3098,22 @@ function resumenGpsHtmlUPV(gps){
    SOLO FORMATO DE MENSAJES / VISTA PREVIA
    ========================================================== */
 function proveedorWhatsappUPV(empresa, capacidadM3){
-
-  const emp = String(empresa || '')
-    .trim()
-    .toUpperCase();
-
+  const emp = String(empresa || '').trim().toUpperCase();
   const cap = Number(capacidadM3);
 
+  // PETRO conserva su identificación actual
   if(emp === 'PETROSMART'){
     return '🔵 ' + emp + ' 🔵';
   }
 
-  if(emp === 'IPEP' && cap === 20){
-    return '🟢 ' + emp + ' 🟢';
+  // TC — Unidad 22 m³ / No. 193
+  if(emp === 'TC' && cap === 22){
+    return '🟢 TC 193 🟢';
   }
 
-  if(emp === 'IPEP' && cap === 30){
-    return '🟠 ' + emp + ' 🟠';
+  // TC — Unidad 30 m³ / No. 184
+  if(emp === 'TC' && cap === 30){
+    return '🟠 TC 184 🟠';
   }
 
   return emp;
@@ -5277,12 +5277,45 @@ function activarPanelPermisosUPV(){
   setTimeout(
     function(){
 
-      verificarPermisosOperacionUPV(
-        false
-      );
+      /*
+       * PRECALENTAMIENTO GPS:
+       * usar el mismo motor UPVGPS que posteriormente utiliza
+       * INICIAR CARGA / DESCARGA.
+       *
+       * capturarGPS() devuelve inmediatamente el cache continuo
+       * cuando ya existe una lectura reciente y precisa.
+       */
+      if(
+        window.UPVGPS &&
+        typeof window.UPVGPS.capturarGPS === 'function'
+      ){
+        window.UPVGPS
+          .capturarGPS()
+          .then(function(gps){
+
+            if(!gps) return;
+
+            window.UPV_FINAL_GPS = {
+              lat:gps.lat,
+              lng:gps.lng,
+              accuracy:gps.accuracy,
+              timestamp:
+                gps.timestamp || Date.now()
+            };
+
+          })
+          .catch(function(error){
+
+            console.warn(
+              '[UPV GPS] Precarga no disponible:',
+              error
+            );
+
+          });
+      }
 
     },
-    250
+    0
   );
 
 }
@@ -6938,7 +6971,7 @@ document.addEventListener(
     if(
       texto === 'UPV' ||
       texto.includes('PETROSMART') ||
-      texto.includes('IPEP')
+      texto.includes('TC')
     ){
       setTimeout(instalar,120);
     }
@@ -6947,7 +6980,7 @@ document.addEventListener(
 
 
 /*
- * Cuando cambie PETROSMART / IPEP,
+ * Cuando cambie PETROSMART / TC,
  * olvidar la unidad anterior.
  */
 document.addEventListener(
@@ -6960,7 +6993,7 @@ document.addEventListener(
 
     if(
       texto === 'PETROSMART' ||
-      texto === 'IPEP'
+      texto === 'TC'
     ){
 
       try{
