@@ -945,15 +945,36 @@ window.AdminUI = {
     const photos = this.resolveReportPhotos(item);
 
     /*
-     * El contador de la pestaña Evidencias representa
-     * únicamente fotografías. El GPS se muestra en su
-     * apartado propio y no debe confundirse con una foto.
+     * Analizar localmente el mensaje del reporte.
+     * Antes se utilizaba una variable `parsed` inexistente,
+     * lo que detenía prepareInspectorTabs() antes de activar
+     * cualquier panel y producía la pantalla azul.
+     */
+    let parsedEvidenceCount = 0;
+
+    try{
+      const parsedLocal =
+        typeof AdminUtils.parseMessage === 'function'
+          ? AdminUtils.parseMessage(
+              this.detailMessage(item) || ''
+            )
+          : null;
+
+      parsedEvidenceCount = Number(
+        parsedLocal?.evidenceCount || 0
+      );
+    }catch(error){
+      parsedEvidenceCount = 0;
+    }
+
+    /*
+     * El contador de Evidencias representa solo fotografías.
      */
     const evidenceCount =
       Number(
         photos.length ||
         item.nFotos ||
-        parsed?.evidenceCount ||
+        parsedEvidenceCount ||
         0
       );
 
@@ -4211,8 +4232,43 @@ window.AdminUI = {
        * únicamente cuando se abre cada pestaña.
        */
 
+      /*
+       * Ejecutar el mismo clic que actualmente corrige
+       * manualmente la pantalla azul.
+       *
+       * No altera el render ni el diseño del inspector:
+       * dispara el manejador real de la pestaña Resumen
+       * cuando el panel ya está abierto y dentro del DOM.
+       */
       requestAnimationFrame(() => {
+        const summaryButton =
+          document.querySelector(
+            '#reportInspectorTabs ' +
+            '[data-inspector-tab="summary"]'
+          );
+
+        if(summaryButton){
+          summaryButton.click();
+        }
+
         bodyEl.scrollTop = 0;
+
+        /*
+         * Segundo intento breve para navegadores lentos.
+         * Solo se ejecuta si aún no hay una sección visible.
+         */
+        setTimeout(() => {
+          const visiblePanel =
+            bodyEl.querySelector(
+              '[data-inspector-panel]:not(.hidden)'
+            );
+
+          if(!visiblePanel && summaryButton){
+            summaryButton.click();
+          }
+
+          bodyEl.scrollTop = 0;
+        }, 60);
       });
     }else{
       document.getElementById('detailDialog')?.showModal();

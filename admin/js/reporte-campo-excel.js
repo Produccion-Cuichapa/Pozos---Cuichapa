@@ -102,9 +102,77 @@
     },
 
     datePartsMexico(value){
-      const date = value instanceof Date
-        ? value
-        : new Date(value);
+      if(
+        value === undefined ||
+        value === null ||
+        value === ''
+      ){
+        return null;
+      }
+
+      /*
+       * FECHA PURA YYYY-MM-DD:
+       * conservar exactamente el día escrito.
+       *
+       * No usar new Date('YYYY-MM-DD') porque JavaScript
+       * lo interpreta como UTC y puede moverlo un día
+       * al convertirlo a México.
+       */
+      if(typeof value === 'string'){
+        const txt = value.trim();
+
+        let m = txt.match(
+          /^(\d{4})-(\d{2})-(\d{2})$/
+        );
+
+        if(m){
+          return {
+            year: Number(m[1]),
+            month: Number(m[2]),
+            day: Number(m[3]),
+            iso: m[1] + '-' + m[2] + '-' + m[3]
+          };
+        }
+
+        /*
+         * También aceptar DD/MM/YYYY sin reinterpretarlo
+         * mediante zona horaria.
+         */
+        m = txt.match(
+          /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
+        );
+
+        if(m){
+          const dd = String(m[1]).padStart(2,'0');
+          const mm = String(m[2]).padStart(2,'0');
+          const yyyy = m[3];
+
+          return {
+            year: Number(yyyy),
+            month: Number(mm),
+            day: Number(dd),
+            iso: yyyy + '-' + mm + '-' + dd
+          };
+        }
+      }
+
+      let raw = value;
+
+      /*
+       * Firebase puede almacenar timestamps en segundos.
+       */
+      if(
+        typeof raw === 'number' &&
+        raw > 0 &&
+        raw < 100000000000
+      ){
+        raw *= 1000;
+      }
+
+      const date =
+        raw instanceof Date
+          ? raw
+          : new Date(raw);
 
       if(Number.isNaN(date.getTime())){
         return null;
@@ -139,14 +207,31 @@
       };
     },
 
+    reportDateCandidates(row){
+      const valores = [
+        row?.fechaISO,
+        row?.fecha,
+        row?.createdAt,
+        row?.timestamp
+      ];
+
+      return valores
+        .filter(v =>
+          v !== undefined &&
+          v !== null &&
+          v !== ''
+        )
+        .map(v => this.datePartsMexico(v))
+        .filter(Boolean);
+    },
+
     reportDate(row){
-      return this.datePartsMexico(
-        row?.fecha ||
-        row?.createdAt ||
-        row?.timestamp ||
-        row?.fechaISO ||
-        0
-      );
+      const fechas =
+        this.reportDateCandidates(row);
+
+      return fechas.length
+        ? fechas[0]
+        : null;
     },
 
     reportTime(row){
@@ -159,12 +244,24 @@
         return direct;
       }
 
-      const date = new Date(
-        row?.fecha ||
+      const raw =
         row?.createdAt ||
         row?.timestamp ||
-        0
-      );
+        row?.fecha ||
+        row?.fechaISO ||
+        0;
+
+      let valor = raw;
+
+      if(
+        typeof valor === 'number' &&
+        valor > 0 &&
+        valor < 100000000000
+      ){
+        valor *= 1000;
+      }
+
+      const date = new Date(valor);
 
       if(Number.isNaN(date.getTime())){
         return '';
@@ -182,12 +279,22 @@
     },
 
     reportTimestamp(row){
-      const time = new Date(
-        row?.fecha ||
+      let raw =
         row?.createdAt ||
         row?.timestamp ||
-        0
-      ).getTime();
+        row?.fecha ||
+        row?.fechaISO ||
+        0;
+
+      if(
+        typeof raw === 'number' &&
+        raw > 0 &&
+        raw < 100000000000
+      ){
+        raw *= 1000;
+      }
+
+      const time = new Date(raw).getTime();
 
       return Number.isFinite(time)
         ? time
@@ -199,9 +306,39 @@
         window.AdminFirebase?.reportes || [];
 
       return reports.filter(row => {
-        const date = this.reportDate(row);
+        const fechas =
+          this.reportDateCandidates(row);
 
-        return date && date.iso === dateISO;
+        if(!fechas.length){
+          return false;
+        }
+
+        const distintas = new Set(
+          fechas.map(fecha => fecha.iso)
+        );
+
+        /*
+         * SEGURIDAD:
+         * Si un mismo registro afirma pertenecer a dos
+         * fechas diferentes, no entra a ningún Excel.
+         */
+        if(distintas.size > 1){
+          console.warn(
+            '[REPORTE CAMPO] Registro rechazado por fechas contradictorias:',
+            {
+              pozo: row?.pozo || '',
+              fecha: row?.fecha,
+              fechaISO: row?.fechaISO,
+              createdAt: row?.createdAt,
+              timestamp: row?.timestamp,
+              fechasDetectadas: Array.from(distintas)
+            }
+          );
+
+          return false;
+        }
+
+        return fechas[0].iso === dateISO;
       });
     },
 
@@ -251,10 +388,21 @@
         '\\$&'
       );
 
+      /*
+       * PRESIONES:
+       * aceptar PTP/PTR/LBN/LDD aunque antes del texto exista
+       * emoji, viñeta u otro carácter del formato WhatsApp.
+       *
+       * También acepta:
+       * PTP: 10
+       * PTP = 10
+       * PTP - 10
+       * PTP 10
+       */
       const expression = new RegExp(
-        '(?:^|[\\n·])\\s*' +
+        '\\b' +
         escaped +
-        '\\s*:\\s*' +
+        '\\s*(?::|=|-)?\\s*' +
         '([-+]?\\d+(?:[.,]\\d+)?)',
         'i'
       );
@@ -267,25 +415,104 @@
     },
 
     pressureValue(row, parsed, field, label){
+
       const value = this.firstValue([
+
+        /*
+         * Estructura actual de Control Operativo.
+         */
         row?.co?.[field],
+        row?.co?.[label],
+
+        /*
+         * Campos directos.
+         */
         row?.[field],
+        row?.[label],
+
+        /*
+         * Variantes históricas / estructuradas.
+         */
+        row?.presiones?.[field],
+        row?.presiones?.[label],
+
+        row?.presion?.[field],
+        row?.presion?.[label],
+
+        row?.controlOperativo?.[field],
+        row?.controlOperativo?.[label],
+
+        /*
+         * Resultado de AdminUtils.parseMsg().
+         */
         parsed?.[field],
-        this.regexValue(this.message(row), label)
+        parsed?.[label],
+
+        /*
+         * Último respaldo:
+         * obtener la presión directamente del mensaje WhatsApp.
+         */
+        this.regexValue(
+          this.message(row),
+          label
+        )
       ]);
 
       if(value === ''){
         return '—';
       }
 
-      const numeric = Number(
-        String(value).replace(',', '.')
+      let txt =
+        String(value)
+          .trim()
+          .replace(/,/g, '.');
+
+      /*
+       * Quitar únicamente la unidad kg/cm².
+       * Conserva números y rangos.
+       */
+      txt = txt
+        .replace(
+          /\s*kg\s*\/\s*cm(?:²|\^?2)?\s*/gi,
+          ''
+        )
+        .trim();
+
+      if(
+        !txt ||
+        txt === '-' ||
+        txt === '—'
+      ){
+        return '—';
+      }
+
+      /*
+       * Número simple.
+       */
+      if(
+        /^[-+]?\d+(?:\.\d+)?$/.test(txt)
+      ){
+        const numeric = Number(txt);
+
+        return Number.isFinite(numeric)
+          ? numeric
+          : txt;
+      }
+
+      /*
+       * Rango numérico.
+       */
+      const rango = txt.match(
+        /^([-+]?\d+(?:\.\d+)?)\s*-\s*([-+]?\d+(?:\.\d+)?)$/
       );
 
-      return Number.isFinite(numeric)
-        ? numeric
-        : value;
+      if(rango){
+        return rango[1] + '-' + rango[2];
+      }
+
+      return txt;
     },
+
 
     sapValue(row, parsed){
       const direct = this.firstValue([
@@ -308,24 +535,91 @@
     },
 
     statusValue(row, parsed){
-      const direct = this.firstValue([
-        row?.co?.estatus,
-        row?.estatus,
-        row?.estadoPozo,
-        parsed?.estatus
-      ]);
 
-      if(direct){
-        return direct;
+      /*
+       * Solo aceptar estados operativos reales del pozo.
+       * Evita valores administrativos como:
+       * enviado, pendiente, sent, etc.
+       */
+      const candidatos = [
+
+        row?.co?.estatus,
+        row?.co?.estado,
+        row?.co?.estadoPozo,
+
+        row?.estatus,
+        row?.estado,
+        row?.estadoPozo,
+
+        row?.controlOperativo?.estatus,
+        row?.controlOperativo?.estado,
+        row?.controlOperativo?.estadoPozo,
+
+        parsed?.estatus,
+        parsed?.estado,
+        parsed?.estadoPozo
+
+      ];
+
+      const normalizarEstado = valor => {
+
+        const txt = this.clean(valor);
+
+        if(!txt){
+          return '';
+        }
+
+        const lower = txt
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g,'');
+
+        if(lower === 'abierto'){
+          return 'Abierto';
+        }
+
+        if(lower === 'cerrado'){
+          return 'Cerrado';
+        }
+
+        if(lower === 'apertura'){
+          return 'Apertura';
+        }
+
+        if(lower === 'cierre'){
+          return 'Cierre';
+        }
+
+        return '';
+      };
+
+      for(const candidato of candidatos){
+
+        const estado =
+          normalizarEstado(candidato);
+
+        if(estado){
+          return estado;
+        }
       }
 
-      const match = this.message(row).match(
-        /(?:Estatus|Estado del pozo)\s*:\s*([^\n]+)/i
-      );
+      /*
+       * Respaldo: buscar el estado directamente
+       * dentro del mensaje WhatsApp.
+       */
+      const mensaje =
+        this.message(row);
 
-      return match
-        ? this.clean(match[1])
-        : '—';
+      const match =
+        mensaje.match(
+          /(?:Estatus|Estado(?:\s+del\s+pozo)?)\s*(?::|=|-)?\s*(Abierto|Cerrado|Apertura|Cierre)\b/i
+        );
+
+      if(match){
+        return normalizarEstado(match[1]) || '—';
+      }
+
+      return '—';
     },
 
     personValue(row){
@@ -361,9 +655,13 @@
       const mode = this.modeValue(row);
       const msg = this.message(row);
 
+      /*
+       * REPORTE DE CAMPO:
+       * Solo considerar Control Operativo real.
+       * Una visita genérica no debe alimentar presiones.
+       */
       return (
         mode === 'co' ||
-        mode === 'visita' ||
         /CONTROL\s+OPERATIVO/i.test(msg)
       );
     },
@@ -650,7 +948,28 @@
       }
     },
 
-    buildData(reports){
+    buildData(
+      reports,
+      dateISO,
+      usarTodasLasFechas = false
+    ){
+
+      /*
+       * BARRERA FINAL DE FECHA:
+       * Las hojas normales siguen utilizando exclusivamente
+       * el día solicitado.
+       *
+       * Equipos de inyección puede solicitar toda la base para
+       * encontrar el último reporte disponible de cada pozo.
+       */
+      reports = reports || [];
+
+      if(!usarTodasLasFechas){
+        reports = reports.filter(row => {
+          const fecha = this.reportDate(row);
+          return fecha && fecha.iso === dateISO;
+        });
+      }
       const pressures = reports
         .filter(row => this.isOperational(row))
         .map(row => {
@@ -695,12 +1014,18 @@
             return false;
           }
 
+          /*
+           * PRESIONES POR POZO:
+           * SAP identifica el sistema del pozo, pero NO es presión.
+           *
+           * El registro solo pertenece a esta tabla cuando trae
+           * al menos una presión real.
+           */
           return (
             row.ptp !== '—' ||
             row.ptr !== '—' ||
             row.lbn !== '—' ||
-            row.ldd !== '—' ||
-            row.sap !== '—'
+            row.ldd !== '—'
           );
         })
         .sort((a, b) => {
@@ -736,7 +1061,9 @@
       );
 
       const observations = reports
+        .filter(row => !this.isNote(row))
         .map(row => ({
+          source: row,
           timestamp: this.reportTimestamp(row),
           hora: this.reportTime(row),
           pozo: this.wellLabel(row.pozo),
@@ -751,18 +1078,11 @@
           a.timestamp - b.timestamp
         );
 
-      const notes = reports
-        .filter(row => this.isNote(row))
-        .map(row => ({
-          timestamp: this.reportTimestamp(row),
-          hora: this.reportTime(row),
-          recorredor: this.personValue(row),
-          nota: this.noteValue(row)
-        }))
-        .filter(row => row.nota)
-        .sort((a, b) =>
-          a.timestamp - b.timestamp
-        );
+      /*
+       * NOTAS DE CAMPO DESACTIVADAS PARA ESTE REPORTE.
+       * No entran en ninguna hoja derivada.
+       */
+      const notes = [];
 
       return {
         pressures,
@@ -780,8 +1100,9 @@
       }
 
       const response = await fetch(
-        '../templates/Reporte_Campo_Cuichapa.xlsx?v=' +
-        Date.now()
+        '/templates/Reporte_Campo_Cuichapa.xlsx?v=' +
+        Date.now(),
+        { cache: 'no-store' }
       );
 
       if(!response.ok){
@@ -817,38 +1138,209 @@
       worksheet.getCell('D11').value =
         data.notes.length;
     },
+      fillPressures(worksheet, dateISO, data){
 
-    fillPressures(worksheet, dateISO, data){
-      worksheet.getCell('B3').value =
-        'Campo Cuichapa · ' +
-        this.dateLong(dateISO) +
-        ' · Valores en kg/cm²';
+        worksheet.getCell('B3').value =
+          'Campo Cuichapa · ' +
+          this.dateLong(dateISO) +
+          ' · Valores en kg/cm²';
 
-      const rows = data.pressures.map(row => [
-        null,
-        row.pozo,
-        row.sap,
-        row.hora,
-        row.recorredor,
-        row.ptp,
-        row.ptr,
-        row.lbn,
-        row.ldd,
-        row.estatus
-      ]);
+        const nomenclatura =
+          'PTP = Presión Tubería Producción · ' +
+          'PTR = Presión Tubería Revestimiento · ' +
+          'LBN = Nivel de Línea · ' +
+          'LDD = Presión Línea de Descarga · ' +
+          '“—” = dato no capturado en el reporte';
 
-      this.replaceRows(
-        worksheet,
-        6,
-        rows,
-        10,
-        'PTP = Presión Tubería Producción · ' +
-        'PTR = Presión Tubería Revestimiento · ' +
-        'LBN = Nivel de Línea · ' +
-        'LDD = Presión Línea de Descarga · ' +
-        '“—” = dato no capturado en el reporte'
-      );
-    },
+        try{
+          worksheet.unMergeCells('B4:J4');
+        }catch(e){}
+
+        try{
+          worksheet.mergeCells('B4:J4');
+        }catch(e){}
+
+        const celda =
+          worksheet.getCell('B4');
+
+        celda.value =
+          nomenclatura;
+
+        celda.alignment = {
+          horizontal:'left',
+          vertical:'middle',
+          wrapText:true
+        };
+
+        celda.font = {
+          ...(celda.font || {}),
+          italic:true,
+          size:10
+        };
+
+        worksheet.getRow(4).height = 28;
+
+        /*
+         * Guardar el estilo original de una fila de datos
+         * antes de eliminar el cuadro viejo de la plantilla.
+         */
+        this._pressureRowStyle =
+          this.captureRowStyle(
+            worksheet,
+            6,
+            10
+          );
+
+        const rows =
+          data.pressures.map(row => [
+            null,
+            row.pozo,
+            row.sap,
+            row.hora,
+            row.recorredor,
+            row.ptp,
+            row.ptr,
+            row.lbn,
+            row.ldd,
+            row.estatus
+          ]);
+
+        /*
+         * PRESIONES POR POZO:
+         * La fila 6 es el modelo de estilo y también debe ser
+         * la primera fila real de datos.
+         *
+         * Solamente se eliminan las filas posteriores para evitar
+         * espacios vacíos, cuadros antiguos y filas residuales.
+         */
+        const ultimaFila = worksheet.rowCount;
+
+        if(ultimaFila > 6){
+          worksheet.spliceRows(
+            7,
+            ultimaFila - 6
+          );
+        }
+
+        /*
+         * Eliminar combinaciones residuales dentro del área de datos.
+         * Los estados como Abierto deben quedar solamente en la
+         * última columna de su pozo, nunca atravesando toda la tabla.
+         */
+        if(worksheet._merges){
+          Object.keys(worksheet._merges).forEach((mergeKey) => {
+            const merge = worksheet._merges[mergeKey];
+            const model = merge && merge.model;
+
+            if(model && model.bottom >= 6){
+              try{
+                worksheet.unMergeCells(
+                  model.top,
+                  model.left,
+                  model.bottom,
+                  model.right
+                );
+              }catch(error){
+                try{
+                  worksheet.unMergeCells(mergeKey);
+                }catch(ignore){}
+              }
+            }
+          });
+        }
+
+        if(rows.length){
+
+          rows.forEach((values, index) => {
+            const numeroFila = 6 + index;
+            const fila = worksheet.getRow(numeroFila);
+
+            values.forEach((value, colIndex) => {
+              fila.getCell(colIndex + 1).value = value;
+            });
+
+            this.applyRowStyle(
+              fila,
+              this._pressureRowStyle
+            );
+
+            fila.height = 20;
+          });
+
+        }else{
+
+          /*
+           * Sin registros:
+           * conservar la fila modelo, pero sin información anterior.
+           */
+          const filaModelo = worksheet.getRow(6);
+
+          for(let col = 1; col <= 10; col++){
+            filaModelo.getCell(col).value = null;
+          }
+
+          this.applyRowStyle(
+            filaModelo,
+            this._pressureRowStyle
+          );
+
+          filaModelo.height = 20;
+        }
+
+        /*
+         * Limitar físicamente la impresión a la última fila real.
+         * Evita páginas vacías o espacios residuales al imprimir.
+         */
+        const ultimaFilaReal =
+          rows.length
+            ? 5 + rows.length
+            : 6;
+
+        worksheet.pageSetup =
+          worksheet.pageSetup || {};
+
+        worksheet.pageSetup.printArea =
+          `A1:J${ultimaFilaReal}`;
+
+        if(Array.isArray(worksheet.rowBreaks)){
+          worksheet.rowBreaks = [];
+        }
+
+        /*
+         * LIMPIEZA FINAL:
+         * La nomenclatura debe existir únicamente arriba.
+         *
+         * Si la plantilla conserva alguna nomenclatura
+         * antigua debajo de la tabla, se elimina.
+         */
+        worksheet.eachRow((row, rowNumber) => {
+
+          if(rowNumber <= 5){
+            return;
+          }
+
+          row.eachCell(cell => {
+
+            const txt =
+              String(
+                cell.value || ''
+              );
+
+            if(
+              txt.includes('PTP = Presión Tubería Producción') ||
+              txt.includes('PTR = Presión Tubería Revestimiento') ||
+              txt.includes('LBN = Nivel de Línea') ||
+              txt.includes('LDD = Presión Línea de Descarga')
+            ){
+              cell.value = '';
+            }
+
+          });
+
+        });
+      },
+
+
 
     fillLatest(worksheet, dateISO, data){
       worksheet.getCell('B3').value =
@@ -880,13 +1372,108 @@
         'Campo Cuichapa · ' +
         this.dateLong(dateISO);
 
+      /*
+       * OBSERVACIONES:
+       *
+       * La plantilla trae datos referenciales viejos en filas 6-23.
+       * Los datos válidos del reporte empiezan en la fila 24.
+       *
+       * Reglas:
+       * 1. Eliminar completamente filas 6 a 23.
+       * 2. Lo que estaba desde la fila 24 en adelante sube
+       *    automáticamente hasta la fila 6.
+       * 3. Después se reemplazan esas filas con los datos reales
+       *    del día seleccionado.
+       */
+
+      /*
+       * Primero quitar merges que crucen el área 6-23.
+       */
+      if(worksheet._merges){
+
+        Object.keys(worksheet._merges)
+          .forEach(mergeKey => {
+
+            const merge =
+              worksheet._merges[mergeKey];
+
+            const model =
+              merge && merge.model;
+
+            if(
+              model &&
+              model.bottom >= 6 &&
+              model.top <= 23
+            ){
+              try{
+                worksheet.unMergeCells(
+                  model.top,
+                  model.left,
+                  model.bottom,
+                  model.right
+                );
+              }catch(error){
+                try{
+                  worksheet.unMergeCells(
+                    mergeKey
+                  );
+                }catch(ignore){}
+              }
+            }
+          });
+      }
+
+      /*
+       * Eliminar físicamente EXACTAMENTE filas 6-23.
+       * Son 18 filas.
+       *
+       * Todo lo que estaba en la 24 baja automáticamente
+       * y pasa a ocupar la fila 6.
+       */
+      if(worksheet.rowCount >= 6){
+
+        const disponibles =
+          Math.min(
+            18,
+            worksheet.rowCount - 5
+          );
+
+        if(disponibles > 0){
+          worksheet.spliceRows(
+            6,
+            disponibles
+          );
+        }
+      }
+
+      /*
+       * Limpiar el texto recibido:
+       * - eliminar líneas completamente vacías;
+       * - quitar espacios al inicio y al final;
+       * - conservar un solo salto entre frases;
+       * - evitar grandes huecos dentro de la observación.
+       */
+      const limpiarObservacion = valor =>
+        String(valor || '')
+          .replace(/\\r\\n?/g, '\\n')
+          .split('\\n')
+          .map(linea =>
+            linea
+              .replace(/[ \\t]+/g, ' ')
+              .trim()
+          )
+          .filter(Boolean)
+          .join(' ')
+          .replace(/\\s+/g, ' ')
+          .trim();
+
       const rows = data.observations.map(row => [
         null,
         row.hora,
         row.pozo,
         row.recorredor,
         row.tipo,
-        row.observacion
+        limpiarObservacion(row.observacion)
       ]);
 
       this.replaceRows(
@@ -896,18 +1483,58 @@
         6
       );
 
+      /*
+       * VISTA COMPACTA:
+       * conservar el texto completo en la celda, pero mostrar
+       * solamente una pequeña vista previa en la tabla.
+       */
+      worksheet.getColumn(6).width = 24;
+
       worksheet.eachRow((row, rowNumber) => {
         if(rowNumber >= 6){
-          row.getCell(6).alignment = {
-            ...row.getCell(6).alignment,
+          const celdaObservacion = row.getCell(6);
+
+          celdaObservacion.alignment = {
+            ...celdaObservacion.alignment,
             wrapText: true,
             vertical: 'top'
           };
 
-          row.height = Math.max(
-            row.height || 18,
-            36
-          );
+          /*
+           * Calcular una altura compacta.
+           * La columna permite aproximadamente 75 caracteres
+           * por línea antes del ajuste automático.
+           */
+          const texto =
+            limpiarObservacion(
+              celdaObservacion.value
+            );
+
+          celdaObservacion.value = texto;
+
+          const lineas =
+            texto
+              ? texto.split('\\n')
+              : [''];
+
+          const lineasVisuales =
+            lineas.reduce((total, linea) => {
+              return total + Math.max(
+                1,
+                Math.ceil(linea.length / 75)
+              );
+            }, 0);
+
+          /*
+           * Una observación corta queda en 20 puntos.
+           * Solo aumenta cuando realmente necesita más líneas.
+           */
+          /*
+           * Altura fija de una sola línea.
+           * Excel conserva todo el contenido y lo muestra
+           * completo al seleccionar la celda.
+           */
+          row.height = 20;
         }
       });
     },
@@ -947,10 +1574,399 @@
       });
     },
 
+
+    fillInjectionEquipment(workbook, dateISO, data){
+
+      const normalizar = valor =>
+        String(valor || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g,'')
+          .toLowerCase();
+
+      const relacionado = texto => {
+        const t = normalizar(texto);
+
+        return (
+
+          /*
+           * REGLA PRINCIPAL:
+           * cualquier nota que mencione INYECCIÓN.
+           *
+           * normalizar() elimina acentos:
+           * "inyección" -> "inyeccion"
+           */
+          /\binyeccion\b/.test(t) ||
+
+          /*
+           * Variantes relacionadas con equipos inyectores,
+           * aunque no escriban literalmente "inyección".
+           */
+          /\binyector/.test(t) ||
+          /\binyectora/.test(t) ||
+
+          /*
+           * Tótem / errores comunes.
+           */
+          /\btotem\b/.test(t) ||
+          /\btoten\b/.test(t) ||
+
+          /*
+           * Dosificación química.
+           */
+          /\bdosificador/.test(t) ||
+          /\bdosificadora/.test(t)
+
+        );
+      };
+
+      const registros = [];
+
+      (data.observations || []).forEach(row => {
+
+        const src = row.source || {};
+
+        const textos = [
+          row.observacion,
+          src.observaciones,
+          src.observacion,
+          src.obs,
+          src.mensaje,
+          src.msg,
+          src.message,
+          src.texto,
+          src.descripcion
+        ]
+        .filter(Boolean)
+        .map(String);
+
+        const textoBusqueda =
+          textos.join('\n').trim();
+
+        if(
+          textoBusqueda &&
+          relacionado(textoBusqueda)
+        ){
+          registros.push({
+            fecha:
+              this.reportDate(src)?.iso || '—',
+
+            timestamp:
+              this.reportTimestamp(src),
+
+            hora: row.hora || '',
+            pozo: row.pozo || '—',
+            recorredor: row.recorredor || '',
+            tipo: row.tipo || 'OBSERVACIÓN',
+
+            /*
+             * Mostrar primero la observación limpia.
+             * Si no existe, conservar el texto original.
+             */
+            observacion:
+              String(
+                row.observacion ||
+                src.observaciones ||
+                src.observacion ||
+                src.obs ||
+                src.mensaje ||
+                src.msg ||
+                src.texto ||
+                src.descripcion ||
+                ''
+              ).trim()
+          });
+        }
+      });
+
+      (data.notes || []).forEach(row => {
+
+        const src = row.source || {};
+
+        const textos = [
+          row.nota,
+          src.observaciones,
+          src.observacion,
+          src.obs,
+          src.mensaje,
+          src.msg,
+          src.message,
+          src.texto,
+          src.descripcion
+        ]
+        .filter(Boolean)
+        .map(String);
+
+        const textoBusqueda =
+          textos.join('\n').trim();
+
+        if(
+          textoBusqueda &&
+          relacionado(textoBusqueda)
+        ){
+          registros.push({
+            fecha:
+              this.reportDate(src)?.iso || '—',
+
+            timestamp:
+              this.reportTimestamp(src),
+
+            hora: row.hora || '',
+            pozo: row.pozo || '—',
+            recorredor: row.recorredor || '',
+            tipo: 'NOTA DE CAMPO',
+
+            observacion:
+              String(
+                row.nota ||
+                src.observaciones ||
+                src.observacion ||
+                src.obs ||
+                src.mensaje ||
+                src.msg ||
+                src.texto ||
+                src.descripcion ||
+                ''
+              ).trim()
+          });
+        }
+      });
+
+      /*
+       * FILTRO ESTRICTO DE EQUIPOS DE INYECCIÓN:
+       * Esta hoja solamente puede contener registros de los
+       * pozos 187, 502, 191, 213, 172 y 376.
+       *
+       * No se crean filas para pozos sin reporte en la fecha.
+       */
+      const pozosEquiposInyeccion =
+        new Set([
+          '187',
+          '502',
+          '191',
+          '213',
+          '172',
+          '376'
+        ]);
+
+      const normalizarPozo = valor =>
+        String(valor || '')
+          .trim()
+          .toUpperCase()
+          .replace(/^C[\s-]*/, '')
+          .replace(/\s+/g, '');
+
+      /*
+       * Primero eliminar cualquier pozo que no pertenezca
+       * al grupo autorizado.
+       */
+      for(let index = registros.length - 1; index >= 0; index--){
+
+        const pozoNormalizado =
+          normalizarPozo(
+            registros[index].pozo
+          );
+
+        if(!pozosEquiposInyeccion.has(pozoNormalizado)){
+          registros.splice(index, 1);
+        }
+      }
+
+      /*
+       * Conservar únicamente el reporte más reciente
+       * relacionado con inyección para cada pozo.
+       */
+      const ultimoReportePorPozo = new Map();
+
+      registros.forEach(item => {
+        const pozo =
+          normalizarPozo(item.pozo);
+
+        const anterior =
+          ultimoReportePorPozo.get(pozo);
+
+        if(
+          !anterior ||
+          Number(item.timestamp || 0) >=
+            Number(anterior.timestamp || 0)
+        ){
+          ultimoReportePorPozo.set(
+            pozo,
+            item
+          );
+        }
+      });
+
+      /*
+       * Los seis pozos siempre deben aparecer y conservar
+       * este orden fijo.
+       */
+      const ordenPozos = [
+        '187',
+        '502',
+        '191',
+        '213',
+        '172',
+        '376'
+      ];
+
+      const registrosFinales =
+        ordenPozos.map(pozo => {
+
+          const encontrado =
+            ultimoReportePorPozo.get(pozo);
+
+          if(encontrado){
+            return encontrado;
+          }
+
+          return {
+            fecha: '—',
+            timestamp: 0,
+            hora: '—',
+            pozo: 'C-' + pozo,
+            recorredor: '—',
+            tipo: 'SIN REPORTE',
+            observacion:
+              'Sin reporte disponible'
+          };
+        });
+
+      registros.length = 0;
+      registros.push(...registrosFinales);
+
+      let ws = workbook.getWorksheet(
+        'Equipos de inyección'
+      );
+
+      if(ws){
+        workbook.removeWorksheet(ws.id);
+      }
+
+      ws = workbook.addWorksheet(
+        'Equipos de inyección'
+      );
+
+      ws.mergeCells('A1:F1');
+
+      ws.getCell('A1').value =
+        'EQUIPOS DE INYECCIÓN — SEGUIMIENTO OPERATIVO';
+
+      ws.getCell('A1').font = {
+        bold:true,
+        size:16
+      };
+
+      ws.mergeCells('A2:F2');
+
+      ws.getCell('A2').value =
+        'Campo Cuichapa · Último reporte disponible por pozo';
+
+      const headers = [
+        'Fecha',
+        'Hora',
+        'Pozo',
+        'Recorredor',
+        'Tipo',
+        'Observación / Nota'
+      ];
+
+      const header = ws.getRow(4);
+
+      headers.forEach((txt, i) => {
+        const c = header.getCell(i + 1);
+
+        c.value = txt;
+
+        c.font = {
+          bold:true,
+          color:{argb:'FFFFFFFF'}
+        };
+
+        c.fill = {
+          type:'pattern',
+          pattern:'solid',
+          fgColor:{argb:'FF2F5FA7'}
+        };
+
+        c.alignment = {
+          horizontal:'center',
+          vertical:'middle'
+        };
+      });
+
+      if(!registros.length){
+
+        ws.mergeCells('A5:F5');
+
+        ws.getCell('A5').value =
+          'Sin registros relacionados con equipos de inyección.';
+
+      }else{
+
+        registros.forEach(item => {
+
+          const row = ws.addRow([
+            item.fecha,
+            item.hora,
+            item.pozo,
+            item.recorredor,
+            item.tipo,
+            item.observacion
+          ]);
+
+          /*
+           * Mantener el texto completo, pero mostrar únicamente
+           * una línea compacta dentro de la tabla.
+           */
+          row.getCell(6).alignment = {
+            vertical:'top',
+            wrapText:true
+          };
+
+          row.height = 20;
+        });
+      }
+
+      ws.columns = [
+        {width:14},
+        {width:14},
+        {width:14},
+        {width:22},
+        {width:22},
+        /*
+         * Ancho compacto para mostrar aproximadamente
+         * las primeras tres palabras.
+         */
+        {width:24}
+      ];
+
+      ws.views = [{
+        state:'frozen',
+        ySplit:4
+      }];
+
+      return registros.length;
+    },
+
     async downloadWorkbook(
       workbook,
       filename
     ){
+      /*
+       * La hoja Resumen por Pozo no debe incluirse
+       * en el reporte final descargado.
+       */
+      const resumenPorPozo =
+        workbook.getWorksheet(
+          'Resumen por Pozo'
+        );
+
+      if(resumenPorPozo){
+        workbook.removeWorksheet(
+          resumenPorPozo.id
+        );
+      }
+
       const buffer =
         await workbook.xlsx.writeBuffer();
 
@@ -999,7 +2015,28 @@
 
       const reports = this.selectedReports(
         dateISO
-      );
+      ).filter(row => {
+        const fechaReal = this.reportDate(row);
+        return fechaReal && fechaReal.iso === dateISO;
+      });
+
+      /*
+       * SEGURIDAD DE FECHA:
+       * Ningún dato de otro día puede entrar al Excel.
+       * Si se solicita 2026-08-26, solamente se utilizan
+       * registros cuya fecha real sea 2026-08-26.
+       */
+      const contaminados = reports.filter(row => {
+        const fechaReal = this.reportDate(row);
+        return !fechaReal || fechaReal.iso !== dateISO;
+      });
+
+      if(contaminados.length){
+        throw new Error(
+          'Se detectaron registros fuera de la fecha solicitada. ' +
+          'La generación fue cancelada por seguridad.'
+        );
+      }
 
       if(!reports.length){
         alert(
@@ -1020,7 +2057,7 @@
       }
 
       try{
-        const data = this.buildData(reports);
+        const data = this.buildData(reports, dateISO);
         const workbook =
           await this.loadTemplate();
 
@@ -1040,16 +2077,20 @@
           'Observaciones de Campo'
         );
 
-        const notes = workbook.getWorksheet(
-          'Notas de Campo'
-        );
+        /*
+         * NOTAS DE CAMPO ELIMINADA DEL REPORTE FINAL.
+         */
+        const notesSheet = workbook.getWorksheet('Notas de Campo');
+
+        if(notesSheet){
+          workbook.removeWorksheet(notesSheet.id);
+        }
 
         if(
           !summary ||
           !pressures ||
           !latest ||
-          !observations ||
-          !notes
+          !observations
         ){
           throw new Error(
             'La plantilla no contiene todas las hojas requeridas.'
@@ -1080,11 +2121,32 @@
           data
         );
 
-        this.fillNotes(
-          notes,
-          dateISO,
-          data
-        );
+        /*
+         * EQUIPOS DE INYECCIÓN:
+         * Utilizar toda la base de reportes, independientemente
+         * de la fecha seleccionada para las demás hojas.
+         */
+        const reportesCompletos =
+          Array.isArray(
+            window.AdminFirebase?.reportes
+          )
+            ? window.AdminFirebase.reportes
+            : [];
+
+        const dataEquiposInyeccion =
+          this.buildData(
+            reportesCompletos,
+            dateISO,
+            true
+          );
+
+        const totalEquiposInyeccion =
+          this.fillInjectionEquipment(
+            workbook,
+            dateISO,
+            dataEquiposInyeccion
+          );
+
 
         if(status){
           status.textContent =
@@ -1093,7 +2155,10 @@
 
         await this.downloadWorkbook(
           workbook,
-          this.outputName(dateISO)
+          this.outputName(dateISO).replace(
+            /\.xlsx$/i,
+            '_PRUEBA_' + Date.now() + '.xlsx'
+          )
         );
 
         if(status){
@@ -1101,9 +2166,8 @@
             data.pressures.length +
             ' registros de presión · ' +
             data.observations.length +
-            ' observaciones · ' +
-            data.notes.length +
-            ' notas de campo';
+            ' observaciones · Fecha: ' +
+            dateISO;
         }
 
       }catch(error){

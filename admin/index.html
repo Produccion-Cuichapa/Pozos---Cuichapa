@@ -4,8 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Cuichapa Control | Centro de Operaciones</title>
-  <link rel="stylesheet" href="./css/admin.css?v=20260804151709">
->
+  <link rel="stylesheet" href="./css/admin.css?v=20260805161251">
     <link rel="stylesheet" href="./css/dashboard-v2.css?v=1784348754">
 <link rel="stylesheet" href="./css/reportes-v2.css?v=1784314915">
 
@@ -16,25 +15,26 @@
   <script src="../config.js" defer></script>
 <script src="./js/config.js" defer></script>
   <script src="./js/utils.js?v=1784566076" defer></script>
-  <script src="./js/firebase.js" defer></script>
+  <script src="./js/firebase.js?v=20260805013816" defer></script>
   <script src="./js/auth.js" defer></script>
-  <script src="./js/ui.js?v=20260804001403" defer></script>
+  <script src="./js/ui.js?v=20260805020055" defer></script>
   <script src="./js/dashboard.js?v=1784312497" defer></script>
-<script src="./js/reportes.js" defer></script>
+  <script src="./js/aforo-utils.js?v=20260806005857" defer></script>
+<script src="./js/reportes.js?v=20260812233209" defer></script>
   <script src="./js/reportes-v2.js?v=1784314540" defer></script>
   <script src="./js/alarmas.js" defer></script>
   <script src="./js/exportar.js" defer></script>
-  <script src="./js/exportaciones.js" defer></script>
+  <script src="./js/exportaciones.js?v=20260813232116" defer></script>
   <script src="./js/catalogo-pozos.js?v=1" defer></script>
-  <script src="./js/dashboard-mensual.js?v=1784664016" defer></script>
-  <script src="./js/dashboard-indicador.js?v=12" defer></script>
+  <script src="./js/dashboard-mensual.js?v=20260806011408" defer></script>
+  <script src="./js/dashboard-indicador.js?v=20260806005857" defer></script>
   <script src="./js/pozos.js?v=1784567781" defer></script>
   <script src="./js/graficas-pozos.js?v=20260804151709" defer></script>
 <script src="./js/firebase-upv-admin.js" defer></script>
   <script src="./js/upv-admin.js" defer></script>
   <script src="./js/config-center.js?v=1784657401" defer></script>
 
-  <script src="./js/app.js?v=1784307160" defer></script>
+  <script src="./js/app.js?v=20260805013816" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <link rel="stylesheet" href="./css/produccion-v2.css?v=1784347568">
   <link rel="stylesheet" href="./css/tema-cuichapa.css?v=1784394705">
@@ -63,6 +63,15 @@
 
   <link rel="stylesheet" href="./css/dashboard-mensual.css?v=1784664016">
   <link rel="stylesheet" href="./css/ia-cuichapa.css?v=20260723">
+
+  <link rel="stylesheet" href="./css/pozos-legible.css?v=20260805164850">
+
+  <link rel="stylesheet" href="./css/graficas-claras.css?v=20260805224258">
+
+<link rel="stylesheet" href="./css/balance-ft.css?v=20260810230156">
+  <link rel="stylesheet" href="./css/recorridos.css?v=20260822183909">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="./css/muestras.css?v=20260824162610">
 </head>
 
 <body>
@@ -426,6 +435,59 @@
 
       <section id="pozosView" class="view hidden">
 
+        <!-- SUBACCESO PRODUCCIÓN → RECORRIDOS -->
+        <div class="recorridos-access-row">
+
+          <button
+            type="button"
+            id="btnAbrirRecorridos"
+            class="recorridos-access-btn">
+
+            <span class="recorridos-access-icon">
+              ↗
+            </span>
+
+            <span>
+              <strong>Seguimiento de recorridos</strong>
+              <small>
+                Orden de visitas, tiempos y velocidad entre puntos
+              </small>
+            </span>
+
+            <b>→</b>
+
+          </button>
+
+        </div>
+
+<div class="muestras-access-row">
+
+  <button
+    type="button"
+    id="btnAbrirMuestras"
+    class="muestras-access-btn">
+
+    <span class="muestras-access-icon">
+      ◉
+    </span>
+
+    <span class="muestras-access-copy">
+      <strong>Muestras</strong>
+      <small>
+        Control y seguimiento mensual de muestras
+      </small>
+    </span>
+
+    <b>→</b>
+
+  </button>
+
+</div>
+
+
+
+
+
         <div class="wells-overview">
           <article class="well-overview-card overview-total">
             <span>Pozos registrados</span>
@@ -527,6 +589,12 @@
             </div>
           </div>
         </section>
+
+
+
+
+
+
 
         <div id="wellsCardsView" class="wells-grid"></div>
 
@@ -638,7 +706,414 @@
         </div>
       </section>
 
-      <section id="alarmasView" class="view hidden">
+
+<section
+  id="recorridosSubView"
+  class="view hidden">
+
+  <div class="recorridos-shell">
+
+    <!-- =====================================================
+         CABECERA
+         ===================================================== -->
+
+    <div class="recorridos-head">
+
+      <button
+        type="button"
+        id="btnVolverProduccionRecorridos"
+        class="recorridos-back-btn">
+        ← Producción
+      </button>
+
+      <div>
+        <span class="recorridos-eyebrow">
+          PRODUCCIÓN
+        </span>
+
+        <h2>
+          Seguimiento de recorridos
+        </h2>
+
+        <p>
+          Orden cronológico de los reportes realizados en campo.
+        </p>
+      </div>
+
+      <div class="recorridos-status">
+        <span class="recorridos-status-dot"></span>
+        En tiempo real
+      </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         FILTROS PRINCIPALES
+         ===================================================== -->
+
+    <div class="recorridos-toolbar">
+
+      <div class="recorridos-field">
+
+        <label>
+          Fecha
+        </label>
+
+        <input
+          type="date"
+          id="recorridosFecha">
+
+      </div>
+
+
+      <div class="recorridos-field">
+
+        <label>
+          Recorredor
+        </label>
+
+        <select id="recorridosPersona">
+
+          <option value="">
+            Todos los recorredores
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <div class="recorridos-field recorridos-tipo">
+
+        <label>
+          Tipo de recorrido
+        </label>
+
+        <div class="recorridos-segmented">
+
+          <button
+            type="button"
+            id="recorridosBtnOtros"
+            class="active"
+            data-recorridos-modo="otros">
+
+            Otros reportes
+
+            <small>
+              Visita · Aforo · Cabezal · Estación · Nota
+            </small>
+
+          </button>
+
+
+          <button
+            type="button"
+            id="recorridosBtnNivel"
+            data-recorridos-modo="nivel">
+
+            Niveles de Guardia
+
+            <small>
+              Solo reportes de nivel
+            </small>
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         FILTRO DETALLADO + LEYENDA
+         ===================================================== -->
+
+    <div
+      id="recorridosExtraTools"
+      class="recorridos-extra-tools">
+
+      <div class="recorridos-subtipos">
+
+        <span class="recorridos-tools-label">
+          Mostrar
+        </span>
+
+        <div
+          id="recorridosSubtipoFiltros"
+          class="recorridos-subtipo-buttons">
+
+          <button
+            type="button"
+            class="active"
+            data-recorridos-subtipo="todos">
+            Todos
+          </button>
+
+          <button
+            type="button"
+            data-recorridos-subtipo="visita">
+            Visitas
+          </button>
+
+          <button
+            type="button"
+            data-recorridos-subtipo="aforo">
+            Aforos
+          </button>
+
+          <button
+            type="button"
+            data-recorridos-subtipo="nota">
+            Notas
+          </button>
+
+          <button
+            type="button"
+            data-recorridos-subtipo="cabezal">
+            Cabezales
+          </button>
+
+          <button
+            type="button"
+            data-recorridos-subtipo="estacion">
+            Estaciones
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <div class="recorridos-leyenda">
+
+        <span class="recorridos-tools-label">
+          Identificación
+        </span>
+
+        <div class="recorridos-leyenda-items">
+
+          <span>
+            <i style="background:#2563eb"></i>
+            Visita
+          </span>
+
+          <span>
+            <i style="background:#f59e0b"></i>
+            Aforo
+          </span>
+
+          <span>
+            <i style="background:#111827"></i>
+            Nota
+          </span>
+
+          <span>
+            <i style="background:#16a34a"></i>
+            Cabezal
+          </span>
+
+          <span>
+            <i style="background:#7c3aed"></i>
+            Estación
+          </span>
+
+          <span>
+            <i style="background:#dc2626"></i>
+            Nivel
+          </span>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         MAPA
+         ===================================================== -->
+
+    <div
+      id="recorridosMapaWrap"
+      class="recorridos-map-wrap">
+
+      <div
+        id="recorridosMapa"
+        class="recorridos-map">
+      </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         RESUMEN
+         ===================================================== -->
+
+    <div
+      id="recorridosResumen"
+      class="recorridos-summary">
+
+      <div class="recorridos-summary-card">
+
+        <span>
+          Puntos visitados
+        </span>
+
+        <strong id="recorridosTotalPuntos">
+          0
+        </strong>
+
+      </div>
+
+
+      <div class="recorridos-summary-card">
+
+        <span>
+          Último punto
+        </span>
+
+        <strong id="recorridosUltimoPunto">
+          —
+        </strong>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+
+
+<section
+  id="muestrasSubView"
+  class="view hidden">
+
+  <div class="muestras-shell">
+
+    <header class="muestras-head">
+
+      <button
+        type="button"
+        id="btnVolverProduccionMuestras"
+        class="muestras-back">
+        ← Producción
+      </button>
+
+      <div class="muestras-title">
+        <span>PRODUCCIÓN</span>
+        <h2>Muestras</h2>
+        <p>
+          Seguimiento mensual de muestras realizadas en campo.
+        </p>
+      </div>
+
+    </header>
+
+
+    <div class="muestras-monthbar">
+
+      <button
+        type="button"
+        id="muestrasMesAnterior">
+        ←
+      </button>
+
+      <strong id="muestrasMesTitulo">
+        —
+      </strong>
+
+      <button
+        type="button"
+        id="muestrasMesSiguiente">
+        →
+      </button>
+
+    </div>
+
+
+    <div class="muestras-kpis">
+
+      <article>
+        <strong id="muestrasKpiTotal">0</strong>
+        <span>Muestras realizadas</span>
+      </article>
+
+      <article>
+        <strong id="muestrasKpiPozos">0</strong>
+        <span>Pozos muestreados</span>
+      </article>
+
+      <article>
+        <strong id="muestrasKpiUltima">—</strong>
+        <span>Última muestra</span>
+      </article>
+
+    </div>
+
+
+    <div class="muestras-filtros">
+
+      <div>
+        <label>Recorredor</label>
+
+        <select id="muestrasFiltroRecorredor">
+          <option value="">
+            Todos los recorredores
+          </option>
+        </select>
+      </div>
+
+
+      <div>
+        <label>Pozo</label>
+
+        <select id="muestrasFiltroPozo">
+          <option value="">
+            Todos los pozos
+          </option>
+        </select>
+      </div>
+
+    </div>
+
+
+    <div class="muestras-leyenda">
+
+      <span>
+        <i class="muestras-dot realizada"></i>
+        Muestra realizada
+      </span>
+
+      <span>
+        <i class="muestras-dot obs"></i>
+        Con observación
+      </span>
+
+    </div>
+
+
+    <div
+      id="muestrasTimeline"
+      class="muestras-timeline">
+
+      <div class="muestras-empty">
+        Cargando muestras…
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<section id="alarmasView" class="view hidden">
 
         <div class="alarm-kpi-grid">
           <article class="alarm-kpi-card alarm-kpi-today">
@@ -933,6 +1408,26 @@
               <input id="supMes" type="month">
               <button id="btnSoportePreview" class="primary-btn">Preparar soporte</button>
               <div id="soporteStatus" class="export-status"></div>
+            </article>
+
+            <article class="export-card">
+              <h3>Balance de Frac Tank</h3>
+              <p>Genera el balance operativo diario de Frac Tank en formato Excel.</p>
+
+              <input
+                id="balanceFtExcelFecha"
+                type="date">
+
+              <button
+                id="btnBalanceFtExcel"
+                class="primary-btn">
+                Descargar Balance FT Excel
+              </button>
+
+              <div
+                id="balanceFtExcelStatus"
+                class="export-status">
+              </div>
             </article>
 
             <article class="export-card">
@@ -1802,7 +2297,7 @@
     <div id="detailBody" class="detail-body"></div>
   </dialog>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-<script src="./js/reporte-campo-excel.js?v=20260804002715"></script>
+<script src="./js/reporte-campo-excel.js?v=20260829195923"></script>
 
   <!-- VISOR INDIVIDUAL DE GRÁFICAS -->
   <div
@@ -1930,5 +2425,12 @@
   <script src="./js/admin-pwa.js?v=2026.07.19.045207" defer></script>
 
 <script src="../health-monitor.js?v=20260804235010"></script>
+
+<script defer src="./js/balance-ft.js?v=20260812190655"></script>
+
+  <!-- Leaflet debe existir antes de recorridos.js -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="./js/recorridos.js?v=20260822183909" defer></script>
+  <script src="./js/muestras.js?v=20260824175110" defer></script>
 </body>
 </html>

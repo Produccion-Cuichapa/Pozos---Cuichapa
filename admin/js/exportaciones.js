@@ -22,24 +22,64 @@ window.AdminExportaciones = {
   },
 
   async downloadWorkbook(wb, filename){
+
     const buffer = await wb.xlsx.writeBuffer();
-    const blob = new Blob([buffer], {
-      type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    });
+
+    const blob = new Blob(
+      [buffer],
+      {
+        type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      }
+    );
+
+    const nombre =
+      filename.endsWith('.xlsx')
+        ? filename
+        : filename + '.xlsx';
 
     const url = URL.createObjectURL(blob);
+
     const a = document.createElement('a');
+
     a.href = url;
-    a.download = filename.endsWith('.xlsx') ? filename : filename + '.xlsx';
+    a.download = nombre;
     a.style.display = 'none';
 
     document.body.appendChild(a);
+
+    /*
+     * Para archivos grandes con muchas hojas:
+     * primero permitimos que el navegador registre
+     * completamente el enlace de descarga.
+     */
+    await new Promise(resolve => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(resolve);
+      });
+    });
+
     a.click();
 
+    /*
+     * NO revocar inmediatamente.
+     * Un Excel de muchos días puede pesar varios MB
+     * y algunos navegadores todavía están leyendo
+     * el Blob después del click.
+     */
     setTimeout(() => {
-      URL.revokeObjectURL(url);
-      a.remove();
-    }, 1000);
+      try{
+        URL.revokeObjectURL(url);
+      }catch(e){}
+
+      try{
+        a.remove();
+      }catch(e){}
+    }, 60000);
+
+    return {
+      filename: nombre,
+      bytes: blob.size
+    };
   },
 
   ymdFromRow(r){
@@ -252,6 +292,77 @@ window.AdminExportaciones = {
       .trim();
   },
 
+  // ==========================================================
+  // PRESIONES — lector robusto para exportación diaria
+  //
+  // Prioridad:
+  // 1. objeto co
+  // 2. reporte directo
+  // 3. parseMsg
+  // 4. mensaje WhatsApp original
+  //
+  // Reconoce:
+  // PTP 11
+  // PTP: 11
+  // PTP = 11
+  // PTP 11 | PTR 39
+  // LDD 20
+  // LBN 52
+  // CAMCO: 3
+  // ==========================================================
+  presionReporte(r, p, campo){
+    const key = String(campo || '').toLowerCase();
+    const upper = key.toUpperCase();
+
+    const candidatos = [
+      r?.co?.[key],
+      r?.co?.[upper],
+      r?.[key],
+      r?.[upper],
+      r?.report?.[key],
+      r?.report?.[upper],
+      p?.[key],
+      p?.[upper]
+    ];
+
+    for(const valor of candidatos){
+      if(
+        valor !== undefined &&
+        valor !== null &&
+        String(valor).trim() !== ''
+      ){
+        return this.limpiaPresion(valor);
+      }
+    }
+
+    const texto = [
+      r?.msg,
+      r?.mensaje,
+      r?.message,
+      r?.texto,
+      r?.whatsappText,
+      r?.raw
+    ].filter(Boolean).join('\n');
+
+    if(!texto) return '';
+
+    const escaped =
+      upper.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    const re = new RegExp(
+      '\\b' + escaped +
+      '\\s*(?:[:=\\-])?\\s*' +
+      '([-+]?\\d+(?:[.,]\\d+)?)',
+      'i'
+    );
+
+    const m = texto.match(re);
+
+    if(!m) return '';
+
+    return String(m[1]).replace(',', '.').trim();
+  },
+
   soloPulg(v){
     v = String(v || '').trim();
 
@@ -306,7 +417,64 @@ window.AdminExportaciones = {
     return this.cortarTxt(this.limpiarGpsTexto(txt.replace(/[🌎🗺️]/g,'').trim()), 90);
   },
 
-  obsReal(r){
+  estadoOperativoExport(r, p = {}){
+
+  const texto = [
+    r?.observaciones,
+    r?.observacion,
+    r?.obs,
+    r?.mensaje,
+    r?.msg,
+    r?.descripcion,
+    r?.co?.observaciones
+  ]
+  .filter(Boolean)
+  .map(String)
+  .join('\n');
+
+  const maniobra =
+    texto.match(
+      /maniobra\s+realizada\s*[:=-]?\s*(apertura|cierre)\b/i
+    );
+
+  if(maniobra){
+    return maniobra[1].toUpperCase();
+  }
+
+  const actual =
+    texto.match(
+      /estado\s+actual\s*[:=-]?\s*(abiert[oa]|cerrad[oa]|intermitente)\b/i
+    );
+
+  if(actual){
+    const v = actual[1].toLowerCase();
+
+    if(v.startsWith('abiert')) return 'ABIERTO';
+    if(v.startsWith('cerrad')) return 'CERRADO';
+    return 'INTERMITENTE';
+  }
+
+  const directo =
+    String(
+      r?.co?.estatus ||
+      r?.co?.estadoActual ||
+      r?.estadoActual ||
+      r?.estatusPozo ||
+      r?.estatus ||
+      p?.estatus ||
+      ''
+    ).toLowerCase();
+
+  if(directo.includes('apertura')) return 'APERTURA';
+  if(directo.includes('cierre')) return 'CIERRE';
+  if(directo.includes('abiert')) return 'ABIERTO';
+  if(directo.includes('cerrad')) return 'CERRADO';
+  if(directo.includes('intermitente')) return 'INTERMITENTE';
+
+  return '';
+},
+
+obsReal(r){
     const direct = String(
       r.observaciones ??
       r.observacion ??
@@ -362,6 +530,67 @@ window.AdminExportaciones = {
 
     const allRows = (AdminFirebase.reportes || []).filter(r => {
       const tipo = this.tipoReporte(r);
+
+      /*
+       * DIARIO POR RECORREDOR:
+       * AFORO / PROYECCIÓN NO SE TRANSCRIBE.
+       *
+       * Se excluye únicamente del reporte diario.
+       * No modifica el Soporte mensual.
+       */
+      const textoAforo = [
+        r?.modo,
+        r?.tipo,
+        r?.tipoReporte,
+        r?.subtipo,
+        r?.mensaje,
+        r?.msg,
+        r?.observaciones
+      ]
+      .filter(Boolean)
+      .map(String)
+      .join(' ')
+      .toLowerCase();
+
+      if(
+        tipo === 'AFORO' ||
+        textoAforo.includes('aforo / proyección') ||
+        textoAforo.includes('aforo/proyección') ||
+        textoAforo.includes('aforo / proyeccion') ||
+        textoAforo.includes('aforo/proyeccion') ||
+        /\baforo\b/i.test(textoAforo)
+      ){
+        return false;
+      }
+
+      /*
+       * DIARIO POR RECORREDOR:
+       * MUESTRAS NO SE TRANSCRIBE.
+       *
+       * Se excluye únicamente de este reporte diario.
+       * El módulo y el historial de Muestras permanecen intactos.
+       */
+      const textoMuestra = [
+        r?.modo,
+        r?.tipo,
+        r?.tipoReporte,
+        r?.subtipo,
+        r?.mensaje,
+        r?.msg
+      ]
+      .filter(Boolean)
+      .map(String)
+      .join(' ')
+      .toLowerCase();
+
+      if(
+        tipo === 'MUESTRA' ||
+        tipo === 'MUESTRAS' ||
+        /\bmuestra(?:s)?\b/i.test(textoMuestra)
+      ){
+        return false;
+      }
+
       const esReporteEspecial =
         tipo === 'NOTA' ||
         tipo === 'CABEZAL' ||
@@ -407,7 +636,7 @@ window.AdminExportaciones = {
 
     const dias = Object.keys(porDia).sort();
 
-    const wb = await this.loadTemplate('../templates/Book.xlsx');
+    const wb = await this.loadTemplate('/templates/Book.xlsx');
     const templateWs = wb.worksheets[0];
 
     const partes = [];
@@ -494,6 +723,7 @@ window.AdminExportaciones = {
       );
 
       const mapaRecorredores = {
+
         'manrique': 'Manrique Jiménez',
         'juan': 'Juan Carlos Flores',
         'juan carlos': 'Juan Carlos Flores',
@@ -547,13 +777,13 @@ window.AdminExportaciones = {
           return;
         }
 
-        ws.getCell(`E${row}`).value = r.co?.estatus || p.estatus || '';
+        ws.getCell(`E${row}`).value = this.estadoOperativoExport(r, p);
         ws.getCell(`F${row}`).value = r.co?.fluye || p.fluye || '';
         ws.getCell(`G${row}`).value = r.co?.sap || p.sap || '';
         ws.getCell(`H${row}`).value = this.soloPulg(r.co?.estrangulador || p.estrangulador || '');
-        ws.getCell(`I${row}`).value = this.limpiaPresion(r.co?.ptp || p.ptp || '');
-        ws.getCell(`J${row}`).value = this.limpiaPresion(r.co?.ldd || p.ldd || '');
-        ws.getCell(`K${row}`).value = this.limpiaPresion(r.co?.ptr || p.ptr || '');
+        ws.getCell(`I${row}`).value = this.presionReporte(r, p, 'ptp');
+        ws.getCell(`J${row}`).value = this.presionReporte(r, p, 'ldd');
+        ws.getCell(`K${row}`).value = this.presionReporte(r, p, 'ptr');
         ws.getCell(`L${row}`).value = r.co?.epm || p.epm || '';
         ws.getCell(`M${row}`).value = r.co?.carrera || p.carrera || '';
         ws.getCell(`N${row}`).value = this.cortarTxt(this.obsReal(r), 55);
@@ -639,7 +869,7 @@ window.AdminExportaciones = {
 
       if(typeof JSZip === 'undefined') throw new Error('JSZip no está cargado.');
 
-      const res = await fetch('../templates/tpl_soporte.xlsx?v=' + Date.now());
+      const res = await fetch('/templates/tpl_soporte.xlsx?v=' + Date.now());
       if(!res.ok) throw new Error('No se pudo cargar la plantilla.');
 
       const zip = await JSZip.loadAsync(await res.blob());
@@ -838,10 +1068,29 @@ window.AdminExportaciones = {
 
         const msg = String(texto).toUpperCase();
 
-        const esVisita = msg.includes('REPORTE DE VISITA');
-        const esGuardia = msg.includes('NIVELES DE GUARDIA');
+        const esVisita =
+          msg.includes('REPORTE DE VISITA');
 
-        if(!esVisita && !esGuardia) return;
+        const esGuardia =
+          msg.includes('NIVELES DE GUARDIA');
+
+        const esAforoIndependiente =
+          Boolean(
+            window.AforoUtils &&
+            AforoUtils.esReporteAforoIndependiente(r)
+          );
+
+        /*
+         * Permitir el nuevo reporte de Aforo aunque no sea
+         * REPORTE DE VISITA ni NIVELES DE GUARDIA.
+         */
+        if(
+          !esVisita &&
+          !esGuardia &&
+          !esAforoIndependiente
+        ){
+          return;
+        }
 
         const ymd = ymdSoporte.call(this, r);
         if(!ymd) return;
@@ -898,8 +1147,10 @@ window.AdminExportaciones = {
           const tieneDrenar = /✅\s*DRENAR/i.test(msg);
 
           const tieneAforo =
-            /✅\s*AFORO/i.test(msg) ||
-            /✅\s*AFORO\/PROYECCI[ÓO]N/i.test(msg);
+            Boolean(
+              window.AforoUtils &&
+              AforoUtils.esActividadAforo(r)
+            );
 
           const tieneInter =
             /✅\s*INTERMITENTE/i.test(msg);
@@ -916,14 +1167,32 @@ window.AdminExportaciones = {
           }
 
           if(tieneAforo){
-            aforoCeldas[addrAforo] = (aforoCeldas[addrAforo] || 0) + 1;
-            aforoTotales[colAforo] = (aforoTotales[colAforo] || 0) + 1;
+            aforoCeldas[addrAforo] =
+              (aforoCeldas[addrAforo] || 0) + 1;
+
+            aforoTotales[colAforo] =
+              (aforoTotales[colAforo] || 0) + 1;
           }
 
           if(tieneInter){
-            interCeldas[addrInter] = (interCeldas[addrInter] || 0) + 1;
-            interTotales[colInter] = (interTotales[colInter] || 0) + 1;
+            interCeldas[addrInter] =
+              (interCeldas[addrInter] || 0) + 1;
+
+            interTotales[colInter] =
+              (interTotales[colInter] || 0) + 1;
           }
+        }
+
+        /*
+         * Aforo creado desde la nueva pantalla:
+         * suma únicamente en AFORO, no en SUPER.
+         */
+        if(esAforoIndependiente && !esVisita){
+          aforoCeldas[addrAforo] =
+            (aforoCeldas[addrAforo] || 0) + 1;
+
+          aforoTotales[colAforo] =
+            (aforoTotales[colAforo] || 0) + 1;
         }
 
         if(esGuardia){

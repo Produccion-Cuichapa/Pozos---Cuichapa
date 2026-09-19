@@ -16,12 +16,21 @@ window.ADMIN_CONFIG = {
   // FASE 1: login local de plataforma.
   // En fase posterior se puede migrar a usuarios/permisos desde Firebase.
   users: {
-    Admin: { pass: '1234', role: 'admin', name: 'Administrador' },
-    AntonioS: { pass: '1234', role: 'supervisor', name: 'Antonio Sánchez' },
-    JaimeG: { pass: '1234', role: 'supervisor', name: 'Jaime G' },
-    IngDuctos: { pass: '1234', role: 'ingenieria', name: 'Ing. Ductos' },
-    Almacenista: { pass: '1234', role: 'almacen', name: 'Almacenista' },
-    JorgeGill: { pass: '1234', role: 'supervisor', name: 'Jorge Gill' }
+    Admin: {
+      pass: '1234',
+      role: 'admin',
+      name: 'Administrador'
+    },
+    Jaime: {
+      pass: 'LIFTING2026',
+      role: 'admin',
+      name: 'Jaime'
+    },
+    Antonio: {
+      pass: 'LIFTING2026',
+      role: 'admin',
+      name: 'Antonio'
+    }
   },
 
   paths: {

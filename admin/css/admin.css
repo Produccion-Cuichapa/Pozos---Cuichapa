@@ -9333,3 +9333,348 @@ body.well-chart-expanded-open{
     flex-direction:column;
   }
 }
+
+
+/* ==========================================================
+   PRODUCCIÓN DE CAMPO
+   Tarjetas claras, amplias y fáciles de interpretar
+   ========================================================== */
+
+/*
+ * La mejora se limita a la vista Producción.
+ * No modifica Dashboard, Reportes ni otros módulos.
+ */
+#produccionView .wells-grid,
+#produccionView .well-grid,
+#produccionView .pozos-grid,
+#produccionView [data-wells-grid]{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  align-items:stretch;
+  gap:18px;
+}
+
+/* Tarjeta principal */
+#produccionView .well-card,
+#produccionView .pozo-card{
+  position:relative;
+  min-width:0;
+  overflow:hidden;
+  border:1px solid #dbe4f1;
+  border-radius:18px;
+  background:#ffffff;
+  box-shadow:
+    0 8px 24px rgba(15,35,70,.07);
+}
+
+/* Línea lateral por condición */
+#produccionView .well-card::after,
+#produccionView .pozo-card::after{
+  content:"";
+  position:absolute;
+  top:0;
+  right:0;
+  bottom:0;
+  width:4px;
+  background:#4b74e6;
+}
+
+/* Cabecera */
+#produccionView .well-card > header,
+#produccionView .pozo-card > header,
+#produccionView .well-card-head,
+#produccionView .pozo-card-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  min-height:118px;
+  padding:22px 22px 18px;
+  border-bottom:1px solid #e2e8f0;
+  background:#fff;
+}
+
+/* Etiqueta POZO */
+#produccionView .well-card-head span:first-child,
+#produccionView .pozo-card-head span:first-child,
+#produccionView .well-card > header span:first-child,
+#produccionView .pozo-card > header span:first-child{
+  color:#64748b;
+  font-size:13px;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+/* Número del pozo */
+#produccionView .well-card h3,
+#produccionView .well-card h2,
+#produccionView .pozo-card h3,
+#produccionView .pozo-card h2{
+  margin:6px 0 0;
+  color:#0b1f41;
+  font-size:36px;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:-.02em;
+}
+
+/* Bloque de estado y riesgo */
+#produccionView .well-card-status,
+#produccionView .pozo-card-status,
+#produccionView .well-status-stack,
+#produccionView .well-card-badges{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:10px;
+}
+
+/* Píldoras de estado */
+#produccionView .well-status,
+#produccionView .well-risk,
+#produccionView .status-badge,
+#produccionView .risk-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:32px;
+  padding:7px 14px;
+  border-radius:999px;
+  font-size:12px;
+  line-height:1;
+  font-weight:800;
+  letter-spacing:.04em;
+  white-space:nowrap;
+}
+
+/* Área central de datos */
+#produccionView .well-card-body,
+#produccionView .pozo-card-body,
+#produccionView .well-card-content{
+  padding:18px 20px 20px;
+}
+
+/* Cuadrícula SAP / Fluye / GPS / Alarmas */
+#produccionView .well-card-metrics,
+#produccionView .pozo-card-metrics,
+#produccionView .well-metrics{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+/* Cada dato */
+#produccionView .well-metric,
+#produccionView .pozo-metric,
+#produccionView .well-data-item{
+  min-width:0;
+  min-height:82px;
+  padding:15px 16px;
+  border:1px solid #dce5f0;
+  border-radius:13px;
+  background:#f9fbfe;
+}
+
+/* Etiqueta del dato */
+#produccionView .well-metric span,
+#produccionView .pozo-metric span,
+#produccionView .well-data-item span{
+  display:block;
+  margin-bottom:7px;
+  color:#718096;
+  font-size:13px;
+  line-height:1.2;
+  font-weight:600;
+}
+
+/* Valor del dato */
+#produccionView .well-metric b,
+#produccionView .pozo-metric b,
+#produccionView .well-data-item b{
+  display:block;
+  color:#0f1f3d;
+  font-size:17px;
+  line-height:1.2;
+  font-weight:850;
+  overflow-wrap:anywhere;
+}
+
+/* GPS disponible */
+#produccionView .well-metric .available,
+#produccionView .pozo-metric .available,
+#produccionView .well-data-item .available,
+#produccionView .gps-ok{
+  color:#36a852 !important;
+  font-weight:850;
+}
+
+/* Última visita */
+#produccionView .well-last-visit,
+#produccionView .pozo-last-visit,
+#produccionView .last-visit{
+  margin-top:14px;
+  padding:16px;
+  border:1px solid #dce5f0;
+  border-radius:13px;
+  background:#f9fbfe;
+}
+
+#produccionView .well-last-visit > span,
+#produccionView .pozo-last-visit > span,
+#produccionView .last-visit > span{
+  color:#64748b;
+  font-size:14px;
+  font-weight:650;
+}
+
+#produccionView .well-last-visit b,
+#produccionView .pozo-last-visit b,
+#produccionView .last-visit b{
+  display:block;
+  margin-top:7px;
+  color:#2557d6;
+  font-size:16px;
+  line-height:1.3;
+  font-weight:850;
+}
+
+#produccionView .well-last-visit small,
+#produccionView .pozo-last-visit small,
+#produccionView .last-visit small{
+  display:block;
+  margin-top:8px;
+  color:#64748b;
+  font-size:13px;
+  line-height:1.35;
+}
+
+/* Acciones inferiores */
+#produccionView .well-card-actions,
+#produccionView .pozo-card-actions,
+#produccionView .well-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr .82fr;
+  gap:10px;
+  padding:0 20px 20px;
+}
+
+/* Botones */
+#produccionView .well-card-actions button,
+#produccionView .well-card-actions a,
+#produccionView .pozo-card-actions button,
+#produccionView .pozo-card-actions a,
+#produccionView .well-actions button,
+#produccionView .well-actions a{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  min-width:0;
+  min-height:48px;
+  padding:10px 12px;
+  border:1px solid #d5dfed;
+  border-radius:11px;
+  color:#152442;
+  background:#fff;
+  font-family:inherit;
+  font-size:14px;
+  line-height:1.1;
+  font-weight:800;
+  text-align:center;
+  text-decoration:none;
+  cursor:pointer;
+}
+
+/* Último botón: Abrir */
+#produccionView .well-card-actions > :last-child,
+#produccionView .pozo-card-actions > :last-child,
+#produccionView .well-actions > :last-child{
+  border-color:#416ce4;
+  color:#fff;
+  background:#416ce4;
+  box-shadow:0 5px 12px rgba(65,108,228,.18);
+}
+
+#produccionView .well-card-actions button:hover,
+#produccionView .well-card-actions a:hover,
+#produccionView .pozo-card-actions button:hover,
+#produccionView .pozo-card-actions a:hover,
+#produccionView .well-actions button:hover,
+#produccionView .well-actions a:hover{
+  transform:translateY(-1px);
+  border-color:#416ce4;
+}
+
+/* Indicadores superiores de Producción */
+#produccionView .production-stat-card,
+#produccionView .well-stat-card,
+#produccionView .production-kpi{
+  min-height:132px;
+  padding:20px;
+  border-radius:16px;
+}
+
+#produccionView .production-stat-card span,
+#produccionView .well-stat-card span,
+#produccionView .production-kpi span{
+  font-size:14px;
+}
+
+#produccionView .production-stat-card b,
+#produccionView .well-stat-card b,
+#produccionView .production-kpi b{
+  font-size:32px;
+}
+
+/* Filtros más legibles */
+#produccionView input,
+#produccionView select{
+  min-height:54px;
+  font-size:15px;
+}
+
+#produccionView button{
+  font-size:14px;
+}
+
+/* Dos columnas en pantallas medianas */
+@media (max-width:1180px){
+  #produccionView .wells-grid,
+  #produccionView .well-grid,
+  #produccionView .pozos-grid,
+  #produccionView [data-wells-grid]{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+/* Una columna en celulares */
+@media (max-width:720px){
+  #produccionView .wells-grid,
+  #produccionView .well-grid,
+  #produccionView .pozos-grid,
+  #produccionView [data-wells-grid]{
+    grid-template-columns:1fr;
+    gap:14px;
+  }
+
+  #produccionView .well-card h3,
+  #produccionView .well-card h2,
+  #produccionView .pozo-card h3,
+  #produccionView .pozo-card h2{
+    font-size:32px;
+  }
+
+  #produccionView .well-card-actions,
+  #produccionView .pozo-card-actions,
+  #produccionView .well-actions{
+    grid-template-columns:1fr 1fr;
+  }
+
+  #produccionView .well-card-actions > :last-child,
+  #produccionView .pozo-card-actions > :last-child,
+  #produccionView .well-actions > :last-child{
+    grid-column:1 / -1;
+  }
+}
+

@@ -1,0 +1,536 @@
+/* ==========================================================
+   GRÁFICAS DE POZOS — TEMA CLARO Y LEGIBLE
+   No modifica cálculos ni JavaScript.
+   ========================================================== */
+
+body.well-charts-open{
+  overflow:hidden;
+}
+
+/* Fondo exterior */
+.well-charts-backdrop{
+  background:rgba(15,23,42,.48) !important;
+  backdrop-filter:blur(3px);
+}
+
+/* Panel principal más amplio */
+.well-charts-panel{
+  width:min(1500px,96vw) !important;
+  border-left:1px solid #d9e2ef !important;
+  background:#f8fafc !important;
+  box-shadow:-20px 0 55px rgba(15,23,42,.18) !important;
+  color:#10213f;
+}
+
+/* Encabezado */
+.well-charts-panel-header{
+  padding:22px 26px !important;
+  border-bottom:1px solid #dce5f0 !important;
+  background:rgba(255,255,255,.97) !important;
+  backdrop-filter:blur(12px);
+}
+
+.well-charts-panel-header span{
+  color:#2563eb !important;
+  font-size:12px !important;
+  font-weight:850 !important;
+  letter-spacing:.11em !important;
+}
+
+.well-charts-panel-header h2{
+  margin-top:8px !important;
+  color:#0b1f41 !important;
+  font-size:30px !important;
+  line-height:1.1;
+  font-weight:900;
+}
+
+.well-charts-panel-header p{
+  margin-top:8px !important;
+  color:#64748b !important;
+  font-size:14px !important;
+  line-height:1.4;
+}
+
+.well-charts-close{
+  width:50px !important;
+  height:50px !important;
+  border:1px solid #d3deec !important;
+  border-radius:14px !important;
+  color:#1e293b !important;
+  background:#fff !important;
+  font-size:27px !important;
+}
+
+.well-charts-close:hover{
+  border-color:#2563eb !important;
+  color:#2563eb !important;
+  background:#eff6ff !important;
+}
+
+/* Barra de fechas y periodos */
+.well-charts-week-toolbar{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  flex-wrap:wrap;
+  gap:18px !important;
+  padding:18px 26px !important;
+  border-bottom:1px solid #dce5f0 !important;
+  background:#fff !important;
+}
+
+.well-charts-date-filter{
+  display:flex !important;
+  align-items:flex-end;
+  flex-wrap:wrap;
+  gap:12px !important;
+}
+
+.well-charts-date-filter label{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+
+.well-charts-date-filter label span{
+  color:#53657d !important;
+  font-size:12px !important;
+  font-weight:800;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+
+.well-charts-date-filter input{
+  min-width:190px;
+  min-height:52px;
+  padding:0 15px;
+  border:1px solid #cad7e7 !important;
+  border-radius:12px !important;
+  color:#152442 !important;
+  background:#fff !important;
+  font-family:inherit;
+  font-size:15px !important;
+  font-weight:650;
+}
+
+.well-charts-date-filter button{
+  min-height:52px;
+  padding:0 24px !important;
+  border:1px solid #2563eb !important;
+  border-radius:12px !important;
+  color:#fff !important;
+  background:#2563eb !important;
+  font-family:inherit;
+  font-size:15px !important;
+  font-weight:850 !important;
+  cursor:pointer;
+}
+
+.well-charts-date-filter button:hover{
+  background:#1d4ed8 !important;
+}
+
+/* Botones de rango */
+.well-charts-date-presets,
+.well-charts-week-buttons{
+  display:flex !important;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:9px !important;
+}
+
+.well-charts-date-presets button,
+.well-charts-week-buttons button{
+  min-height:42px;
+  padding:9px 16px !important;
+  border:1px solid #ccd8e8 !important;
+  border-radius:999px !important;
+  color:#475569 !important;
+  background:#fff !important;
+  font-family:inherit;
+  font-size:13px !important;
+  font-weight:800 !important;
+  cursor:pointer;
+}
+
+.well-charts-date-presets button.active,
+.well-charts-week-buttons button.active{
+  border-color:#2563eb !important;
+  color:#1d4ed8 !important;
+  background:#eff6ff !important;
+  box-shadow:0 0 0 3px rgba(37,99,235,.08) !important;
+}
+
+#wellChartsWeekRange{
+  color:#53657d !important;
+  font-size:13px !important;
+  font-weight:700;
+}
+
+/* Cuadrícula principal */
+.well-charts-content{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:18px !important;
+  padding:20px 24px 32px !important;
+  background:#f8fafc !important;
+}
+
+/* Tarjetas */
+.well-charts-card{
+  min-width:0;
+  overflow:hidden;
+  border:1px solid #dbe4ef !important;
+  border-radius:18px !important;
+  background:#fff !important;
+  box-shadow:0 7px 22px rgba(15,35,70,.06) !important;
+}
+
+.well-charts-card-ft{
+  grid-column:1 / -1;
+}
+
+.well-charts-card > header{
+  display:flex !important;
+  align-items:flex-start !important;
+  justify-content:space-between !important;
+  gap:16px !important;
+  padding:20px 22px 16px !important;
+  border-bottom:1px solid #e2e8f0 !important;
+  background:#fff !important;
+}
+
+.well-charts-card > header span{
+  color:#2563eb !important;
+  font-size:11px !important;
+  font-weight:850 !important;
+  letter-spacing:.09em !important;
+}
+
+.well-charts-card > header h3{
+  margin:7px 0 0 !important;
+  color:#0b1f41 !important;
+  font-size:25px !important;
+  line-height:1;
+  font-weight:900;
+}
+
+.well-charts-card-actions{
+  display:flex !important;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:10px !important;
+}
+
+.well-charts-card-actions > b,
+.well-charts-card > header > b{
+  color:#475569 !important;
+  font-size:13px !important;
+  font-weight:800;
+}
+
+/* Botón ampliar */
+.well-chart-expand-btn{
+  min-height:40px !important;
+  padding:8px 13px !important;
+  border:1px solid #cbd8e8 !important;
+  border-radius:10px !important;
+  color:#1d4ed8 !important;
+  background:#fff !important;
+  font-size:13px !important;
+  font-weight:800 !important;
+}
+
+.well-chart-expand-btn:hover{
+  border-color:#2563eb !important;
+  background:#eff6ff !important;
+}
+
+/* Estadísticas */
+.well-charts-stats{
+  display:grid !important;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  gap:10px !important;
+  padding:16px 18px 8px !important;
+  background:#fff !important;
+}
+
+.well-charts-stats > div{
+  min-width:0;
+  min-height:84px;
+  padding:14px 15px !important;
+  border:1px solid #dce5f0 !important;
+  border-radius:13px !important;
+  background:#f8fafc !important;
+}
+
+.well-charts-stats span{
+  display:block;
+  margin-bottom:8px;
+  color:#64748b !important;
+  font-size:12px !important;
+  font-weight:650;
+}
+
+.well-charts-stats b{
+  display:block;
+  color:#0b1f41 !important;
+  font-size:20px !important;
+  line-height:1.2;
+  font-weight:900;
+}
+
+.well-charts-stats small{
+  color:#52657e !important;
+  font-size:11px !important;
+  font-weight:700;
+}
+
+/* Área de gráfica más alta */
+.well-charts-graph{
+  min-height:350px !important;
+  padding:14px 18px 20px !important;
+  background:#fff !important;
+}
+
+.well-charts-svg{
+  display:block;
+  width:100% !important;
+  min-height:320px;
+  height:auto !important;
+  overflow:visible;
+}
+
+/* Ejes y cuadrícula */
+.well-charts-grid-line{
+  stroke:#dce5f0 !important;
+  stroke-width:1 !important;
+}
+
+.well-charts-axis-text,
+.well-charts-date-text{
+  fill:#64748b !important;
+  font-size:11px !important;
+  font-weight:650;
+}
+
+/* Línea base azul */
+.well-charts-line{
+  fill:none !important;
+  stroke:#2563eb !important;
+  stroke-width:3 !important;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+.well-charts-point{
+  fill:#fff !important;
+  stroke:#2563eb !important;
+  stroke-width:2.5 !important;
+}
+
+/* PTP — azul */
+.well-charts-card:nth-child(1) .well-charts-line{
+  stroke:#2563eb !important;
+}
+
+.well-charts-card:nth-child(1) .well-charts-point{
+  stroke:#2563eb !important;
+}
+
+/* PTR — verde */
+.well-charts-card:nth-child(2) .well-charts-line{
+  stroke:#2da866 !important;
+}
+
+.well-charts-card:nth-child(2) .well-charts-point{
+  stroke:#2da866 !important;
+}
+
+/* LDD — naranja */
+.well-charts-card:nth-child(3) .well-charts-line{
+  stroke:#e59a16 !important;
+}
+
+.well-charts-card:nth-child(3) .well-charts-point{
+  stroke:#e59a16 !important;
+}
+
+/* LBN — morado */
+.well-charts-card:nth-child(4) .well-charts-line{
+  stroke:#7c3aed !important;
+}
+
+.well-charts-card:nth-child(4) .well-charts-point{
+  stroke:#7c3aed !important;
+}
+
+/* Resto de métricas */
+.well-charts-card:nth-child(5) .well-charts-line{
+  stroke:#0891b2 !important;
+}
+
+.well-charts-card:nth-child(5) .well-charts-point{
+  stroke:#0891b2 !important;
+}
+
+.well-charts-card:nth-child(6) .well-charts-line{
+  stroke:#db2777 !important;
+}
+
+.well-charts-card:nth-child(6) .well-charts-point{
+  stroke:#db2777 !important;
+}
+
+/* Sin datos */
+.well-charts-no-data{
+  display:grid;
+  place-items:center;
+  min-height:300px;
+  padding:30px;
+  color:#64748b !important;
+  background:#f8fafc !important;
+  font-size:15px !important;
+  text-align:center;
+}
+
+/* Tarjeta de balance Frac Tank */
+.well-charts-balance-card{
+  border:1px solid #dbe4ef !important;
+  background:#fff !important;
+  color:#10213f !important;
+}
+
+.well-charts-balance-value,
+.well-charts-balance-badge{
+  color:#10213f !important;
+}
+
+/* ==========================================================
+   VISOR INDIVIDUAL AMPLIADO
+   ========================================================== */
+
+.well-chart-expanded-backdrop{
+  background:rgba(15,23,42,.54) !important;
+  backdrop-filter:blur(4px);
+}
+
+.well-chart-expanded-panel{
+  width:min(1500px,96vw) !important;
+  max-height:94vh !important;
+  border:1px solid #d8e2ee !important;
+  border-radius:20px !important;
+  background:#fff !important;
+  box-shadow:0 24px 70px rgba(15,23,42,.24) !important;
+}
+
+.well-chart-expanded-header{
+  padding:20px 24px !important;
+  border-bottom:1px solid #dce5f0 !important;
+  background:#fff !important;
+}
+
+.well-chart-expanded-header h2,
+#wellChartExpandedTitle{
+  color:#0b1f41 !important;
+  font-size:27px !important;
+}
+
+.well-chart-expanded-header p,
+#wellChartExpandedSubtitle{
+  color:#64748b !important;
+  font-size:14px !important;
+}
+
+.well-chart-expanded-body{
+  padding:22px !important;
+  background:#f8fafc !important;
+}
+
+.well-chart-expanded-body .well-charts-card{
+  box-shadow:none !important;
+}
+
+.well-chart-expanded-body .well-charts-graph{
+  min-height:520px !important;
+}
+
+.well-chart-expanded-body .well-charts-svg{
+  min-height:490px !important;
+}
+
+/* Laptop */
+@media (max-width:1100px){
+  .well-charts-panel{
+    width:98vw !important;
+  }
+
+  .well-charts-content{
+    grid-template-columns:1fr !important;
+  }
+
+  .well-charts-card-ft{
+    grid-column:auto;
+  }
+}
+
+/* Tablet y celular */
+@media (max-width:720px){
+  .well-charts-panel{
+    width:100vw !important;
+  }
+
+  .well-charts-panel-header{
+    padding:17px !important;
+  }
+
+  .well-charts-panel-header h2{
+    font-size:24px !important;
+  }
+
+  .well-charts-week-toolbar{
+    align-items:stretch !important;
+    padding:14px !important;
+  }
+
+  .well-charts-date-filter{
+    display:grid !important;
+    grid-template-columns:1fr 1fr;
+    width:100%;
+  }
+
+  .well-charts-date-filter label,
+  .well-charts-date-filter input{
+    width:100%;
+    min-width:0;
+  }
+
+  .well-charts-date-filter button{
+    grid-column:1 / -1;
+  }
+
+  .well-charts-content{
+    padding:12px !important;
+  }
+
+  .well-charts-stats{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+
+  .well-charts-graph{
+    min-height:300px !important;
+    padding:8px !important;
+  }
+
+  .well-charts-svg{
+    min-height:280px;
+  }
+
+  .well-chart-expanded-panel{
+    width:100vw !important;
+    max-height:100vh !important;
+    border-radius:0 !important;
+  }
+}

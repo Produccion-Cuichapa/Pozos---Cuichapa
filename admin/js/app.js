@@ -37,10 +37,22 @@ window.AdminApp = {
     AdminFirebase.init();
     AdminUI.init();
     AdminReportes.init();
+    if(window.AdminPozos) AdminPozos.init();
     AdminAlarmas.init();
+
+    if(
+      window.AdminGraficas &&
+      typeof AdminGraficas.init === 'function'
+    ){
+      AdminGraficas.init();
+    }
+
+    if(window.AdminExportaciones) AdminExportaciones.init();
+    if(window.AdminUpv) AdminUpv.init();
 
     this.started = true;
     AdminFirebase.listen();
+    if(window.AdminUpv) AdminUpv.listen();
     this.render();
   },
 
@@ -48,7 +60,9 @@ window.AdminApp = {
     if(!this.started) return;
     AdminDashboard.render();
     AdminReportes.render();
+    if(window.AdminPozos) AdminPozos.render();
     AdminAlarmas.render();
+    if(window.AdminUpv) AdminUpv.render();
   }
 };
 
