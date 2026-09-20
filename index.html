@@ -2798,133 +2798,195 @@ function volverAlPicker(){
  * Selector reutilizable para Maniobra y Estado
  * en Guardia y Aforo.
  */
-function actualizarExclusionModuloPozo(maniobraId, estadoId, maniobraWrapId, estadoWrapId){
+function limpiarGrupoPozoModulo(inputId, wrapId){
 
-  var inputManiobra =
-    document.getElementById(maniobraId);
+  var input =
+    document.getElementById(inputId);
 
-  var inputEstado =
-    document.getElementById(estadoId);
+  var wrap =
+    document.getElementById(wrapId);
 
-  var maniobra =
-    inputManiobra
-      ? String(inputManiobra.value || '').trim()
-      : '';
-
-  var estado =
-    inputEstado
-      ? String(inputEstado.value || '').trim()
-      : '';
-
-  var hayManiobra =
-    maniobra === 'Apertura' ||
-    maniobra === 'Cierre';
-
-  var hayEstado =
-    estado === 'Abierto' ||
-    estado === 'Cerrado' ||
-    estado === 'Intermitente';
-
-
-  var wrapManiobra =
-    document.getElementById(maniobraWrapId);
-
-  var wrapEstado =
-    document.getElementById(estadoWrapId);
-
-
-  if(wrapManiobra){
-    wrapManiobra
-      .querySelectorAll('.big-status-btn')
-      .forEach(function(btn){
-
-        btn.disabled = hayEstado;
-
-        btn.style.opacity =
-          hayEstado ? '0.35' : '';
-
-        btn.style.pointerEvents =
-          hayEstado ? 'none' : '';
-
-        btn.style.filter =
-          hayEstado ? 'grayscale(0.65)' : '';
-
-        btn.setAttribute(
-          'aria-disabled',
-          hayEstado ? 'true' : 'false'
-        );
-      });
+  if(input){
+    input.value = '';
   }
 
-
-  if(wrapEstado){
-    wrapEstado
+  if(wrap){
+    wrap
       .querySelectorAll('.big-status-btn')
       .forEach(function(btn){
 
-        btn.disabled = hayManiobra;
-
-        btn.style.opacity =
-          hayManiobra ? '0.35' : '';
-
-        btn.style.pointerEvents =
-          hayManiobra ? 'none' : '';
-
-        btn.style.filter =
-          hayManiobra ? 'grayscale(0.65)' : '';
-
-        btn.setAttribute(
-          'aria-disabled',
-          hayManiobra ? 'true' : 'false'
+        btn.classList.remove(
+          'active',
+          'sel-a',
+          'sel-b',
+          'sel-c'
         );
+
+        /*
+         * Nunca bloquear físicamente el otro grupo.
+         * El operador siempre puede cambiar su decisión.
+         */
+        btn.disabled = false;
+        btn.style.opacity = '';
+        btn.style.pointerEvents = '';
+        btn.style.filter = '';
+        btn.setAttribute('aria-disabled','false');
+
       });
   }
 }
 
 
+function actualizarExclusionModuloPozo(
+  maniobraId,
+  estadoId,
+  maniobraWrapId,
+  estadoWrapId
+){
+
+  /*
+   * La exclusión ahora se controla limpiando el grupo
+   * contrario al seleccionar.
+   *
+   * Ningún botón queda bloqueado.
+   */
+  [maniobraWrapId, estadoWrapId]
+    .forEach(function(wrapId){
+
+      var wrap =
+        document.getElementById(wrapId);
+
+      if(!wrap) return;
+
+      wrap
+        .querySelectorAll('.big-status-btn')
+        .forEach(function(btn){
+
+          btn.disabled = false;
+          btn.style.opacity = '';
+          btn.style.pointerEvents = '';
+          btn.style.filter = '';
+          btn.setAttribute(
+            'aria-disabled',
+            'false'
+          );
+
+        });
+
+    });
+}
+
+
 function selOpcionPozoModulo(btn, inputId, wrapId, valor){
-  var input = document.getElementById(inputId);
-  var wrap = document.getElementById(wrapId);
+
+  var input =
+    document.getElementById(inputId);
+
+  var wrap =
+    document.getElementById(wrapId);
 
   if(!input || !wrap || !btn){
     return;
   }
 
+
   var yaSeleccionado =
     input.value === valor &&
     btn.classList.contains('active');
 
+
+  /*
+   * GUARDIA:
+   * Maniobra y Estado son mutuamente excluyentes.
+   */
+  if(
+    inputId === 'guardiaManiobra' &&
+    !yaSeleccionado
+  ){
+    limpiarGrupoPozoModulo(
+      'guardiaEstado',
+      'guardiaEstadoWrap'
+    );
+  }
+
+  if(
+    inputId === 'guardiaEstado' &&
+    !yaSeleccionado
+  ){
+    limpiarGrupoPozoModulo(
+      'guardiaManiobra',
+      'guardiaManiobraWrap'
+    );
+  }
+
+
+  /*
+   * AFORO:
+   * misma regla.
+   */
+  if(
+    inputId === 'aforoManiobra' &&
+    !yaSeleccionado
+  ){
+    limpiarGrupoPozoModulo(
+      'aforoEstado',
+      'aforoEstadoWrap'
+    );
+  }
+
+  if(
+    inputId === 'aforoEstado' &&
+    !yaSeleccionado
+  ){
+    limpiarGrupoPozoModulo(
+      'aforoManiobra',
+      'aforoManiobraWrap'
+    );
+  }
+
+
   wrap
     .querySelectorAll('.big-status-btn')
     .forEach(function(elemento){
+
       elemento.classList.remove(
         'active',
         'sel-a',
         'sel-b',
         'sel-c'
       );
+
     });
 
+
   if(yaSeleccionado){
+
     input.value = '';
+
   }else{
+
     input.value = valor;
+
     btn.classList.add('active');
 
     if(
       valor === 'Apertura' ||
       valor === 'Abierto'
     ){
+
       btn.classList.add('sel-a');
 
     }else if(
       valor === 'Cierre' ||
       valor === 'Cerrado'
     ){
+
       btn.classList.add('sel-b');
 
     }else{
+
       btn.classList.add('sel-c');
+
     }
   }
 
@@ -2933,12 +2995,14 @@ function selOpcionPozoModulo(btn, inputId, wrapId, valor){
     inputId === 'guardiaManiobra' ||
     inputId === 'guardiaEstado'
   ){
+
     actualizarExclusionModuloPozo(
       'guardiaManiobra',
       'guardiaEstado',
       'guardiaManiobraWrap',
       'guardiaEstadoWrap'
     );
+
   }
 
 
@@ -2946,19 +3010,24 @@ function selOpcionPozoModulo(btn, inputId, wrapId, valor){
     inputId === 'aforoManiobra' ||
     inputId === 'aforoEstado'
   ){
+
     actualizarExclusionModuloPozo(
       'aforoManiobra',
       'aforoEstado',
       'aforoManiobraWrap',
       'aforoEstadoWrap'
     );
+
   }
 
 
-  if(typeof actualizarEnviarBtn === 'function'){
+  if(
+    typeof actualizarEnviarBtn === 'function'
+  ){
     actualizarEnviarBtn();
   }
 }
+
 
 function selManiobraGuardia(btn, valor){
   selOpcionPozoModulo(
@@ -2997,24 +3066,38 @@ function selEstadoAforo(btn, valor){
 }
 
 function lineaManiobraEstado(maniobraId, estadoId){
-  var maniobra = v(maniobraId);
-  var estado = v(estadoId);
-  var texto = '';
 
+  var maniobra =
+    String(v(maniobraId) || '').trim();
+
+  var estado =
+    String(v(estadoId) || '').trim();
+
+
+  /*
+   * Protección final:
+   * Maniobra tiene prioridad si por cualquier estado
+   * residual llegaran ambos valores llenos.
+   */
   if(maniobra === 'Apertura'){
-    texto += '🔓 Maniobra realizada: APERTURA\n';
-
-  }else if(maniobra === 'Cierre'){
-    texto += '🔒 Maniobra realizada: CIERRE\n';
+    return '🔓 Maniobra realizada: APERTURA\n';
   }
 
-  if(estado){
-    texto += '📌 Estado actual: ' +
+  if(maniobra === 'Cierre'){
+    return '🔒 Maniobra realizada: CIERRE\n';
+  }
+
+  if(
+    estado === 'Abierto' ||
+    estado === 'Cerrado' ||
+    estado === 'Intermitente'
+  ){
+    return '📌 Estado actual: ' +
       estado +
       '\n';
   }
 
-  return texto;
+  return '';
 }
 
 
