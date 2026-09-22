@@ -631,7 +631,111 @@ async function renderHistorial() {
   try {
     if (UPV.db) {
       reportes = await idbGetAll('reportes');
-      reportes.sort(function(a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
+
+      /*
+       * HISTORIAL AISLADO POR UNIDAD.
+       * Cada acceso ve únicamente sus propios registros.
+       */
+      var unidadActiva = null;
+
+      try {
+        var rawUnidad =
+          sessionStorage.getItem('upv_unidad_operativa');
+
+        var unidadData =
+          rawUnidad
+            ? JSON.parse(rawUnidad)
+            : null;
+
+        var empresaActual =
+          String(
+            (unidadData && unidadData.empresa) ||
+            UPV.empresa ||
+            ''
+          ).toUpperCase();
+
+        var capacidadActual =
+          Number(
+            unidadData &&
+            unidadData.capacidadM3
+          );
+
+        if (
+          empresaActual === 'PETROSMART' &&
+          capacidadActual === 30
+        ) {
+          unidadActiva = 'PETROSMART_93';
+        } else if (
+          empresaActual === 'TC' &&
+          capacidadActual === 30
+        ) {
+          unidadActiva = 'TC_184';
+        } else if (
+          empresaActual === 'TC' &&
+          capacidadActual === 22
+        ) {
+          unidadActiva = 'TC_193';
+        }
+
+      } catch(e) {
+        console.warn(
+          '[UPV] No fue posible identificar unidad activa:',
+          e
+        );
+      }
+
+      reportes = reportes.filter(function(r) {
+
+        /*
+         * Registros nuevos:
+         * usar identidad exacta.
+         */
+        if (r.unidadId) {
+          return r.unidadId === unidadActiva;
+        }
+
+        /*
+         * Compatibilidad con registros anteriores.
+         */
+        var empresaRegistro =
+          String(r.empresa || '').toUpperCase();
+
+        var capacidadRegistro =
+          Number(
+            r.capacidadUnidadM3 ||
+            String(r.unidad || '')
+              .replace(',', '.')
+              .match(/[0-9.]+/)?.[0] ||
+            0
+          );
+
+        if (unidadActiva === 'PETROSMART_93') {
+          return (
+            empresaRegistro === 'PETROSMART' &&
+            capacidadRegistro === 30
+          );
+        }
+
+        if (unidadActiva === 'TC_184') {
+          return (
+            empresaRegistro === 'TC' &&
+            capacidadRegistro === 30
+          );
+        }
+
+        if (unidadActiva === 'TC_193') {
+          return (
+            empresaRegistro === 'TC' &&
+            capacidadRegistro === 22
+          );
+        }
+
+        return false;
+      });
+
+      reportes.sort(function(a, b) {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
     }
   } catch(e) { console.warn('[UPV] historial error:', e); }
   if (!reportes.length) {
@@ -656,7 +760,28 @@ async function renderHistorial() {
       String(r.etapa || r.subtipo || '').replace(/"/g, '&quot;') +
       '">' +
       '<div class="hist-item-header">' +
-        '<span class="emp-tag ' + (r.empresa||'') + '">' + (r.empresa||'') + '</span>' +
+        '<span class="emp-tag ' + (r.empresa||'') + '">' +
+          (
+            r.unidadNombre ||
+            (
+              r.unidadId === 'TC_184'
+                ? 'TC 184'
+                : r.unidadId === 'TC_193'
+                  ? 'TC 193'
+                  : r.unidadId === 'PETROSMART_93'
+                    ? 'PETROSMART'
+                    : (
+                        String(r.empresa || '').toUpperCase() === 'TC' &&
+                        String(r.unidad || '').indexOf('30') !== -1
+                          ? 'TC 184'
+                          : String(r.empresa || '').toUpperCase() === 'TC' &&
+                            String(r.unidad || '').indexOf('22') !== -1
+                              ? 'TC 193'
+                              : (r.empresa || '')
+                      )
+            )
+          ) +
+        '</span>' +
         '<span>' + fechaStr + '</span>' +
       '</div>' +
       '<div class="hist-item-title">' + titulo + '</div>' +
@@ -867,6 +992,23 @@ async function enviarReporteUpv(id) {
       tipo: reporte.tipo || null,
       subtipo: reporte.subtipo || null,
       unidad: reporte.unidad || null,
+
+      /*
+       * Identidad exacta de la unidad operativa.
+       * Evita mezclar TC 184, TC 193 y PETROSMART
+       * cuando el registro sale de IndexedDB.
+       */
+      unidadId:
+        reporte.unidadId || null,
+
+      unidadNombre:
+        reporte.unidadNombre || null,
+
+      capacidadUnidadM3:
+        reporte.capacidadUnidadM3 !== undefined
+          ? reporte.capacidadUnidadM3
+          : null,
+
       origen: reporte.origen || null,
       cantidad:
         reporte.cantidad !== undefined
@@ -942,7 +1084,8 @@ async function enviarReporteUpv(id) {
       createdAt: reporte.createdAt || null,
       origenApp: 'UPV',
       entorno: 'PRUEBA',
-      schemaVersion: 1,
+      schemaVersion:
+        reporte.schemaVersion || 2,
       receivedAtClient: new Date().toISOString()
     };
 
@@ -1059,6 +1202,20 @@ async function guardarRegistroFinalUPV(data){
       data.unidad ||
       null,
 
+    unidadId:
+      data.unidadId ||
+      null,
+
+    unidadNombre:
+      data.unidadNombre ||
+      data.empresa ||
+      null,
+
+    capacidadUnidadM3:
+      data.capacidadUnidadM3 !== undefined
+        ? data.capacidadUnidadM3
+        : null,
+
     origen:
       data.origen ||
       null,
@@ -1169,11 +1326,6 @@ async function guardarRegistroFinalUPV(data){
         data.cargasSeleccionadas
       )
         ? data.cargasSeleccionadas
-        : [],
-
-    fotoIds:
-      Array.isArray(data.fotoIds)
-        ? data.fotoIds
         : [],
 
     fecha:
@@ -1353,8 +1505,14 @@ function ocultarBotonActualizarUpv() {
   if (banner) banner.classList.remove('show');
 }
 
+var upvActualizando = false;
+
 async function actualizarAppUpv() {
+  if (upvActualizando) return;
+
   var btn = document.getElementById('upv-update-btn');
+
+  upvActualizando = true;
 
   if (btn) {
     btn.disabled = true;
@@ -1400,6 +1558,8 @@ async function actualizarAppUpv() {
   } catch (error) {
     console.error('[UPV] Error al actualizar:', error);
     mostrarError('No fue posible actualizar. Intenta nuevamente.');
+
+    upvActualizando = false;
 
     if (btn) {
       btn.disabled = false;
@@ -1451,84 +1611,6 @@ function configurarActualizacionUpv() {
 document.addEventListener('DOMContentLoaded', configurarActualizacionUpv);
 
 window.actualizarAppUpv = actualizarAppUpv;
-
-// ═══════════════════════════════════════════════════════════
-// ACTUALIZACIÓN MANUAL PERMANENTE
-// ═══════════════════════════════════════════════════════════
-var upvActualizando = false;
-
-async function actualizarAppUpv() {
-  if (upvActualizando) return;
-
-  var btn = document.getElementById('upv-update-btn');
-  upvActualizando = true;
-
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = 'Actualizando...';
-  }
-
-  try {
-    if ('serviceWorker' in navigator) {
-      var registros = await navigator.serviceWorker.getRegistrations();
-
-      for (var i = 0; i < registros.length; i++) {
-        var reg = registros[i];
-
-        if (reg.scope.indexOf('/UPV/') !== -1) {
-          await reg.update();
-
-          if (reg.waiting) {
-            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-          }
-        }
-      }
-    }
-
-    if ('caches' in window) {
-      var claves = await caches.keys();
-
-      await Promise.all(
-        claves
-          .filter(function(clave) {
-            return clave.indexOf('upv-pwa-') === 0;
-          })
-          .map(function(clave) {
-            return caches.delete(clave);
-          })
-      );
-    }
-
-    var url = new URL(window.location.href);
-    url.searchParams.set('actualizado', Date.now().toString());
-
-    window.location.replace(url.toString());
-  } catch (error) {
-    console.error('[UPV] No se pudo actualizar:', error);
-
-    if (typeof mostrarError === 'function') {
-      mostrarError('No fue posible actualizar. Intenta otra vez.');
-    }
-
-    upvActualizando = false;
-
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = 'Actualizar';
-    }
-  }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  var btn = document.getElementById('upv-update-btn');
-
-  if (btn) {
-    btn.addEventListener('click', actualizarAppUpv);
-  }
-});
-
-window.actualizarAppUpv = actualizarAppUpv;
-
 
 /* ===== EXPORTS FLUJO OPERATIVO UNIFICADO ===== */
 window.idbPut = idbPut;

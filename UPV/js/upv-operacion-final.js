@@ -18,10 +18,13 @@ const POZOS = [
   '180',
   '201',
   '207',
+  '352',
   '376',
   '377',
   '385',
   '401',
+  '500',
+  '505',
   '601',
   '602',
   '603'
@@ -1075,10 +1078,55 @@ function datosSeleccionPozosDescarga(){
 
 
 
+function idUnidadOperativa(){
+
+  const empresa =
+    empresaActiva();
+
+  const data =
+    leerUnidadSeleccionada();
+
+  const capacidad =
+    Number(data?.capacidadM3 || 0);
+
+  if(
+    empresa === 'PETROSMART' &&
+    capacidad === 30
+  ){
+    return 'PETROSMART_93';
+  }
+
+  if(
+    empresa === 'TC' &&
+    capacidad === 30
+  ){
+    return 'TC_184';
+  }
+
+  if(
+    empresa === 'TC' &&
+    capacidad === 22
+  ){
+    return 'TC_193';
+  }
+
+  return '';
+}
+
+
 function keyInicio(tipo){
-  return tipo === 'CARGA'
-    ? MEM.carga
-    : MEM.descarga;
+
+  const base =
+    tipo === 'CARGA'
+      ? MEM.carga
+      : MEM.descarga;
+
+  const unidadId =
+    idUnidadOperativa();
+
+  return unidadId
+    ? base + '_' + unidadId
+    : base + '_SIN_UNIDAD';
 }
 
 function leerInicio(tipo){
@@ -2588,256 +2636,56 @@ async function validarGPSOperacionRapidaUPV(
 
   try{
 
-    if(!window.UPVGPS){
+    if(
+      !window.UPVGPS ||
+      typeof window.UPVGPS.validarReferenciaActual !== 'function'
+    ){
       return {
-        error:'Servicio GPS no disponible'
+        error:'Servicio GPS no disponible',
+        dentro:null,
+        distancia:null
       };
     }
 
     /*
-     * MISMO PRINCIPIO DE RECORREDORES:
-     * utilizar primero la ubicación que el GPS continuo
-     * ya mantiene disponible.
+     * CIRCUITO NO BLOQUEANTE.
+     *
+     * validarReferenciaActual() utiliza exclusivamente
+     * el GPS continuo que ya está disponible en caché.
+     *
+     * NO ejecuta getCurrentPosition().
+     * NO espera una nueva captura GPS.
+     *
+     * Además utiliza la tabla oficial centralizada de
+     * upv-confirmacion-gps.js, evitando mantener aquí
+     * una segunda lista de coordenadas.
      */
-    const gps =
-      typeof window.UPVGPS.obtenerGPSActual === 'function'
-        ? window.UPVGPS.obtenerGPSActual()
-        : null;
-
-    /*
-     * Si la app acaba de abrir y todavía no existe
-     * una lectura válida del GPS continuo, conservar
-     * el mecanismo anterior como respaldo.
-     */
-    if(!gps){
-      return await validarGPSOperacionUPV(
+    const resultado =
+      await window.UPVGPS.validarReferenciaActual(
         ubicacion,
         pozo
       );
-    }
-
-    const ubicacionNormalizada =
-      String(ubicacion || '')
-        .trim()
-        .toUpperCase();
-
-    /*
-     * POZO / BSC / PIA / ECO:
-     * necesitamos coordenadas oficiales para calcular
-     * distancia y radio.
-     *
-     * validarPozo() volvería a capturar GPS, por lo que
-     * aquí usamos las referencias oficiales que ya expone
-     * el propio resultado del sistema cuando corresponda.
-     */
-    const referencias = {
-
-      BSC:{
-        lat:17.942389,
-        lng:-94.297432
-      },
-
-      PIA:{
-        lat:17.940260,
-        lng:-94.301605
-      },
-
-      ECO:{
-        lat:17.946119,
-        lng:-94.283073
-      },
-
-      '19':{
-        lat:17.955136,
-        lng:-94.263964
-      },
-
-      '106D':{
-        lat:17.957444,
-        lng:-94.287753
-      },
-
-      '107':{
-        lat:17.953797,
-        lng:-94.280869
-      },
-
-      '137':{
-        lat:17.967892,
-        lng:-94.287797
-      },
-
-      '138':{
-        lat:17.971828,
-        lng:-94.287369
-      },
-
-      '139':{
-        lat:17.951825,
-        lng:-94.297089
-      },
-
-      '169':{
-        lat:17.935357,
-        lng:-94.274471
-      },
-
-      '172':{
-        lat:17.932064,
-        lng:-94.280831
-      },
-
-      '176':{
-        lat:17.937503,
-        lng:-94.271028
-      },
-
-      '179':{
-        lat:17.966961,
-        lng:-94.284103
-      },
-
-      '180':{
-        lat:17.942889,
-        lng:-94.300467
-      },
-
-      '201':{
-        lat:17.926681,
-        lng:-94.290647
-      },
-
-      '207':{
-        lat:17.924742,
-        lng:-94.293919
-      },
-
-      '376':{
-        lat:17.927106,
-        lng:-94.292572
-      },
-
-      '377':{
-        lat:17.926603,
-        lng:-94.287797
-      },
-
-      '385':{
-        lat:17.923300,
-        lng:-94.292781
-      },
-
-      '401':{
-        lat:17.935633,
-        lng:-94.287222
-      },
-
-      '601':{
-        lat:17.952008,
-        lng:-94.264047
-      },
-
-      '602':{
-        lat:17.951783,
-        lng:-94.263978
-      },
-
-      '603':{
-        lat:17.957717,
-        lng:-94.291701
-      }
-
-    };
-
-    let clave = '';
 
     if(
-      ubicacionNormalizada === 'POZO'
+      !resultado ||
+      resultado.error
     ){
-      clave =
-        String(pozo || '')
-          .trim()
-          .toUpperCase()
-          .replace(/^C-/,'');
-    }
-    else if(
-      ubicacionNormalizada === 'BSC' ||
-      ubicacionNormalizada === 'PIA' ||
-      ubicacionNormalizada === 'ECO'
-    ){
-      clave = ubicacionNormalizada;
-    }
-
-    /*
-     * Ubicación general sin radio específico.
-     */
-    if(!clave){
-
       return {
-        tipo:'GENERAL',
-        lat:gps.lat,
-        lng:gps.lng,
-        accuracy:gps.accuracy,
-        timestamp:gps.timestamp
+        ...(resultado || {}),
+        error:
+          resultado?.error ||
+          'GPS no disponible',
+        dentro:
+          resultado?.dentro ?? null,
+        distancia:
+          resultado?.distancia ?? null,
+        fuente:'GPS_CONTINUO'
       };
     }
-
-    const referencia =
-      referencias[clave];
-
-    if(!referencia){
-
-      return {
-        tipo:'POZO',
-        pozo:clave,
-        lat:gps.lat,
-        lng:gps.lng,
-        accuracy:gps.accuracy,
-        dentro:null,
-        distancia:null,
-        referenciaDisponible:false
-      };
-    }
-
-    const distancia =
-      window.UPVGPS.distanciaMetros(
-        gps.lat,
-        gps.lng,
-        referencia.lat,
-        referencia.lng
-      );
 
     return {
-
-      tipo:'POZO',
-
-      pozo:clave,
-
-      lat:gps.lat,
-      lng:gps.lng,
-
-      accuracy:gps.accuracy,
-
-      destinoLat:
-        referencia.lat,
-
-      destinoLng:
-        referencia.lng,
-
-      distancia,
-
-      dentro:
-        distancia <=
-        Number(
-          window.UPVGPS.RADIO_POZO_M || 80
-        ),
-
-      referenciaDisponible:true,
-
-      timestamp:gps.timestamp,
-
+      ...resultado,
       fuente:'GPS_CONTINUO'
-
     };
 
   }catch(error){
@@ -2848,13 +2696,15 @@ async function validarGPSOperacionRapidaUPV(
     );
 
     /*
-     * Si algo excepcional ocurre en el circuito rápido,
-     * conservar el validador anterior.
+     * Ante cualquier error, responder inmediatamente.
+     * No caer al capturador GPS bloqueante.
      */
-    return await validarGPSOperacionUPV(
-      ubicacion,
-      pozo
-    );
+    return {
+      error:'GPS no disponible',
+      dentro:null,
+      distancia:null,
+      fuente:'GPS_CONTINUO'
+    };
   }
 }
 
@@ -4597,6 +4447,21 @@ function renderInicio(tipo){
           empresa:
             empresaActiva(),
 
+          unidadId:
+            idUnidadOperativa(),
+
+          capacidadUnidadM3:
+            leerUnidadSeleccionada()?.capacidadM3 || null,
+
+          unidadNombre:
+            idUnidadOperativa() === 'TC_184'
+              ? 'TC 184'
+              : idUnidadOperativa() === 'TC_193'
+                ? 'TC 193'
+                : idUnidadOperativa() === 'PETROSMART_93'
+                  ? 'PETROSMART'
+                  : empresaActiva(),
+
           origen,
 
           pozo,
@@ -4730,6 +4595,30 @@ function renderInicio(tipo){
 
             await window.guardarRegistroFinalUPV(
               registroInicio
+            );
+
+            /*
+             * La evidencia de INICIO ya quedó capturada
+             * dentro de registroInicio.
+             *
+             * No debe heredarse a FINALIZACIÓN.
+             */
+            if(
+              typeof UPV !== 'undefined' &&
+              UPV &&
+              Array.isArray(UPV.fotosOperacion)
+            ){
+              UPV.fotosOperacion = [];
+            }
+
+            if(
+              typeof window.renderFotos === 'function'
+            ){
+              window.renderFotos('operacion');
+            }
+
+            console.log(
+              '[UPV-FOTOS] Evidencia de INICIO limpiada para FINALIZACIÓN'
             );
 
             console.log(
@@ -5892,6 +5781,31 @@ function renderTermino(tipo){
 
   if(!r) return;
 
+  /*
+   * FINALIZACIÓN SIEMPRE INICIA CON EVIDENCIA NUEVA.
+   *
+   * Las fotos del INICIO ya pertenecen al registro de INICIO
+   * y no deben reutilizarse en FINALIZACIÓN.
+   */
+  if(
+    typeof UPV !== 'undefined' &&
+    UPV &&
+    Array.isArray(UPV.fotosOperacion)
+  ){
+    UPV.fotosOperacion = [];
+  }
+
+  const inputFotoOperacion =
+    document.getElementById('foto-input-operacion');
+
+  if(inputFotoOperacion){
+    inputFotoOperacion.value = '';
+  }
+
+  console.log(
+    '[UPV-FOTOS] FINALIZACIÓN inicia con 0 fotos'
+  );
+
   const inicio = leerInicio(tipo);
 
   r.innerHTML = `
@@ -6530,6 +6444,18 @@ function renderTermino(tipo){
           empresa:
             empresaActiva(),
 
+          unidadId:
+            idUnidadOperativa(),
+
+          unidadNombre:
+            idUnidadOperativa() === 'TC_184'
+              ? 'TC 184'
+              : idUnidadOperativa() === 'TC_193'
+                ? 'TC 193'
+                : idUnidadOperativa() === 'PETROSMART_93'
+                  ? 'PETROSMART'
+                  : empresaActiva(),
+
           unidad:
             unidad(),
 
@@ -6671,8 +6597,8 @@ function renderTermino(tipo){
 
           }else{
 
-            console.warn(
-              '[UPV-FINAL] guardarRegistroFinalUPV no disponible'
+            throw new Error(
+              'guardarRegistroFinalUPV no disponible'
             );
 
           }
@@ -6685,10 +6611,28 @@ function renderTermino(tipo){
           );
 
           /*
-           * No rompemos la operación visual.
-           * El registro sigue disponible en
-           * window.UPV_FINAL_REGISTRO.
+           * SEGURIDAD OPERATIVA:
+           *
+           * Si IndexedDB no confirmó el guardado,
+           * NO borrar el INICIO y NO mostrar la
+           * operación como finalizada.
+           *
+           * Así el operador puede volver a intentar
+           * sin perder el estado de la operación.
            */
+          if(
+            typeof mostrarError === 'function'
+          ){
+            mostrarError(
+              'No fue posible guardar la finalización. Intenta nuevamente.'
+            );
+          }else{
+            alert(
+              'No fue posible guardar la finalización. Intenta nuevamente.'
+            );
+          }
+
+          return;
         }
 
 
@@ -7366,6 +7310,25 @@ function abrirVistaPreviaObservacionUPV(datos){
 
             unidad:
               datos.unidad,
+
+            unidadId:
+              typeof idUnidadOperativa === 'function'
+                ? idUnidadOperativa()
+                : null,
+
+            unidadNombre:
+              idUnidadOperativa() === 'PETROSMART_93'
+                ? 'PETROSMART'
+                : idUnidadOperativa() === 'TC_184'
+                  ? 'TC 184'
+                  : idUnidadOperativa() === 'TC_193'
+                    ? 'TC 193'
+                    : datos.unidad,
+
+            capacidadUnidadM3:
+              Number(
+                leerUnidadSeleccionada()?.capacidadM3 || 0
+              ),
 
             observaciones:
               datos.texto,

@@ -1,15 +1,37 @@
 // UPV Service Worker v2
 // Cache exclusivo upv-pwa-v9-sync-prueba. No toca caches de la app de recorredores.
 // Usa rutas relativas. No depende de /upv/ en minusculas.
-const UPV_CACHE = 'upv-pwa-v33-gps-obligatorio-20260829202842';
+const UPV_CACHE = 'upv-pwa-v35-20260922';
 
 const UPV_ASSETS = [
   './',
   './index.html',
+  './manifest.json',
+
   './css/upv.css',
+  './css/upv-cuichapa-theme.css',
+  './css/upv-portada-cuichapa.css',
+  './css/upv-portada-final.css',
+  './css/upv-branding-lifting.css',
+  './css/upv-permisos.css',
+  './css/upv-operacion-final.css',
+  './css/upv-pantallas.css',
+  './css/upv-confirmacion-gps.css',
+  './css/upv-historial.css',
+
+  './js/config.js',
+  './js/state.js',
   './js/firebase-upv.js',
   './js/upv.js',
-  './manifest.json',
+  './js/upv-portada-cuichapa.js',
+  './js/upv-portada-final.js',
+  './js/upv-branding-lifting.js',
+  './js/upv-permisos.js',
+  './js/upv-operacion-final.js',
+  './js/upv-pantallas.js',
+  './js/upv-confirmacion-gps.js',
+  './js/upv-historial.js',
+
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];
@@ -48,7 +70,7 @@ self.addEventListener('fetch', event => {
         return response;
       })
       .catch(() =>
-        caches.match(event.request).then(cached => {
+        caches.match(event.request, { ignoreSearch: true }).then(cached => {
           if (cached) return cached;
           if (event.request.mode === 'navigate') {
             return caches.match('./index.html');
@@ -67,9 +89,3 @@ self.addEventListener('message', function(event) {
   }
 });
 
-// Activa inmediatamente la nueva versión cuando el usuario pulsa Actualizar.
-self.addEventListener('message', function(event) {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-});

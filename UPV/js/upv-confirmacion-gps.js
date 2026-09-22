@@ -469,6 +469,12 @@ const COORD_POZOS_FT = Object.freeze({
     lng:-94.293919
   },
 
+  '352': { lat:17.937386, lng:-94.292839 },
+
+  '505': { lat:17.946683, lng:-94.289367 },
+
+  '500': { lat:17.959172, lng:-94.287736 },
+
   '376': {
     lat:17.927106,
     lng:-94.292572
@@ -522,7 +528,24 @@ async function coordenadasPozo(pozo){
    * Primero revisar caché.
    */
   if(cacheCoords.has(pozo)){
-    return cacheCoords.get(pozo);
+
+    const coordsCache =
+      cacheCoords.get(pozo);
+
+    /*
+     * Solo reutilizar coordenadas válidas.
+     * Un null antiguo no debe impedir que un pozo
+     * recién agregado consulte la tabla oficial.
+     */
+    if(
+      coordsCache &&
+      Number.isFinite(Number(coordsCache.lat)) &&
+      Number.isFinite(Number(coordsCache.lng))
+    ){
+      return coordsCache;
+    }
+
+    cacheCoords.delete(pozo);
   }
 
 
@@ -541,10 +564,12 @@ async function coordenadasPozo(pozo){
       pozo
     );
 
-    cacheCoords.set(
-      pozo,
-      null
-    );
+    /*
+     * No guardar resultados negativos en caché.
+     * Si posteriormente se agrega el pozo a la tabla
+     * oficial podrá resolverse inmediatamente.
+     */
+    cacheCoords.delete(pozo);
 
     return null;
   }
@@ -709,13 +734,16 @@ async function validarReferenciaActual(
   }
 
 
-  let referenciaNombre =
+  const tipoReferencia =
     String(ubicacion || '')
       .trim()
       .toUpperCase();
 
+  let referenciaNombre =
+    tipoReferencia;
 
-  if(referenciaNombre === 'POZO'){
+
+  if(tipoReferencia === 'POZO'){
 
     referenciaNombre =
       limpiarPozo(pozo);
@@ -746,7 +774,10 @@ async function validarReferenciaActual(
   if(!referencia){
 
     return {
-      tipo:'REFERENCIA',
+      tipo:
+        tipoReferencia === 'POZO'
+          ? 'POZO'
+          : 'REFERENCIA',
       referencia:referenciaNombre,
       lat:gps.lat,
       lng:gps.lng,
@@ -769,7 +800,10 @@ async function validarReferenciaActual(
 
 
   return {
-    tipo:'REFERENCIA',
+    tipo:
+      tipoReferencia === 'POZO'
+        ? 'POZO'
+        : 'REFERENCIA',
     referencia:referenciaNombre,
 
     lat:gps.lat,
