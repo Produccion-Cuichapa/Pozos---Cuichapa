@@ -934,3 +934,18 @@ body.upv-solo-portada #upv-update-btn {
   }
 }
 
+
+/* ==========================================================
+   UPV — ACTUALIZAR SOLO EN PANTALLA DE INICIO
+   ========================================================== */
+
+/* Oculto por defecto en toda la aplicación */
+#upv-update-banner.upv-update-banner {
+  display: none !important;
+}
+
+/* Visible exclusivamente en la portada PETROSMART / TC */
+body.upv-solo-portada #upv-update-banner.upv-update-banner {
+  display: flex !important;
+}
+
