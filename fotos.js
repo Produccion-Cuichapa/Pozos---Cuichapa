@@ -211,7 +211,7 @@ function borrarFotosReporteIDB(reporteId){
 
 // ── Comprimir imagen File → base64 (para captura de fotos) ─
 function comprimirImagen(file, callback){
-  var maxW = 900, maxH = 900, quality = 0.75;
+  var maxW = 720, maxH = 720, quality = 0.65;
   var reader = new FileReader();
   reader.onerror = function(){ callback(null); };
   reader.onload = function(ev){
