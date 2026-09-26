@@ -7029,8 +7029,223 @@ function guardarEnFirebase(reporte){
     }
 
     /*
-     * Solo si el Registry todavía NO confirma el envío,
-     * consultar el reporte remoto completo.
+     * SYNC FOTOS V2
+     * ----------------------------------------------------------
+     * Los reportes nuevos NO descargan /reportes/{id} completo.
+     * Las fotos Base64 pueden pesar cientos de KB.
+     *
+     * Solo consultamos cuatro metadatos pequeños.
+     * Los reportes antiguos conservan el flujo legacy inferior.
+     */
+    if(reporte.syncFotosV2 === true){
+
+      return Promise.all([
+        reporteRef.child('fotosRecibidas').once('value'),
+        reporteRef.child('whatsappStatus').once('value'),
+        reporteRef.child('whatsappSent').once('value'),
+        reporteRef.child('nFotos').once('value')
+      ])
+      .then(function(snaps){
+
+        var fotosRecibidas =
+          snaps[0].val() === true;
+
+        var remotoStatus = String(
+          snaps[1].val() || ''
+        ).toLowerCase();
+
+        var remotoWhatsappSent =
+          snaps[2].val() === true;
+
+        var remotoNFotos =
+          Number(snaps[3].val() || 0);
+
+        var confirmado =
+          remotoStatus === 'sent' ||
+          remotoWhatsappSent;
+
+        var fotosLocales =
+          Array.isArray(reporte.fotos)
+            ? reporte.fotos
+            : [];
+
+        var fotosEsperadas =
+          Number(
+            reporte.nFotos ||
+            remotoNFotos ||
+            fotosLocales.length ||
+            0
+          );
+
+        /*
+         * Si todavía deberían existir fotos pero Firebase
+         * no confirma haberlas recibido, recuperarlas desde
+         * IndexedDB. Esto mantiene el funcionamiento offline.
+         */
+        if(
+          !confirmado &&
+          !fotosRecibidas &&
+          !fotosLocales.length &&
+          fotosEsperadas > 0 &&
+          !reporte._fotosIDBRecuperadas &&
+          typeof cargarFotosReporteIDB === 'function'
+        ){
+          var reporteHidratado =
+            Object.assign({}, reporte);
+
+          reporteHidratado._fotosIDBRecuperadas = true;
+
+          return cargarFotosReporteIDB(reporte.id)
+            .then(function(fotosIDB){
+
+              reporteHidratado.fotos =
+                Array.isArray(fotosIDB)
+                  ? fotosIDB
+                  : [];
+
+              console.log(
+                '[SYNC_FOTOS_V2] evidencias recuperadas de IDB:',
+                reporte.id,
+                reporteHidratado.fotos.length
+              );
+
+              return guardarEnFirebase(
+                reporteHidratado
+              );
+            });
+        }
+
+        var payloadV2 = {
+          id: reporte.id,
+          fecha: reporte.fecha,
+          hora: reporte.hora || null,
+          pozo: reporte.pozo,
+          recorredor: reporte.recorredor,
+          perfil: reporte.perfil || null,
+          modo: reporte.modo || 'co',
+
+          syncFotosV2: true,
+
+          estado:
+            confirmado
+              ? 'enviado'
+              : (reporte.estado || 'pendiente'),
+
+          device: deviceName,
+
+          nFotos:
+            fotosLocales.length ||
+            fotosEsperadas,
+
+          esAlarma:
+            reporte.esAlarma || false,
+
+          tipoAlarma:
+            reporte.tipoAlarma || null,
+
+          msg:
+            reporte.msg || null,
+
+          estatus: reporte.estatus || null,
+          fluye: reporte.fluye || null,
+          sap: reporte.sap || null,
+          estrang: reporte.estrang || null,
+          ptp: reporte.ptp || null,
+          ldd: reporte.ldd || null,
+          ptr: reporte.ptr || null,
+          lbn: reporte.lbn || null,
+          epm: reporte.epm || null,
+          carrera: reporte.carrera || null,
+
+          nivel: reporte.nivel || null,
+          bls: reporte.bls || null,
+          ctm: reporte.ctm || null,
+
+          checks:
+            reporte.checks || null,
+
+          estadoPozo:
+            reporte.estadoPozo || '',
+
+          gps:
+            reporte.gps || null,
+
+          observaciones:
+            reporte.observaciones || null,
+
+          obs:
+            reporte.obs || null,
+
+          ultimoIntento:
+            reporte.ultimoIntento || null,
+
+          intentos:
+            Number(reporte.intentos || 0),
+
+          whatsappDedupeKey:
+            reporte.whatsappDedupeKey ||
+            reportId
+        };
+
+        /*
+         * Solamente transferir Base64 cuando Firebase todavía
+         * NO confirma haber recibido las fotografías.
+         */
+        if(
+          !confirmado &&
+          !fotosRecibidas &&
+          fotosLocales.length > 0
+        ){
+          payloadV2.fotos =
+            fotosLocales;
+
+          payloadV2.fotosRecibidas =
+            true;
+        }
+
+        if(confirmado){
+          payloadV2.whatsappStatus =
+            'sent';
+
+          payloadV2.whatsappSent =
+            true;
+
+          payloadV2.whatsappSentAt =
+            registry && registry.sentAt
+              ? registry.sentAt
+              : null;
+
+        }else{
+          payloadV2.whatsappStatus =
+            reporte.whatsappStatus ||
+            remotoStatus ||
+            'pending';
+
+          payloadV2.whatsappSent =
+            false;
+        }
+
+        console.log(
+          '[SYNC_FOTOS_V2]',
+          reportId,
+          'fotosRecibidas=',
+          fotosRecibidas,
+          'subeFotos=',
+          !!payloadV2.fotos
+        );
+
+        return reporteRef
+          .update(payloadV2)
+          .then(function(){
+            return true;
+          });
+      });
+    }
+
+    /*
+     * FLUJO LEGACY
+     * Reportes anteriores a Sync Fotos V2 mantienen
+     * exactamente el comportamiento anterior.
      */
     return reporteRef.once('value')
       .then(function(remotoSnap){
@@ -7160,19 +7375,6 @@ function guardarEnFirebase(reporte){
        * No volver a cargar Base64 si la Cloud Function
        * ya archivó o limpió las evidencias.
        */
-      fotos:
-        confirmado
-          ? (
-              remoto.fotos === undefined
-                ? null
-                : remoto.fotos
-            )
-          : (
-              reporte.fotos ||
-              remoto.fotos ||
-              []
-            ),
-
       // Control Operativo
       estatus: reporte.estatus || null,
       fluye:   reporte.fluye || null,
@@ -7221,6 +7423,28 @@ function guardarEnFirebase(reporte){
           0
         )
     };
+
+    /*
+     * AHORRO DE DATOS:
+     * No incluir fotos en update() si Firebase ya conserva la evidencia
+     * o si el reporte ya fue confirmado.
+     *
+     * Solo se transfieren las fotos cuando Firebase todavía no las tiene.
+     */
+    if(!confirmado && !remotoTieneFotos){
+      payload.fotos = fotosLocales.length
+        ? fotosLocales
+        : [];
+
+      /*
+       * Marcador ligero para futuras sincronizaciones.
+       * true significa que este upload lleva efectivamente
+       * las evidencias fotográficas hacia Firebase.
+       */
+      if(fotosLocales.length > 0){
+        payload.fotosRecibidas = true;
+      }
+    }
 
     if(confirmado){
       payload.whatsappStatus = 'sent';
@@ -8810,10 +9034,42 @@ function enviarConUltramsg(id, callback, fotosDirectas){
   r.whatsappAttempts  = r.whatsappAttempts || 0;
   if(fotosDirectas && fotosDirectas.length) r.fotos = fotosDirectas.slice();
 
-  guardarReporte(r);
+  var promesaGuardadoWA = guardarReporte(r);
+
+  /*
+   * REPORTES NORMALES:
+   * guardarReporte() -> guardarEnFirebase() es la única ruta
+   * autorizada para sincronizar el reporte y sus evidencias.
+   *
+   * Esto evita una segunda escritura de fotos Base64 desde
+   * enviarConUltramsg().
+   *
+   * ALARMAS:
+   * conservan temporalmente el flujo existente porque utilizan
+   * /alarmas/{id} y tienen un proceso independiente.
+   */
+  if(!r.esAlarma){
+    Promise.resolve(promesaGuardadoWA)
+      .then(function(ok){
+        console.log(
+          '[WA_BACKEND] reporte normal delegado a Sync Fotos V2:',
+          r.id
+        );
+        if(callback) callback(ok !== false);
+      })
+      .catch(function(err){
+        console.error(
+          '[WA_BACKEND] error en Sync Fotos V2:',
+          err
+        );
+        if(callback) callback(false);
+      });
+
+    return;
+  }
 
   if(fbDB){
-    var path = r.esAlarma ? ('alarmas/' + r.id) : ('reportes/' + r.id);
+    var path = 'alarmas/' + r.id;
     fbDB.ref(path).update({
       id: r.id,
       fecha: r.fecha || new Date().toISOString(),
@@ -9380,6 +9636,12 @@ function confirmarEnvio(){
              null;
   var reporte = {
     id: Date.now(),
+
+    // Sincronización optimizada de evidencias.
+    // Solo los reportes creados desde esta versión usan
+    // el flujo que evita descargar/retransmitir Base64.
+    syncFotosV2: true,
+
     fecha: ahora,
     hora: _horaStr,
     pozo: W,
