@@ -6868,6 +6868,10 @@ function initFirebase(){
     if(fbApp){ escucharFirebase(); return; }
     fbApp = firebase.initializeApp(FB_CONFIG);
     fbDB  = firebase.database(fbApp);
+
+    // Detectar conexión REAL con Firebase.
+    instalarDetectorConexionFirebase();
+
     sincronizarAFirebase();
     escucharFirebase();
     escucharAlarmas();
@@ -7688,8 +7692,14 @@ window.addEventListener('load', function(){
 // Re-intentar conexión Firebase cuando vuelva señal
 window.addEventListener('unload', function(){ try{ var m=document.getElementById('pwa-manifest'); if(m&&m.href&&m.href.startsWith('blob:'))URL.revokeObjectURL(m.href); }catch(e){} });
 window.addEventListener('online', function(){
-  if(!fbDB) setTimeout(initFirebase, 1000);
-  else sincronizarAFirebase();
+  /*
+   * Si Firebase aún no existe, inicializarlo.
+   * Si ya existe, verificarYEnviar() y .info/connected
+   * administran la recuperación de pendientes.
+   */
+  if(!fbDB){
+    setTimeout(initFirebase, 1000);
+  }
 });
 
 
@@ -8133,7 +8143,24 @@ function actualizarEstadoReporte(id, estado, ultimoIntento){
 
 // ── Cola: pendientes por enviar ───────────────────
 function getPendientes(){
-  return getHistorial().filter(function(r){ return r.estado==='pendiente'||r.estado==='fallido'; });
+  /*
+   * Cola FIFO para reportes offline.
+   *
+   * El historial visual conserva su orden actual
+   * (más reciente primero), pero la sincronización
+   * devuelve los pendientes del más antiguo al más reciente.
+   */
+  return getHistorial()
+    .filter(function(r){
+      return r.estado === 'pendiente' ||
+             r.estado === 'fallido';
+    })
+    .sort(function(a, b){
+      var fechaA = Date.parse(a.fecha || '') || 0;
+      var fechaB = Date.parse(b.fecha || '') || 0;
+
+      return fechaA - fechaB;
+    });
 }
 
 // ── Enviar a WhatsApp ─────────────────────────────
@@ -9111,6 +9138,83 @@ function intentarEnviar(id){
   enviarConUltramsg(id, null);
 }
 
+// ── Esperar confirmación real de WhatsApp ──────────
+function esperarConfirmacionWhatsappFIFO(id){
+  return new Promise(function(resolve){
+
+    if(!fbDB || !id){
+      resolve('sin-firebase');
+      return;
+    }
+
+    var ref =
+      fbDB.ref('whatsappSentRegistry/' + String(id));
+
+    var terminado = false;
+    var timeout = null;
+
+    function finalizar(resultado){
+      if(terminado) return;
+      terminado = true;
+
+      if(timeout){
+        clearTimeout(timeout);
+      }
+
+      try{
+        ref.off('value', escuchar);
+      }catch(e){}
+
+      resolve(resultado);
+    }
+
+    function escuchar(snapshot){
+      var registry = snapshot.val();
+
+      var status = String(
+        registry && (
+          registry.status ||
+          registry.estado ||
+          registry.whatsappStatus
+        ) || ''
+      ).toLowerCase();
+
+      if(
+        registry === true ||
+        status === 'sent' ||
+        status === 'enviado' ||
+        status === 'success' ||
+        status === 'ok'
+      ){
+        finalizar('sent');
+        return;
+      }
+
+      /*
+       * Si el backend libera el lock por fallo,
+       * no congelar toda la cola.
+       */
+      if(
+        status === 'failed' ||
+        status === 'blocked'
+      ){
+        finalizar(status);
+      }
+    }
+
+    ref.on('value', escuchar);
+
+    /*
+     * Seguridad:
+     * nunca dejar congelada la cola indefinidamente.
+     * El backend tiene timeout de hasta 120 s.
+     */
+    timeout = setTimeout(function(){
+      finalizar('timeout');
+    }, 130000);
+  });
+}
+
 // ── Procesar cola completa — silencioso ──────────
 var _colaEnProceso = false;
 function procesarCola(){
@@ -9126,14 +9230,9 @@ function procesarCola(){
 
   _colaEnProceso = true;
 
-  var _colaTimeout = setTimeout(function(){
-    _colaEnProceso = false;
-  }, 60000);
-
   var indice = 0;
 
   function terminar(){
-    clearTimeout(_colaTimeout);
     _colaEnProceso = false;
   }
 
@@ -9227,17 +9326,74 @@ function procesarCola(){
           return guardarEnFirebase(fresco);
         }
 
-        return null;
+        return true;
+      })
+      .then(function(resultado){
+        /*
+         * FIFO estricto:
+         * guardarEnFirebase() devuelve false cuando Firebase
+         * no pudo completar la operación. En ese caso detener
+         * esta pasada y conservar el orden de los pendientes.
+         */
+        if(resultado === false){
+          console.warn(
+            '[COLA_FIFO] Firebase no confirmó:',
+            id,
+            '— se detiene la pasada'
+          );
+
+          terminar();
+          programarReintentoSync();
+          return;
+        }
+
+        /*
+         * Firebase aceptó el reporte, pero NO liberar todavía
+         * el siguiente. Esperar confirmación real del Registry
+         * para conservar el orden también en WhatsApp.
+         */
+        return esperarConfirmacionWhatsappFIFO(id)
+          .then(function(confirmacion){
+
+            if(confirmacion === 'sent'){
+              console.log(
+                '[COLA_FIFO] WhatsApp confirmado:',
+                id
+              );
+
+              setTimeout(enviarSiguiente, 250);
+              return;
+            }
+
+            /*
+             * Timeout, failed, blocked o cualquier resultado
+             * distinto de SENT:
+             * detener aquí. El siguiente reporte NO se libera.
+             */
+            console.warn(
+              '[COLA_FIFO] WhatsApp sin confirmar:',
+              id,
+              confirmacion,
+              '— se detiene la pasada'
+            );
+
+            terminar();
+            programarReintentoSync();
+          });
       })
       .catch(function(error){
+        /*
+         * Un fallo leyendo Registry también detiene la pasada.
+         * No saltar al siguiente reporte porque rompería FIFO.
+         */
         console.warn(
-          'Cola Registry:',
+          '[COLA_FIFO] Error Registry:',
           id,
           error
         );
-      })
-      .finally(function(){
-        setTimeout(enviarSiguiente, 250);
+
+        terminar();
+        programarReintentoSync();
       });
   }
 
@@ -9260,6 +9416,106 @@ function verificarConectividad(callback){
 }
 
 
+/*
+ * CONECTIVIDAD REAL FIREBASE
+ * Aprovecha inmediatamente ventanas cortas de señal.
+ */
+var _firebaseRealmenteConectado = false;
+var _firebaseConnectedListenerInstalado = false;
+
+function instalarDetectorConexionFirebase(){
+  if(
+    _firebaseConnectedListenerInstalado ||
+    !fbDB
+  ){
+    return;
+  }
+
+  _firebaseConnectedListenerInstalado = true;
+
+  fbDB.ref('.info/connected').on(
+    'value',
+    function(snapshot){
+      var conectado = snapshot.val() === true;
+      var antes = _firebaseRealmenteConectado;
+
+      _firebaseRealmenteConectado = conectado;
+
+      console.log(
+        '[FIREBASE_CONNECTION]',
+        conectado ? 'CONECTADO' : 'DESCONECTADO'
+      );
+
+      /*
+       * En cuanto Firebase consigue conexión,
+       * aprovechar inmediatamente esa ventana.
+       */
+      if(
+        conectado &&
+        !antes &&
+        getPendientes().length
+      ){
+        console.log(
+          '[SYNC] ventana Firebase detectada — despertando cola'
+        );
+
+        verificarYEnviar();
+      }
+    }
+  );
+}
+
+// ── Reintento rápido para señal débil/intermitente ──────────
+var _reintentoSyncTimer = null;
+var _reintentoSyncPaso = 0;
+var _reintentoSyncTiempos = [3000, 6000, 12000, 20000];
+
+function programarReintentoSync(){
+  if(_reintentoSyncTimer) return;
+
+  if(!getPendientes().length){
+    _reintentoSyncPaso = 0;
+    return;
+  }
+
+  var paso = Math.min(
+    _reintentoSyncPaso,
+    _reintentoSyncTiempos.length - 1
+  );
+
+  var espera = _reintentoSyncTiempos[paso];
+
+  _reintentoSyncTimer = setTimeout(function(){
+    _reintentoSyncTimer = null;
+
+    if(!getPendientes().length){
+      _reintentoSyncPaso = 0;
+      return;
+    }
+
+    _reintentoSyncPaso = Math.min(
+      _reintentoSyncPaso + 1,
+      _reintentoSyncTiempos.length - 1
+    );
+
+    console.log(
+      '[SYNC_RETRY] pendientes detectados — nuevo intento'
+    );
+
+    verificarYEnviar();
+
+  }, espera);
+}
+
+function cancelarReintentoSync(){
+  if(_reintentoSyncTimer){
+    clearTimeout(_reintentoSyncTimer);
+    _reintentoSyncTimer = null;
+  }
+
+  _reintentoSyncPaso = 0;
+}
+
 var _vyv_timer = null;
 function verificarYEnviar(){
   // Debounce: múltiples triggers en <2s se colapsan en uno solo
@@ -9267,14 +9523,31 @@ function verificarYEnviar(){
   _vyv_timer = setTimeout(function(){
     _vyv_timer = null;
     var pendientes = getPendientes();
-    if(!pendientes.length) return;
-    // Fix 4 — usar navigator.onLine en lugar de ping a /instance/status
-    // verificarConectividad puede falso-negativo si ese endpoint está caído
-    var haySenal = navigator.onLine !== false; // true si no sabemos (mejor que bloquear)
-    if(haySenal){
-      procesarCola();
-      if(fbDB) sincronizarAFirebase();
+
+    if(!pendientes.length){
+      cancelarReintentoSync();
+      actualizarBadgeHistorial();
+      return;
     }
+
+    // Intentar aprovechar cualquier ventana de conectividad.
+    var haySenal = navigator.onLine !== false;
+
+    if(haySenal){
+      /*
+       * Una sola ruta para pendientes.
+       * procesarCola() consulta Registry y evita
+       * sincronizaciones paralelas del mismo lote.
+       */
+      procesarCola();
+    }
+
+    /*
+     * Mientras existan pendientes, mantener reintentos
+     * cortos para aprovechar señal débil/intermitente.
+     */
+    programarReintentoSync();
+
     actualizarBadgeHistorial();
   }, 800); // debounce 800ms
 }
