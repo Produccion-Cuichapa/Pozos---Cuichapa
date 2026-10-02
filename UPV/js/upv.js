@@ -34,10 +34,23 @@ function escucharConexion() {
   const update = () => {
     UPV.enLinea = navigator.onLine;
     const badge = document.getElementById('upv-conn-badge');
-    if (!badge) return;
-    badge.textContent = UPV.enLinea ? 'EN LINEA' : 'SIN CONEXION';
-    badge.className = 'conn-badge' + (UPV.enLinea ? '' : ' offline');
-    if (UPV.enLinea) sincronizarPendientesUpv();
+
+    if (badge) {
+      badge.textContent =
+        UPV.enLinea ? 'EN LINEA' : 'SIN CONEXION';
+
+      badge.className =
+        'conn-badge' +
+        (UPV.enLinea ? '' : ' offline');
+    }
+
+    /*
+     * La sincronización no depende de que exista
+     * visualmente el badge de conexión.
+     */
+    if (UPV.enLinea) {
+      sincronizarPendientesUpv();
+    }
   };
   window.addEventListener('online',  update);
   window.addEventListener('offline', update);
@@ -796,8 +809,167 @@ async function renderHistorial() {
 // ═══════════════════════════════════════════════════════════
 // STUBS FASE 3
 // ═══════════════════════════════════════════════════════════
+
+/* ==========================================================
+   UPV — FIFO ESTRICTO HASTA WHATSAPP
+   ========================================================== */
+
+var _upvRetryTimer = null;
+var _upvRetryPaso = 0;
+var _upvRetryTiempos = [3000, 6000, 12000, 20000];
+
+function programarReintentoSyncUpv(){
+
+  if(_upvRetryTimer) return;
+
+  var paso = Math.min(
+    _upvRetryPaso,
+    _upvRetryTiempos.length - 1
+  );
+
+  var espera = _upvRetryTiempos[paso];
+
+  _upvRetryTimer = setTimeout(function(){
+
+    _upvRetryTimer = null;
+
+    _upvRetryPaso = Math.min(
+      _upvRetryPaso + 1,
+      _upvRetryTiempos.length - 1
+    );
+
+    console.log(
+      '[UPV-FIFO] reintentando cola pendiente'
+    );
+
+    sincronizarPendientesUpv();
+
+  }, espera);
+}
+
+function cancelarReintentoSyncUpv(){
+
+  if(_upvRetryTimer){
+    clearTimeout(_upvRetryTimer);
+    _upvRetryTimer = null;
+  }
+
+  _upvRetryPaso = 0;
+}
+
+function esperarConfirmacionWhatsappFIFOUpv(id){
+
+  return new Promise(function(resolve){
+
+    if(
+      !id ||
+      !UPV.firebaseDb
+    ){
+      resolve('sin-firebase');
+      return;
+    }
+
+    var registryRef =
+      UPV.firebaseDb.ref(
+        '/upvWhatsappSentRegistry/' +
+        String(id)
+      );
+
+    var reporteRef =
+      UPV.firebaseDb.ref(
+        '/' +
+        UPV_FIREBASE_TEST_PATH +
+        '/' +
+        String(id)
+      );
+
+    var terminado = false;
+    var timeout = null;
+
+    function finalizar(resultado){
+
+      if(terminado) return;
+
+      terminado = true;
+
+      if(timeout){
+        clearTimeout(timeout);
+      }
+
+      try{
+        registryRef.off('value', escucharRegistry);
+      }catch(e){}
+
+      try{
+        reporteRef.off('value', escucharReporte);
+      }catch(e){}
+
+      resolve(resultado);
+    }
+
+    function escucharRegistry(snapshot){
+
+      var data = snapshot.val();
+
+      var status = String(
+        data && data.status || ''
+      ).toLowerCase();
+
+      if(status === 'sent'){
+        finalizar('sent');
+        return;
+      }
+
+      if(status === 'failed'){
+        finalizar('failed');
+      }
+    }
+
+    function escucharReporte(snapshot){
+
+      var data = snapshot.val();
+
+      var status = String(
+        data && data.whatsappStatus || ''
+      ).toLowerCase();
+
+      if(status === 'sent'){
+        finalizar('sent');
+        return;
+      }
+
+      if(status === 'failed'){
+        finalizar('failed');
+      }
+    }
+
+    registryRef.on(
+      'value',
+      escucharRegistry
+    );
+
+    reporteRef.on(
+      'value',
+      escucharReporte
+    );
+
+    /*
+     * Cloud Function UPV tiene timeout de 60 s.
+     * Dejamos margen suficiente para texto + fotografías.
+     */
+    timeout = setTimeout(function(){
+      finalizar('timeout');
+    }, 75000);
+
+  });
+}
+
+
 async function sincronizarPendientesUpv() {
-  if (UPV.syncInProgress) return;
+
+  if (UPV.syncInProgress) {
+    return;
+  }
 
   if (
     !UPV.firebaseReady ||
@@ -805,50 +977,189 @@ async function sincronizarPendientesUpv() {
     !UPV.firebaseDb ||
     !UPV.db
   ) {
+    programarReintentoSyncUpv();
     return;
   }
 
   UPV.syncInProgress = true;
 
   try {
+
     var todos = await idbGetAll('reportes');
 
     var pendientes = todos
       .filter(function(r) {
-        return r && r.id && r.syncStatus !== 'sincronizado';
+        return (
+          r &&
+          r.id &&
+          r.syncStatus !== 'sincronizado'
+        );
       })
       .sort(function(a, b) {
-        return new Date(a.createdAt) - new Date(b.createdAt);
+
+        var fechaA =
+          Date.parse(a.createdAt || a.fecha || '') || 0;
+
+        var fechaB =
+          Date.parse(b.createdAt || b.fecha || '') || 0;
+
+        return fechaA - fechaB;
       });
 
     if (!pendientes.length) {
-      console.log('[UPV-SYNC] No hay reportes pendientes');
+
+      console.log(
+        '[UPV-FIFO] No hay reportes pendientes'
+      );
+
+      cancelarReintentoSyncUpv();
       return;
     }
 
-    console.log('[UPV-SYNC] Pendientes encontrados:', pendientes.length);
+    console.log(
+      '[UPV-FIFO] Pendientes:',
+      pendientes.length
+    );
 
-    for (var i = 0; i < pendientes.length; i++) {
-      try {
-        await enviarReporteUpv(pendientes[i].id);
-      } catch (e) {
+    for (
+      var i = 0;
+      i < pendientes.length;
+      i++
+    ) {
+
+      var reporteId = pendientes[i].id;
+
+      /*
+       * PASO 1:
+       * escribir SOLO el reporte más antiguo
+       * en Firebase.
+       */
+      var enviadoFirebase =
+        await enviarReporteUpv(reporteId);
+
+      if (!enviadoFirebase) {
+
         console.warn(
-          '[UPV-SYNC] Error al enviar reporte',
-          pendientes[i].id,
-          e.message
+          '[UPV-FIFO] Firebase falló. Cola detenida:',
+          reporteId
+        );
+
+        programarReintentoSyncUpv();
+        break;
+      }
+
+      /*
+       * PASO 2:
+       * no liberar el siguiente reporte hasta
+       * que WhatsApp confirme SENT.
+       */
+      var estadoWhatsapp =
+        await esperarConfirmacionWhatsappFIFOUpv(
+          reporteId
+        );
+
+      console.log(
+        '[UPV-FIFO] Confirmación WhatsApp:',
+        reporteId,
+        estadoWhatsapp
+      );
+
+      if (estadoWhatsapp !== 'sent') {
+
+        /*
+         * IMPORTANTE:
+         * Firebase recibió el reporte, pero
+         * WhatsApp todavía no confirmó SENT.
+         *
+         * Lo devolvemos a pendiente local para
+         * que la cola vuelva a revisar este mismo
+         * reporte antes de avanzar.
+         */
+        var pendienteOtraVez =
+          await idbGet(
+            'reportes',
+            reporteId
+          );
+
+        if (pendienteOtraVez) {
+
+          pendienteOtraVez.syncStatus =
+            'pendiente';
+
+          pendienteOtraVez.syncError =
+            'WhatsApp: ' +
+            estadoWhatsapp;
+
+          await idbPut(
+            'reportes',
+            pendienteOtraVez
+          );
+        }
+
+        console.warn(
+          '[UPV-FIFO] Cola detenida esperando WhatsApp:',
+          reporteId,
+          estadoWhatsapp
+        );
+
+        programarReintentoSyncUpv();
+        break;
+      }
+
+      /*
+       * PASO 3:
+       * solamente SENT libera el siguiente.
+       */
+      var confirmado =
+        await idbGet(
+          'reportes',
+          reporteId
+        );
+
+      if (confirmado) {
+
+        confirmado.syncStatus =
+          'sincronizado';
+
+        confirmado.whatsappStatus =
+          'sent';
+
+        confirmado.syncError = null;
+
+        confirmado.whatsappConfirmedAt =
+          new Date().toISOString();
+
+        await idbPut(
+          'reportes',
+          confirmado
         );
       }
+
+      cancelarReintentoSyncUpv();
+
+      console.log(
+        '[UPV-FIFO] Liberado siguiente reporte:',
+        reporteId
+      );
     }
 
-    if (typeof renderHistorial === 'function') {
+    if (
+      typeof renderHistorial === 'function'
+    ) {
       await renderHistorial();
     }
+
   } catch (e) {
+
     console.warn(
-      '[UPV-SYNC] Error general en sincronizarPendientesUpv:',
+      '[UPV-FIFO] Error general:',
       e.message
     );
+
+    programarReintentoSyncUpv();
+
   } finally {
+
     UPV.syncInProgress = false;
   }
 }
@@ -1089,19 +1400,193 @@ async function enviarReporteUpv(id) {
       receivedAtClient: new Date().toISOString()
     };
 
-    await UPV.firebaseDb
-      .ref(ruta)
-      .set(payload);
+    /*
+     * Antes de escribir, comprobar si WhatsApp ya confirmó
+     * este mismo ID. Esto evita reenviar un reporte que el
+     * backend ya procesó correctamente.
+     */
+    var registrySnap =
+      await UPV.firebaseDb
+        .ref(
+          '/upvWhatsappSentRegistry/' +
+          reporte.id
+        )
+        .once('value');
 
-    reporte.syncStatus = 'sincronizado';
+    var registryData =
+      registrySnap.val();
+
+    if (
+      registryData &&
+      String(
+        registryData.status || ''
+      ).toLowerCase() === 'sent'
+    ) {
+
+      reporte.firebasePath = ruta;
+      reporte.firebaseSyncedAt =
+        new Date().toISOString();
+
+      /*
+       * Todavía NO lo marcamos sincronizado aquí.
+       * La cola FIFO hará esa transición después
+       * de confirmar SENT.
+       */
+      reporte.syncStatus = 'pendiente';
+      reporte.syncError = null;
+
+      await idbPut(
+        'reportes',
+        reporte
+      );
+
+      console.log(
+        '[UPV-FIFO] Registry ya estaba SENT:',
+        reporte.id
+      );
+
+      return true;
+    }
+
+    /*
+     * Comprobar si el reporte ya existe remotamente.
+     *
+     * sendUpvWhatsApp usa onCreate, por lo que volver
+     * a ejecutar set() sobre un registro existente NO
+     * vuelve a disparar el envío.
+     */
+    var remotoRef =
+      UPV.firebaseDb.ref(ruta);
+
+    var remotoSnap =
+      await remotoRef.once('value');
+
+    var remoto =
+      remotoSnap.val();
+
+    if (remoto) {
+
+      var remotoWhatsappStatus =
+        String(
+          remoto.whatsappStatus || ''
+        ).toLowerCase();
+
+      if (
+        remotoWhatsappStatus === 'sent'
+      ) {
+
+        reporte.firebasePath = ruta;
+        reporte.firebaseSyncedAt =
+          new Date().toISOString();
+        reporte.syncStatus = 'pendiente';
+        reporte.syncError = null;
+
+        await idbPut(
+          'reportes',
+          reporte
+        );
+
+        console.log(
+          '[UPV-FIFO] Reporte remoto ya estaba SENT:',
+          reporte.id
+        );
+
+        return true;
+      }
+
+      /*
+       * Si la Function anterior terminó en FAILED,
+       * reactivar exactamente el mismo reportId.
+       *
+       * El backend onWrite detectará:
+       *
+       * failed -> pending
+       *
+       * y volverá a adquirir el lock del Registry.
+       */
+      if (
+        remotoWhatsappStatus === 'failed'
+      ) {
+
+        console.log(
+          '[UPV-FIFO] Reactivando WhatsApp:',
+          reporte.id
+        );
+
+        await remotoRef.update({
+          whatsappStatus: 'pending',
+          whatsappError: null,
+          whatsappRetryAt:
+            new Date().toISOString()
+        });
+
+        reporte.firebasePath = ruta;
+        reporte.syncStatus = 'pendiente';
+        reporte.syncError = null;
+
+        await idbPut(
+          'reportes',
+          reporte
+        );
+
+        return true;
+      }
+
+      /*
+       * El reporte existe, pero WhatsApp todavía no
+       * confirmó SENT.
+       *
+       * NO sobrescribir.
+       * NO borrar.
+       * NO recrear.
+       * La cola esperará la confirmación existente.
+       */
+      reporte.firebasePath = ruta;
+      reporte.firebaseSyncedAt =
+        reporte.firebaseSyncedAt ||
+        new Date().toISOString();
+      reporte.syncStatus = 'pendiente';
+      reporte.syncError = null;
+
+      await idbPut(
+        'reportes',
+        reporte
+      );
+
+      console.log(
+        '[UPV-FIFO] Reporte ya existe en Firebase; esperando WhatsApp:',
+        reporte.id,
+        remotoWhatsappStatus || 'sin-status'
+      );
+
+      return true;
+    }
+
+    /*
+     * Solo los reportes que todavía NO existen
+     * se crean en Firebase.
+     *
+     * Este set() dispara sendUpvWhatsApp.onCreate().
+     */
+    await remotoRef.set(payload);
+
+    /*
+     * Firebase recibió el reporte, pero eso NO significa
+     * todavía que WhatsApp lo haya enviado.
+     */
+    reporte.syncStatus = 'pendiente';
     reporte.firebasePath = ruta;
-    reporte.firebaseSyncedAt = new Date().toISOString();
+    reporte.firebaseSyncedAt =
+      new Date().toISOString();
     reporte.syncError = null;
 
-    await idbPut('reportes', reporte);
+    await idbPut(
+      'reportes',
+      reporte
+    );
 
     console.log(
-      '[UPV-SYNC] Sincronizado correctamente:',
+      '[UPV-FIFO] Entregado a Firebase; esperando WhatsApp:',
       reporte.id,
       ruta
     );

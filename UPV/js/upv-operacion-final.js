@@ -997,21 +997,14 @@ function mensajeInicioDescargaSeleccionada(config){
       textoPozos +
       '* 🛢️',
 
-    '',
 
     '▶️ *INICIO DESCARGA*',
 
-    '',
 
     '🚛 *Proveedor:* ' +
       proveedorWhatsappUPV(
         empresaActiva(),
         leerUnidadSeleccionada()?.capacidadM3
-      ),
-
-    '🚚 *Unidad:* ' +
-      String(
-        unidad() || ''
       ),
 
     '',
@@ -2392,12 +2385,6 @@ function formatoGpsWhatsappUPV(gps){
       gps?.lon
     );
 
-  const accuracy =
-    Number(
-      gps?.accuracy ??
-      gps?.precision
-    );
-
   const distancia =
     Number(
       gps?.distancia ??
@@ -2414,56 +2401,12 @@ function formatoGpsWhatsappUPV(gps){
     return '📍 GPS: NO DISPONIBLE';
   }
 
-
-  /*
-   * ========================================================
-   * DENTRO DE RANGO
-   * ========================================================
-   *
-   * No mostrar:
-   * - coordenadas
-   * - precisión
-   * - Maps
-   * - distancia
-   *
-   * Únicamente confirmación.
-   */
   if(
     Number.isFinite(distancia) &&
     distancia <= 80
   ){
     return '✅ DENTRO DE RANGO';
   }
-
-
-  /*
-   * ========================================================
-   * FUERA DE RANGO
-   * ========================================================
-   *
-   * Aquí sí mostramos toda la evidencia GPS.
-   */
-  let linea =
-    '📍 GPS: ' +
-    lat.toFixed(6) +
-    ', ' +
-    lng.toFixed(6);
-
-
-  if(Number.isFinite(accuracy)){
-    linea +=
-      ' (±' +
-      Math.round(accuracy) +
-      ' m)';
-  }
-
-
-  linea +=
-    '\n🗺 https://maps.google.com/?q=' +
-    lat +
-    ',' +
-    lng;
-
 
   if(Number.isFinite(distancia)){
 
@@ -2472,16 +2415,13 @@ function formatoGpsWhatsappUPV(gps){
         ? (distancia / 1000).toFixed(2) + ' km'
         : Math.round(distancia) + ' m';
 
-    linea +=
-      '\n⚠️ Fuera del rango del punto (' +
+    return '⚠️ FUERA DE RANGO (' +
       textoDistancia +
       ')';
   }
 
-
-  return linea;
+  return '⚠️ FUERA DE RANGO';
 }
-
 
 /*
  * Versión HTML para los resúmenes internos de UPV.
@@ -2544,12 +2484,16 @@ function formatoGpsHtmlUPV(gps){
           ? (distancia / 1000).toFixed(2) + ' km'
           : Math.round(distancia) + ' m';
 
-      estado = `
+      /*
+       * FUERA DE RANGO:
+       * mostrar únicamente la advertencia.
+       * Las coordenadas continúan disponibles internamente.
+       */
+      return `
         <div class="upv-confirm-row">
           <span>VALIDACIÓN</span>
           <strong>
-            ⚠️ Fuera del rango del punto
-            (${escaparHtml(textoDistancia)})
+            ⚠️ FUERA DE RANGO (${escaparHtml(textoDistancia)})
           </strong>
         </div>
       `;
@@ -2847,19 +2791,23 @@ function lineasGpsWhatsappUPV(gps){
     }
 
 
+    const distancia =
+      Number(gps.distancia);
+
+    const textoDistancia =
+      Number.isFinite(distancia)
+        ? (
+            distancia >= 1000
+              ? (distancia / 1000).toFixed(2) + ' km'
+              : Math.round(distancia) + ' m'
+          )
+        : '';
+
     return [
       '',
-      '⚠️ *FUERA DE RANGO*',
-      '📏 Distancia: *' +
-        Math.round(
-          Number(gps.distancia)
-        ) +
-        ' m*',
-      '📍 Ubicación de envío: *' +
-        Number(gps.lat).toFixed(6) +
-        ', ' +
-        Number(gps.lng).toFixed(6) +
-        '*'
+      textoDistancia
+        ? '⚠️ *FUERA DE RANGO (' + textoDistancia + ')*'
+        : '⚠️ *FUERA DE RANGO*'
     ];
   }
 
@@ -3003,20 +2951,26 @@ function mensajeWhatsappInicio(config){
 
     '🛢️ *' + lugar + '* 🛢️',
     '*' + actividad + '*',
-    '',
 
     'Proveedor: *' +
       proveedorWhatsappUPV(
         empresa,
         leerUnidadSeleccionada()?.capacidadM3
       ) +
-      '*',
-
-    'Unidad: *' +
-      unidad +
       '*'
 
   ];
+
+  /*
+   * Evitar doble espacio antes de Inicio cuando
+   * la línea adicional de destino no aplica.
+   */
+  if(
+    lineas.length &&
+    lineas[lineas.length - 1] === ''
+  ){
+    lineas.pop();
+  }
 
   lineas.push(
     ...observacionWhatsappUPV(
@@ -3211,7 +3165,6 @@ function mensajeWhatsappTermino(config){
         ),
 
     '*' + actividad + '*',
-    '',
 
     'Proveedor: *' +
       proveedorWhatsappUPV(
@@ -3220,17 +3173,11 @@ function mensajeWhatsappTermino(config){
       ) +
       '*',
 
-    'Unidad: *' +
-      unidad +
-      '*',
-
     '',
 
     'Volumen: *' +
       Number(cantidadM3).toFixed(2) +
       ' m³*',
-
-    '',
 
     /*
      * En descarga mostramos explícitamente
@@ -3274,6 +3221,17 @@ function mensajeWhatsappTermino(config){
   );
 
   if(inicio?.hora){
+
+    /*
+     * Exactamente UN renglón vacío antes de Inicio.
+     * Eliminamos vacíos previos para evitar duplicados.
+     */
+    while(
+      lineas.length &&
+      lineas[lineas.length - 1] === ''
+    ){
+      lineas.pop();
+    }
 
     lineas.push(
       '',
@@ -3795,18 +3753,32 @@ function renderInicio(tipo){
       
 
 
-      ${evidenciaFotoHtml()}
+      <button
+        type="button"
+        class="upv-action-final inicio upv-accion-b"
+        id="upvFinalInicioBtn">
 
-<button
-            type="button"
-            class="upv-action-final inicio"
-            id="upvFinalInicioBtn">
+        <span class="upv-accion-b-icono">▶</span>
+
+        <span class="upv-accion-b-texto">
+          <strong>
             ${
               String(tipo).toUpperCase() === 'DESCARGA'
-                ? '▶️ INICIAR DESCARGA'
-                : '▶️ INICIAR CARGA'
+                ? 'INICIAR DESCARGA'
+                : 'INICIAR CARGA'
             }
-          </button>
+          </strong>
+
+          <small>
+            Toca aquí para comenzar
+          </small>
+        </span>
+
+        <span class="upv-accion-b-flecha">›</span>
+
+      </button>
+
+      ${evidenciaFotoHtml()}
 
       ${evidenciaGpsHtml()}
 
@@ -5967,9 +5939,6 @@ function renderTermino(tipo){
             🌿 ECO
           </option>
 
-          <option value="PIA">
-            🏭 PIA
-          </option>
 
           <option value="BASE">
             🏠 BASE
@@ -6032,20 +6001,32 @@ function renderTermino(tipo){
       
 
 
-      ${evidenciaFotoHtml()}
-
-<button
+      <button
         type="button"
         id="upvFinalTerminoBtn"
-        class="upv-action-final termino">
+        class="upv-action-final termino upv-accion-b">
 
-        ${
-          String(tipo).toUpperCase() === 'DESCARGA'
-            ? '✅ FINALIZÓ DESCARGA'
-            : '✅ FINALIZÓ CARGA'
-        }
+        <span class="upv-accion-b-icono">✓</span>
+
+        <span class="upv-accion-b-texto">
+          <strong>
+            ${
+              String(tipo).toUpperCase() === 'DESCARGA'
+                ? 'FINALIZÓ DESCARGA'
+                : 'FINALIZÓ CARGA'
+            }
+          </strong>
+
+          <small>
+            Toca aquí para finalizar
+          </small>
+        </span>
+
+        <span class="upv-accion-b-flecha">›</span>
 
       </button>
+
+      ${evidenciaFotoHtml()}
 
       ${evidenciaGpsHtml()}
 

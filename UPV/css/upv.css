@@ -949,3 +949,194 @@ body.upv-solo-portada #upv-update-banner.upv-update-banner {
   display: flex !important;
 }
 
+
+
+/* ==========================================================
+   UPV — BOTÓN PRINCIPAL DISEÑO B
+   Acción muy visible para operadores
+   ========================================================== */
+
+.upv-accion-b{
+  width:100%;
+  min-height:112px;
+  margin:28px 0 22px;
+  padding:18px 22px;
+
+  display:flex;
+  align-items:center;
+  gap:18px;
+
+  border:0;
+  border-radius:24px;
+
+  cursor:pointer;
+  text-align:left;
+
+  position:relative;
+  overflow:hidden;
+
+  box-shadow:
+    0 12px 26px rgba(15, 23, 42, .16),
+    inset 0 1px 0 rgba(255,255,255,.25);
+
+  transition:
+    transform .15s ease,
+    box-shadow .15s ease;
+}
+
+
+/* INICIAR */
+
+.upv-accion-b.inicio{
+  background:
+    linear-gradient(
+      135deg,
+      #1769e8 0%,
+      #2454c6 100%
+    );
+
+  color:#fff;
+}
+
+
+/* FINALIZAR */
+
+.upv-accion-b.termino{
+  background:
+    linear-gradient(
+      135deg,
+      #22a447 0%,
+      #16843a 100%
+    );
+
+  color:#fff;
+}
+
+
+/* CÍRCULO DEL ICONO */
+
+.upv-accion-b-icono{
+  width:66px;
+  height:66px;
+
+  flex:0 0 66px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:50%;
+
+  background:rgba(255,255,255,.20);
+
+  border:3px solid rgba(255,255,255,.92);
+
+  color:#fff;
+
+  font-size:32px;
+  font-weight:900;
+
+  line-height:1;
+
+  box-shadow:
+    0 5px 14px rgba(0,0,0,.15);
+}
+
+
+/* TEXTO */
+
+.upv-accion-b-texto{
+  flex:1;
+
+  display:flex;
+  flex-direction:column;
+
+  min-width:0;
+}
+
+
+.upv-accion-b-texto strong{
+  color:#fff;
+
+  font-size:24px;
+  font-weight:900;
+
+  line-height:1.1;
+
+  letter-spacing:.2px;
+}
+
+
+.upv-accion-b-texto small{
+  display:block;
+
+  margin-top:7px;
+
+  color:rgba(255,255,255,.86);
+
+  font-size:14px;
+  font-weight:650;
+
+  line-height:1.2;
+}
+
+
+/* FLECHA DERECHA */
+
+.upv-accion-b-flecha{
+  flex:0 0 auto;
+
+  color:rgba(255,255,255,.92);
+
+  font-size:42px;
+  font-weight:400;
+
+  line-height:1;
+}
+
+
+/* RESPUESTA AL TOQUE */
+
+.upv-accion-b:active{
+  transform:scale(.98);
+
+  box-shadow:
+    0 6px 14px rgba(15,23,42,.18);
+}
+
+
+/* TELÉFONOS PEQUEÑOS */
+
+@media (max-width:480px){
+
+  .upv-accion-b{
+    min-height:104px;
+    padding:16px 18px;
+    gap:15px;
+    border-radius:21px;
+  }
+
+  .upv-accion-b-icono{
+    width:58px;
+    height:58px;
+    flex-basis:58px;
+
+    font-size:28px;
+  }
+
+  .upv-accion-b-texto strong{
+    font-size:21px;
+  }
+
+  .upv-accion-b-texto small{
+    font-size:13px;
+  }
+
+  .upv-accion-b-flecha{
+    font-size:36px;
+  }
+}
+
+
+
+

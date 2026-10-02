@@ -434,14 +434,51 @@ functions
   .ref(
     UPV_PATH + '/{reportId}'
   )
-  .onCreate(
-    async (snap, context) => {
+  .onWrite(
+    async (change, context) => {
 
       const reportId =
         context.params.reportId;
 
+      const snap =
+        change.after;
+
+      if(!snap.exists()){
+        return null;
+      }
+
       const data =
         snap.val();
+
+      const before =
+        change.before.exists()
+          ? change.before.val()
+          : null;
+
+      /*
+       * FIFO / RETRY UPV:
+       *
+       * Procesar únicamente:
+       * 1. creación nueva con status pending
+       * 2. transición failed -> pending
+       *
+       * Los cambios pending -> sent y
+       * pending -> failed NO vuelven a enviar.
+       */
+      const esCreacion =
+        !before;
+
+      const esReintento =
+        !!before &&
+        before.whatsappStatus !== 'pending' &&
+        data.whatsappStatus === 'pending';
+
+      if(
+        !esCreacion &&
+        !esReintento
+      ){
+        return null;
+      }
 
       if(!data){
         return null;
