@@ -139,7 +139,8 @@
     if(
       !original ||
       !original.children ||
-      original.children.length === 0
+      original.children.length === 0 ||
+      original.querySelector('.hist-empty')
     ){
 
       lista.innerHTML = `
@@ -162,21 +163,230 @@
 
     elementos.forEach(function(elemento){
 
-      const copia =
-        elemento.cloneNode(true);
-
       /*
-       * Evitar IDs duplicados dentro del drawer.
+       * DISEÑO 1
+       * Convertimos visualmente la tarjeta original en una
+       * tarjeta compacta exclusiva del drawer.
+       *
+       * NO se modifica IndexedDB ni el registro original.
        */
-      copia
-        .querySelectorAll('[id]')
-        .forEach(function(nodo){
-          nodo.removeAttribute('id');
-        });
 
-      copia.removeAttribute('id');
+      const empresaNodo =
+        elemento.querySelector('.emp-tag');
 
-      lista.appendChild(copia);
+      const fechaNodo =
+        elemento.querySelector('.hist-item-header span:last-child');
+
+      const tituloNodo =
+        elemento.querySelector('.hist-item-title');
+
+      const detalleNodo =
+        elemento.querySelector('.hist-item-title + .fs13');
+
+      const syncNodo =
+        elemento.querySelector('.hist-item > .mt8.fs13:last-child');
+
+
+      const empresa =
+        empresaNodo
+          ? empresaNodo.textContent.trim()
+          : '';
+
+
+      const fecha =
+        fechaNodo
+          ? fechaNodo.textContent.trim()
+          : '';
+
+
+      const tituloOriginal =
+        tituloNodo
+          ? tituloNodo.textContent.trim()
+          : '';
+
+
+      const detalleOriginal =
+        detalleNodo
+          ? detalleNodo.textContent.trim()
+          : '';
+
+
+      const sincronizado =
+        syncNodo &&
+        /sincronizado/i.test(
+          syncNodo.textContent || ''
+        );
+
+
+      let operacion = '';
+      let punto = '';
+      let volumen = '';
+
+      const etapaRegistro =
+        String(
+          elemento.dataset.etapa || ''
+        )
+        .trim()
+        .toUpperCase();
+
+      let textoEtapa = '';
+
+
+      if(/^carga/i.test(tituloOriginal)){
+
+        operacion = 'CARGA';
+
+        const partes =
+          tituloOriginal
+            .split('·')
+            .map(function(x){
+              return x.trim();
+            });
+
+        /*
+         * El último elemento normalmente es el origen:
+         * PIA, ECO, pozo, etc.
+         */
+        if(partes.length >= 2){
+          punto = partes[partes.length - 1];
+        }
+
+        /*
+         * Solo mostrar BBLS cuando realmente existe.
+         * Evita "null bbls".
+         */
+        if(
+          detalleOriginal &&
+          !/^null\s*bbls$/i.test(detalleOriginal) &&
+          !/^undefined\s*bbls$/i.test(detalleOriginal)
+        ){
+          volumen = detalleOriginal
+            .replace(/bbls/i, 'BBLS');
+        }
+
+      }else if(/^descarga/i.test(tituloOriginal)){
+
+        operacion = 'DESCARGA';
+
+      }else if(/^obs/i.test(tituloOriginal)){
+
+        operacion = 'OBSERVACIÓN';
+
+        if(detalleOriginal){
+          punto = detalleOriginal;
+        }
+
+      }else{
+
+        operacion =
+          tituloOriginal.toUpperCase();
+
+      }
+
+
+      const tarjeta =
+        document.createElement('article');
+
+      tarjeta.className =
+        'upv-historial-card ' +
+        (
+          operacion === 'DESCARGA'
+            ? 'es-descarga'
+            : operacion === 'CARGA'
+              ? 'es-carga'
+              : 'es-otro'
+        );
+
+
+      if(operacion === 'CARGA'){
+        if(etapaRegistro === 'INICIO'){
+          textoEtapa = 'Inicio de carga';
+        }else if(etapaRegistro === 'FINALIZAR'){
+          textoEtapa = 'Finalización de carga';
+        }
+      }
+
+      if(operacion === 'DESCARGA'){
+        if(etapaRegistro === 'INICIO'){
+          textoEtapa = 'Inicio de descarga';
+        }else if(etapaRegistro === 'FINALIZAR'){
+          textoEtapa = 'Finalización de descarga';
+        }
+      }
+
+      const lineaDetalle =
+        [punto, volumen]
+          .filter(Boolean)
+          .join(' · ');
+
+
+      tarjeta.innerHTML = `
+        <div class="upv-historial-card-top">
+          <span class="upv-historial-card-empresa"></span>
+          <time class="upv-historial-card-hora"></time>
+        </div>
+
+        <div class="upv-historial-card-main">
+          <span class="upv-historial-card-tipo"></span>
+
+          ${
+            textoEtapa
+              ? '<span class="upv-historial-card-etapa"></span>'
+              : ''
+          }
+
+          ${
+            lineaDetalle
+              ? '<span class="upv-historial-card-detalle"></span>'
+              : ''
+          }
+        </div>
+
+        ${
+          sincronizado
+            ? '<span class="upv-historial-card-sync" title="Sincronizado">✓</span>'
+            : '<span class="upv-historial-card-sync pendiente" title="Pendiente">!</span>'
+        }
+      `;
+
+
+      tarjeta
+        .querySelector('.upv-historial-card-empresa')
+        .textContent = empresa;
+
+
+      tarjeta
+        .querySelector('.upv-historial-card-hora')
+        .textContent = fecha;
+
+
+      tarjeta
+        .querySelector('.upv-historial-card-tipo')
+        .textContent = operacion;
+
+
+      const etapaFinal =
+        tarjeta.querySelector(
+          '.upv-historial-card-etapa'
+        );
+
+      if(etapaFinal){
+        etapaFinal.textContent =
+          textoEtapa;
+      }
+
+      const detalleFinal =
+        tarjeta.querySelector(
+          '.upv-historial-card-detalle'
+        );
+
+      if(detalleFinal){
+        detalleFinal.textContent =
+          lineaDetalle;
+      }
+
+
+      lista.appendChild(tarjeta);
 
     });
 

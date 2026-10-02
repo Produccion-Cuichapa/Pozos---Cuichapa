@@ -18,10 +18,13 @@ const POZOS = [
   '180',
   '201',
   '207',
+  '352',
   '376',
   '377',
   '385',
   '401',
+  '500',
+  '505',
   '601',
   '602',
   '603'
@@ -994,21 +997,14 @@ function mensajeInicioDescargaSeleccionada(config){
       textoPozos +
       '* 🛢️',
 
-    '',
 
     '▶️ *INICIO DESCARGA*',
 
-    '',
 
     '🚛 *Proveedor:* ' +
       proveedorWhatsappUPV(
         empresaActiva(),
         leerUnidadSeleccionada()?.capacidadM3
-      ),
-
-    '🚚 *Unidad:* ' +
-      String(
-        unidad() || ''
       ),
 
     '',
@@ -1075,10 +1071,55 @@ function datosSeleccionPozosDescarga(){
 
 
 
+function idUnidadOperativa(){
+
+  const empresa =
+    empresaActiva();
+
+  const data =
+    leerUnidadSeleccionada();
+
+  const capacidad =
+    Number(data?.capacidadM3 || 0);
+
+  if(
+    empresa === 'PETROSMART' &&
+    capacidad === 30
+  ){
+    return 'PETROSMART_93';
+  }
+
+  if(
+    empresa === 'TC' &&
+    capacidad === 30
+  ){
+    return 'TC_184';
+  }
+
+  if(
+    empresa === 'TC' &&
+    capacidad === 22
+  ){
+    return 'TC_193';
+  }
+
+  return '';
+}
+
+
 function keyInicio(tipo){
-  return tipo === 'CARGA'
-    ? MEM.carga
-    : MEM.descarga;
+
+  const base =
+    tipo === 'CARGA'
+      ? MEM.carga
+      : MEM.descarga;
+
+  const unidadId =
+    idUnidadOperativa();
+
+  return unidadId
+    ? base + '_' + unidadId
+    : base + '_SIN_UNIDAD';
 }
 
 function leerInicio(tipo){
@@ -2344,12 +2385,6 @@ function formatoGpsWhatsappUPV(gps){
       gps?.lon
     );
 
-  const accuracy =
-    Number(
-      gps?.accuracy ??
-      gps?.precision
-    );
-
   const distancia =
     Number(
       gps?.distancia ??
@@ -2366,56 +2401,12 @@ function formatoGpsWhatsappUPV(gps){
     return '📍 GPS: NO DISPONIBLE';
   }
 
-
-  /*
-   * ========================================================
-   * DENTRO DE RANGO
-   * ========================================================
-   *
-   * No mostrar:
-   * - coordenadas
-   * - precisión
-   * - Maps
-   * - distancia
-   *
-   * Únicamente confirmación.
-   */
   if(
     Number.isFinite(distancia) &&
     distancia <= 80
   ){
     return '✅ DENTRO DE RANGO';
   }
-
-
-  /*
-   * ========================================================
-   * FUERA DE RANGO
-   * ========================================================
-   *
-   * Aquí sí mostramos toda la evidencia GPS.
-   */
-  let linea =
-    '📍 GPS: ' +
-    lat.toFixed(6) +
-    ', ' +
-    lng.toFixed(6);
-
-
-  if(Number.isFinite(accuracy)){
-    linea +=
-      ' (±' +
-      Math.round(accuracy) +
-      ' m)';
-  }
-
-
-  linea +=
-    '\n🗺 https://maps.google.com/?q=' +
-    lat +
-    ',' +
-    lng;
-
 
   if(Number.isFinite(distancia)){
 
@@ -2424,16 +2415,13 @@ function formatoGpsWhatsappUPV(gps){
         ? (distancia / 1000).toFixed(2) + ' km'
         : Math.round(distancia) + ' m';
 
-    linea +=
-      '\n⚠️ Fuera del rango del punto (' +
+    return '⚠️ FUERA DE RANGO (' +
       textoDistancia +
       ')';
   }
 
-
-  return linea;
+  return '⚠️ FUERA DE RANGO';
 }
-
 
 /*
  * Versión HTML para los resúmenes internos de UPV.
@@ -2496,12 +2484,16 @@ function formatoGpsHtmlUPV(gps){
           ? (distancia / 1000).toFixed(2) + ' km'
           : Math.round(distancia) + ' m';
 
-      estado = `
+      /*
+       * FUERA DE RANGO:
+       * mostrar únicamente la advertencia.
+       * Las coordenadas continúan disponibles internamente.
+       */
+      return `
         <div class="upv-confirm-row">
           <span>VALIDACIÓN</span>
           <strong>
-            ⚠️ Fuera del rango del punto
-            (${escaparHtml(textoDistancia)})
+            ⚠️ FUERA DE RANGO (${escaparHtml(textoDistancia)})
           </strong>
         </div>
       `;
@@ -2588,256 +2580,56 @@ async function validarGPSOperacionRapidaUPV(
 
   try{
 
-    if(!window.UPVGPS){
+    if(
+      !window.UPVGPS ||
+      typeof window.UPVGPS.validarReferenciaActual !== 'function'
+    ){
       return {
-        error:'Servicio GPS no disponible'
+        error:'Servicio GPS no disponible',
+        dentro:null,
+        distancia:null
       };
     }
 
     /*
-     * MISMO PRINCIPIO DE RECORREDORES:
-     * utilizar primero la ubicación que el GPS continuo
-     * ya mantiene disponible.
+     * CIRCUITO NO BLOQUEANTE.
+     *
+     * validarReferenciaActual() utiliza exclusivamente
+     * el GPS continuo que ya está disponible en caché.
+     *
+     * NO ejecuta getCurrentPosition().
+     * NO espera una nueva captura GPS.
+     *
+     * Además utiliza la tabla oficial centralizada de
+     * upv-confirmacion-gps.js, evitando mantener aquí
+     * una segunda lista de coordenadas.
      */
-    const gps =
-      typeof window.UPVGPS.obtenerGPSActual === 'function'
-        ? window.UPVGPS.obtenerGPSActual()
-        : null;
-
-    /*
-     * Si la app acaba de abrir y todavía no existe
-     * una lectura válida del GPS continuo, conservar
-     * el mecanismo anterior como respaldo.
-     */
-    if(!gps){
-      return await validarGPSOperacionUPV(
+    const resultado =
+      await window.UPVGPS.validarReferenciaActual(
         ubicacion,
         pozo
       );
-    }
-
-    const ubicacionNormalizada =
-      String(ubicacion || '')
-        .trim()
-        .toUpperCase();
-
-    /*
-     * POZO / BSC / PIA / ECO:
-     * necesitamos coordenadas oficiales para calcular
-     * distancia y radio.
-     *
-     * validarPozo() volvería a capturar GPS, por lo que
-     * aquí usamos las referencias oficiales que ya expone
-     * el propio resultado del sistema cuando corresponda.
-     */
-    const referencias = {
-
-      BSC:{
-        lat:17.942389,
-        lng:-94.297432
-      },
-
-      PIA:{
-        lat:17.940260,
-        lng:-94.301605
-      },
-
-      ECO:{
-        lat:17.946119,
-        lng:-94.283073
-      },
-
-      '19':{
-        lat:17.955136,
-        lng:-94.263964
-      },
-
-      '106D':{
-        lat:17.957444,
-        lng:-94.287753
-      },
-
-      '107':{
-        lat:17.953797,
-        lng:-94.280869
-      },
-
-      '137':{
-        lat:17.967892,
-        lng:-94.287797
-      },
-
-      '138':{
-        lat:17.971828,
-        lng:-94.287369
-      },
-
-      '139':{
-        lat:17.951825,
-        lng:-94.297089
-      },
-
-      '169':{
-        lat:17.935357,
-        lng:-94.274471
-      },
-
-      '172':{
-        lat:17.932064,
-        lng:-94.280831
-      },
-
-      '176':{
-        lat:17.937503,
-        lng:-94.271028
-      },
-
-      '179':{
-        lat:17.966961,
-        lng:-94.284103
-      },
-
-      '180':{
-        lat:17.942889,
-        lng:-94.300467
-      },
-
-      '201':{
-        lat:17.926681,
-        lng:-94.290647
-      },
-
-      '207':{
-        lat:17.924742,
-        lng:-94.293919
-      },
-
-      '376':{
-        lat:17.927106,
-        lng:-94.292572
-      },
-
-      '377':{
-        lat:17.926603,
-        lng:-94.287797
-      },
-
-      '385':{
-        lat:17.923300,
-        lng:-94.292781
-      },
-
-      '401':{
-        lat:17.935633,
-        lng:-94.287222
-      },
-
-      '601':{
-        lat:17.952008,
-        lng:-94.264047
-      },
-
-      '602':{
-        lat:17.951783,
-        lng:-94.263978
-      },
-
-      '603':{
-        lat:17.957717,
-        lng:-94.291701
-      }
-
-    };
-
-    let clave = '';
 
     if(
-      ubicacionNormalizada === 'POZO'
+      !resultado ||
+      resultado.error
     ){
-      clave =
-        String(pozo || '')
-          .trim()
-          .toUpperCase()
-          .replace(/^C-/,'');
-    }
-    else if(
-      ubicacionNormalizada === 'BSC' ||
-      ubicacionNormalizada === 'PIA' ||
-      ubicacionNormalizada === 'ECO'
-    ){
-      clave = ubicacionNormalizada;
-    }
-
-    /*
-     * Ubicación general sin radio específico.
-     */
-    if(!clave){
-
       return {
-        tipo:'GENERAL',
-        lat:gps.lat,
-        lng:gps.lng,
-        accuracy:gps.accuracy,
-        timestamp:gps.timestamp
+        ...(resultado || {}),
+        error:
+          resultado?.error ||
+          'GPS no disponible',
+        dentro:
+          resultado?.dentro ?? null,
+        distancia:
+          resultado?.distancia ?? null,
+        fuente:'GPS_CONTINUO'
       };
     }
-
-    const referencia =
-      referencias[clave];
-
-    if(!referencia){
-
-      return {
-        tipo:'POZO',
-        pozo:clave,
-        lat:gps.lat,
-        lng:gps.lng,
-        accuracy:gps.accuracy,
-        dentro:null,
-        distancia:null,
-        referenciaDisponible:false
-      };
-    }
-
-    const distancia =
-      window.UPVGPS.distanciaMetros(
-        gps.lat,
-        gps.lng,
-        referencia.lat,
-        referencia.lng
-      );
 
     return {
-
-      tipo:'POZO',
-
-      pozo:clave,
-
-      lat:gps.lat,
-      lng:gps.lng,
-
-      accuracy:gps.accuracy,
-
-      destinoLat:
-        referencia.lat,
-
-      destinoLng:
-        referencia.lng,
-
-      distancia,
-
-      dentro:
-        distancia <=
-        Number(
-          window.UPVGPS.RADIO_POZO_M || 80
-        ),
-
-      referenciaDisponible:true,
-
-      timestamp:gps.timestamp,
-
+      ...resultado,
       fuente:'GPS_CONTINUO'
-
     };
 
   }catch(error){
@@ -2848,13 +2640,15 @@ async function validarGPSOperacionRapidaUPV(
     );
 
     /*
-     * Si algo excepcional ocurre en el circuito rápido,
-     * conservar el validador anterior.
+     * Ante cualquier error, responder inmediatamente.
+     * No caer al capturador GPS bloqueante.
      */
-    return await validarGPSOperacionUPV(
-      ubicacion,
-      pozo
-    );
+    return {
+      error:'GPS no disponible',
+      dentro:null,
+      distancia:null,
+      fuente:'GPS_CONTINUO'
+    };
   }
 }
 
@@ -2997,19 +2791,23 @@ function lineasGpsWhatsappUPV(gps){
     }
 
 
+    const distancia =
+      Number(gps.distancia);
+
+    const textoDistancia =
+      Number.isFinite(distancia)
+        ? (
+            distancia >= 1000
+              ? (distancia / 1000).toFixed(2) + ' km'
+              : Math.round(distancia) + ' m'
+          )
+        : '';
+
     return [
       '',
-      '⚠️ *FUERA DE RANGO*',
-      '📏 Distancia: *' +
-        Math.round(
-          Number(gps.distancia)
-        ) +
-        ' m*',
-      '📍 Ubicación de envío: *' +
-        Number(gps.lat).toFixed(6) +
-        ', ' +
-        Number(gps.lng).toFixed(6) +
-        '*'
+      textoDistancia
+        ? '⚠️ *FUERA DE RANGO (' + textoDistancia + ')*'
+        : '⚠️ *FUERA DE RANGO*'
     ];
   }
 
@@ -3153,20 +2951,26 @@ function mensajeWhatsappInicio(config){
 
     '🛢️ *' + lugar + '* 🛢️',
     '*' + actividad + '*',
-    '',
 
     'Proveedor: *' +
       proveedorWhatsappUPV(
         empresa,
         leerUnidadSeleccionada()?.capacidadM3
       ) +
-      '*',
-
-    'Unidad: *' +
-      unidad +
       '*'
 
   ];
+
+  /*
+   * Evitar doble espacio antes de Inicio cuando
+   * la línea adicional de destino no aplica.
+   */
+  if(
+    lineas.length &&
+    lineas[lineas.length - 1] === ''
+  ){
+    lineas.pop();
+  }
 
   lineas.push(
     ...observacionWhatsappUPV(
@@ -3361,7 +3165,6 @@ function mensajeWhatsappTermino(config){
         ),
 
     '*' + actividad + '*',
-    '',
 
     'Proveedor: *' +
       proveedorWhatsappUPV(
@@ -3370,17 +3173,11 @@ function mensajeWhatsappTermino(config){
       ) +
       '*',
 
-    'Unidad: *' +
-      unidad +
-      '*',
-
     '',
 
     'Volumen: *' +
       Number(cantidadM3).toFixed(2) +
       ' m³*',
-
-    '',
 
     /*
      * En descarga mostramos explícitamente
@@ -3424,6 +3221,17 @@ function mensajeWhatsappTermino(config){
   );
 
   if(inicio?.hora){
+
+    /*
+     * Exactamente UN renglón vacío antes de Inicio.
+     * Eliminamos vacíos previos para evitar duplicados.
+     */
+    while(
+      lineas.length &&
+      lineas[lineas.length - 1] === ''
+    ){
+      lineas.pop();
+    }
 
     lineas.push(
       '',
@@ -3528,6 +3336,21 @@ function confirmarUPVVisual(config){
     const mensaje =
       config.mensajeWhatsapp || '';
 
+    /*
+     * Evidencia fotográfica REAL del momento
+     * de abrir la vista previa.
+     */
+    const fotosPreview =
+      Array.isArray(config.fotos)
+        ? config.fotos.slice(0, 3)
+        : (
+            typeof UPV !== 'undefined' &&
+            UPV &&
+            Array.isArray(UPV.fotosOperacion)
+          )
+            ? UPV.fotosOperacion.slice(0, 3)
+            : [];
+
     const overlay =
       document.createElement('div');
 
@@ -3580,6 +3403,38 @@ function confirmarUPVVisual(config){
             </div>
 
           </div>
+
+          ${
+            fotosPreview.length
+              ? `
+                <div style="
+                  margin-top:14px;
+                  padding:12px;
+                  background:#fff;
+                  border-radius:14px;
+                  border:1px solid #e5e7eb;
+                ">
+                  <div style="
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    gap:10px;
+                    margin-bottom:8px;
+                    color:#475467;
+                    font-size:12px;
+                    font-weight:800;
+                  ">
+                    <span>EVIDENCIA FOTOGRÁFICA</span>
+                    <span>${fotosPreview.length}/3</span>
+                  </div>
+
+                  ${upvMiniaturasHtml(
+                    fotosPreview
+                  )}
+                </div>
+              `
+              : ''
+          }
 
         </div>
 
@@ -3898,18 +3753,32 @@ function renderInicio(tipo){
       
 
 
-      ${evidenciaFotoHtml()}
+      <button
+        type="button"
+        class="upv-action-final inicio upv-accion-b"
+        id="upvFinalInicioBtn">
 
-<button
-            type="button"
-            class="upv-action-final inicio"
-            id="upvFinalInicioBtn">
+        <span class="upv-accion-b-icono">▶</span>
+
+        <span class="upv-accion-b-texto">
+          <strong>
             ${
               String(tipo).toUpperCase() === 'DESCARGA'
-                ? '▶️ INICIAR DESCARGA'
-                : '▶️ INICIAR CARGA'
+                ? 'INICIAR DESCARGA'
+                : 'INICIAR CARGA'
             }
-          </button>
+          </strong>
+
+          <small>
+            Toca aquí para comenzar
+          </small>
+        </span>
+
+        <span class="upv-accion-b-flecha">›</span>
+
+      </button>
+
+      ${evidenciaFotoHtml()}
 
       ${evidenciaGpsHtml()}
 
@@ -4498,6 +4367,43 @@ function renderInicio(tipo){
          * operativo en localStorage como para generar
          * el reporte offline-first.
          */
+        /*
+         * Guardar evidencia fotográfica de CARGA / DESCARGA
+         * en IndexedDB antes de crear el reporte.
+         */
+        const fotoIdsOperacionInicio = [];
+
+        if(
+          typeof UPV !== 'undefined' &&
+          UPV &&
+          Array.isArray(UPV.fotosOperacion)
+        ){
+          for(const foto of UPV.fotosOperacion){
+
+            if(!foto || !foto.id) continue;
+
+            if(
+              typeof window.idbPut ===
+              'function'
+            ){
+              await window.idbPut(
+                'fotos',
+                foto
+              );
+            }
+
+            fotoIdsOperacionInicio.push(
+              foto.id
+            );
+          }
+        }
+
+        console.log(
+          '[UPV-FOTOS] Inicio:',
+          fotoIdsOperacionInicio.length
+        );
+
+
         const registroInicio = {
 
           ...momento,
@@ -4512,6 +4418,21 @@ function renderInicio(tipo){
 
           empresa:
             empresaActiva(),
+
+          unidadId:
+            idUnidadOperativa(),
+
+          capacidadUnidadM3:
+            leerUnidadSeleccionada()?.capacidadM3 || null,
+
+          unidadNombre:
+            idUnidadOperativa() === 'TC_184'
+              ? 'TC 184'
+              : idUnidadOperativa() === 'TC_193'
+                ? 'TC 193'
+                : idUnidadOperativa() === 'PETROSMART_93'
+                  ? 'PETROSMART'
+                  : empresaActiva(),
 
           origen,
 
@@ -4566,6 +4487,43 @@ function renderInicio(tipo){
           mensajeWhatsapp:
             mensajeWA,
 
+          /*
+           * Referencias de evidencia para que upv.js
+           * recupere las imágenes y las mande a Firebase.
+           */
+          fotoIds:
+            fotoIdsOperacionInicio,
+
+          /*
+           * MISMA LÓGICA DE RECORREDORES:
+           * la evidencia viaja directamente en el reporte.
+           */
+          fotos:
+            (
+              typeof UPV !== 'undefined' &&
+              UPV &&
+              Array.isArray(UPV.fotosOperacion)
+            )
+              ? UPV.fotosOperacion.map(function(f){
+                  return {
+                    data:
+                      f.data ||
+                      f.dataUrl ||
+                      '',
+                    nombre:
+                      f.nombre ||
+                      'foto.jpg',
+                    size:
+                      f.sizeComprimido ||
+                      (
+                        f.dataUrl
+                          ? f.dataUrl.length
+                          : 0
+                      )
+                  };
+                })
+              : [],
+
           createdAt:
             new Date().toISOString()
 
@@ -4609,6 +4567,30 @@ function renderInicio(tipo){
 
             await window.guardarRegistroFinalUPV(
               registroInicio
+            );
+
+            /*
+             * La evidencia de INICIO ya quedó capturada
+             * dentro de registroInicio.
+             *
+             * No debe heredarse a FINALIZACIÓN.
+             */
+            if(
+              typeof UPV !== 'undefined' &&
+              UPV &&
+              Array.isArray(UPV.fotosOperacion)
+            ){
+              UPV.fotosOperacion = [];
+            }
+
+            if(
+              typeof window.renderFotos === 'function'
+            ){
+              window.renderFotos('operacion');
+            }
+
+            console.log(
+              '[UPV-FOTOS] Evidencia de INICIO limpiada para FINALIZACIÓN'
             );
 
             console.log(
@@ -5331,7 +5313,153 @@ function evidenciaHtml(){
 }
 
 
-function activarEvidencia(){
+
+/*
+ * ============================================================
+ * MINIATURAS DE EVIDENCIA UPV
+ * ============================================================
+ * Usa las fotografías YA procesadas/comprimidas por upv.js.
+ * No crea copias nuevas de las imágenes.
+ */
+function upvFotosActuales(modulo){
+
+  if(
+    typeof UPV === 'undefined' ||
+    !UPV
+  ){
+    return [];
+  }
+
+  const lista =
+    modulo === 'observacion'
+      ? UPV.fotosObservacion
+      : UPV.fotosOperacion;
+
+  return Array.isArray(lista)
+    ? lista.slice(0, 3)
+    : [];
+}
+
+
+function upvMiniaturasHtml(fotos){
+
+  if(
+    !Array.isArray(fotos) ||
+    !fotos.length
+  ){
+    return '';
+  }
+
+  return `
+    <div style="
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:8px;
+      margin-top:10px;
+    ">
+      ${fotos.map(function(f, i){
+
+        const src =
+          f && (
+            f.dataUrl ||
+            f.data ||
+            ''
+          );
+
+        if(!src){
+          return '';
+        }
+
+        return `
+          <div style="
+            position:relative;
+            aspect-ratio:1/1;
+            overflow:hidden;
+            border-radius:12px;
+            background:#eef2f6;
+            border:1px solid #d8dee9;
+          ">
+            <img
+              src="${src}"
+              alt="Evidencia ${i + 1}"
+              style="
+                width:100%;
+                height:100%;
+                object-fit:cover;
+                display:block;
+              "
+            >
+            <div style="
+              position:absolute;
+              right:5px;
+              bottom:5px;
+              min-width:22px;
+              height:22px;
+              padding:0 5px;
+              border-radius:11px;
+              display:flex;
+              align-items:center;
+              justify-content:center;
+              background:rgba(0,0,0,.68);
+              color:#fff;
+              font-size:11px;
+              font-weight:800;
+            ">
+              ${i + 1}
+            </div>
+          </div>
+        `;
+
+      }).join('')}
+    </div>
+  `;
+}
+
+
+function actualizarMiniaturasEvidenciaUPV(modulo){
+
+  const estado =
+    document.getElementById(
+      'upvFinalFotosEstado'
+    );
+
+  if(!estado){
+    return;
+  }
+
+  const fotos =
+    upvFotosActuales(modulo);
+
+  const cantidad =
+    fotos.length;
+
+  if(!cantidad){
+
+    estado.innerHTML = '';
+
+    return;
+  }
+
+  estado.innerHTML = `
+    <div style="
+      margin-top:10px;
+      color:#344054;
+      font-size:13px;
+      font-weight:700;
+    ">
+      ✓ ${cantidad}/3
+      ${cantidad === 1
+        ? 'imagen lista'
+        : 'imágenes listas'}
+    </div>
+
+    ${upvMiniaturasHtml(fotos)}
+  `;
+}
+
+
+
+function activarEvidencia(modulo = 'operacion'){
 
   const fotosInput =
     document.getElementById(
@@ -5520,7 +5648,30 @@ function activarEvidencia(){
         try{
           window.procesarFotos(
             e.target.files,
-            'operacion'
+            modulo
+          );
+
+          /*
+           * procesarFotos() comprime de forma asíncrona.
+           * Actualizamos mientras termina y hacemos una
+           * segunda actualización al finalizar la compresión.
+           */
+          setTimeout(
+            function(){
+              actualizarMiniaturasEvidenciaUPV(
+                modulo
+              );
+            },
+            100
+          );
+
+          setTimeout(
+            function(){
+              actualizarMiniaturasEvidenciaUPV(
+                modulo
+              );
+            },
+            900
           );
         }catch(err){
           console.warn(err);
@@ -5601,6 +5752,31 @@ function renderTermino(tipo){
   const r = root();
 
   if(!r) return;
+
+  /*
+   * FINALIZACIÓN SIEMPRE INICIA CON EVIDENCIA NUEVA.
+   *
+   * Las fotos del INICIO ya pertenecen al registro de INICIO
+   * y no deben reutilizarse en FINALIZACIÓN.
+   */
+  if(
+    typeof UPV !== 'undefined' &&
+    UPV &&
+    Array.isArray(UPV.fotosOperacion)
+  ){
+    UPV.fotosOperacion = [];
+  }
+
+  const inputFotoOperacion =
+    document.getElementById('foto-input-operacion');
+
+  if(inputFotoOperacion){
+    inputFotoOperacion.value = '';
+  }
+
+  console.log(
+    '[UPV-FOTOS] FINALIZACIÓN inicia con 0 fotos'
+  );
 
   const inicio = leerInicio(tipo);
 
@@ -5763,9 +5939,6 @@ function renderTermino(tipo){
             🌿 ECO
           </option>
 
-          <option value="PIA">
-            🏭 PIA
-          </option>
 
           <option value="BASE">
             🏠 BASE
@@ -5828,20 +6001,32 @@ function renderTermino(tipo){
       
 
 
-      ${evidenciaFotoHtml()}
-
-<button
+      <button
         type="button"
         id="upvFinalTerminoBtn"
-        class="upv-action-final termino">
+        class="upv-action-final termino upv-accion-b">
 
-        ${
-          String(tipo).toUpperCase() === 'DESCARGA'
-            ? '✅ FINALIZÓ DESCARGA'
-            : '✅ FINALIZÓ CARGA'
-        }
+        <span class="upv-accion-b-icono">✓</span>
+
+        <span class="upv-accion-b-texto">
+          <strong>
+            ${
+              String(tipo).toUpperCase() === 'DESCARGA'
+                ? 'FINALIZÓ DESCARGA'
+                : 'FINALIZÓ CARGA'
+            }
+          </strong>
+
+          <small>
+            Toca aquí para finalizar
+          </small>
+        </span>
+
+        <span class="upv-accion-b-flecha">›</span>
 
       </button>
+
+      ${evidenciaFotoHtml()}
 
       ${evidenciaGpsHtml()}
 
@@ -6194,6 +6379,43 @@ function renderTermino(tipo){
           leerUnidadSeleccionada();
 
 
+        /*
+         * Guardar evidencia fotográfica de la FINALIZACIÓN
+         * antes de generar el reporte offline-first.
+         */
+        const fotoIdsOperacionFinal = [];
+
+        if(
+          typeof UPV !== 'undefined' &&
+          UPV &&
+          Array.isArray(UPV.fotosOperacion)
+        ){
+          for(const foto of UPV.fotosOperacion){
+
+            if(!foto || !foto.id) continue;
+
+            if(
+              typeof window.idbPut ===
+              'function'
+            ){
+              await window.idbPut(
+                'fotos',
+                foto
+              );
+            }
+
+            fotoIdsOperacionFinal.push(
+              foto.id
+            );
+          }
+        }
+
+        console.log(
+          '[UPV-FOTOS] Finalización:',
+          fotoIdsOperacionFinal.length
+        );
+
+
         const registro = {
 
           tipo,
@@ -6202,6 +6424,18 @@ function renderTermino(tipo){
 
           empresa:
             empresaActiva(),
+
+          unidadId:
+            idUnidadOperativa(),
+
+          unidadNombre:
+            idUnidadOperativa() === 'TC_184'
+              ? 'TC 184'
+              : idUnidadOperativa() === 'TC_193'
+                ? 'TC 193'
+                : idUnidadOperativa() === 'PETROSMART_93'
+                  ? 'PETROSMART'
+                  : empresaActiva(),
 
           unidad:
             unidad(),
@@ -6271,6 +6505,42 @@ function renderTermino(tipo){
           observaciones:
             observacionesOperacion,
 
+          /*
+           * Evidencia fotográfica de esta finalización.
+           */
+          fotoIds:
+            fotoIdsOperacionFinal,
+
+          /*
+           * MISMA LÓGICA DE RECORREDORES:
+           * la evidencia viaja directamente en el reporte.
+           */
+          fotos:
+            (
+              typeof UPV !== 'undefined' &&
+              UPV &&
+              Array.isArray(UPV.fotosOperacion)
+            )
+              ? UPV.fotosOperacion.map(function(f){
+                  return {
+                    data:
+                      f.data ||
+                      f.dataUrl ||
+                      '',
+                    nombre:
+                      f.nombre ||
+                      'foto.jpg',
+                    size:
+                      f.sizeComprimido ||
+                      (
+                        f.dataUrl
+                          ? f.dataUrl.length
+                          : 0
+                      )
+                  };
+                })
+              : [],
+
           etapa:
             'FINALIZAR',
 
@@ -6308,8 +6578,8 @@ function renderTermino(tipo){
 
           }else{
 
-            console.warn(
-              '[UPV-FINAL] guardarRegistroFinalUPV no disponible'
+            throw new Error(
+              'guardarRegistroFinalUPV no disponible'
             );
 
           }
@@ -6322,10 +6592,28 @@ function renderTermino(tipo){
           );
 
           /*
-           * No rompemos la operación visual.
-           * El registro sigue disponible en
-           * window.UPV_FINAL_REGISTRO.
+           * SEGURIDAD OPERATIVA:
+           *
+           * Si IndexedDB no confirmó el guardado,
+           * NO borrar el INICIO y NO mostrar la
+           * operación como finalizada.
+           *
+           * Así el operador puede volver a intentar
+           * sin perder el estado de la operación.
            */
+          if(
+            typeof mostrarError === 'function'
+          ){
+            mostrarError(
+              'No fue posible guardar la finalización. Intenta nuevamente.'
+            );
+          }else{
+            alert(
+              'No fue posible guardar la finalización. Intenta nuevamente.'
+            );
+          }
+
+          return;
         }
 
 
@@ -6581,20 +6869,22 @@ function renderObs(){
 
       </div>
 
-      ${evidenciaHtml()}
+      ${evidenciaFotoHtml()}
 
       <button
         type="button"
         class="upv-action-final observacion"
         id="upvFinalGuardarObs">
-        💾 GUARDAR OBSERVACIÓN
+        ENVIAR OBSERVACIÓN
       </button>
+
+      ${evidenciaGpsHtml()}
 
     </section>
   `;
 
   activarBack();
-  activarEvidencia();
+  activarEvidencia('observacion');
 
   activarPanelPermisosUPV();
 
@@ -6620,6 +6910,532 @@ function renderObs(){
  * GUARDAR OBSERVACIÓN — FORMULARIO NUEVO
  * ==========================================================
  */
+let upvObsConfirmando = false;
+
+
+/*
+ * ==========================================================
+ * VISTA PREVIA — OBSERVACIÓN DE CAMPO
+ * ==========================================================
+ */
+function abrirVistaPreviaObservacionUPV(datos){
+
+  document
+    .getElementById('upvObsPreviewOverlay')
+    ?.remove();
+
+  const escapar = function(valor){
+    return String(valor ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+
+  const overlay =
+    document.createElement('div');
+
+  overlay.id =
+    'upvObsPreviewOverlay';
+
+  overlay.style.cssText = `
+    position:fixed;
+    inset:0;
+    z-index:99999;
+    background:rgba(8,18,35,.62);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    box-sizing:border-box;
+  `;
+
+  let gpsHtml = `
+    <div style="
+      margin-top:16px;
+      padding:12px 14px;
+      border-radius:12px;
+      background:#f4f7fb;
+      color:#667085;
+      font-size:13px;
+    ">
+      Ubicación no disponible
+    </div>
+  `;
+
+  if(
+    datos.gps &&
+    Number.isFinite(Number(datos.gps.lat)) &&
+    Number.isFinite(Number(datos.gps.lng))
+  ){
+
+    const lat =
+      Number(datos.gps.lat).toFixed(6);
+
+    const lng =
+      Number(datos.gps.lng).toFixed(6);
+
+    const precision =
+      Number.isFinite(Number(datos.gps.accuracy))
+        ? Math.round(Number(datos.gps.accuracy))
+        : null;
+
+    gpsHtml = `
+      <div style="
+        margin-top:16px;
+        padding:12px 14px;
+        border-radius:12px;
+        background:#f4f7fb;
+        color:#475467;
+        font-size:13px;
+        line-height:1.5;
+      ">
+        <strong>Ubicación actual</strong><br>
+        ${lat}, ${lng}${
+          precision !== null
+            ? ` · ±${precision} m`
+            : ''
+        }
+      </div>
+    `;
+  }
+
+  const cantidadFotos =
+    Array.isArray(datos.fotos)
+      ? datos.fotos.length
+      : 0;
+
+  overlay.innerHTML = `
+    <div style="
+      width:min(100%,460px);
+      max-height:88vh;
+      overflow:auto;
+      background:#fff;
+      border-radius:20px;
+      box-shadow:0 22px 60px rgba(0,0,0,.28);
+    ">
+
+      <div style="
+        padding:20px 20px 14px;
+        border-bottom:1px solid #e8edf4;
+      ">
+        <div style="
+          color:#667085;
+          font-size:12px;
+          font-weight:700;
+          letter-spacing:.06em;
+        ">
+          VISTA PREVIA
+        </div>
+
+        <div style="
+          margin-top:5px;
+          color:#172b4d;
+          font-size:20px;
+          font-weight:800;
+        ">
+          OBSERVACIÓN DE CAMPO
+        </div>
+      </div>
+
+      <div style="padding:18px 20px;">
+
+        <div style="
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:10px;
+        ">
+
+          <div style="
+            background:#f7f9fc;
+            border-radius:12px;
+            padding:12px;
+          ">
+            <div style="
+              font-size:11px;
+              color:#7a869a;
+              font-weight:700;
+            ">
+              UNIDAD
+            </div>
+
+            <div style="
+              margin-top:4px;
+              color:#172b4d;
+              font-weight:800;
+            ">
+              ${escapar(datos.unidad)}
+            </div>
+          </div>
+
+          <div style="
+            background:#f7f9fc;
+            border-radius:12px;
+            padding:12px;
+          ">
+            <div style="
+              font-size:11px;
+              color:#7a869a;
+              font-weight:700;
+            ">
+              TIPO
+            </div>
+
+            <div style="
+              margin-top:4px;
+              color:#172b4d;
+              font-weight:800;
+            ">
+              ${escapar(datos.tipo)}
+            </div>
+          </div>
+
+        </div>
+
+        <div style="
+          margin-top:14px;
+          color:#667085;
+          font-size:11px;
+          font-weight:700;
+        ">
+          OBSERVACIÓN
+        </div>
+
+        <div style="
+          margin-top:6px;
+          padding:14px;
+          background:#f7f9fc;
+          border-radius:12px;
+          color:#172b4d;
+          font-size:15px;
+          line-height:1.5;
+          white-space:pre-wrap;
+        ">${escapar(datos.texto)}</div>
+
+        <div style="
+          display:flex;
+          justify-content:space-between;
+          gap:12px;
+          margin-top:14px;
+          color:#667085;
+          font-size:13px;
+        ">
+          <span>${escapar(datos.fecha)}</span>
+          <span>${escapar(datos.hora)}</span>
+        </div>
+
+        ${gpsHtml}
+
+        <div style="
+          margin-top:16px;
+          color:#667085;
+          font-size:13px;
+        ">
+          <div style="
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:10px;
+          ">
+            <strong style="color:#344054;">
+              Evidencia fotográfica
+            </strong>
+
+            <span>
+              ${cantidadFotos}/3
+            </span>
+          </div>
+
+          ${upvMiniaturasHtml(
+            Array.isArray(datos.fotos)
+              ? datos.fotos.slice(0,3)
+              : []
+          )}
+        </div>
+
+      </div>
+
+      <div style="
+        display:grid;
+        grid-template-columns:1fr 1.25fr;
+        gap:10px;
+        padding:14px 20px 20px;
+      ">
+
+        <button
+          type="button"
+          id="upvObsPreviewCancelar"
+          style="
+            min-height:48px;
+            border:1px solid #d8dee9;
+            border-radius:12px;
+            background:#fff;
+            color:#344054;
+            font-weight:800;
+            cursor:pointer;
+          ">
+          CANCELAR
+        </button>
+
+        <button
+          type="button"
+          id="upvObsPreviewConfirmar"
+          style="
+            min-height:48px;
+            border:0;
+            border-radius:12px;
+            background:#172b4d;
+            color:#fff;
+            font-weight:800;
+            cursor:pointer;
+          ">
+          CONFIRMAR ENVÍO
+        </button>
+
+      </div>
+
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+
+  document
+    .getElementById('upvObsPreviewCancelar')
+    ?.addEventListener(
+      'click',
+      function(){
+
+        if(upvObsConfirmando) return;
+
+        overlay.remove();
+
+      }
+    );
+
+
+  document
+    .getElementById('upvObsPreviewConfirmar')
+    ?.addEventListener(
+      'click',
+      async function(){
+
+        if(upvObsConfirmando) return;
+
+        upvObsConfirmando = true;
+
+        const boton = this;
+
+        boton.disabled = true;
+        boton.textContent = 'ENVIANDO...';
+        boton.style.opacity = '.65';
+
+        try{
+
+          /*
+           * Guardar primero las fotografías procesadas
+           * en IndexedDB.
+           */
+          const fotos =
+            Array.isArray(datos.fotos)
+              ? datos.fotos
+              : [];
+
+          const fotoIds = [];
+
+          for(const foto of fotos){
+
+            if(!foto || !foto.id) continue;
+
+            if(
+              typeof window.idbPut ===
+              'function'
+            ){
+              await window.idbPut(
+                'fotos',
+                foto
+              );
+            }
+
+            fotoIds.push(foto.id);
+          }
+
+
+          if(
+            typeof window.guardarRegistroFinalUPV !==
+            'function'
+          ){
+            throw new Error(
+              'No está disponible guardarRegistroFinalUPV'
+            );
+          }
+
+
+          /*
+           * UNA sola entrada al circuito oficial UPV.
+           * No se llama UltraMsg directamente.
+           */
+          await window.guardarRegistroFinalUPV({
+
+            tipo:'OBSERVACION',
+
+            subtipo:'CAMPO',
+
+            etapa:'REGISTRO',
+
+            empresa:
+              typeof empresaActiva === 'function'
+                ? empresaActiva()
+                : null,
+
+            unidad:
+              datos.unidad,
+
+            unidadId:
+              typeof idUnidadOperativa === 'function'
+                ? idUnidadOperativa()
+                : null,
+
+            unidadNombre:
+              idUnidadOperativa() === 'PETROSMART_93'
+                ? 'PETROSMART'
+                : idUnidadOperativa() === 'TC_184'
+                  ? 'TC 184'
+                  : idUnidadOperativa() === 'TC_193'
+                    ? 'TC 193'
+                    : datos.unidad,
+
+            capacidadUnidadM3:
+              Number(
+                leerUnidadSeleccionada()?.capacidadM3 || 0
+              ),
+
+            observaciones:
+              datos.texto,
+
+            gps:
+              datos.gps,
+
+            mensajeWhatsapp:
+              datos.mensaje,
+
+            fotoIds:
+              fotoIds,
+
+            fecha:
+              datos.createdAt,
+
+            createdAt:
+              datos.createdAt
+
+          });
+
+
+          /*
+           * Limpiar únicamente evidencia de Observación.
+           */
+          if(
+            typeof UPV !== 'undefined' &&
+            UPV
+          ){
+            UPV.fotosObservacion = [];
+          }
+
+
+          overlay.remove();
+
+
+          /*
+           * Volver al formulario limpio.
+           */
+          renderObs();
+
+
+          /*
+           * Mensaje discreto dentro de la app.
+           */
+          const aviso =
+            document.createElement('div');
+
+          aviso.textContent =
+            '✓ Observación registrada para envío';
+
+          aviso.style.cssText = `
+            position:fixed;
+            left:50%;
+            bottom:24px;
+            transform:translateX(-50%);
+            z-index:100000;
+            background:#172b4d;
+            color:#fff;
+            padding:12px 18px;
+            border-radius:12px;
+            font-size:14px;
+            font-weight:700;
+            box-shadow:0 10px 30px rgba(0,0,0,.22);
+            white-space:nowrap;
+          `;
+
+          document.body.appendChild(aviso);
+
+          setTimeout(
+            function(){
+              aviso.remove();
+            },
+            2600
+          );
+
+        }catch(error){
+
+          console.error(
+            '[UPV OBS] Error al confirmar:',
+            error
+          );
+
+          boton.disabled = false;
+          boton.textContent =
+            'CONFIRMAR ENVÍO';
+
+          boton.style.opacity = '1';
+
+          const errorNodo =
+            document.createElement('div');
+
+          errorNodo.textContent =
+            'No se pudo guardar la observación. Intenta nuevamente.';
+
+          errorNodo.style.cssText = `
+            grid-column:1/-1;
+            color:#b42318;
+            background:#fef3f2;
+            padding:10px;
+            border-radius:10px;
+            font-size:13px;
+            font-weight:700;
+          `;
+
+          boton
+            .parentElement
+            ?.prepend(errorNodo);
+
+        }finally{
+
+          upvObsConfirmando = false;
+
+        }
+
+      }
+    );
+
+}
+
+
+/*
+ * ==========================================================
+ * ENVIAR OBSERVACIÓN — FORMULARIO NUEVO
+ * ==========================================================
+ */
 async function guardarObservacionFinalUPV(){
 
   const unidad =
@@ -6628,6 +7444,25 @@ async function guardarObservacionFinalUPV(){
         'upvFinalObsUnidad'
       )?.value || ''
     ).trim();
+
+  const empresaObs =
+    String(
+      typeof empresaActiva === 'function'
+        ? empresaActiva()
+        : ''
+    ).trim().toUpperCase();
+
+  let unidadObs = unidad;
+
+  /*
+   * En Observaciones identificamos proveedor + capacidad
+   * para evitar confundir las unidades de 30 m³.
+   */
+  if(empresaObs === 'PETROSMART'){
+    unidadObs = 'PETROSMART ' + unidad;
+  }else if(empresaObs === 'TC'){
+    unidadObs = 'TC ' + unidad;
+  }
 
   const tipo =
     String(
@@ -6646,41 +7481,28 @@ async function guardarObservacionFinalUPV(){
 
   if(!unidad){
 
-    alert(
-      'Ingresa la unidad.'
-    );
-
+    alert('Ingresa la unidad.');
     return;
-  }
 
+  }
 
   if(!tipo){
 
-    alert(
-      'Selecciona el tipo de observación.'
-    );
-
+    alert('Selecciona el tipo de observación.');
     return;
-  }
 
+  }
 
   if(!texto){
 
-    alert(
-      'Escribe la observación.'
-    );
-
+    alert('Escribe la observación.');
     return;
+
   }
 
 
   /*
-   * GPS NO BLOQUEANTE.
-   *
-   * Tomamos exclusivamente la posición que
-   * el GPS continuo ya tenga disponible.
-   *
-   * NO se realiza validación contra ningún punto.
+   * GPS actual. No valida radio ni punto de referencia.
    */
   let gps = null;
 
@@ -6707,10 +7529,6 @@ async function guardarObservacionFinalUPV(){
   }
 
 
-  /*
-   * Compatibilidad adicional con el estado
-   * GPS existente de UPV.
-   */
   if(
     !gps &&
     typeof UPV !== 'undefined' &&
@@ -6724,6 +7542,17 @@ async function guardarObservacionFinalUPV(){
   }
 
 
+  if(
+    !gps &&
+    window.UPV_FINAL_GPS
+  ){
+
+    gps =
+      window.UPV_FINAL_GPS;
+
+  }
+
+
   const gpsTexto =
     formatoGpsObservacionWhatsappUPV(
       gps
@@ -6732,6 +7561,9 @@ async function guardarObservacionFinalUPV(){
 
   const ahora =
     new Date();
+
+  const createdAt =
+    ahora.toISOString();
 
   const fecha =
     ahora.toLocaleDateString(
@@ -6761,7 +7593,7 @@ async function guardarObservacionFinalUPV(){
     '',
 
     '🚛 *Unidad:* ' +
-      unidad,
+      unidadObs,
 
     '📋 *Tipo:* ' +
       tipo,
@@ -6786,64 +7618,46 @@ async function guardarObservacionFinalUPV(){
   ].join('\n');
 
 
-  /*
-   * Por ahora dejamos disponible el mensaje
-   * para el circuito actual de UPV.
-   *
-   * No introducimos una segunda ruta de WhatsApp
-   * ni modificamos Carga/Descarga.
-   */
+  const fotos =
+    (
+      typeof UPV !== 'undefined' &&
+      UPV &&
+      Array.isArray(UPV.fotosObservacion)
+    )
+      ? UPV.fotosObservacion.slice()
+      : [];
+
+
   console.log(
-    '[UPV OBSERVACIÓN]',
+    '[UPV OBSERVACIÓN] Vista previa:',
     {
       unidad,
       tipo,
       texto,
       gps,
+      fotos:fotos.length,
       mensaje
     }
   );
 
 
   /*
-   * Vista previa.
-   *
-   * Si la aplicación ya dispone del overlay general,
-   * lo reutilizamos.
+   * Ya NO usamos alert(mensaje).
    */
-  if(
-    typeof abrirConfirmOverlayUPV ===
-      'function'
-  ){
+  abrirVistaPreviaObservacionUPV({
 
-    abrirConfirmOverlayUPV(
-      mensaje
-    );
-
-    return;
-  }
-
-
-  if(
-    typeof _abrirConfirmOverlay ===
-      'function'
-  ){
-
-    _abrirConfirmOverlay(
-      mensaje
-    );
-
-    return;
-  }
-
-
-  /*
-   * Fallback seguro:
-   * no perdemos la información aunque no exista overlay.
-   */
-  alert(
+    unidad:unidadObs,
+    tipo,
+    texto,
+    gps,
+    fotos,
+    fecha,
+    hora,
+    createdAt,
     mensaje
-  );
+
+  });
+
 }
 
 

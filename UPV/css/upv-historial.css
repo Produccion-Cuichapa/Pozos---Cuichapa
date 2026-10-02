@@ -639,3 +639,601 @@ body.upv-historial-abierto{
   z-index:auto;
 }
 
+
+
+/* ==========================================================
+   UPV — HISTORIAL DISEÑO 1
+   Tarjetas limpias y minimalistas
+   Solo afecta el drawer del historial
+   ========================================================== */
+
+#upvHistorialDrawer{
+  background:#f5f8fd;
+}
+
+#upvHistorialDrawer .upv-historial-ayuda{
+  background:#ffffff;
+  color:#64748b;
+  font-size:15px;
+  font-weight:700;
+  padding:18px 24px;
+  border-bottom:1px solid #e5eaf2;
+}
+
+#upvHistorialDrawer .upv-historial-lista{
+  padding:18px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+
+/* TARJETA */
+
+#upvHistorialDrawer .hist-item{
+  position:relative;
+  margin:0;
+  padding:18px 20px 16px 22px;
+
+  background:#ffffff;
+  border:1px solid #e1e8f2;
+  border-radius:18px;
+
+  box-shadow:
+    0 2px 5px rgba(15,23,42,.03),
+    0 8px 22px rgba(15,23,42,.04);
+
+  color:#172b4d;
+
+  min-height:auto;
+}
+
+
+/* LÍNEA AZUL LATERAL */
+
+#upvHistorialDrawer .hist-item::before{
+  content:"";
+  position:absolute;
+
+  left:0;
+  top:13px;
+  bottom:13px;
+
+  width:4px;
+
+  background:#2f6fdb;
+
+  border-radius:0 5px 5px 0;
+}
+
+
+/* EMPRESA + HORA */
+
+#upvHistorialDrawer .hist-item-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:12px;
+
+  margin:0 0 10px 0;
+
+  color:#64748b;
+  font-size:13px;
+}
+
+
+/* EMPRESA */
+
+#upvHistorialDrawer .hist-item-header .emp-tag{
+  background:transparent !important;
+  border:0 !important;
+
+  padding:0 !important;
+  margin:0 !important;
+
+  color:#17315f !important;
+
+  font-size:16px !important;
+  font-weight:800 !important;
+  letter-spacing:.3px;
+}
+
+
+/* TÍTULO PRINCIPAL */
+
+#upvHistorialDrawer .hist-item-title{
+  margin:0;
+
+  color:#102a56;
+
+  font-size:17px;
+  font-weight:800;
+  line-height:1.25;
+}
+
+
+/* DETALLE PRINCIPAL */
+
+#upvHistorialDrawer .hist-item-title + .fs13{
+  margin-top:7px !important;
+
+  color:#526581 !important;
+
+  font-size:14px !important;
+  font-weight:600;
+}
+
+
+/* OCULTAR INFORMACIÓN SECUNDARIA
+   GPS
+   FOTOS / ESTADO
+*/
+
+#upvHistorialDrawer .hist-item .fs13.txt2.mt8:nth-of-type(n+2){
+  display:none;
+}
+
+
+/* ESTADO DE SINCRONIZACIÓN */
+
+#upvHistorialDrawer .hist-item > .mt8.fs13:last-child{
+  position:absolute;
+
+  right:18px;
+  bottom:15px;
+
+  width:24px;
+  height:24px;
+
+  overflow:hidden;
+
+  margin:0 !important;
+
+  font-size:0 !important;
+
+  border-radius:50%;
+
+  background:#e8f8ee;
+}
+
+
+/* CHECK */
+
+#upvHistorialDrawer .hist-item > .mt8.fs13:last-child::after{
+  content:"✓";
+
+  position:absolute;
+  inset:0;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  color:#159447;
+
+  font-size:15px;
+  font-weight:900;
+}
+
+
+/* DEJAR ESPACIO PARA EL CHECK */
+
+#upvHistorialDrawer .hist-item{
+  padding-right:54px;
+}
+
+
+/* EVITAR NULL VISUAL MUY LLAMATIVO */
+
+#upvHistorialDrawer .hist-empty{
+  background:#ffffff;
+
+  border:1px dashed #cad5e5;
+  border-radius:18px;
+
+  padding:32px 20px;
+
+  color:#718096;
+  text-align:center;
+}
+
+
+/* MÓVIL */
+
+@media (max-width:600px){
+
+  #upvHistorialDrawer .upv-historial-lista{
+    padding:14px;
+    gap:10px;
+  }
+
+  #upvHistorialDrawer .hist-item{
+    padding:
+      15px
+      48px
+      14px
+      19px;
+
+    border-radius:15px;
+  }
+
+  #upvHistorialDrawer .hist-item-header{
+    margin-bottom:8px;
+  }
+
+  #upvHistorialDrawer .hist-item-title{
+    font-size:16px;
+  }
+
+}
+
+
+
+/* ==========================================================
+   UPV HISTORIAL — DISEÑO 1 FINAL
+   ========================================================== */
+
+#upvHistorialDrawer .upv-historial-lista{
+  padding:18px !important;
+  gap:12px !important;
+}
+
+#upvHistorialDrawer .upv-historial-card{
+  position:relative;
+
+  background:#fff;
+
+  border:1px solid #dfe7f2;
+  border-radius:16px;
+
+  padding:17px 54px 17px 20px;
+
+  box-shadow:0 5px 16px rgba(15,23,42,.05);
+
+  overflow:hidden;
+}
+
+#upvHistorialDrawer .upv-historial-card::before{
+  content:"";
+
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+
+  width:4px;
+
+  background:#2f6fdb;
+}
+
+#upvHistorialDrawer .upv-historial-card.es-descarga::before{
+  background:#20a464;
+}
+
+
+/* SUPERIOR */
+
+#upvHistorialDrawer .upv-historial-card-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  gap:15px;
+
+  margin-bottom:11px;
+}
+
+#upvHistorialDrawer .upv-historial-card-empresa{
+  color:#536986;
+
+  font-size:13px;
+  font-weight:800;
+
+  text-transform:uppercase;
+}
+
+#upvHistorialDrawer .upv-historial-card-hora{
+  color:#7b8da6;
+
+  font-size:13px;
+  font-weight:600;
+
+  white-space:nowrap;
+}
+
+
+/* OPERACIÓN */
+
+#upvHistorialDrawer .upv-historial-card-main{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+#upvHistorialDrawer .upv-historial-card-tipo{
+  color:#17315f;
+
+  font-size:17px;
+  line-height:1.15;
+  font-weight:900;
+}
+
+#upvHistorialDrawer .es-descarga
+.upv-historial-card-tipo{
+  color:#18794e;
+}
+
+
+/* PUNTO / VOLUMEN */
+
+#upvHistorialDrawer .upv-historial-card-detalle{
+  color:#64748b;
+
+  font-size:14px;
+  font-weight:650;
+}
+
+
+/* SINCRONIZACIÓN */
+
+#upvHistorialDrawer .upv-historial-card-sync{
+  position:absolute;
+
+  right:18px;
+  bottom:17px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  width:24px;
+  height:24px;
+
+  border-radius:50%;
+
+  background:#e9f8ef;
+  color:#16934c;
+
+  font-size:14px;
+  font-weight:900;
+}
+
+#upvHistorialDrawer
+.upv-historial-card-sync.pendiente{
+  background:#fff4df;
+  color:#c67a00;
+}
+
+
+/* MÓVIL */
+
+@media(max-width:600px){
+
+  #upvHistorialDrawer .upv-historial-lista{
+    padding:13px !important;
+    gap:9px !important;
+  }
+
+  #upvHistorialDrawer .upv-historial-card{
+    padding:
+      15px
+      48px
+      15px
+      18px;
+
+    border-radius:14px;
+  }
+
+  #upvHistorialDrawer .upv-historial-card-tipo{
+    font-size:16px;
+  }
+
+  #upvHistorialDrawer .upv-historial-card-hora{
+    font-size:12px;
+  }
+
+}
+
+
+/* ============================================================
+   UPV HISTORIAL — DISEÑO APROBADO
+   ============================================================ */
+
+#upvHistorialLista{
+  padding: 18px 16px 28px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  background: #f5f8fc !important;
+}
+
+#upvHistorialLista .upv-historial-card{
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: 1fr auto !important;
+  grid-template-rows: auto auto !important;
+
+  min-height: 92px !important;
+  padding: 15px 58px 15px 20px !important;
+
+  background: #ffffff !important;
+  border: 1px solid #e4eaf2 !important;
+  border-radius: 17px !important;
+
+  box-shadow:
+    0 5px 14px rgba(15, 35, 70, .08) !important;
+
+  overflow: hidden !important;
+}
+
+/* Línea lateral */
+#upvHistorialLista .upv-historial-card::before{
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  width: 6px !important;
+  background: #2563eb !important;
+}
+
+#upvHistorialLista .upv-historial-card.es-descarga::before{
+  background: #10a45a !important;
+}
+
+/* ============================================================
+   CABECERA DE LA TARJETA
+   ============================================================ */
+
+#upvHistorialLista .upv-historial-card-top{
+  grid-column: 1 / -1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
+  margin: 0 0 5px !important;
+}
+
+#upvHistorialLista .upv-historial-card-empresa{
+  color: #52698e !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+}
+
+#upvHistorialLista .upv-historial-card-hora{
+  color: #65799b !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+}
+
+/* ============================================================
+   OPERACIÓN
+   ============================================================ */
+
+#upvHistorialLista .upv-historial-card-main{
+  grid-column: 1 / 2 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 2px !important;
+  min-width: 0 !important;
+}
+
+#upvHistorialLista .upv-historial-card-tipo{
+  color: #1769e8 !important;
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  line-height: 1.15 !important;
+  letter-spacing: .2px !important;
+}
+
+#upvHistorialLista .upv-historial-card.es-descarga
+.upv-historial-card-tipo{
+  color: #079653 !important;
+}
+
+#upvHistorialLista .upv-historial-card-detalle{
+  display: block !important;
+  margin-top: 2px !important;
+
+  color: #4c6389 !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+}
+
+/* ============================================================
+   ESTADO SINCRONIZADO
+   ============================================================ */
+
+#upvHistorialLista .upv-historial-card-sync{
+  position: absolute !important;
+  right: 17px !important;
+  top: 50% !important;
+  transform: translateY(-10%) !important;
+
+  width: 34px !important;
+  height: 34px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  border-radius: 50% !important;
+
+  background: #dcf8e8 !important;
+  color: #079653 !important;
+
+  font-size: 21px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+}
+
+#upvHistorialLista .upv-historial-card-sync.pendiente{
+  background: #fff1d7 !important;
+  color: #d97706 !important;
+}
+
+/* ============================================================
+   AJUSTE PARA CELULARES
+   ============================================================ */
+
+@media (max-width: 520px){
+
+  #upvHistorialLista{
+    padding: 14px 12px 24px !important;
+    gap: 10px !important;
+  }
+
+  #upvHistorialLista .upv-historial-card{
+    min-height: 88px !important;
+    padding:
+      13px 52px 13px 18px !important;
+    border-radius: 15px !important;
+  }
+
+  #upvHistorialLista .upv-historial-card-empresa{
+    font-size: 13px !important;
+  }
+
+  #upvHistorialLista .upv-historial-card-hora{
+    font-size: 12px !important;
+  }
+
+  #upvHistorialLista .upv-historial-card-tipo{
+    font-size: 17px !important;
+  }
+
+  #upvHistorialLista .upv-historial-card-detalle{
+    font-size: 13px !important;
+  }
+
+  #upvHistorialLista .upv-historial-card-sync{
+    right: 13px !important;
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 19px !important;
+  }
+}
+
+
+/* ETAPA — Inicio / Finalización */
+#upvHistorialLista .upv-historial-card-etapa{
+  display:block !important;
+  margin-top:3px !important;
+  margin-bottom:2px !important;
+  color:#71819b !important;
+  font-size:12px !important;
+  font-weight:600 !important;
+  line-height:1.25 !important;
+  letter-spacing:0 !important;
+}
+

@@ -34,10 +34,23 @@ function escucharConexion() {
   const update = () => {
     UPV.enLinea = navigator.onLine;
     const badge = document.getElementById('upv-conn-badge');
-    if (!badge) return;
-    badge.textContent = UPV.enLinea ? 'EN LINEA' : 'SIN CONEXION';
-    badge.className = 'conn-badge' + (UPV.enLinea ? '' : ' offline');
-    if (UPV.enLinea) sincronizarPendientesUpv();
+
+    if (badge) {
+      badge.textContent =
+        UPV.enLinea ? 'EN LINEA' : 'SIN CONEXION';
+
+      badge.className =
+        'conn-badge' +
+        (UPV.enLinea ? '' : ' offline');
+    }
+
+    /*
+     * La sincronización no depende de que exista
+     * visualmente el badge de conexión.
+     */
+    if (UPV.enLinea) {
+      sincronizarPendientesUpv();
+    }
   };
   window.addEventListener('online',  update);
   window.addEventListener('offline', update);
@@ -631,7 +644,111 @@ async function renderHistorial() {
   try {
     if (UPV.db) {
       reportes = await idbGetAll('reportes');
-      reportes.sort(function(a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
+
+      /*
+       * HISTORIAL AISLADO POR UNIDAD.
+       * Cada acceso ve únicamente sus propios registros.
+       */
+      var unidadActiva = null;
+
+      try {
+        var rawUnidad =
+          sessionStorage.getItem('upv_unidad_operativa');
+
+        var unidadData =
+          rawUnidad
+            ? JSON.parse(rawUnidad)
+            : null;
+
+        var empresaActual =
+          String(
+            (unidadData && unidadData.empresa) ||
+            UPV.empresa ||
+            ''
+          ).toUpperCase();
+
+        var capacidadActual =
+          Number(
+            unidadData &&
+            unidadData.capacidadM3
+          );
+
+        if (
+          empresaActual === 'PETROSMART' &&
+          capacidadActual === 30
+        ) {
+          unidadActiva = 'PETROSMART_93';
+        } else if (
+          empresaActual === 'TC' &&
+          capacidadActual === 30
+        ) {
+          unidadActiva = 'TC_184';
+        } else if (
+          empresaActual === 'TC' &&
+          capacidadActual === 22
+        ) {
+          unidadActiva = 'TC_193';
+        }
+
+      } catch(e) {
+        console.warn(
+          '[UPV] No fue posible identificar unidad activa:',
+          e
+        );
+      }
+
+      reportes = reportes.filter(function(r) {
+
+        /*
+         * Registros nuevos:
+         * usar identidad exacta.
+         */
+        if (r.unidadId) {
+          return r.unidadId === unidadActiva;
+        }
+
+        /*
+         * Compatibilidad con registros anteriores.
+         */
+        var empresaRegistro =
+          String(r.empresa || '').toUpperCase();
+
+        var capacidadRegistro =
+          Number(
+            r.capacidadUnidadM3 ||
+            String(r.unidad || '')
+              .replace(',', '.')
+              .match(/[0-9.]+/)?.[0] ||
+            0
+          );
+
+        if (unidadActiva === 'PETROSMART_93') {
+          return (
+            empresaRegistro === 'PETROSMART' &&
+            capacidadRegistro === 30
+          );
+        }
+
+        if (unidadActiva === 'TC_184') {
+          return (
+            empresaRegistro === 'TC' &&
+            capacidadRegistro === 30
+          );
+        }
+
+        if (unidadActiva === 'TC_193') {
+          return (
+            empresaRegistro === 'TC' &&
+            capacidadRegistro === 22
+          );
+        }
+
+        return false;
+      });
+
+      reportes.sort(function(a, b) {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
     }
   } catch(e) { console.warn('[UPV] historial error:', e); }
   if (!reportes.length) {
@@ -652,9 +769,32 @@ async function renderHistorial() {
     var gpsStr  = r.gps ? 'GPS: +/-' + r.gps.accuracy + ' m (' + r.gps.source + ')' : 'Sin GPS';
     var sync    = r.syncStatus === 'sincronizado' ? 'Sincronizado' : 'Pendiente';
     var syncClr = r.syncStatus === 'sincronizado' ? 'var(--green)' : 'var(--orange)';
-    return '<div class="hist-item">' +
+    return '<div class="hist-item" data-etapa="' +
+      String(r.etapa || r.subtipo || '').replace(/"/g, '&quot;') +
+      '">' +
       '<div class="hist-item-header">' +
-        '<span class="emp-tag ' + (r.empresa||'') + '">' + (r.empresa||'') + '</span>' +
+        '<span class="emp-tag ' + (r.empresa||'') + '">' +
+          (
+            r.unidadNombre ||
+            (
+              r.unidadId === 'TC_184'
+                ? 'TC 184'
+                : r.unidadId === 'TC_193'
+                  ? 'TC 193'
+                  : r.unidadId === 'PETROSMART_93'
+                    ? 'PETROSMART'
+                    : (
+                        String(r.empresa || '').toUpperCase() === 'TC' &&
+                        String(r.unidad || '').indexOf('30') !== -1
+                          ? 'TC 184'
+                          : String(r.empresa || '').toUpperCase() === 'TC' &&
+                            String(r.unidad || '').indexOf('22') !== -1
+                              ? 'TC 193'
+                              : (r.empresa || '')
+                      )
+            )
+          ) +
+        '</span>' +
         '<span>' + fechaStr + '</span>' +
       '</div>' +
       '<div class="hist-item-title">' + titulo + '</div>' +
@@ -669,8 +809,167 @@ async function renderHistorial() {
 // ═══════════════════════════════════════════════════════════
 // STUBS FASE 3
 // ═══════════════════════════════════════════════════════════
+
+/* ==========================================================
+   UPV — FIFO ESTRICTO HASTA WHATSAPP
+   ========================================================== */
+
+var _upvRetryTimer = null;
+var _upvRetryPaso = 0;
+var _upvRetryTiempos = [3000, 6000, 12000, 20000];
+
+function programarReintentoSyncUpv(){
+
+  if(_upvRetryTimer) return;
+
+  var paso = Math.min(
+    _upvRetryPaso,
+    _upvRetryTiempos.length - 1
+  );
+
+  var espera = _upvRetryTiempos[paso];
+
+  _upvRetryTimer = setTimeout(function(){
+
+    _upvRetryTimer = null;
+
+    _upvRetryPaso = Math.min(
+      _upvRetryPaso + 1,
+      _upvRetryTiempos.length - 1
+    );
+
+    console.log(
+      '[UPV-FIFO] reintentando cola pendiente'
+    );
+
+    sincronizarPendientesUpv();
+
+  }, espera);
+}
+
+function cancelarReintentoSyncUpv(){
+
+  if(_upvRetryTimer){
+    clearTimeout(_upvRetryTimer);
+    _upvRetryTimer = null;
+  }
+
+  _upvRetryPaso = 0;
+}
+
+function esperarConfirmacionWhatsappFIFOUpv(id){
+
+  return new Promise(function(resolve){
+
+    if(
+      !id ||
+      !UPV.firebaseDb
+    ){
+      resolve('sin-firebase');
+      return;
+    }
+
+    var registryRef =
+      UPV.firebaseDb.ref(
+        '/upvWhatsappSentRegistry/' +
+        String(id)
+      );
+
+    var reporteRef =
+      UPV.firebaseDb.ref(
+        '/' +
+        UPV_FIREBASE_TEST_PATH +
+        '/' +
+        String(id)
+      );
+
+    var terminado = false;
+    var timeout = null;
+
+    function finalizar(resultado){
+
+      if(terminado) return;
+
+      terminado = true;
+
+      if(timeout){
+        clearTimeout(timeout);
+      }
+
+      try{
+        registryRef.off('value', escucharRegistry);
+      }catch(e){}
+
+      try{
+        reporteRef.off('value', escucharReporte);
+      }catch(e){}
+
+      resolve(resultado);
+    }
+
+    function escucharRegistry(snapshot){
+
+      var data = snapshot.val();
+
+      var status = String(
+        data && data.status || ''
+      ).toLowerCase();
+
+      if(status === 'sent'){
+        finalizar('sent');
+        return;
+      }
+
+      if(status === 'failed'){
+        finalizar('failed');
+      }
+    }
+
+    function escucharReporte(snapshot){
+
+      var data = snapshot.val();
+
+      var status = String(
+        data && data.whatsappStatus || ''
+      ).toLowerCase();
+
+      if(status === 'sent'){
+        finalizar('sent');
+        return;
+      }
+
+      if(status === 'failed'){
+        finalizar('failed');
+      }
+    }
+
+    registryRef.on(
+      'value',
+      escucharRegistry
+    );
+
+    reporteRef.on(
+      'value',
+      escucharReporte
+    );
+
+    /*
+     * Cloud Function UPV tiene timeout de 60 s.
+     * Dejamos margen suficiente para texto + fotografías.
+     */
+    timeout = setTimeout(function(){
+      finalizar('timeout');
+    }, 75000);
+
+  });
+}
+
+
 async function sincronizarPendientesUpv() {
-  if (UPV.syncInProgress) return;
+
+  if (UPV.syncInProgress) {
+    return;
+  }
 
   if (
     !UPV.firebaseReady ||
@@ -678,50 +977,189 @@ async function sincronizarPendientesUpv() {
     !UPV.firebaseDb ||
     !UPV.db
   ) {
+    programarReintentoSyncUpv();
     return;
   }
 
   UPV.syncInProgress = true;
 
   try {
+
     var todos = await idbGetAll('reportes');
 
     var pendientes = todos
       .filter(function(r) {
-        return r && r.id && r.syncStatus !== 'sincronizado';
+        return (
+          r &&
+          r.id &&
+          r.syncStatus !== 'sincronizado'
+        );
       })
       .sort(function(a, b) {
-        return new Date(a.createdAt) - new Date(b.createdAt);
+
+        var fechaA =
+          Date.parse(a.createdAt || a.fecha || '') || 0;
+
+        var fechaB =
+          Date.parse(b.createdAt || b.fecha || '') || 0;
+
+        return fechaA - fechaB;
       });
 
     if (!pendientes.length) {
-      console.log('[UPV-SYNC] No hay reportes pendientes');
+
+      console.log(
+        '[UPV-FIFO] No hay reportes pendientes'
+      );
+
+      cancelarReintentoSyncUpv();
       return;
     }
 
-    console.log('[UPV-SYNC] Pendientes encontrados:', pendientes.length);
+    console.log(
+      '[UPV-FIFO] Pendientes:',
+      pendientes.length
+    );
 
-    for (var i = 0; i < pendientes.length; i++) {
-      try {
-        await enviarReporteUpv(pendientes[i].id);
-      } catch (e) {
+    for (
+      var i = 0;
+      i < pendientes.length;
+      i++
+    ) {
+
+      var reporteId = pendientes[i].id;
+
+      /*
+       * PASO 1:
+       * escribir SOLO el reporte más antiguo
+       * en Firebase.
+       */
+      var enviadoFirebase =
+        await enviarReporteUpv(reporteId);
+
+      if (!enviadoFirebase) {
+
         console.warn(
-          '[UPV-SYNC] Error al enviar reporte',
-          pendientes[i].id,
-          e.message
+          '[UPV-FIFO] Firebase falló. Cola detenida:',
+          reporteId
+        );
+
+        programarReintentoSyncUpv();
+        break;
+      }
+
+      /*
+       * PASO 2:
+       * no liberar el siguiente reporte hasta
+       * que WhatsApp confirme SENT.
+       */
+      var estadoWhatsapp =
+        await esperarConfirmacionWhatsappFIFOUpv(
+          reporteId
+        );
+
+      console.log(
+        '[UPV-FIFO] Confirmación WhatsApp:',
+        reporteId,
+        estadoWhatsapp
+      );
+
+      if (estadoWhatsapp !== 'sent') {
+
+        /*
+         * IMPORTANTE:
+         * Firebase recibió el reporte, pero
+         * WhatsApp todavía no confirmó SENT.
+         *
+         * Lo devolvemos a pendiente local para
+         * que la cola vuelva a revisar este mismo
+         * reporte antes de avanzar.
+         */
+        var pendienteOtraVez =
+          await idbGet(
+            'reportes',
+            reporteId
+          );
+
+        if (pendienteOtraVez) {
+
+          pendienteOtraVez.syncStatus =
+            'pendiente';
+
+          pendienteOtraVez.syncError =
+            'WhatsApp: ' +
+            estadoWhatsapp;
+
+          await idbPut(
+            'reportes',
+            pendienteOtraVez
+          );
+        }
+
+        console.warn(
+          '[UPV-FIFO] Cola detenida esperando WhatsApp:',
+          reporteId,
+          estadoWhatsapp
+        );
+
+        programarReintentoSyncUpv();
+        break;
+      }
+
+      /*
+       * PASO 3:
+       * solamente SENT libera el siguiente.
+       */
+      var confirmado =
+        await idbGet(
+          'reportes',
+          reporteId
+        );
+
+      if (confirmado) {
+
+        confirmado.syncStatus =
+          'sincronizado';
+
+        confirmado.whatsappStatus =
+          'sent';
+
+        confirmado.syncError = null;
+
+        confirmado.whatsappConfirmedAt =
+          new Date().toISOString();
+
+        await idbPut(
+          'reportes',
+          confirmado
         );
       }
+
+      cancelarReintentoSyncUpv();
+
+      console.log(
+        '[UPV-FIFO] Liberado siguiente reporte:',
+        reporteId
+      );
     }
 
-    if (typeof renderHistorial === 'function') {
+    if (
+      typeof renderHistorial === 'function'
+    ) {
       await renderHistorial();
     }
+
   } catch (e) {
+
     console.warn(
-      '[UPV-SYNC] Error general en sincronizarPendientesUpv:',
+      '[UPV-FIFO] Error general:',
       e.message
     );
+
+    programarReintentoSyncUpv();
+
   } finally {
+
     UPV.syncInProgress = false;
   }
 }
@@ -763,12 +1201,125 @@ async function enviarReporteUpv(id) {
       ? reporte.fotoIds
       : [];
 
+    /*
+     * Recuperar evidencia fotográfica desde IndexedDB.
+     *
+     * Antes solamente se enviaban fotoIds, por lo que
+     * Firebase sabía que existían fotos pero no recibía
+     * el contenido necesario para WhatsApp.
+     */
+    /*
+     * PRIORIDAD 1:
+     * fotografías que ya vienen dentro del reporte,
+     * igual que en la app Recorrredores.
+     */
+    var fotosFirebase =
+      Array.isArray(reporte.fotos)
+        ? reporte.fotos
+            .map(function(f) {
+              if (!f) return null;
+
+              return {
+                data:
+                  f.data ||
+                  f.dataUrl ||
+                  '',
+                nombre:
+                  f.nombre ||
+                  'foto.jpg',
+                tipo:
+                  f.tipo ||
+                  'image/jpeg',
+                size:
+                  f.size ||
+                  f.sizeComprimido ||
+                  0
+              };
+            })
+            .filter(function(f) {
+              return (
+                f &&
+                typeof f.data === 'string' &&
+                f.data.length > 100
+              );
+            })
+        : [];
+
+    console.log(
+      '[UPV-FOTOS] Fotos directas del reporte:',
+      fotosFirebase.length
+    );
+
+    /*
+     * PRIORIDAD 2:
+     * compatibilidad con reportes anteriores.
+     *
+     * Solo recuperar por fotoIds cuando el reporte
+     * no tenga fotos directas.
+     */
+    if (!fotosFirebase.length) {
+
+    for (var fi = 0; fi < fotoIds.length; fi++) {
+      try {
+        var fotoLocal = await idbGet('fotos', fotoIds[fi]);
+
+        if (
+          fotoLocal &&
+          fotoLocal.dataUrl
+        ) {
+          fotosFirebase.push({
+            id: fotoLocal.id,
+
+            /*
+             * La Cloud Function _extractBase64()
+             * reconoce la propiedad "data".
+             */
+            data: fotoLocal.dataUrl,
+
+            nombre: fotoLocal.nombre || null,
+            tipo: fotoLocal.tipo || 'image/jpeg',
+            createdAt: fotoLocal.createdAt || null
+          });
+        }
+      } catch (fotoError) {
+        console.warn(
+          '[UPV-SYNC] No se pudo recuperar foto:',
+          fotoIds[fi],
+          fotoError
+        );
+      }
+    }
+
+    }
+
+    console.log(
+      '[UPV-FOTOS] Fotos que viajarán a Firebase:',
+      fotosFirebase.length
+    );
+
     var payload = {
       id: reporte.id,
       empresa: reporte.empresa || null,
       tipo: reporte.tipo || null,
       subtipo: reporte.subtipo || null,
       unidad: reporte.unidad || null,
+
+      /*
+       * Identidad exacta de la unidad operativa.
+       * Evita mezclar TC 184, TC 193 y PETROSMART
+       * cuando el registro sale de IndexedDB.
+       */
+      unidadId:
+        reporte.unidadId || null,
+
+      unidadNombre:
+        reporte.unidadNombre || null,
+
+      capacidadUnidadM3:
+        reporte.capacidadUnidadM3 !== undefined
+          ? reporte.capacidadUnidadM3
+          : null,
+
       origen: reporte.origen || null,
       cantidad:
         reporte.cantidad !== undefined
@@ -834,28 +1385,208 @@ async function enviarReporteUpv(id) {
         reporte.gps || null,
 
       fotoIds: fotoIds,
-      nFotos: fotoIds.length,
+
+      /*
+       * Evidencia disponible para sendUpvWhatsApp.
+       */
+      fotos: fotosFirebase,
+      nFotos: fotosFirebase.length,
       fecha: reporte.fecha || null,
       createdAt: reporte.createdAt || null,
       origenApp: 'UPV',
       entorno: 'PRUEBA',
-      schemaVersion: 1,
+      schemaVersion:
+        reporte.schemaVersion || 2,
       receivedAtClient: new Date().toISOString()
     };
 
-    await UPV.firebaseDb
-      .ref(ruta)
-      .set(payload);
+    /*
+     * Antes de escribir, comprobar si WhatsApp ya confirmó
+     * este mismo ID. Esto evita reenviar un reporte que el
+     * backend ya procesó correctamente.
+     */
+    var registrySnap =
+      await UPV.firebaseDb
+        .ref(
+          '/upvWhatsappSentRegistry/' +
+          reporte.id
+        )
+        .once('value');
 
-    reporte.syncStatus = 'sincronizado';
+    var registryData =
+      registrySnap.val();
+
+    if (
+      registryData &&
+      String(
+        registryData.status || ''
+      ).toLowerCase() === 'sent'
+    ) {
+
+      reporte.firebasePath = ruta;
+      reporte.firebaseSyncedAt =
+        new Date().toISOString();
+
+      /*
+       * Todavía NO lo marcamos sincronizado aquí.
+       * La cola FIFO hará esa transición después
+       * de confirmar SENT.
+       */
+      reporte.syncStatus = 'pendiente';
+      reporte.syncError = null;
+
+      await idbPut(
+        'reportes',
+        reporte
+      );
+
+      console.log(
+        '[UPV-FIFO] Registry ya estaba SENT:',
+        reporte.id
+      );
+
+      return true;
+    }
+
+    /*
+     * Comprobar si el reporte ya existe remotamente.
+     *
+     * sendUpvWhatsApp usa onCreate, por lo que volver
+     * a ejecutar set() sobre un registro existente NO
+     * vuelve a disparar el envío.
+     */
+    var remotoRef =
+      UPV.firebaseDb.ref(ruta);
+
+    var remotoSnap =
+      await remotoRef.once('value');
+
+    var remoto =
+      remotoSnap.val();
+
+    if (remoto) {
+
+      var remotoWhatsappStatus =
+        String(
+          remoto.whatsappStatus || ''
+        ).toLowerCase();
+
+      if (
+        remotoWhatsappStatus === 'sent'
+      ) {
+
+        reporte.firebasePath = ruta;
+        reporte.firebaseSyncedAt =
+          new Date().toISOString();
+        reporte.syncStatus = 'pendiente';
+        reporte.syncError = null;
+
+        await idbPut(
+          'reportes',
+          reporte
+        );
+
+        console.log(
+          '[UPV-FIFO] Reporte remoto ya estaba SENT:',
+          reporte.id
+        );
+
+        return true;
+      }
+
+      /*
+       * Si la Function anterior terminó en FAILED,
+       * reactivar exactamente el mismo reportId.
+       *
+       * El backend onWrite detectará:
+       *
+       * failed -> pending
+       *
+       * y volverá a adquirir el lock del Registry.
+       */
+      if (
+        remotoWhatsappStatus === 'failed'
+      ) {
+
+        console.log(
+          '[UPV-FIFO] Reactivando WhatsApp:',
+          reporte.id
+        );
+
+        await remotoRef.update({
+          whatsappStatus: 'pending',
+          whatsappError: null,
+          whatsappRetryAt:
+            new Date().toISOString()
+        });
+
+        reporte.firebasePath = ruta;
+        reporte.syncStatus = 'pendiente';
+        reporte.syncError = null;
+
+        await idbPut(
+          'reportes',
+          reporte
+        );
+
+        return true;
+      }
+
+      /*
+       * El reporte existe, pero WhatsApp todavía no
+       * confirmó SENT.
+       *
+       * NO sobrescribir.
+       * NO borrar.
+       * NO recrear.
+       * La cola esperará la confirmación existente.
+       */
+      reporte.firebasePath = ruta;
+      reporte.firebaseSyncedAt =
+        reporte.firebaseSyncedAt ||
+        new Date().toISOString();
+      reporte.syncStatus = 'pendiente';
+      reporte.syncError = null;
+
+      await idbPut(
+        'reportes',
+        reporte
+      );
+
+      console.log(
+        '[UPV-FIFO] Reporte ya existe en Firebase; esperando WhatsApp:',
+        reporte.id,
+        remotoWhatsappStatus || 'sin-status'
+      );
+
+      return true;
+    }
+
+    /*
+     * Solo los reportes que todavía NO existen
+     * se crean en Firebase.
+     *
+     * Este set() dispara sendUpvWhatsApp.onCreate().
+     */
+    await remotoRef.set(payload);
+
+    /*
+     * Firebase recibió el reporte, pero eso NO significa
+     * todavía que WhatsApp lo haya enviado.
+     */
+    reporte.syncStatus = 'pendiente';
     reporte.firebasePath = ruta;
-    reporte.firebaseSyncedAt = new Date().toISOString();
+    reporte.firebaseSyncedAt =
+      new Date().toISOString();
     reporte.syncError = null;
 
-    await idbPut('reportes', reporte);
+    await idbPut(
+      'reportes',
+      reporte
+    );
 
     console.log(
-      '[UPV-SYNC] Sincronizado correctamente:',
+      '[UPV-FIFO] Entregado a Firebase; esperando WhatsApp:',
       reporte.id,
       ruta
     );
@@ -956,6 +1687,20 @@ async function guardarRegistroFinalUPV(data){
       data.unidad ||
       null,
 
+    unidadId:
+      data.unidadId ||
+      null,
+
+    unidadNombre:
+      data.unidadNombre ||
+      data.empresa ||
+      null,
+
+    capacidadUnidadM3:
+      data.capacidadUnidadM3 !== undefined
+        ? data.capacidadUnidadM3
+        : null,
+
     origen:
       data.origen ||
       null,
@@ -1018,16 +1763,54 @@ async function guardarRegistroFinalUPV(data){
       data.mensajeWA ||
       null,
 
+    /*
+     * EVIDENCIA FOTOGRÁFICA DIRECTA.
+     *
+     * El registro final ya trae las imágenes comprimidas.
+     * Debemos conservarlas dentro del reporte IndexedDB
+     * para que enviarReporteUpv() pueda mandarlas a Firebase.
+     */
+    fotos:
+      Array.isArray(data.fotos)
+        ? data.fotos
+            .slice(0, 3)
+            .map(function(f){
+              return {
+                data:
+                  f && (
+                    f.data ||
+                    f.dataUrl ||
+                    ''
+                  ),
+                nombre:
+                  f && f.nombre
+                    ? f.nombre
+                    : 'foto.jpg',
+                size:
+                  f && f.size
+                    ? f.size
+                    : 0
+              };
+            })
+            .filter(function(f){
+              return (
+                f &&
+                typeof f.data === 'string' &&
+                f.data.length > 100
+              );
+            })
+        : [],
+
+    fotoIds:
+      Array.isArray(data.fotoIds)
+        ? data.fotoIds.slice(0, 3)
+        : [],
+
     cargasSeleccionadas:
       Array.isArray(
         data.cargasSeleccionadas
       )
         ? data.cargasSeleccionadas
-        : [],
-
-    fotoIds:
-      Array.isArray(data.fotoIds)
-        ? data.fotoIds
         : [],
 
     fecha:
@@ -1207,8 +1990,14 @@ function ocultarBotonActualizarUpv() {
   if (banner) banner.classList.remove('show');
 }
 
+var upvActualizando = false;
+
 async function actualizarAppUpv() {
+  if (upvActualizando) return;
+
   var btn = document.getElementById('upv-update-btn');
+
+  upvActualizando = true;
 
   if (btn) {
     btn.disabled = true;
@@ -1254,6 +2043,8 @@ async function actualizarAppUpv() {
   } catch (error) {
     console.error('[UPV] Error al actualizar:', error);
     mostrarError('No fue posible actualizar. Intenta nuevamente.');
+
+    upvActualizando = false;
 
     if (btn) {
       btn.disabled = false;
@@ -1305,84 +2096,6 @@ function configurarActualizacionUpv() {
 document.addEventListener('DOMContentLoaded', configurarActualizacionUpv);
 
 window.actualizarAppUpv = actualizarAppUpv;
-
-// ═══════════════════════════════════════════════════════════
-// ACTUALIZACIÓN MANUAL PERMANENTE
-// ═══════════════════════════════════════════════════════════
-var upvActualizando = false;
-
-async function actualizarAppUpv() {
-  if (upvActualizando) return;
-
-  var btn = document.getElementById('upv-update-btn');
-  upvActualizando = true;
-
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = 'Actualizando...';
-  }
-
-  try {
-    if ('serviceWorker' in navigator) {
-      var registros = await navigator.serviceWorker.getRegistrations();
-
-      for (var i = 0; i < registros.length; i++) {
-        var reg = registros[i];
-
-        if (reg.scope.indexOf('/UPV/') !== -1) {
-          await reg.update();
-
-          if (reg.waiting) {
-            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-          }
-        }
-      }
-    }
-
-    if ('caches' in window) {
-      var claves = await caches.keys();
-
-      await Promise.all(
-        claves
-          .filter(function(clave) {
-            return clave.indexOf('upv-pwa-') === 0;
-          })
-          .map(function(clave) {
-            return caches.delete(clave);
-          })
-      );
-    }
-
-    var url = new URL(window.location.href);
-    url.searchParams.set('actualizado', Date.now().toString());
-
-    window.location.replace(url.toString());
-  } catch (error) {
-    console.error('[UPV] No se pudo actualizar:', error);
-
-    if (typeof mostrarError === 'function') {
-      mostrarError('No fue posible actualizar. Intenta otra vez.');
-    }
-
-    upvActualizando = false;
-
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = 'Actualizar';
-    }
-  }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  var btn = document.getElementById('upv-update-btn');
-
-  if (btn) {
-    btn.addEventListener('click', actualizarAppUpv);
-  }
-});
-
-window.actualizarAppUpv = actualizarAppUpv;
-
 
 /* ===== EXPORTS FLUJO OPERATIVO UNIFICADO ===== */
 window.idbPut = idbPut;
