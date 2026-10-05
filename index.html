@@ -6872,7 +6872,10 @@ function initFirebase(){
     // Detectar conexión REAL con Firebase.
     instalarDetectorConexionFirebase();
 
-    sincronizarAFirebase();
+    // IMPORTANTE:
+    // Los reportes pendientes NO se sincronizan aquí en paralelo.
+    // El detector .info/connected despertará procesarCola(),
+    // que los libera uno por uno respetando FIFO y confirmación WA.
     escucharFirebase();
     escucharAlarmas();
     escucharConfigFirebase();
@@ -8115,11 +8118,55 @@ function guardarReporte(reporte){
   saveHistorial(arr);
 
   /*
-   * Si Firebase está disponible, usar el objeto ORIGINAL,
-   * que todavía contiene las fotografías en memoria.
+   * FIFO OFFLINE:
+   * Tener fbDB inicializado NO significa que exista conexión real.
+   *
+   * Solo entregar directamente a Firebase cuando .info/connected
+   * ya confirmó conexión. Si no hay conexión, el reporte queda
+   * únicamente en almacenamiento local/IndexedDB como pendiente.
+   *
+   * Al recuperar conexión, instalarDetectorConexionFirebase()
+   * despierta procesarCola(), que libera los pendientes uno por uno
+   * y espera confirmación real de WhatsApp antes del siguiente.
    */
-  if(fbDB){
+  /*
+   * No permitir que un reporte recién creado rebase una cola
+   * que ya contiene reportes anteriores.
+   *
+   * Como este reporte ya fue insertado en historial arriba,
+   * hay cola previa cuando getPendientes() contiene más de
+   * este único reporte.
+   */
+  var pendientesFIFO = getPendientes();
+  var hayPendientesAnteriores =
+    pendientesFIFO.some(function(item){
+      return item && String(item.id) !== String(reporte.id);
+    });
+
+  if(
+    fbDB &&
+    _firebaseRealmenteConectado === true &&
+    !hayPendientesAnteriores
+  ){
     return guardarEnFirebase(reporte);
+  }
+
+  if(
+    fbDB &&
+    _firebaseRealmenteConectado === true &&
+    hayPendientesAnteriores
+  ){
+    console.log(
+      '[COLA_FIFO] reporte nuevo espera detrás de pendientes:',
+      reporte.id
+    );
+
+    setTimeout(verificarYEnviar, 0);
+  }else{
+    console.log(
+      '[FIFO_OFFLINE] reporte conservado localmente:',
+      reporte.id
+    );
   }
 
   return Promise.resolve(false);
