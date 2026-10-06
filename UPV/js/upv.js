@@ -956,7 +956,7 @@ async function renderHistorial() {
           empresaActual === 'TC' &&
           capacidadActual === 30
         ) {
-          unidadActiva = 'TC_184';
+          unidadActiva = 'TC_89';
         } else if (
           empresaActual === 'TC' &&
           capacidadActual === 22
@@ -1003,7 +1003,7 @@ async function renderHistorial() {
           );
         }
 
-        if (unidadActiva === 'TC_184') {
+        if (unidadActiva === 'TC_89') {
           return (
             empresaRegistro === 'TC' &&
             capacidadRegistro === 30
@@ -1051,8 +1051,8 @@ async function renderHistorial() {
           (
             r.unidadNombre ||
             (
-              r.unidadId === 'TC_184'
-                ? 'TC 184'
+              r.unidadId === 'TC_89'
+                ? 'TC 89'
                 : r.unidadId === 'TC_193'
                   ? 'TC 193'
                   : r.unidadId === 'PETROSMART_93'
@@ -1060,7 +1060,7 @@ async function renderHistorial() {
                     : (
                         String(r.empresa || '').toUpperCase() === 'TC' &&
                         String(r.unidad || '').indexOf('30') !== -1
-                          ? 'TC 184'
+                          ? 'TC 89'
                           : String(r.empresa || '').toUpperCase() === 'TC' &&
                             String(r.unidad || '').indexOf('22') !== -1
                               ? 'TC 193'
@@ -1732,7 +1732,7 @@ async function enviarReporteUpv(id) {
 
       /*
        * Identidad exacta de la unidad operativa.
-       * Evita mezclar TC 184, TC 193 y PETROSMART
+       * Evita mezclar TC 89, TC 193 y PETROSMART
        * cuando el registro sale de IndexedDB.
        */
       unidadId:
