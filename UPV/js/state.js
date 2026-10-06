@@ -16,6 +16,10 @@ var UPV = {
   // Firebase exclusivo UPV
   firebaseApp:       null,
   firebaseDb:        null,
+  firebaseAuth:      null,
+  firebaseUser:      null,
+  firebaseUid:       null,
+  firebaseAuthReady: false,
   firebaseReady:     false,
   firebaseConnected: false,
   syncInProgress:    false

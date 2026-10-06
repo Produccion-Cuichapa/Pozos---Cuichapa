@@ -734,6 +734,53 @@ async function validarReferenciaActual(
   }
 
 
+  /*
+   * VALIDACIÓN OPERATIVA DE FRESCURA.
+   *
+   * El caché general puede conservar una posición
+   * durante más tiempo como respaldo interno.
+   *
+   * Pero una coordenada antigua NO debe decidir
+   * si la unidad está DENTRO o FUERA del radio
+   * operativo de 80 metros.
+   *
+   * watchPosition mantiene normalmente esta lectura
+   * actualizada sin bloquear la interfaz.
+   */
+  const GPS_MAX_EDAD_RADIO_MS =
+    30000;
+
+  const timestampGps =
+    Number(gps.timestamp || 0);
+
+  const edadGps =
+    Date.now() - timestampGps;
+
+  if(
+    !Number.isFinite(timestampGps) ||
+    timestampGps <= 0 ||
+    !Number.isFinite(edadGps) ||
+    edadGps < 0 ||
+    edadGps > GPS_MAX_EDAD_RADIO_MS
+  ){
+    return {
+      error:'GPS sin lectura reciente',
+      referencia:
+        String(ubicacion || '').trim().toUpperCase(),
+      lat:gps.lat,
+      lng:gps.lng,
+      accuracy:gps.accuracy,
+      timestamp:timestampGps || null,
+      edadMs:
+        Number.isFinite(edadGps)
+          ? edadGps
+          : null,
+      dentro:null,
+      distancia:null
+    };
+  }
+
+
   const tipoReferencia =
     String(ubicacion || '')
       .trim()

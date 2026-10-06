@@ -1009,14 +1009,6 @@ function mensajeInicioDescargaSeleccionada(config){
 
     '',
 
-    '🕒 *Hora de inicio:*',
-
-    horaInicio +
-      ' h · ' +
-      fechaInicio,
-
-    '',
-
     '💧 *Volumen total:* ' +
       volumen.toFixed(2) +
       ' m³',
@@ -2978,18 +2970,15 @@ function mensajeWhatsappInicio(config){
     )
   );
 
-  lineas.push(
-    '',
-
-    'Fecha: ' +
-      t.fecha,
-
-    'Hora de inicio: ' +
-      t.hora
-  );
+  /*
+   * INICIO DE CARGA / DESCARGA:
+   * fecha y hora se conservan internamente,
+   * pero no se muestran en vista previa ni WhatsApp.
+   */
 
   /*
-   * GPS SIEMPRE AL FINAL
+   * GPS visible en INICIO DE CARGA e INICIO DE DESCARGA.
+   * La validación y almacenamiento GPS continúan funcionando.
    */
   lineas.push(
     '',
@@ -3207,8 +3196,14 @@ function mensajeWhatsappTermino(config){
     tipoNormalizado === 'DESCARGA' &&
     String(lugarDestino || '').trim()
       ? (
-          '➡️ *Se dirige a:* ' +
-          String(lugarDestino)
+          String(destino || '')
+            .trim()
+            .toUpperCase() === 'MODO_ESPERA'
+              ? '⏸️ *EN ESPERA DEL PROGRAMA*'
+              : (
+                  '➡️ *Se dirige a:* ' +
+                  String(lugarDestino)
+                )
         )
       : ''
 
@@ -3250,26 +3245,9 @@ function mensajeWhatsappTermino(config){
   );
 
   /*
-   * GPS SIEMPRE AL FINAL
-   *
-   * Formato único UPV:
-   *
-   * DENTRO:
-   *   ✅ DENTRO DE RANGO
-   *
-   * FUERA:
-   *   GPS + precisión
-   *   Maps
-   *   distancia
-   *   advertencia
+   * GPS continúa validándose y guardándose internamente.
+   * No se muestra en vista previa ni WhatsApp.
    */
-  lineas.push(
-    '',
-    formatoGpsWhatsappUPV(
-      gps
-    )
-  );
-
   return lineas.join('\n');
 }
 
@@ -3469,7 +3447,34 @@ function confirmarUPVVisual(config){
     );
 
 
+    let confirmacionResuelta = false;
+
     function cerrar(resultado){
+
+      /*
+       * LOCK DE CONFIRMACIÓN:
+       * una vista previa solo puede resolverse una vez.
+       * Evita doble toque / doble clic antes de guardar.
+       */
+      if(confirmacionResuelta){
+        return;
+      }
+
+      confirmacionResuelta = true;
+
+      const btnAceptar =
+        overlay.querySelector('#upvConfirmAceptar');
+
+      const btnCancelar =
+        overlay.querySelector('#upvConfirmCancelar');
+
+      if(btnAceptar){
+        btnAceptar.disabled = true;
+      }
+
+      if(btnCancelar){
+        btnCancelar.disabled = true;
+      }
 
       document.body.classList.remove(
         'upv-confirm-open'
@@ -3875,6 +3880,19 @@ function renderInicio(tipo){
     ?.addEventListener(
       'click',
       async function(){
+
+        /*
+         * LOCK OPERATIVO DE INICIO.
+         * Impide dos ejecuciones simultáneas del mismo botón.
+         */
+        if(window.UPV_INICIO_GUARDANDO){
+          console.warn('[UPV] INICIO ya se está procesando');
+          return;
+        }
+
+        window.UPV_INICIO_GUARDANDO = true;
+
+        try{
 
         if(!unidad()){
           error(
@@ -4294,6 +4312,19 @@ function renderInicio(tipo){
 
         }
 
+        /*
+         * Esperar cualquier evidencia que todavía esté
+         * leyendo/comprimiendo antes de tomar el snapshot.
+         */
+        if(
+          typeof window.esperarFotosPendientesUPV ===
+          'function'
+        ){
+          await window.esperarFotosPendientesUPV(
+            'operacion'
+          );
+        }
+
         const ok =
           await confirmarUPVVisual({
 
@@ -4531,92 +4562,125 @@ function renderInicio(tipo){
 
 
         /*
-         * Mantener comportamiento operativo existente.
-         */
-        guardarInicio(
-          tipo,
-          registroInicio
-        );
-
-
-        /*
-         * Dejamos también una referencia global
-         * para diagnóstico y recuperación.
-         */
-        window.UPV_FINAL_REGISTRO =
-          registroInicio;
-
-
-        /*
-         * PUENTE OFFLINE-FIRST:
+         * INICIO TRANSACCIONAL:
          *
-         * IndexedDB
-         *   ↓
-         * sincronizador UPV
-         *   ↓
-         * Firebase pozos-upv
+         * Primero debe quedar confirmado en IndexedDB.
+         * Solamente después se activa el Inicio operativo
+         * en localStorage/UI.
          *
-         * NO UltraMsg directo.
+         * Si IndexedDB falla, NO se crea un Inicio activo.
          */
         try{
 
           if(
-            typeof window.guardarRegistroFinalUPV ===
+            typeof window.guardarRegistroFinalUPV !==
             'function'
           ){
-
-            await window.guardarRegistroFinalUPV(
-              registroInicio
+            throw new Error(
+              'guardarRegistroFinalUPV no disponible'
             );
-
-            /*
-             * La evidencia de INICIO ya quedó capturada
-             * dentro de registroInicio.
-             *
-             * No debe heredarse a FINALIZACIÓN.
-             */
-            if(
-              typeof UPV !== 'undefined' &&
-              UPV &&
-              Array.isArray(UPV.fotosOperacion)
-            ){
-              UPV.fotosOperacion = [];
-            }
-
-            if(
-              typeof window.renderFotos === 'function'
-            ){
-              window.renderFotos('operacion');
-            }
-
-            console.log(
-              '[UPV-FOTOS] Evidencia de INICIO limpiada para FINALIZACIÓN'
-            );
-
-            console.log(
-              '[UPV-FINAL] INICIO conectado a IndexedDB:',
-              tipo
-            );
-
-          }else{
-
-            console.warn(
-              '[UPV-FINAL] guardarRegistroFinalUPV no disponible'
-            );
-
           }
+
+
+          /*
+           * PASO 1:
+           * Persistencia oficial offline-first.
+           */
+          await window.guardarRegistroFinalUPV(
+            registroInicio
+          );
+
+
+          /*
+           * PASO 2:
+           * Solo después del guardado confirmado
+           * activamos el Inicio operativo.
+           */
+          guardarInicio(
+            tipo,
+            registroInicio
+          );
+
+
+          /*
+           * Referencia global únicamente después
+           * de confirmar la persistencia.
+           */
+          window.UPV_FINAL_REGISTRO =
+            registroInicio;
+
+
+          /*
+           * La evidencia de INICIO ya quedó capturada.
+           * No debe heredarse a FINALIZACIÓN.
+           */
+          if(
+            typeof UPV !== 'undefined' &&
+            UPV &&
+            Array.isArray(UPV.fotosOperacion)
+          ){
+            UPV.fotosOperacion = [];
+          }
+
+
+          if(
+            typeof window.renderFotos === 'function'
+          ){
+            window.renderFotos('operacion');
+          }
+
+
+          console.log(
+            '[UPV-FOTOS] Evidencia de INICIO limpiada para FINALIZACIÓN'
+          );
+
+          console.log(
+            '[UPV-FINAL] INICIO confirmado en IndexedDB:',
+            tipo
+          );
+
+
+          /*
+           * PASO 3:
+           * Mostrar estado de Inicio únicamente
+           * después de completar los pasos anteriores.
+           */
+          renderInicio(tipo);
+
 
         }catch(errorPuente){
 
           console.error(
-            '[UPV-FINAL] Error guardando INICIO:',
+            '[UPV-FINAL] INICIO NO guardado:',
             errorPuente
           );
 
+
+          /*
+           * Seguridad:
+           * no dejar referencia que pueda aparentar
+           * que existe un Inicio válido.
+           */
+          window.UPV_FINAL_REGISTRO =
+            null;
+
+
+          if(
+            typeof mostrarError ===
+            'function'
+          ){
+            mostrarError(
+              'No fue posible guardar el Inicio. ' +
+              'La operación NO fue iniciada. Intenta nuevamente.'
+            );
+          }
+
+          return;
         }
 
-
-        renderInicio(tipo);
+        }finally{
+          window.UPV_INICIO_GUARDANDO = false;
+        }
       }
     );
 }
@@ -5635,46 +5699,36 @@ function activarEvidencia(modulo = 'operacion'){
 
   foto?.addEventListener(
     'change',
-    function(e){
+    async function(e){
 
       /*
-       * Si existe el procesador original UPV,
-       * reutilizarlo.
+       * Esperar el procesamiento REAL de la evidencia.
+       * No usamos tiempos estimados: FileReader +
+       * compresión deben terminar antes de considerar
+       * la fotografía lista.
        */
       if(
         typeof window.procesarFotos ===
         'function'
       ){
         try{
-          window.procesarFotos(
+
+          await window.procesarFotos(
             e.target.files,
             modulo
           );
 
-          /*
-           * procesarFotos() comprime de forma asíncrona.
-           * Actualizamos mientras termina y hacemos una
-           * segunda actualización al finalizar la compresión.
-           */
-          setTimeout(
-            function(){
-              actualizarMiniaturasEvidenciaUPV(
-                modulo
-              );
-            },
-            100
+          actualizarMiniaturasEvidenciaUPV(
+            modulo
           );
 
-          setTimeout(
-            function(){
-              actualizarMiniaturasEvidenciaUPV(
-                modulo
-              );
-            },
-            900
-          );
         }catch(err){
-          console.warn(err);
+
+          console.warn(
+            '[UPV-FOTOS] Error procesando evidencia:',
+            err
+          );
+
         }
       }
     }
@@ -5944,6 +5998,16 @@ function renderTermino(tipo){
             🏠 BASE
           </option>
 
+          ${
+            String(tipo).toUpperCase() === 'DESCARGA'
+              ? `
+                <option value="MODO_ESPERA">
+                  ⏸️ MODO ESPERA
+                </option>
+              `
+              : ''
+          }
+
         </select>
 
       </div>
@@ -6107,6 +6171,19 @@ function renderTermino(tipo){
     .addEventListener(
       'click',
       async function(){
+
+        /*
+         * LOCK OPERATIVO DE FINALIZACIÓN.
+         * Impide dos ejecuciones simultáneas del mismo botón.
+         */
+        if(window.UPV_FINALIZACION_GUARDANDO){
+          console.warn('[UPV] FINALIZACIÓN ya se está procesando');
+          return;
+        }
+
+        window.UPV_FINALIZACION_GUARDANDO = true;
+
+        try{
 
         if(!unidad()){
 
@@ -6299,6 +6376,19 @@ function renderTermino(tipo){
           });
 
 
+        /*
+         * Esperar cualquier evidencia que todavía esté
+         * leyendo/comprimiendo antes de tomar el snapshot.
+         */
+        if(
+          typeof window.esperarFotosPendientesUPV ===
+          'function'
+        ){
+          await window.esperarFotosPendientesUPV(
+            'operacion'
+          );
+        }
+
         const ok =
           await confirmarUPVVisual({
             ubicacionTermino:
@@ -6343,11 +6433,26 @@ function renderTermino(tipo){
               </div>
 
               <div class="upv-confirm-row">
-                <span>SE DIRIGE A</span>
+                <span>
+                  ${
+                    String(destino || '')
+                      .trim()
+                      .toUpperCase() === 'MODO_ESPERA'
+                        ? 'ESTADO'
+                        : 'SE DIRIGE A'
+                  }
+                </span>
+
                 <strong>
-                  ${escaparHtml(
-                    lugarPreview
-                  )}
+                  ${
+                    String(destino || '')
+                      .trim()
+                      .toUpperCase() === 'MODO_ESPERA'
+                        ? '⏸️ EN ESPERA DEL PROGRAMA'
+                        : escaparHtml(
+                            lugarPreview
+                          )
+                  }
                 </strong>
               </div>
 
@@ -6572,6 +6677,42 @@ function renderTermino(tipo){
               registro
             );
 
+            /*
+             * La evidencia de FINALIZACIÓN ya quedó
+             * confirmada dentro del reporte en IndexedDB.
+             *
+             * Solo ahora puede limpiarse de memoria.
+             * Si el guardado falla, el catch conserva
+             * las fotos para permitir el reintento.
+             */
+            if(
+              typeof UPV !== 'undefined' &&
+              UPV &&
+              Array.isArray(UPV.fotosOperacion)
+            ){
+              UPV.fotosOperacion = [];
+            }
+
+            const inputFotoFinal =
+              document.getElementById(
+                'foto-input-operacion'
+              );
+
+            if(inputFotoFinal){
+              inputFotoFinal.value = '';
+            }
+
+            if(
+              typeof window.renderFotos ===
+              'function'
+            ){
+              window.renderFotos('operacion');
+            }
+
+            console.log(
+              '[UPV-FOTOS] Evidencia de FINALIZACIÓN limpiada después de IndexedDB'
+            );
+
             console.log(
               '[UPV-FINAL] FINALIZAR conectado a IndexedDB'
             );
@@ -6779,6 +6920,10 @@ function renderTermino(tipo){
           '[UPV FINAL]',
           registro
         );
+
+        }finally{
+          window.UPV_FINALIZACION_GUARDANDO = false;
+        }
       }
     );
 }
@@ -7617,6 +7762,19 @@ async function guardarObservacionFinalUPV(){
 
   ].join('\n');
 
+
+  /*
+   * Esperar evidencia pendiente antes de congelar
+   * las fotografías de esta observación.
+   */
+  if(
+    typeof window.esperarFotosPendientesUPV ===
+    'function'
+  ){
+    await window.esperarFotosPendientesUPV(
+      'observacion'
+    );
+  }
 
   const fotos =
     (

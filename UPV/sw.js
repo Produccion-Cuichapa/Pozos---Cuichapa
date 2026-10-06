@@ -1,7 +1,7 @@
 // UPV Service Worker v2
 // Cache exclusivo upv-pwa-v9-sync-prueba. No toca caches de la app de recorredores.
 // Usa rutas relativas. No depende de /upv/ en minusculas.
-const UPV_CACHE = 'upv-pwa-v39-20261002';
+const UPV_CACHE = 'upv-pwa-v41-20261005';
 
 const UPV_ASSETS = [
   './',

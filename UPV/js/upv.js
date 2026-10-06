@@ -13,7 +13,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     inicializarFirebaseUpv();
   }
   escucharConexion();
-  await abrirIDB();
+
+  /*
+   * IndexedDB es obligatorio para la operación offline-first.
+   * Si no está disponible, no habilitamos formularios que
+   * podrían aparentar que un reporte fue guardado.
+   */
+  try{
+
+    await abrirIDB();
+
+  }catch(errorIDB){
+
+    console.error(
+      '[UPV-IDB] No se puede iniciar la operación:',
+      errorIDB
+    );
+
+    if(typeof mostrarError === 'function'){
+      mostrarError(
+        'No fue posible abrir el almacenamiento local. ' +
+        'No se pueden guardar reportes. Recarga la aplicación.'
+      );
+    }
+
+    return;
+  }
+
   await migrarDesdeLocalStorage();
   recuperarEmpresa();
   bindLoginBtns();
@@ -49,7 +75,59 @@ function escucharConexion() {
      * visualmente el badge de conexión.
      */
     if (UPV.enLinea) {
-      sincronizarPendientesUpv();
+
+      /*
+       * Si la PWA arrancó completamente offline,
+       * los SDK externos de Firebase pudieron no cargar.
+       *
+       * Al recuperar Internet intentamos restaurarlos
+       * antes de iniciar la sincronización.
+       */
+      if (
+        typeof window.asegurarFirebaseUpv === 'function'
+      ) {
+
+        window.asegurarFirebaseUpv()
+          .then(function(firebaseDisponible) {
+
+            if (
+              firebaseDisponible &&
+              UPV.firebaseReady &&
+              UPV.firebaseAuthReady &&
+              UPV.firebaseUid &&
+              UPV.firebaseDb
+            ) {
+              sincronizarPendientesUpv();
+            }
+
+          })
+          .catch(function(error) {
+
+            console.warn(
+              '[UPV] Firebase todavía no disponible:',
+              error && error.message
+                ? error.message
+                : error
+            );
+
+          });
+
+      } else {
+
+        /*
+         * Compatibilidad defensiva:
+         * si el SDK ya estaba inicializado normalmente,
+         * conservar el comportamiento anterior.
+         */
+        if (
+          UPV.firebaseReady &&
+          UPV.firebaseAuthReady &&
+          UPV.firebaseUid &&
+          UPV.firebaseDb
+        ) {
+          sincronizarPendientesUpv();
+        }
+      }
     }
   };
   window.addEventListener('online',  update);
@@ -62,26 +140,107 @@ function escucharConexion() {
 // stores: reportes, fotos, configuracion
 // ═══════════════════════════════════════════════════════════
 function abrirIDB() {
-  return new Promise((resolve) => {
-    const req = indexedDB.open(UPV_IDB_NAME, UPV_IDB_VERSION);
+  return new Promise((resolve, reject) => {
+
+    if(!('indexedDB' in window)){
+      reject(
+        new Error('IndexedDB no disponible en este navegador')
+      );
+      return;
+    }
+
+    let req;
+
+    try{
+      req = indexedDB.open(
+        UPV_IDB_NAME,
+        UPV_IDB_VERSION
+      );
+    }catch(error){
+      reject(error);
+      return;
+    }
+
     req.onupgradeneeded = e => {
       const db = e.target.result;
+
       if (!db.objectStoreNames.contains('reportes')) {
-        const rs = db.createObjectStore('reportes', { keyPath: 'id' });
-        rs.createIndex('empresa',    'empresa',    { unique: false });
-        rs.createIndex('syncStatus', 'syncStatus', { unique: false });
-        rs.createIndex('createdAt',  'createdAt',  { unique: false });
+        const rs = db.createObjectStore(
+          'reportes',
+          { keyPath: 'id' }
+        );
+
+        rs.createIndex(
+          'empresa',
+          'empresa',
+          { unique: false }
+        );
+
+        rs.createIndex(
+          'syncStatus',
+          'syncStatus',
+          { unique: false }
+        );
+
+        rs.createIndex(
+          'createdAt',
+          'createdAt',
+          { unique: false }
+        );
       }
+
       if (!db.objectStoreNames.contains('fotos')) {
-        const fs = db.createObjectStore('fotos', { keyPath: 'id' });
-        fs.createIndex('reporteId', 'reporteId', { unique: false });
+        const fs = db.createObjectStore(
+          'fotos',
+          { keyPath: 'id' }
+        );
+
+        fs.createIndex(
+          'reporteId',
+          'reporteId',
+          { unique: false }
+        );
       }
+
       if (!db.objectStoreNames.contains('configuracion')) {
-        db.createObjectStore('configuracion', { keyPath: 'clave' });
+        db.createObjectStore(
+          'configuracion',
+          { keyPath: 'clave' }
+        );
       }
     };
-    req.onsuccess = e => { UPV.db = e.target.result; resolve(); };
-    req.onerror   = e => { console.warn('[UPV-IDB] error:', e.target.error); resolve(); };
+
+    req.onsuccess = e => {
+      UPV.db = e.target.result;
+
+      UPV.db.onversionchange = function(){
+        UPV.db.close();
+        UPV.db = null;
+      };
+
+      resolve(UPV.db);
+    };
+
+    req.onerror = e => {
+      UPV.db = null;
+
+      const error =
+        e.target.error ||
+        new Error('No fue posible abrir IndexedDB UPV');
+
+      console.error(
+        '[UPV-IDB] Error abriendo base:',
+        error
+      );
+
+      reject(error);
+    };
+
+    req.onblocked = () => {
+      console.warn(
+        '[UPV-IDB] Apertura bloqueada por otra pestaña o versión'
+      );
+    };
   });
 }
 
@@ -226,36 +385,151 @@ function bindFotoInputs() {
   if (inpObs) inpObs.addEventListener('change', e => procesarFotos(e.target.files, 'observacion'));
 }
 
-function procesarFotos(files, modulo) {
-  if (!files || !files.length) return;
-  const estado = modulo === 'operacion' ? UPV.fotosOperacion : UPV.fotosObservacion;
-  const libre  = UPV_MAX_FOTOS - estado.length;
-  if (libre <= 0) { mostrarError('Maximo ' + UPV_MAX_FOTOS + ' fotos por reporte.'); return; }
-  const lista = Array.from(files).slice(0, libre);
-  lista.forEach(file => {
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const sizeOriginal = file.size;
-      comprimirImagen(ev.target.result).then(dataUrl => {
-        const foto = {
-          id:             'foto_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
-          dataUrl:        dataUrl,
-          nombre:         file.name,
-          tipo:           file.type || 'image/jpeg',
-          sizeOriginal:   sizeOriginal,
-          sizeComprimido: Math.round(dataUrl.length * 0.75),
-          createdAt:      new Date().toISOString()
-        };
-        if (modulo === 'operacion') UPV.fotosOperacion.push(foto);
-        else                        UPV.fotosObservacion.push(foto);
-        renderFotosPreview(modulo);
-      });
-    };
-    reader.readAsDataURL(file);
+async function procesarFotos(files, modulo) {
+  if (!files || !files.length) return [];
+
+  const estado =
+    modulo === 'operacion'
+      ? UPV.fotosOperacion
+      : UPV.fotosObservacion;
+
+  /*
+   * Contabilizar también las fotos que ya están
+   * procesándose para no superar el máximo por carreras.
+   */
+  UPV.fotosProcesando = UPV.fotosProcesando || {
+    operacion: 0,
+    observacion: 0
+  };
+
+  const pendientes =
+    Number(UPV.fotosProcesando[modulo] || 0);
+
+  const libre =
+    UPV_MAX_FOTOS -
+    estado.length -
+    pendientes;
+
+  if (libre <= 0) {
+    mostrarError(
+      'Maximo ' + UPV_MAX_FOTOS + ' fotos por reporte.'
+    );
+    return [];
+  }
+
+  const lista =
+    Array.from(files).slice(0, libre);
+
+  UPV.fotosProcesando[modulo] += lista.length;
+
+  UPV.promesasFotos = UPV.promesasFotos || {
+    operacion: [],
+    observacion: []
+  };
+
+  const tareas = lista.map(file => {
+    return new Promise(resolve => {
+      const reader = new FileReader();
+
+      reader.onload = async ev => {
+        try {
+          const dataUrl =
+            await comprimirImagen(ev.target.result);
+
+          const foto = {
+            id:
+              'foto_' +
+              Date.now() +
+              '_' +
+              Math.random().toString(36).slice(2, 7),
+            dataUrl,
+            nombre: file.name,
+            tipo: file.type || 'image/jpeg',
+            sizeOriginal: file.size,
+            sizeComprimido:
+              Math.round(dataUrl.length * 0.75),
+            createdAt:
+              new Date().toISOString()
+          };
+
+          estado.push(foto);
+          renderFotosPreview(modulo);
+
+          resolve(foto);
+
+        } catch (err) {
+          console.warn('[UPV-FOTOS] Error:', err);
+          resolve(null);
+
+        } finally {
+          UPV.fotosProcesando[modulo] =
+            Math.max(
+              0,
+              Number(
+                UPV.fotosProcesando[modulo] || 0
+              ) - 1
+            );
+        }
+      };
+
+      reader.onerror = () => {
+        UPV.fotosProcesando[modulo] =
+          Math.max(
+            0,
+            Number(
+              UPV.fotosProcesando[modulo] || 0
+            ) - 1
+          );
+
+        resolve(null);
+      };
+
+      reader.readAsDataURL(file);
+    });
   });
-  const inp = document.getElementById('foto-input-' + modulo);
+
+  const inp =
+    document.getElementById(
+      'foto-input-' + modulo
+    );
+
   if (inp) inp.value = '';
+
+  UPV.promesasFotos[modulo].push(...tareas);
+
+  const lote = Promise.all(tareas);
+
+  lote.finally(() => {
+    UPV.promesasFotos[modulo] =
+      UPV.promesasFotos[modulo].filter(
+        promesa => !tareas.includes(promesa)
+      );
+  });
+
+  return lote;
 }
+
+
+async function esperarFotosPendientesUPV(modulo) {
+
+  if(
+    !UPV.promesasFotos ||
+    !Array.isArray(UPV.promesasFotos[modulo]) ||
+    !UPV.promesasFotos[modulo].length
+  ){
+    return;
+  }
+
+  const pendientes =
+    UPV.promesasFotos[modulo].slice();
+
+  await Promise.allSettled(pendientes);
+}
+
+
+window.esperarFotosPendientesUPV =
+  esperarFotosPendientesUPV;
+
 
 function comprimirImagen(dataUrl) {
   return new Promise(resolve => {
@@ -922,6 +1196,16 @@ function esperarConfirmacionWhatsappFIFOUpv(id){
 
       if(status === 'failed'){
         finalizar('failed');
+        return;
+      }
+
+      /*
+       * UNCERTAIN:
+       * el backend perdió la confirmación definitiva
+       * del envío. NO debemos reenviar automáticamente.
+       */
+      if(status === 'uncertain'){
+        finalizar('uncertain');
       }
     }
 
@@ -940,6 +1224,11 @@ function esperarConfirmacionWhatsappFIFOUpv(id){
 
       if(status === 'failed'){
         finalizar('failed');
+        return;
+      }
+
+      if(status === 'uncertain'){
+        finalizar('uncertain');
       }
     }
 
@@ -958,7 +1247,79 @@ function esperarConfirmacionWhatsappFIFOUpv(id){
      * Dejamos margen suficiente para texto + fotografías.
      */
     timeout = setTimeout(function(){
-      finalizar('timeout');
+
+      /*
+       * La Function normal tiene timeout máximo de 60 s.
+       *
+       * A los 75 s todavía NO declaramos el envío
+       * como huérfano, porque el backend de recuperación
+       * exige 90 s de antigüedad del lock.
+       *
+       * Esperamos 20 s adicionales:
+       *
+       * 75 s + 20 s = ~95 s.
+       *
+       * Después solicitamos únicamente una REVISIÓN.
+       * Esta escritura NO solicita un nuevo WhatsApp.
+       */
+      setTimeout(async function(){
+
+        if(terminado){
+          return;
+        }
+
+        try{
+
+          await reporteRef
+            .child('whatsappRecoveryRequest')
+            .set(
+              Date.now()
+            );
+
+          console.warn(
+            '[UPV-FIFO] Solicitada revisión de lock WhatsApp:',
+            id
+          );
+
+          /*
+           * La Function recoverUpvWhatsAppLock
+           * actualizará el reporte/registry.
+           *
+           * Los listeners existentes recibirán:
+           *
+           * SENT       -> enviado correctamente
+           * FAILED     -> reintento normal
+           * UNCERTAIN  -> revisión manual, sin reenvío
+           *
+           * Dejamos 30 s para recibir esa respuesta.
+           */
+          timeout = setTimeout(function(){
+
+            if(!terminado){
+              finalizar(
+                'timeout-recovery'
+              );
+            }
+
+          }, 30000);
+
+        }catch(error){
+
+          console.warn(
+            '[UPV-FIFO] No fue posible solicitar revisión:',
+            id,
+            error && error.message
+              ? error.message
+              : error
+          );
+
+          finalizar(
+            'timeout-recovery'
+          );
+        }
+
+      }, 20000);
+
     }, 75000);
 
   });
@@ -973,6 +1334,8 @@ async function sincronizarPendientesUpv() {
 
   if (
     !UPV.firebaseReady ||
+    !UPV.firebaseAuthReady ||
+    !UPV.firebaseUid ||
     !UPV.firebaseConnected ||
     !UPV.firebaseDb ||
     !UPV.db
@@ -992,7 +1355,8 @@ async function sincronizarPendientesUpv() {
         return (
           r &&
           r.id &&
-          r.syncStatus !== 'sincronizado'
+          r.syncStatus !== 'sincronizado' &&
+          r.syncStatus !== 'requiere_revision'
         );
       })
       .sort(function(a, b) {
@@ -1063,6 +1427,57 @@ async function sincronizarPendientesUpv() {
         reporteId,
         estadoWhatsapp
       );
+
+      /*
+       * UNCERTAIN es terminal para el envío automático.
+       *
+       * No sabemos con certeza si UltraMsg alcanzó a
+       * entregar el contenido antes de interrumpirse
+       * la Function.
+       *
+       * Por seguridad:
+       * - NO reenviar automáticamente.
+       * - NO bloquear los reportes posteriores.
+       * - Conservar el registro para revisión manual.
+       */
+      if (estadoWhatsapp === 'uncertain') {
+
+        var incierto =
+          await idbGet(
+            'reportes',
+            reporteId
+          );
+
+        if (incierto) {
+
+          incierto.syncStatus =
+            'requiere_revision';
+
+          incierto.whatsappStatus =
+            'uncertain';
+
+          incierto.syncError =
+            'WhatsApp: resultado incierto; revisar antes de reenviar';
+
+          incierto.whatsappUncertainAt =
+            new Date().toISOString();
+
+          await idbPut(
+            'reportes',
+            incierto
+          );
+        }
+
+        console.warn(
+          '[UPV-FIFO] Resultado incierto; NO se reenvía automáticamente:',
+          reporteId
+        );
+
+        /*
+         * Continuar con el siguiente reporte.
+         */
+        continue;
+      }
 
       if (estadoWhatsapp !== 'sent') {
 
@@ -1168,6 +1583,8 @@ async function enviarReporteUpv(id) {
   if (
     !id ||
     !UPV.firebaseReady ||
+    !UPV.firebaseAuthReady ||
+    !UPV.firebaseUid ||
     !UPV.firebaseConnected ||
     !UPV.firebaseDb ||
     !UPV.db
@@ -1299,6 +1716,15 @@ async function enviarReporteUpv(id) {
 
     var payload = {
       id: reporte.id,
+
+      /*
+       * Propietario Firebase del reporte.
+       *
+       * Se obtiene exclusivamente de la sesión autenticada
+       * y permitirá aplicar reglas RTDB por auth.uid.
+       */
+      ownerUid: UPV.firebaseUid,
+
       empresa: reporte.empresa || null,
       tipo: reporte.tipo || null,
       subtipo: reporte.subtipo || null,
@@ -1635,6 +2061,85 @@ async function enviarReporteUpv(id) {
    - Conserva offline-first.
    ========================================================== */
 
+
+/*
+ * DEDUPE DEL FLUJO MODERNO UPV.
+ *
+ * Protege guardarRegistroFinalUPV() contra una segunda
+ * creación equivalente dentro de la ventana de 60 s.
+ *
+ * La firma distingue:
+ * - empresa
+ * - unidad
+ * - CARGA / DESCARGA / OBSERVACION
+ * - INICIO / FINALIZAR / REGISTRO
+ * - origen y pozo origen
+ * - destino y pozo destino
+ * - volumen
+ * - operación de origen para FINALIZAR
+ */
+function firmaModernaUPV(data){
+
+  data = data || {};
+
+  const etapa =
+    data.etapa ||
+    data.subtipo ||
+    '';
+
+  const idsCargas =
+    Array.isArray(data.cargasSeleccionadasIds)
+      ? data.cargasSeleccionadasIds
+          .map(String)
+          .sort()
+          .join(',')
+      : (
+          Array.isArray(data.cargasSeleccionadas)
+            ? data.cargasSeleccionadas
+                .map(function(item){
+                  return item && item.id
+                    ? String(item.id)
+                    : '';
+                })
+                .filter(Boolean)
+                .sort()
+                .join(',')
+            : ''
+        );
+
+  return [
+    data.empresa || UPV.empresa || '',
+    data.unidadId || '',
+    data.unidad || '',
+    data.tipo || '',
+    etapa,
+    data.origen || '',
+    data.pozoOrigen || data.pozo || '',
+    data.destino || '',
+    data.pozoDestino || data.destinoPozo || '',
+    data.cantidadM3 ?? data.cantidad ?? '',
+    data.inicioTimestamp || '',
+    idsCargas,
+
+    /*
+     * Para OBSERVACION el texto forma parte de la identidad.
+     * Así dos observaciones diferentes no se bloquean entre sí.
+     */
+    String(data.tipo || '').toUpperCase() === 'OBSERVACION'
+      ? (
+          data.observaciones ||
+          data.observacionesOperacion ||
+          ''
+        )
+      : ''
+  ]
+    .map(function(v){
+      return String(v).trim().toLowerCase();
+    })
+    .join('|');
+}
+
+
 async function guardarRegistroFinalUPV(data){
 
   if(
@@ -1813,6 +2318,32 @@ async function guardarRegistroFinalUPV(data){
         ? data.cargasSeleccionadas
         : [],
 
+    /*
+     * Metadatos internos para deduplicación moderna.
+     * No modifican el mensaje visible ni WhatsApp.
+     */
+    cargasSeleccionadasIds:
+      Array.isArray(data.cargasSeleccionadasIds)
+        ? data.cargasSeleccionadasIds
+            .map(String)
+            .sort()
+        : (
+            Array.isArray(data.cargasSeleccionadas)
+              ? data.cargasSeleccionadas
+                  .map(function(item){
+                    return item && item.id
+                      ? String(item.id)
+                      : '';
+                  })
+                  .filter(Boolean)
+                  .sort()
+              : []
+          ),
+
+    inicioTimestamp:
+      data.inicioTimestamp ||
+      null,
+
     fecha:
       data.fecha ||
       ahora,
@@ -1846,6 +2377,57 @@ async function guardarRegistroFinalUPV(data){
       2
   };
 
+  /*
+   * DEDUPE MODERNO.
+   *
+   * Antes de crear un nuevo registro verificamos si
+   * el mismo evento operativo ya fue persistido durante
+   * la ventana de protección.
+   */
+  const firmaNueva =
+    firmaModernaUPV(data);
+
+  const ahoraDedupe =
+    Date.now();
+
+  const reportesExistentes =
+    await idbGetAll('reportes');
+
+  const reporteDuplicado =
+    reportesExistentes.find(function(r){
+
+      const fecha =
+        new Date(
+          r.createdAt ||
+          r.fecha ||
+          0
+        ).getTime();
+
+      if(
+        !Number.isFinite(fecha) ||
+        ahoraDedupe - fecha >= UPV_DEDUP_WINDOW
+      ){
+        return false;
+      }
+
+      return (
+        firmaModernaUPV(r) ===
+        firmaNueva
+      );
+    });
+
+  if(reporteDuplicado){
+
+    console.warn(
+      '[UPV-DEDUPE] Registro duplicado bloqueado:',
+      reporteDuplicado.id,
+      reporteDuplicado.tipo,
+      reporteDuplicado.etapa
+    );
+
+    return reporteDuplicado;
+  }
+
   await idbPut(
     'reportes',
     reporte
@@ -1864,6 +2446,8 @@ async function guardarRegistroFinalUPV(data){
    */
   if(
     UPV.firebaseReady &&
+    UPV.firebaseAuthReady &&
+    UPV.firebaseUid &&
     UPV.firebaseConnected &&
     typeof sincronizarPendientesUpv === 'function'
   ){
