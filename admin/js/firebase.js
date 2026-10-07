@@ -4,7 +4,7 @@ window.AdminFirebase = {
   reportes: [],
   alarmas: [],
 
-  init(){
+  initApp(){
     if(!window.ADMIN_CONFIG?.firebase?.databaseURL){
       throw new Error('Falta ADMIN_CONFIG.firebase.databaseURL');
     }
@@ -14,6 +14,12 @@ window.AdminFirebase = {
     }else{
       this.app = firebase.app();
     }
+
+    return this.app;
+  },
+
+  init(){
+    this.initApp();
 
     this.db = firebase.database();
 
@@ -55,11 +61,25 @@ window.AdminFirebase = {
       window.setTimeout(() => {
         renderPendiente = false;
 
-        this.reportes.sort(
-          (a, b) =>
-            AdminUtils.getTime(b) -
-            AdminUtils.getTime(a)
-        );
+        // Normalizar la ventana antes de renderizar:
+        // 1. una sola fila por ID de Firebase
+        // 2. más recientes primero
+        // 3. nunca superar el límite configurado
+        const unicos = new Map();
+
+        for(const reporte of this.reportes){
+          if(!reporte || !reporte.id) continue;
+          unicos.set(reporte.id, reporte);
+        }
+
+        this.reportes = Array
+          .from(unicos.values())
+          .sort(
+            (a, b) =>
+              AdminUtils.getTime(b) -
+              AdminUtils.getTime(a)
+          )
+          .slice(0, limits.reportes);
 
         window.AdminApp.render();
       }, 100);

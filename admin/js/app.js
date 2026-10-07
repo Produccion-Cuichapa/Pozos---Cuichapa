@@ -1,10 +1,13 @@
 window.AdminApp = {
   started: false,
 
-  init(){
+  async init(){
+    // Inicializar Firebase App antes del login.
+    AdminFirebase.initApp();
+
     this.bindLogin();
 
-    if(AdminAuth.init()){
+    if(await AdminAuth.init()){
       this.start();
     }
   },
@@ -17,17 +20,27 @@ window.AdminApp = {
     document.getElementById('logoutBtn').addEventListener('click', () => AdminAuth.logout());
   },
 
-  login(){
+  async login(){
     const user = document.getElementById('loginUser').value;
     const pass = document.getElementById('loginPass').value;
-    const res = AdminAuth.login(user, pass);
+    const btn = document.getElementById('loginBtn');
+    const error = document.getElementById('loginError');
 
-    if(!res.ok){
-      document.getElementById('loginError').textContent = res.error;
-      return;
+    error.textContent = '';
+    btn.disabled = true;
+
+    try{
+      const res = await AdminAuth.login(user, pass);
+
+      if(!res.ok){
+        error.textContent = res.error;
+        return;
+      }
+
+      this.start();
+    }finally{
+      btn.disabled = false;
     }
-
-    this.start();
   },
 
   start(){

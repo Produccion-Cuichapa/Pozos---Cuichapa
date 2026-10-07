@@ -4,11 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Cuichapa Control | Centro de Operaciones</title>
-  <link rel="stylesheet" href="./css/admin.css?v=20260805161251">
+  <link rel="stylesheet" href="./css/admin.css?v=20261002173000">
     <link rel="stylesheet" href="./css/dashboard-v2.css?v=1784348754">
 <link rel="stylesheet" href="./css/reportes-v2.css?v=1784314915">
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js?v=1784301243" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js" defer></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js" defer></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js" defer></script>
 
@@ -311,19 +312,50 @@
             <div class="panel-head">
               <div class="panel-title">
                 <span class="panel-title-icon">!</span>
-                <h2>Alertas recientes</h2>
+                <h2>Atención a Cond. de la pera</h2>
               </div>
 
-              <button class="mini-btn" data-jump="alarmas">
-                Ver todas las alertas →
-              </button>
+              <span class="muted">Estado vigente por último reporte</span>
             </div>
 
-            <div id="ultimasAlarmas" class="list dashboard-list"></div>
+            <div class="cond-pera-leyenda"
+                 aria-label="Indicadores de condición de pera">
 
-            <button class="panel-footer-link" data-jump="alarmas">
-              Ir a Alertas →
-            </button>
+              <span class="cond-pera-leyenda-item">
+                <i class="cond-pera-leyenda-dot cond-pera-leyenda-area"></i>
+                Área de pozo
+              </span>
+
+              <span class="cond-pera-leyenda-item">
+                <i class="cond-pera-leyenda-dot cond-pera-leyenda-contra"></i>
+                Contrapozo
+              </span>
+
+              <span class="cond-pera-leyenda-item">
+                <i class="cond-pera-leyenda-dot cond-pera-leyenda-cerco"></i>
+                Cerco perimetral
+              </span>
+
+              <span class="cond-pera-leyenda-item">
+                <i class="cond-pera-leyenda-dot cond-pera-leyenda-bayoneta"></i>
+                Bayoneta
+              </span>
+
+            </div>
+
+            <div id="condicionPeraDashboard"
+                 class="list dashboard-list"
+                 style="
+                   height:500px;
+                   max-height:500px;
+                   overflow-y:scroll;
+                   overflow-x:hidden;
+                   overscroll-behavior:contain;
+                   scrollbar-gutter:stable;
+                   padding-right:12px;
+                 "></div>
+
+            
           </article>
         </div>
 

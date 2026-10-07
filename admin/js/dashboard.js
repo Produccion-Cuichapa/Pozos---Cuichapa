@@ -75,7 +75,7 @@ window.AdminDashboard = {
     this.renderDailyInsights(reportesHoy);
     this.renderRecorredores(reportesHoy);
     this.renderList('ultimosReportes', r.slice(0, 5), 'reporte');
-    this.renderList('ultimasAlarmas', a.slice(0, 3), 'alarma');
+    this.renderCondicionPera(r);
 
     this.renderIncidentBanner({
       reportesHoy,
@@ -400,6 +400,331 @@ window.AdminDashboard = {
       `;
     }).join('');
   },
+
+  renderCondicionPera(rows){
+
+    const u = AdminUtils;
+    const el = document.getElementById('condicionPeraDashboard');
+
+    if(!el) return;
+
+    /*
+     * ESTADO VIGENTE:
+     * tomar únicamente el último reporte disponible de
+     * COND. DE PERA de cada pozo.
+     *
+     * NO acumular por mes.
+     * NO sumar reportes históricos.
+     */
+    const ultimoPorPozo = new Map();
+
+    (rows || []).forEach(row => {
+
+      const msg = String(
+        row.msg ||
+        row.mensaje ||
+        row.observaciones ||
+        row.obs ||
+        ''
+      );
+
+      if(!/COND\.?\s*DE\s*PERA/i.test(msg)) return;
+
+      let pozo = String(
+        u.placeText(row) || ''
+      ).trim();
+
+      /*
+       * Si Firebase no trae el pozo como campo,
+       * obtenerlo del encabezado del reporte.
+       */
+      if(!pozo){
+        const mPozo = msg.match(
+          /(?:^|\n)[^\n]*?C[-\s]?(\d{2,4})[^\n]*/i
+        );
+
+        if(mPozo){
+          pozo = 'C-' + mPozo[1];
+        }
+      }
+
+      if(!pozo) return;
+
+      const numero = pozo.match(/\d+/);
+
+      if(numero){
+        pozo = 'C-' + numero[0];
+      }
+
+      const key = pozo.toUpperCase();
+      const fecha = u.dateObj(row);
+      const tiempo =
+        fecha && !isNaN(fecha.getTime())
+          ? fecha.getTime()
+          : u.getTime(row);
+
+      const anterior = ultimoPorPozo.get(key);
+
+      /*
+       * Conservamos exclusivamente el reporte más reciente
+       * de condición de pera para cada pozo.
+       */
+      if(
+        anterior &&
+        Number(anterior.tiempo || 0) >= Number(tiempo || 0)
+      ){
+        return;
+      }
+
+      /*
+       * Extraer solamente el bloque COND. DE PERA.
+       * El siguiente separador marca el final del bloque.
+       */
+      const inicioPera = msg.search(/COND\.?\s*DE\s*PERA/i);
+
+      let bloque = inicioPera >= 0
+        ? msg.slice(inicioPera)
+        : '';
+
+      const despuesTitulo = bloque.indexOf('\n');
+
+      if(despuesTitulo >= 0){
+        const resto = bloque.slice(despuesTitulo + 1);
+
+        const separador = resto.search(
+          /\n\s*(?:={3,}|_{3,}|-{3,})\s*(?:\n|$)/
+        );
+
+        if(separador >= 0){
+          bloque =
+            bloque.slice(0, despuesTitulo + 1) +
+            resto.slice(0, separador);
+        }
+      }
+
+      /*
+       * Contar las X del último reporte.
+       * Cada ❌ dentro del bloque representa una incidencia
+       * vigente reportada para la condición de la pera.
+       */
+      const cantidadX =
+        (bloque.match(/❌/g) || []).length;
+
+      /*
+       * Estado individual de los cuatro componentes.
+       * El reporte solamente incluye los componentes BAD,
+       * por ejemplo: ❌ Área de pozo
+       */
+      const estadoPera = {
+        areaPozo:
+          /❌\s*Área\s+de\s+pozo/i.test(bloque),
+
+        contrapozo:
+          /❌\s*Contrapozo/i.test(bloque),
+
+        cerco:
+          /❌\s*Cerco\s+perimetral/i.test(bloque),
+
+        bayoneta:
+          /❌\s*Bayoneta/i.test(bloque)
+      };
+
+      /*
+       * Obtener observación del mismo último reporte.
+       */
+      const lineas = bloque
+        .split(/\r?\n/)
+        .map(x => x.replace(/\*/g, '').trim())
+        .filter(Boolean);
+
+      let observacion = '';
+
+      const lineaObs = lineas.find(
+        x => /^📝/.test(x)
+      );
+
+      if(lineaObs){
+        observacion = lineaObs
+          .replace(/^📝\s*/, '')
+          .trim();
+      }
+
+      /*
+       * Respaldo para mensajes donde la observación
+       * no venga precedida por 📝.
+       */
+      if(!observacion){
+        const idxContra = lineas.findIndex(
+          x => /Contrapozo/i.test(x)
+        );
+
+        if(idxContra >= 0 && lineas[idxContra + 1]){
+          observacion = lineas[idxContra + 1]
+            .replace(/^📝\s*/, '')
+            .trim();
+        }
+      }
+
+      if(!observacion){
+        observacion = 'Sin observación registrada';
+      }
+
+      ultimoPorPozo.set(key, {
+        pozo,
+        cantidad: cantidadX,
+        requiereAtencion: cantidadX > 0,
+        estadoPera,
+        observacion,
+        fecha,
+        tiempo
+      });
+    });
+
+
+    /*
+     * Mostrar solamente pozos cuyo último reporte
+     * todavía tenga una o más ❌.
+     *
+     * Si el último reporte ya no tiene ❌,
+     * la condición se considera atendida y desaparece.
+     */
+    const lista = Array
+      .from(ultimoPorPozo.values())
+      .sort((a, b) => {
+
+        /*
+         * Primero los que requieren atención.
+         * Después los que están OK.
+         */
+        const atencionA = a.cantidad > 0 ? 1 : 0;
+        const atencionB = b.cantidad > 0 ? 1 : 0;
+
+        if(atencionB !== atencionA){
+          return atencionB - atencionA;
+        }
+
+        /*
+         * Entre los que requieren atención:
+         * mayor cantidad de incidencias primero.
+         */
+        if(
+          atencionA &&
+          atencionB &&
+          b.cantidad !== a.cantidad
+        ){
+          return b.cantidad - a.cantidad;
+        }
+
+        /*
+         * En empate, el reporte más reciente primero.
+         */
+        return Number(b.tiempo || 0) -
+               Number(a.tiempo || 0);
+      });
+
+
+    if(!lista.length){
+
+      el.innerHTML = `
+        <div class="dashboard-empty"
+             style="color:#64748b;">
+          No hay reportes de condición de pera.
+        </div>
+      `;
+
+      return;
+    }
+
+
+    el.innerHTML = lista.map(item => {
+
+      const fechaTexto =
+        item.fecha && !isNaN(item.fecha.getTime())
+          ? item.fecha.toLocaleDateString('es-MX')
+          : '';
+
+      return `
+        <div class="dashboard-cond-pera-item"
+             style="
+               display:grid;
+               grid-template-columns:140px minmax(0,1fr);
+               gap:22px;
+               align-items:center;
+               padding:18px 10px;
+               border-bottom:1px solid #dbe3ee;
+             ">
+
+          <div>
+
+            <div style="
+              font-size:20px;
+              line-height:1.15;
+              font-weight:800;
+              color:#c62828;
+              letter-spacing:-0.2px;
+            ">
+              <div class="cond-pera-semaforo"
+               aria-label="Condición de la pera">
+            <span class="cond-pera-dot cond-pera-dot-area ${item.estadoPera?.areaPozo ? 'activo' : ''}"
+                  title="Área de pozo"></span>
+            <span class="cond-pera-dot cond-pera-dot-contra ${item.estadoPera?.contrapozo ? 'activo' : ''}"
+                  title="Contrapozo"></span>
+            <span class="cond-pera-dot cond-pera-dot-cerco ${item.estadoPera?.cerco ? 'activo' : ''}"
+                  title="Cerco perimetral"></span>
+            <span class="cond-pera-dot cond-pera-dot-bayoneta ${item.estadoPera?.bayoneta ? 'activo' : ''}"
+                  title="Bayoneta"></span>
+          </div>
+
+          ${u.escapeHtml(item.pozo)}
+            </div>
+
+          </div>
+
+          <div>
+
+            <div style="
+              display:inline-block;
+              margin-bottom:7px;
+              font-size:12px;
+              line-height:1;
+              font-weight:800;
+              letter-spacing:.3px;
+              color:${item.requiereAtencion ? '#c62828' : '#16803a'};
+            ">
+              ${item.requiereAtencion ? 'REQUIERE ATENCIÓN' : 'OK'}
+            </div>
+
+            <div style="
+              font-size:15px;
+              line-height:1.45;
+              font-weight:650;
+              color:#172033;
+            ">
+              ${u.escapeHtml(item.observacion)}
+            </div>
+
+            ${
+              fechaTexto
+                ? `
+                  <div style="
+                    margin-top:6px;
+                    font-size:12px;
+                    font-weight:600;
+                    color:#64748b;
+                  ">
+                    Último reporte: ${u.escapeHtml(fechaTexto)}
+                  </div>
+                `
+                : ''
+            }
+
+          </div>
+
+        </div>
+      `;
+    }).join('');
+  },
+
 
   renderList(id, rows, type){
 

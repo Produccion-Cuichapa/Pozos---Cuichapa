@@ -17,18 +17,15 @@ window.ADMIN_CONFIG = {
   // En fase posterior se puede migrar a usuarios/permisos desde Firebase.
   users: {
     Admin: {
-      pass: '1234',
-      role: 'admin',
+role: 'admin',
       name: 'Administrador'
     },
     Jaime: {
-      pass: 'LIFTING2026',
-      role: 'admin',
+role: 'admin',
       name: 'Jaime'
     },
     Antonio: {
-      pass: 'LIFTING2026',
-      role: 'admin',
+role: 'admin',
       name: 'Antonio'
     }
   },

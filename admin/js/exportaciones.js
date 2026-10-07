@@ -419,60 +419,113 @@ window.AdminExportaciones = {
 
   estadoOperativoExport(r, p = {}){
 
-  const texto = [
-    r?.observaciones,
-    r?.observacion,
-    r?.obs,
-    r?.mensaje,
-    r?.msg,
-    r?.descripcion,
-    r?.co?.observaciones
-  ]
-  .filter(Boolean)
-  .map(String)
-  .join('\n');
+    const normalizar = (valor) => {
+      const v = String(valor || '').trim().toLowerCase();
 
-  const maniobra =
-    texto.match(
-      /maniobra\s+realizada\s*[:=-]?\s*(apertura|cierre)\b/i
+      if(!v) return '';
+
+      if(v.includes('apertura')) return 'APERTURA';
+      if(v.includes('cierre')) return 'CIERRE';
+      if(v.includes('intermitente')) return 'INTERMITENTE';
+      if(v.includes('abiert')) return 'ABIERTO';
+      if(v.includes('cerrad')) return 'CERRADO';
+
+      return '';
+    };
+
+    // 1. Maniobras: APERTURA / CIERRE
+    const maniobras = [
+      r?.maniobraPozo,
+      r?.guardiaManiobra,
+      r?.aforoManiobra,
+      r?.aforo?.maniobraPozo,
+      r?.co?.maniobraPozo,
+      r?.controlOperativo?.maniobraPozo,
+
+      p?.maniobraPozo,
+      p?.guardiaManiobra,
+      p?.aforoManiobra
+    ];
+
+    for(const valor of maniobras){
+      const estado = normalizar(valor);
+
+      if(estado === 'APERTURA' || estado === 'CIERRE'){
+        return estado;
+      }
+    }
+
+    // 2. Estado del pozo: ABIERTO / CERRADO / INTERMITENTE
+    const estados = [
+      r?.estadoPozo,
+      r?.guardiaEstado,
+      r?.aforoEstado,
+      r?.aforo?.estadoPozo,
+
+      r?.co?.estadoPozo,
+      r?.co?.estadoActual,
+      r?.co?.estatus,
+
+      r?.controlOperativo?.estadoPozo,
+      r?.controlOperativo?.estadoActual,
+      r?.controlOperativo?.estatus,
+
+      r?.estadoActual,
+      r?.estatusPozo,
+      r?.estatus,
+
+      p?.estadoPozo,
+      p?.guardiaEstado,
+      p?.aforoEstado,
+      p?.estatus
+    ];
+
+    for(const valor of estados){
+      const estado = normalizar(valor);
+
+      if(estado){
+        return estado;
+      }
+    }
+
+    // 3. Compatibilidad con reportes históricos por mensaje
+    const texto = [
+      r?.mensaje,
+      r?.msg,
+      r?.message,
+      r?.texto,
+      r?.whatsappText,
+      r?.raw,
+      r?.observaciones,
+      r?.observacion,
+      r?.obs,
+      r?.descripcion,
+      r?.co?.observaciones
+    ]
+    .filter(Boolean)
+    .map(String)
+    .join('\n');
+
+    let m = texto.match(
+      /maniobra(?:\s+realizada|\s+del\s+pozo)?\s*[:=-]?\s*(apertura|cierre)\b/i
     );
 
-  if(maniobra){
-    return maniobra[1].toUpperCase();
-  }
+    if(m){
+      return m[1].toLowerCase() === 'apertura'
+        ? 'APERTURA'
+        : 'CIERRE';
+    }
 
-  const actual =
-    texto.match(
-      /estado\s+actual\s*[:=-]?\s*(abiert[oa]|cerrad[oa]|intermitente)\b/i
+    m = texto.match(
+      /(?:estado\s+actual|estado\s*|estatus(?:\s+del\s+pozo)?)\s*[:=-]\s*(abiert[oa]|cerrad[oa]|intermitente)\b/i
     );
 
-  if(actual){
-    const v = actual[1].toLowerCase();
+    if(m){
+      return normalizar(m[1]);
+    }
 
-    if(v.startsWith('abiert')) return 'ABIERTO';
-    if(v.startsWith('cerrad')) return 'CERRADO';
-    return 'INTERMITENTE';
-  }
-
-  const directo =
-    String(
-      r?.co?.estatus ||
-      r?.co?.estadoActual ||
-      r?.estadoActual ||
-      r?.estatusPozo ||
-      r?.estatus ||
-      p?.estatus ||
-      ''
-    ).toLowerCase();
-
-  if(directo.includes('apertura')) return 'APERTURA';
-  if(directo.includes('cierre')) return 'CIERRE';
-  if(directo.includes('abiert')) return 'ABIERTO';
-  if(directo.includes('cerrad')) return 'CERRADO';
-  if(directo.includes('intermitente')) return 'INTERMITENTE';
-
-  return '';
-},
+    return '';
+  },
 
 obsReal(r){
     const direct = String(
@@ -993,11 +1046,12 @@ obsReal(r){
       }
 
       const pozosPlantilla = [
-        '106D','107','119','124D','128','131','137','138','139','167',
-        '169','172','176','179','180','187','19','191','201','207',
-        '213','306','324','326','327','328','331','342','343','346',
-        '350','352','356','359','363','364','367','373','376','377',
-        '385','401','500','502','504','505','507','513','601','602','603'
+        '19','101','106D','107','108','119','124D','128','131','137',
+        '139','167','169','172','176','179','180','181','182','187',
+        '191','197','213','224','324','326','327','328','331','333',
+        '339','342','344','346','350','352','356','359','363','364',
+        '367','373','376','385','401','500','502','504','505','601',
+        '602','603'
       ];
 
       const pozoRow = {};
@@ -1018,7 +1072,7 @@ obsReal(r){
         const colAforo = startCol + ((dia - 1) * block) + 6;
         const colInter = startCol + ((dia - 1) * block) + 7;
 
-        for(let row = 3; row <= 53; row++){
+        for(let row = 3; row <= 54; row++){
           clearCell(colName(colSuper) + row);
           clearCell(colName(colNivel) + row);
           clearCell(colName(colTrabajo) + row);
@@ -1209,29 +1263,162 @@ obsReal(r){
       Object.entries(interCeldas).forEach(([addr, val]) => setNum(addr, val));
 
       Object.keys(superTotales).forEach(col => {
-        setCachedFormulaValue(colName(Number(col)) + 54, superTotales[col]);
+        setCachedFormulaValue(colName(Number(col)) + 55, superTotales[col]);
       });
 
       Object.keys(nivelTotales).forEach(col => {
-        setCachedFormulaValue(colName(Number(col)) + 54, nivelTotales[col]);
+        setCachedFormulaValue(colName(Number(col)) + 55, nivelTotales[col]);
       });
 
       Object.keys(trabajoTotales).forEach(col => {
-        setCachedFormulaValue(colName(Number(col)) + 54, trabajoTotales[col]);
+        setCachedFormulaValue(colName(Number(col)) + 55, trabajoTotales[col]);
       });
 
       Object.keys(drenarTotales).forEach(col => {
-        setCachedFormulaValue(colName(Number(col)) + 54, drenarTotales[col]);
+        setCachedFormulaValue(colName(Number(col)) + 55, drenarTotales[col]);
       });
 
       Object.keys(aforoTotales).forEach(col => {
-        setCachedFormulaValue(colName(Number(col)) + 54, aforoTotales[col]);
+        setCachedFormulaValue(colName(Number(col)) + 55, aforoTotales[col]);
       });
 
       Object.keys(interTotales).forEach(col => {
-        setCachedFormulaValue(colName(Number(col)) + 54, interTotales[col]);
+        setCachedFormulaValue(colName(Number(col)) + 55, interTotales[col]);
       });
       zip.file(sheetName, new XMLSerializer().serializeToString(doc));
+
+      /*
+       * CORRECCIÓN HOJA 2 / GRAFICOS
+       *
+       * La plantilla contiene algunas celdas de resultados con style 19.
+       * Ese estilo usa numFmtId 16 (formato de FECHA de Excel).
+       *
+       * Por eso valores numéricos como:
+       *   6  -> 06-ene
+       *   10 -> 10-ene
+       *
+       * Solo corregimos las celdas con FORMULA de la hoja Graficos
+       * que tengan style 19, pasándolas al style 10 (General).
+       *
+       * IMPORTANTE:
+       * - NO se toca la columna A.
+       * - NO se modifican las fechas reales.
+       * - NO se modifica la Hoja 1.
+       */
+      const sheet2Name = 'xl/worksheets/sheet2.xml';
+      const sheet2File = zip.file(sheet2Name);
+
+      if(sheet2File){
+        const sheet2Xml = await sheet2File.async('string');
+        const doc2 = parser.parseFromString(
+          sheet2Xml,
+          'application/xml'
+        );
+
+        const cells2 = Array.from(
+          doc2.getElementsByTagNameNS(ns, 'c')
+        );
+
+        let estilosFechaCorregidos = 0;
+
+        /*
+         * TABLA RESUMEN — POZOS OPERANDO
+         *
+         * B = Abiertos   -> 25
+         * C = Cerrados   -> 20
+         * D = INYECTORES -> 6
+         *
+         * Se utiliza la columna D que ya existe vacía en la plantilla.
+         * Así NO desplazamos los bloques de actividades ni los gráficos.
+         */
+        function getCellSheet2(addr){
+          const rowNum = Number(addr.match(/\d+/)[0]);
+
+          const row = Array.from(
+            doc2.getElementsByTagNameNS(ns, 'row')
+          ).find(r => r.getAttribute('r') == rowNum);
+
+          if(!row) return null;
+
+          return Array.from(
+            row.getElementsByTagNameNS(ns, 'c')
+          ).find(c => c.getAttribute('r') === addr) || null;
+        }
+
+        function setNumSheet2(addr, value){
+          const c = getCellSheet2(addr);
+          if(!c) return;
+
+          Array.from(c.childNodes).forEach(
+            n => c.removeChild(n)
+          );
+
+          c.setAttribute('t', 'n');
+
+          const v = doc2.createElementNS(ns, 'v');
+          v.textContent = String(value);
+          c.appendChild(v);
+        }
+
+        function setTextSheet2(addr, value){
+          const c = getCellSheet2(addr);
+          if(!c) return;
+
+          Array.from(c.childNodes).forEach(
+            n => c.removeChild(n)
+          );
+
+          c.setAttribute('t', 'inlineStr');
+
+          const is = doc2.createElementNS(ns, 'is');
+          const t = doc2.createElementNS(ns, 't');
+
+          t.textContent = value;
+          is.appendChild(t);
+          c.appendChild(is);
+        }
+
+        // Encabezado nuevo.
+        setTextSheet2('D4', 'INYECTORES');
+
+        // Valores fijos para todos los días del mes.
+        for(let fila = 5; fila <= 35; fila++){
+          setNumSheet2('B' + fila, 25);
+          setNumSheet2('C' + fila, 20);
+          setNumSheet2('D' + fila, 6);
+        }
+
+        cells2.forEach(c => {
+          const addr = c.getAttribute('r') || '';
+          const style = c.getAttribute('s');
+
+          const formula =
+            c.getElementsByTagNameNS(ns, 'f')[0];
+
+          /*
+           * style 19 = numFmtId 16 = fecha.
+           * Solo cambiarlo cuando sea una celda calculada de datos.
+           */
+          if(
+            formula &&
+            style === '19' &&
+            !/^A\\d+$/i.test(addr)
+          ){
+            c.setAttribute('s', '10');
+            estilosFechaCorregidos++;
+          }
+        });
+
+        zip.file(
+          sheet2Name,
+          new XMLSerializer().serializeToString(doc2)
+        );
+
+        console.log(
+          '[Soporte Mensual] Formatos fecha incorrectos corregidos:',
+          estilosFechaCorregidos
+        );
+      }
 
       const blobFinal = await zip.generateAsync({
         type:'blob',

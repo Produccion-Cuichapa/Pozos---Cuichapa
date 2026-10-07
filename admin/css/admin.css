@@ -9678,3 +9678,229 @@ body.well-chart-expanded-open{
   }
 }
 
+
+/* ==========================================================
+   DASHBOARD — CONDICIÓN DE PERA
+   Scroll interno real
+   ========================================================== */
+
+#condicionPeraDashboard{
+  display:block !important;
+  height:500px !important;
+  max-height:500px !important;
+  min-height:0 !important;
+
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+
+  overscroll-behavior-y:contain;
+  touch-action:pan-y;
+
+  -webkit-overflow-scrolling:touch;
+
+  padding-right:12px !important;
+
+  scrollbar-width:auto;
+  scrollbar-color:#94a3b8 #eef2f7;
+}
+
+#condicionPeraDashboard::-webkit-scrollbar{
+  width:12px;
+}
+
+#condicionPeraDashboard::-webkit-scrollbar-track{
+  background:#eef2f7;
+  border-radius:10px;
+}
+
+#condicionPeraDashboard::-webkit-scrollbar-thumb{
+  background:#94a3b8;
+  border-radius:10px;
+  border:3px solid #eef2f7;
+}
+
+#condicionPeraDashboard::-webkit-scrollbar-thumb:hover{
+  background:#64748b;
+}
+
+#condicionPeraDashboard .dashboard-cond-pera-item{
+  min-height:0 !important;
+}
+
+/* ==========================================================
+   CONDICIÓN DE PERA — SCROLL DEFINITIVO
+   ========================================================== */
+
+/* La tarjeta completa mantiene una altura controlada */
+#dashboardView .dashboard-alert-panel{
+  height:560px !important;
+  max-height:560px !important;
+  min-height:0 !important;
+
+  display:flex !important;
+  flex-direction:column !important;
+
+  overflow:hidden !important;
+}
+
+/* Encabezado siempre visible */
+#dashboardView .dashboard-alert-panel > .panel-head{
+  flex:0 0 auto !important;
+}
+
+/* La lista ocupa el espacio restante y ES la zona desplazable */
+#dashboardView #condicionPeraDashboard{
+  display:block !important;
+
+  flex:1 1 auto !important;
+
+  width:100% !important;
+  height:0 !important;
+  min-height:0 !important;
+  max-height:none !important;
+
+  overflow-x:hidden !important;
+  overflow-y:scroll !important;
+
+  position:relative !important;
+
+  padding-right:14px !important;
+  padding-bottom:20px !important;
+
+  overscroll-behavior:contain !important;
+  touch-action:pan-y !important;
+
+  scrollbar-gutter:stable !important;
+}
+
+/* Cada pozo debe formar una fila normal */
+#dashboardView #condicionPeraDashboard
+.dashboard-cond-pera-item{
+  position:relative !important;
+  flex:none !important;
+  width:100% !important;
+}
+
+/* Scroll visible en Chrome / Edge */
+#dashboardView #condicionPeraDashboard::-webkit-scrollbar{
+  width:12px !important;
+}
+
+#dashboardView #condicionPeraDashboard::-webkit-scrollbar-track{
+  background:#e8edf3 !important;
+  border-radius:10px;
+}
+
+#dashboardView #condicionPeraDashboard::-webkit-scrollbar-thumb{
+  background:#8292a6 !important;
+  border-radius:10px;
+  border:2px solid #e8edf3;
+}
+
+#dashboardView #condicionPeraDashboard::-webkit-scrollbar-thumb:hover{
+  background:#58697d !important;
+}
+
+/* ==========================================================
+   CONDICIÓN DE PERA — INDICADORES POR COMPONENTE
+   ========================================================== */
+
+/* 4 indicadores sobre el número del pozo */
+#dashboardView .cond-pera-semaforo{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin-bottom:9px;
+}
+
+/* Estado normal: componente sin incidencia */
+#dashboardView .cond-pera-dot{
+  display:inline-block;
+  width:11px;
+  height:11px;
+  flex:0 0 11px;
+
+  border-radius:50%;
+  background:#d6dde6;
+  border:1px solid #c2ccd8;
+
+  box-shadow:none;
+}
+
+/* ÁREA DE POZO — ROJO */
+#dashboardView .cond-pera-dot-area.activo{
+  background:#dc2626;
+  border-color:#b91c1c;
+  box-shadow:0 0 0 3px rgba(220,38,38,.10);
+}
+
+/* CONTRAPOZO — NARANJA */
+#dashboardView .cond-pera-dot-contra.activo{
+  background:#f97316;
+  border-color:#ea580c;
+  box-shadow:0 0 0 3px rgba(249,115,22,.10);
+}
+
+/* CERCO PERIMETRAL — AMARILLO */
+#dashboardView .cond-pera-dot-cerco.activo{
+  background:#eab308;
+  border-color:#ca8a04;
+  box-shadow:0 0 0 3px rgba(234,179,8,.12);
+}
+
+/* BAYONETA — AZUL */
+#dashboardView .cond-pera-dot-bayoneta.activo{
+  background:#2563eb;
+  border-color:#1d4ed8;
+  box-shadow:0 0 0 3px rgba(37,99,235,.10);
+}
+
+/* Leyenda */
+#dashboardView .cond-pera-leyenda{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:8px 15px;
+
+  margin:0 0 8px;
+  padding:8px 10px;
+
+  border-bottom:1px solid #e2e8f0;
+
+  color:#64748b;
+  font-size:10px;
+  font-weight:700;
+}
+
+/* Los círculos de la leyenda siempre muestran su color */
+#dashboardView .cond-pera-leyenda-item{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  white-space:nowrap;
+}
+
+#dashboardView .cond-pera-leyenda-dot{
+  display:inline-block;
+  width:9px;
+  height:9px;
+  flex:0 0 9px;
+  border-radius:50%;
+}
+
+#dashboardView .cond-pera-leyenda-area{
+  background:#dc2626;
+}
+
+#dashboardView .cond-pera-leyenda-contra{
+  background:#f97316;
+}
+
+#dashboardView .cond-pera-leyenda-cerco{
+  background:#eab308;
+}
+
+#dashboardView .cond-pera-leyenda-bayoneta{
+  background:#2563eb;
+}
