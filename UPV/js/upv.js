@@ -961,7 +961,7 @@ async function renderHistorial() {
           empresaActual === 'TC' &&
           capacidadActual === 22
         ) {
-          unidadActiva = 'TC_193';
+          unidadActiva = 'TC_88';
         }
 
       } catch(e) {
@@ -1010,7 +1010,7 @@ async function renderHistorial() {
           );
         }
 
-        if (unidadActiva === 'TC_193') {
+        if (unidadActiva === 'TC_88') {
           return (
             empresaRegistro === 'TC' &&
             capacidadRegistro === 22
@@ -1053,7 +1053,7 @@ async function renderHistorial() {
             (
               r.unidadId === 'TC_89'
                 ? 'TC 89'
-                : r.unidadId === 'TC_193'
+                : r.unidadId === 'TC_88' ? 'TC 88' : r.unidadId === 'TC_193'
                   ? 'TC 193'
                   : r.unidadId === 'PETROSMART_93'
                     ? 'PETROSMART'
@@ -1732,7 +1732,7 @@ async function enviarReporteUpv(id) {
 
       /*
        * Identidad exacta de la unidad operativa.
-       * Evita mezclar TC 89, TC 193 y PETROSMART
+       * Evita mezclar TC 89, TC 88 y PETROSMART
        * cuando el registro sale de IndexedDB.
        */
       unidadId:

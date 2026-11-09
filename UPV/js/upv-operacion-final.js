@@ -1092,7 +1092,7 @@ function idUnidadOperativa(){
     empresa === 'TC' &&
     capacidad === 22
   ){
-    return 'TC_193';
+    return 'TC_88';
   }
 
   return '';
@@ -1431,7 +1431,7 @@ function opcionesUnidadEmpresa(){
       },
       {
         capacidadM3:22,
-        titulo:'UNIDAD 193',
+        titulo:'UNIDAD 88',
         subtitulo:'TC'
       }
 
@@ -2896,9 +2896,9 @@ function proveedorWhatsappUPV(empresa, capacidadM3){
     return '🔵 ' + emp + ' 🔵';
   }
 
-  // TC — Unidad 22 m³ / No. 193
+  // TC — Unidad 22 m³ / No. 88
   if(emp === 'TC' && cap === 22){
-    return '🟢 TC 193 🟢';
+    return '🟢 TC 88 🟢';
   }
 
   // TC — Unidad 30 m³ / No. 89
@@ -4459,8 +4459,8 @@ function renderInicio(tipo){
           unidadNombre:
             idUnidadOperativa() === 'TC_89'
               ? 'TC 89'
-              : idUnidadOperativa() === 'TC_193'
-                ? 'TC 193'
+              : idUnidadOperativa() === 'TC_88'
+                ? 'TC 88'
                 : idUnidadOperativa() === 'PETROSMART_93'
                   ? 'PETROSMART'
                   : empresaActiva(),
@@ -6536,8 +6536,8 @@ function renderTermino(tipo){
           unidadNombre:
             idUnidadOperativa() === 'TC_89'
               ? 'TC 89'
-              : idUnidadOperativa() === 'TC_193'
-                ? 'TC 193'
+              : idUnidadOperativa() === 'TC_88'
+                ? 'TC 88'
                 : idUnidadOperativa() === 'PETROSMART_93'
                   ? 'PETROSMART'
                   : empresaActiva(),
@@ -7447,8 +7447,8 @@ function abrirVistaPreviaObservacionUPV(datos){
                 ? 'PETROSMART'
                 : idUnidadOperativa() === 'TC_89'
                   ? 'TC 89'
-                  : idUnidadOperativa() === 'TC_193'
-                    ? 'TC 193'
+                  : idUnidadOperativa() === 'TC_88'
+                    ? 'TC 88'
                     : datos.unidad,
 
             capacidadUnidadM3:
