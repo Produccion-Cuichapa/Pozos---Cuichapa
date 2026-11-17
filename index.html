@@ -393,11 +393,12 @@ window.addEventListener('unhandledrejection', function(e){
     <!-- RECORREDORES -->
     <button class="pk-row" onclick="ppToggle('rec')">
       <div class="pk-ball" style="background:#dcfce7">🚶</div>
-      <div class="pk-info"><div class="pk-info-name">Recorredores</div><div class="pk-info-sub">Manrique, Juan Carlos, Jose, Luis</div></div>
+      <div class="pk-info"><div class="pk-info-name">Recorredores</div><div class="pk-info-sub">Manrique, Juan Carlos, Jose, Luis, NASH</div></div>
       <span class="pk-chev" id="pp-arrow-rec">›</span>
     </button>
     <div class="pk-divider"></div>
     <div class="pk-cards" id="pp-body-rec">
+      <div class="pk-card" id="pk-rec-nash" onclick="selProfile('NASH','nash','rec')"><div class="pk-card-ico">👷</div><div class="pk-card-nm">NASH</div><div class="pk-card-lk">🔒 clave</div></div>
       <div class="pk-card" id="pk-rec-m" onclick="selProfile('Manrique','m','rec')"><div class="pk-card-ico">🌊</div><div class="pk-card-nm">Manrique</div><div class="pk-card-lk">🔒 clave</div></div>
 
       <div class="pk-card" id="pk-rec-jc" onclick="selProfile('Juan Carlos','jc','rec')"><div class="pk-card-ico">🦺</div><div class="pk-card-nm">Juan Carlos</div><div class="pk-card-lk">🔒 clave</div></div>
@@ -2443,7 +2444,7 @@ var _nivTipo='ft', _medTipo='ft';
 var _wt=document.getElementById('wellTitle'); if(_wt) _wt.textContent='C-'+W;
 document.title='C-'+W;
 
-['Manrique','Juan Carlos','Jose','Luis'].forEach(function(n){
+['Manrique','Juan Carlos','Jose','Luis','NASH'].forEach(function(n){
   var i=getCicloInfo(n);
   var dotEl=document.getElementById('dot-'+n);if(dotEl)dotEl.className='dot '+(i.trabajando?'dot-green':'dot-yellow');
 });
@@ -2497,7 +2498,7 @@ function selRec(btn,nombre,theme){
   THEMES.forEach(function(t){document.body.classList.remove(t)});
   document.body.classList.add(theme+'-active');
   // Update header subtitle
-  var subs={'Manrique':'🌊 Plataforma Offshore · Cuichapa','Juan Carlos':'🛢 Producción de Campo · Cuichapa','Jose':'🔧 Campo · Cuichapa','Luis':'🪛 Campo · Cuichapa'};
+  var subs={'Manrique':'🌊 Plataforma Offshore · Cuichapa','Juan Carlos':'🛢 Producción de Campo · Cuichapa','Jose':'🔧 Campo · Cuichapa','Luis':'🪛 Campo · Cuichapa','NASH':'👷 Recorredor · Cuichapa'};
   document.getElementById('headerSub').textContent=subs[nombre]||'Campo Cuichapa';
   // Show name badge in header
   var badge=document.getElementById('recBadge');
@@ -3805,7 +3806,7 @@ function guardarVacaciones(){
   var vdClr=document.getElementById('vacDias'); if(vdClr) vdClr.value='';
   renderVacStatus();
   // Refresh dots and counter
-  ['Manrique','Juan Carlos','Jose','Luis'].forEach(function(n){
+  ['Manrique','Juan Carlos','Jose','Luis','NASH'].forEach(function(n){
     var i = getCicloInfo(n);
     var dotEl2=document.getElementById('dot-'+n);if(dotEl2)dotEl2.className='dot '+(i.trabajando?'dot-green':'dot-yellow');
   });
@@ -3823,7 +3824,7 @@ function borrarVacacion(nombre, idx){
 
 function renderVacStatus(){
   var html = '';
-  var nombres = vacRecSel ? [vacRecSel] : ['Manrique','Juan Carlos','Jose','Luis'];
+  var nombres = vacRecSel ? [vacRecSel] : ['Manrique','Juan Carlos','Jose','Luis','NASH'];
   nombres.forEach(function(nombre){
     var arr = getVacaciones(nombre);
     if(!arr.length) return;
@@ -4684,7 +4685,8 @@ function doLogin(){
 
 // ══ LOGIN RECORREDORES ══════════════════════════
 var REC_MAP = {
-  'Manrique':   { nombre:'Manrique',   pass:'Canada',    theme:'m'  },
+    'NASH': { nombre:'NASH', pass:'Nash2026!', theme:'nash' },
+'Manrique':   { nombre:'Manrique',   pass:'Canada',    theme:'m'  },
   'JuanCarlos': { nombre:'Juan Carlos', pass:'JCYNL041084', theme:'jc' },
   'Jose':       { nombre:'Jose',        pass:'Mexico',    theme:'j'  },
   'Luis':       { nombre:'Luis',        pass:'Carlos1903', theme:'l'  }
@@ -4941,9 +4943,9 @@ function abrirVistaAlarma(){
   // Detectar si es recorredor:
   // REC contiene el nombre corto seleccionado por el recorredor
   // loggedUser puede ser 'm', 'c', 'jc' (theme del login de recorredor)
-  var RECS_SHORT = ['Manrique','Juan Carlos','Jose','Luis'];
-  var RECS_THEMES = ['m','c','jc'];
-  var RECS_NOMBRES = {'m':'Manrique','jc':'Juan Carlos','j':'Jose','l':'Luis'};
+  var RECS_SHORT = ['Manrique','Juan Carlos','Jose','Luis','NASH'];
+  var RECS_THEMES = ['m','c','jc','nash'];
+  var RECS_NOMBRES = {'m':'Manrique','jc':'Juan Carlos','j':'Jose','l':'Luis','nash':'NASH'};
   var esRecorredor = RECS_SHORT.indexOf(REC) !== -1 || RECS_THEMES.indexOf(loggedUser) !== -1;
 
   // Subtítulo con usuario detectado
@@ -5076,10 +5078,10 @@ function enviarAlarma(){
   var _ov = document.getElementById('alarmConfirmOverlay'); if(_ov) _ov.style.display = 'none';
 
   // Detectar quien reporta automáticamente
-  var RECS = {'m':'Manrique','jc':'Juan Carlos','j':'Jose','l':'Luis'};
-  var RECS_SHORT = ['Manrique','Juan Carlos','Jose','Luis'];
+  var RECS = {'m':'Manrique','jc':'Juan Carlos','j':'Jose','l':'Luis','nash':'NASH'};
+  var RECS_SHORT = ['Manrique','Juan Carlos','Jose','Luis','NASH'];
   var quien = REC || RECS[loggedUser] || loggedUser || 'Campo Cuichapa';
-  var esRecorredor = RECS_SHORT.indexOf(REC) !== -1 || ['m','c','jc'].indexOf(loggedUser) !== -1;
+  var esRecorredor = RECS_SHORT.indexOf(REC) !== -1 || ['m','c','jc','nash'].indexOf(loggedUser) !== -1;
 
   var ahora = new Date();
   var horaStr  = ahora.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
@@ -5375,7 +5377,7 @@ function hcRender(){
     var arr=_hcData.slice();
     if(HC_FILTRO!=='todos') arr=arr.filter(function(r){ return hcTipoReporte(r)===HC_FILTRO; });
     if(HC_FILTRO_REC!=='todos'){
-      var recs=['Manrique','Juan Carlos','Jose','Luis'];
+      var recs=['Manrique','Juan Carlos','Jose','Luis','NASH'];
       if(HC_FILTRO_REC==='otros') arr=arr.filter(function(r){ return recs.indexOf(r.recorredor)===-1; });
       else arr=arr.filter(function(r){ return r.recorredor===HC_FILTRO_REC; });
     }
