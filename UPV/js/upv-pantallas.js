@@ -69,6 +69,15 @@
 
   function mostrarApp(){
 
+    const acceso=window.UPVAccesoSeguro;
+
+    if(!acceso?.sesionVigente()){
+      mostrarPortada();
+      return;
+    }
+
+
+
     const l = login();
     const a = app();
 
@@ -132,10 +141,7 @@
          * Dejamos que primero trabaje la lógica original
          * que establece PETROSMART/IPEP.
          */
-        setTimeout(
-          mostrarApp,
-          60
-        );
+
 
         return;
       }

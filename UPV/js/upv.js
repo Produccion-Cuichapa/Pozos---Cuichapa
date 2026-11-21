@@ -310,38 +310,54 @@ function bindLoginBtns() {
 }
 
 function seleccionarEmpresa(empresa) {
-  UPV.empresa = empresa;
-  try { localStorage.setItem(UPV_LS_EMPRESA, empresa); } catch(e) {}
-  document.getElementById('screen-login').style.display = 'none';
-  document.getElementById('upv-app').style.display = 'flex';
-  actualizarHeaderEmpresa(empresa);
-  mostrarPantalla('upv');
-
-  /*
-   * La empresa ya está disponible en UPV.empresa.
-   * Instalar ahora el selector para que opcionesUnidadEmpresa()
-   * pueda construir correctamente la unidad correspondiente.
-   */
-  setTimeout(function(){
-    if(typeof instalarSelectorUnidad === 'function'){
-      try {
-        sessionStorage.removeItem('upv_unidad_operativa');
-      } catch(e) {}
-
-      instalarSelectorUnidad(true);
-    }
-  }, 0);
+  window.UPVAccesoSeguro?.abrir(empresa);
 }
 
 function recuperarEmpresa() {
-  const saved = localStorage.getItem(UPV_LS_EMPRESA);
-  if (!saved) return;
-  UPV.empresa = saved;
-  document.getElementById('screen-login').style.display = 'none';
-  document.getElementById('upv-app').style.display = 'flex';
-  actualizarHeaderEmpresa(saved);
-  mostrarPantalla('upv');
+  const acceso=window.UPVAccesoSeguro;
+
+  if(!acceso?.sesionVigente()){
+    UPV.empresa=null;
+
+    const app=document.getElementById('upv-app');
+    const login=document.getElementById('screen-login');
+
+    if(app)app.style.display='none';
+    if(login)login.style.display='flex';
+
+    return false;
+  }
+
+  return acceso.restaurar();
 }
+
+window.UPVAccesoAutorizado = function(empresa) {
+  if(!window.UPVAccesoSeguro?.sesionVigente()) return;
+
+  const sesion=window.UPVAccesoSeguro.obtenerSesion();
+  if(!sesion || sesion.empresa!==empresa) return;
+
+  UPV.empresa=empresa;
+  localStorage.setItem(UPV_LS_EMPRESA,empresa);
+
+  actualizarHeaderEmpresa(empresa);
+
+  // Activar primero el contenido operativo.
+  mostrarPantalla('upv');
+
+  // Una sola transicion visual autorizada.
+  if(window.UPVPantallas &&
+     typeof window.UPVPantallas.app==='function'){
+    window.UPVPantallas.app();
+  }else{
+    document.getElementById('screen-login').style.display='none';
+    document.getElementById('upv-app').style.display='flex';
+  }
+
+  if(typeof instalarSelectorPozo==='function'){
+    instalarSelectorPozo();
+  }
+};
 
 function actualizarHeaderEmpresa(empresa) {
   const el = document.getElementById('upv-empresa-label');
@@ -349,8 +365,14 @@ function actualizarHeaderEmpresa(empresa) {
 }
 
 function cerrarSesion() {
-  try { localStorage.removeItem(UPV_LS_EMPRESA); } catch(e) {}
+  window.UPVAccesoSeguro?.cerrar();
+
+  try {
+    localStorage.removeItem(UPV_LS_EMPRESA);
+  } catch(e) {}
+
   UPV.empresa = null;
+
   document.getElementById('upv-app').style.display = 'none';
   document.getElementById('screen-login').style.display = 'flex';
 }
@@ -365,6 +387,16 @@ function bindNavBtns() {
 }
 
 function mostrarPantalla(id) {
+  if(!window.UPVAccesoSeguro?.sesionVigente()){
+    const app=document.getElementById('upv-app');
+    const login=document.getElementById('screen-login');
+
+    if(app)app.style.display='none';
+    if(login)login.style.display='flex';
+
+    return;
+  }
+
   UPV.pantalla = id;
   document.querySelectorAll('.upv-screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -961,7 +993,7 @@ async function renderHistorial() {
           empresaActual === 'TC' &&
           capacidadActual === 22
         ) {
-          unidadActiva = 'TC_88';
+          unidadActiva = 'TC_193';
         }
 
       } catch(e) {
@@ -1010,7 +1042,7 @@ async function renderHistorial() {
           );
         }
 
-        if (unidadActiva === 'TC_88') {
+        if (unidadActiva === 'TC_193') {
           return (
             empresaRegistro === 'TC' &&
             capacidadRegistro === 22
@@ -1053,7 +1085,7 @@ async function renderHistorial() {
             (
               r.unidadId === 'TC_89'
                 ? 'TC 89'
-                : r.unidadId === 'TC_88' ? 'TC 88' : r.unidadId === 'TC_193'
+                : r.unidadId === 'TC_193'
                   ? 'TC 193'
                   : r.unidadId === 'PETROSMART_93'
                     ? 'PETROSMART'
@@ -1732,7 +1764,7 @@ async function enviarReporteUpv(id) {
 
       /*
        * Identidad exacta de la unidad operativa.
-       * Evita mezclar TC 89, TC 88 y PETROSMART
+       * Evita mezclar TC 89, TC 193 y PETROSMART
        * cuando el registro sale de IndexedDB.
        */
       unidadId:

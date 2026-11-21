@@ -64,6 +64,36 @@ window.addEventListener('load', function(){
 
   <!-- UPV_HISTORIAL_UI_V1 -->
   <link rel="stylesheet" href="./css/upv-historial.css?v=202609181000">
+<style id="upv-scroll-fix-107">
+html, body {
+  overflow-y: auto !important;
+  overscroll-behavior-y: auto;
+}
+
+#upv-app {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.upv-screen.active {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+</style>
+<style id="upv-transicion-112">
+#screen-login,
+#upv-app {
+  transition: none !important;
+}
+
+#upv-auth-panel[hidden] {
+  display: none !important;
+}
+
+#upv-app {
+  min-height: 100dvh;
+}
+</style>
 </head>
 <body class="upv-cuichapa-theme">
 
@@ -71,6 +101,30 @@ window.addEventListener('load', function(){
   <div class="login-logo">UPV</div>
   <div class="login-sub">Unidades de Producción y Volumen<br>Campo Cuichapa U-39</div>
   <div class="login-title">Selecciona tu empresa</div>
+  <!-- UPV_ACCESO_SEGURO_098 -->
+  <form id="upv-auth-panel" hidden
+        style="width:min(100%,360px);margin-top:18px"
+        onsubmit="event.preventDefault();UPVAccesoSeguro.ingresar()">
+    <div id="upv-auth-empresa"
+         style="font-weight:700;margin-bottom:10px"></div>
+    <input id="upv-auth-password"
+           type="password"
+           autocomplete="current-password"
+           placeholder="Contraseña de empresa"
+           required
+           style="width:100%;padding:12px;border-radius:10px">
+    <button type="submit"
+            style="width:100%;margin-top:12px;padding:12px">
+      Ingresar
+    </button>
+    <button type="button"
+            onclick="UPVAccesoSeguro.cancelar()"
+            style="width:100%;margin-top:8px;padding:10px">
+      Cancelar
+    </button>
+    <div id="upv-auth-error" role="alert"
+         style="margin-top:10px;font-size:13px"></div>
+  </form>
   <div class="login-btns">
     <button class="empresa-btn" data-empresa="PETROSMART">🔵 PETROSMART</button>
     <button class="empresa-btn" data-empresa="TC">🟡 TC</button>
@@ -250,6 +304,7 @@ window.addEventListener('load', function(){
 <script src="./js/state.js?v=20261005_appcheck"></script>
 <script src="./js/firebase-upv.js?v=20261005_appcheck"></script>
 <script src="./js/upv.js?v=20261005_appcheck"></script>
+<script src="./js/upv-acceso-seguro-098.js"></script>
 
   <script src="./js/upv-portada-cuichapa.js?v=20260806185518"></script>
 
@@ -266,5 +321,29 @@ window.addEventListener('load', function(){
 
   <!-- UPV_HISTORIAL_JS_V1 -->
   <script src="./js/upv-historial.js?v=20260921184500"></script>
+<script id="upv-login-guard-108">
+(function(){
+  function verificar(){
+    const acceso=window.UPVAccesoSeguro;
+    const app=document.getElementById('upv-app');
+    const login=document.getElementById('screen-login');
+
+    if(!app || !login)return;
+
+    if(!acceso?.sesionVigente()){
+      app.style.display='none';
+      login.style.display='flex';
+    }
+  }
+
+  document.addEventListener(
+    'DOMContentLoaded',
+    verificar
+  );
+
+  window.addEventListener('pageshow',verificar);
+  window.addEventListener('focus',verificar);
+})();
+</script>
 </body>
 </html>
