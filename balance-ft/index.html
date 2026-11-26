@@ -2335,18 +2335,21 @@ setMes(mon(D[0].d));render();
     }, 1200);
   }
   function withTimeout(p, ms, what) { return Promise.race([p, new Promise(function (_, ko) { setTimeout(function () { ko(new Error(what + ": sin respuesta en " + ms / 1000 + " s")); }, ms); })]); }
+
   function mergedBal() {
     var o = {}, k;
-    for (k in (LIVE.balLocal || {})) o[k] = LIVE.balLocal[k];
-    for (k in LIVE.bal) o[k] = LIVE.bal[k];
-    for (k in (LIVE.balTemporal || {})) {
-      if (!Object.prototype.hasOwnProperty.call(LIVE.balLocal || {}, k) &&
-          !Object.prototype.hasOwnProperty.call(LIVE.bal, k)) {
-        o[k] = LIVE.balTemporal[k];
-      }
+
+    for (k in (LIVE.balLocal || {})) {
+      o[k] = LIVE.balLocal[k];
     }
+
+    for (k in LIVE.bal) {
+      o[k] = LIVE.bal[k];
+    }
+
     return o;
-  }   // lo de Firebase manda
+  }
+
   function liveError(e) {
     var m = String(e && (e.code || e.message) || e);
     LIVE.error = /permission/i.test(m) ? "Firebase negó la lectura de /" + RUTA_REPORTES + " (las reglas piden sesión)" : "Sin conexión con Firebase (" + m + ")";
@@ -2467,14 +2470,7 @@ setMes(mon(D[0].d));render();
       var balLocal = Promise.resolve(datos291[1]);
       LIVE.H = H;
       return balLocal.then(function (bl) { LIVE.balLocal = bl || {};
-        try {
-          LIVE.balTemporal = JSON.parse(
-            localStorage.getItem("cuichapa_balance_ft_lab188") || "{}"
-          );
-        } catch(e) {
-          LIVE.balTemporal = {};
-          console.warn("Balances locales no disponibles:", e);
-        }
+        LIVE.balTemporal = {};
         return H; });
     }).then(function (H) {
       if (!db) return;                                   // sin Firebase: solo histórico local
@@ -2530,14 +2526,37 @@ setMes(mon(D[0].d));render();
     $("upWork").style.display = "block";
     upMsg("Selecciona el Excel «Volumen de Recuperación Crudo» (o fotos del balance). Se leen todas las hojas DD-MM-AAAA y tú eliges cuáles guardar.");
   }
+
   function openUp() {
+
     $("upModal").style.display = "flex";
-    if (!window.firebase || !firebase.apps.length) { upMsg("Sin conexión a Firebase: no se puede subir el balance ahora.", "err"); return; }
-    var auth = firebase.auth(), u = auth.currentUser;
-    if (u) { listo(u); return; }
-    if (!auth.signInAnonymously) { listo(null); return; }
-    auth.signInAnonymously().then(function (r) { listo(r.user); }, function (e) { console.warn("auth anónima:", e && e.code); listo(null); });
+
+    UP.admin = false;
+    UP.user = null;
+
+    $("upWork").style.display = "none";
+
+    if (!window.firebase || !firebase.apps.length) {
+      upMsg("Firebase no disponible.", "err");
+      return;
+    }
+
+    var u = firebase.auth().currentUser;
+
+    if (!u || u.isAnonymous ||
+        !ADMIN_EMAILS.includes(
+          String(u.email || "").toLowerCase()
+        )) {
+      upMsg(
+        "Inicia sesión con un usuario administrativo.",
+        "err"
+      );
+      return;
+    }
+
+    listo(u);
   }
+
   function closeUp() { $("upModal").style.display = "none"; }
   function cellVal(ws, addr) { var c = ws[addr]; return c ? (c.v !== undefined ? c.v : null) : null; }
   function colName(n) { var s = ""; n++; while (n) { var m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; }
@@ -2790,7 +2809,24 @@ setMes(mon(D[0].d));render();
     UP.items.forEach(function (it) { if (!it.raw || !it.iso || it.editado) return; var prev = prevRowsFor(it.iso);
       it.pozos = it.raw.map(function (p, k) { return window.balanceFixRow(p.slice(), prev && prev[k]); }); });
   }
-  function saveItems() {
+
+  /* BLOQUE 316: GUARDADO ADMINISTRATIVO PERMANENTE */
+  var guardando316 = false;
+
+  async function saveItems() {
+
+    if (guardando316) return;
+
+    var usuario = firebase.auth().currentUser;
+
+    if (!usuario || usuario.isAnonymous ||
+        !ADMIN_EMAILS.includes(
+          String(usuario.email || "").toLowerCase()
+        )) {
+      upMsg("Se requiere una sesión administrativa.", "err");
+      return;
+    }
+
     var sel = UP.items.filter(function(it) {
       return it.sel !== false && it.iso;
     });
@@ -2800,42 +2836,40 @@ setMes(mon(D[0].d));render();
       return;
     }
 
-    var key = "cuichapa_balance_ft_lab188";
-    var temporal = {};
-
-    try {
-      temporal = JSON.parse(localStorage.getItem(key) || "{}");
-    } catch(e) {
-      upMsg("Error al leer balances locales: " + e.message, "err");
-      return;
-    }
-
     var actuales = mergedBal();
     var nuevos = {};
+    var reemplazos = [];
 
-    for (var j = 0; j < sel.length; j++) {
-      var it = sel[j];
+    for (var it of sel) {
 
       if (!/^\d{4}-\d{2}-\d{2}$/.test(it.iso)) {
         upMsg("Fecha inválida: " + it.iso, "err");
         return;
       }
 
-      if (!Array.isArray(it.pozos) || it.pozos.length !== 15) {
-        upMsg("La hoja " + it.iso + " no contiene 15 pozos.", "err");
+      if (Object.prototype.hasOwnProperty.call(
+          nuevos, it.iso)) {
+        upMsg("Fecha duplicada: " + it.iso, "err");
         return;
       }
 
-      if (actuales[it.iso] && !temporal[it.iso]) {
-        upMsg("La fecha " + it.iso +
-          " ya existe en el historial. No se sobrescribió.", "err");
+      if (!Array.isArray(it.pozos) ||
+          it.pozos.length !== 15 ||
+          !it.pozos.every(function(p) {
+            return Array.isArray(p) && p.length >= 13;
+          })) {
+        upMsg("Balance incompleto: " + it.iso, "err");
         return;
       }
 
-      if (temporal[it.iso] &&
-          !confirm("Ya existe un balance local del " + it.iso +
-          ". ¿Deseas reemplazarlo?")) {
+      if (it.img && itemErrs(it) > 0) {
+        upMsg("Revisa las celdas pendientes del " +
+          it.iso, "err");
         return;
+      }
+
+      if (actuales[it.iso]) {
+        reemplazos.push(it.iso);
       }
 
       nuevos[it.iso] = {
@@ -2844,33 +2878,98 @@ setMes(mon(D[0].d));render();
         pozos: it.pozos.map(function(p) {
           return p.slice(0, 13);
         }),
-        fuente: it.fuente || "Excel importado en laboratorio"
+        fuente: it.fuente || "Balance importado"
       };
     }
 
-    var actualizado = Object.assign({}, temporal, nuevos);
-
-    try {
-      localStorage.setItem(key, JSON.stringify(actualizado));
-    } catch(e) {
-      upMsg("No se pudo guardar localmente: " + e.message, "err");
+    if (reemplazos.length &&
+        !confirm(
+          "Ya existen balances para:\n" +
+          reemplazos.join("\n") +
+          "\n¿Deseas actualizar estas fechas?"
+        )) {
       return;
     }
 
-    LIVE.balTemporal = actualizado;
+    guardando316 = true;
+    $("upSave").disabled = true;
+    $("upFile").disabled = true;
 
-    sel.forEach(function(it) {
-      UP.existing[it.iso] = nuevos[it.iso];
-      it.sel = false;
-    });
+    upMsg("Guardando balances en Firebase...");
 
-    renderItems(UP.existing);
-    rebuildBalance();
+    try {
 
-    upMsg("Balance incorporado localmente: " +
-      Object.keys(nuevos).sort().join(", ") +
-      ". Firebase no fue modificado.", "ok");
+      var token = await usuario.getIdToken();
+
+      var respuesta = await fetch(
+        "/api/balance-ft/guardar", {
+          method: "POST",
+          credentials: "same-origin",
+          cache: "no-store",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Cuichapa-Token": "Bearer " + token
+          },
+          body: JSON.stringify({
+            balances: nuevos,
+            reemplazos: reemplazos
+          })
+        }
+      );
+
+      var resultado = await respuesta.json();
+
+      if (!respuesta.ok || resultado.ok !== true) {
+        throw new Error(
+          resultado.error || "HTTP " + respuesta.status
+        );
+      }
+
+      var fechas = Object.keys(nuevos).sort();
+
+      if (!Array.isArray(resultado.fechas) ||
+          JSON.stringify(resultado.fechas.slice().sort()) !==
+          JSON.stringify(fechas)) {
+        throw new Error("Confirmación incompleta del servidor");
+      }
+
+      fechas.forEach(function(fecha) {
+        LIVE.bal[fecha] = nuevos[fecha];
+        UP.existing[fecha] = nuevos[fecha];
+      });
+
+      sel.forEach(function(it) {
+        it.sel = false;
+      });
+
+      renderItems(UP.existing);
+      rebuildBalance();
+
+      upMsg(
+        "Balance guardado permanentemente en Firebase: " +
+        fechas.join(", ") +
+        ". Disponible para todos los administradores.",
+        "ok"
+      );
+
+    } catch(e) {
+
+      upMsg(
+        "No se pudo confirmar el guardado: " +
+        (e.message || e) +
+        ". Verifica las fechas antes de reintentar.",
+        "err"
+      );
+
+    } finally {
+
+      guardando316 = false;
+      $("upSave").disabled = false;
+      $("upFile").disabled = false;
+
+    }
   }
+
   function initUpload() {
     $("upOpen").onclick = openUp; $("upClose").onclick = closeUp;
     $("upModal").addEventListener("click", function (e) { if (e.target === $("upModal")) closeUp(); });

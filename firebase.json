@@ -44,6 +44,13 @@
     ],
     "rewrites": [
       {
+        "source": "/api/balance-ft/guardar",
+        "function": {
+          "functionId": "cuichapaGuardarBalance",
+          "region": "us-central1"
+        }
+      },
+      {
         "source": "/api/historicos/**",
         "function": {
           "functionId": "cuichapaHistoricos",
