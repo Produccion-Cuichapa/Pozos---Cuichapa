@@ -70,7 +70,7 @@
     {pozo:'500',  destino:'BSC', tipo:'BSC', estatus:'OPERANDO', sap:'BN'},
     {pozo:'502',  destino:'BSC', tipo:'BSC', estatus:'OPERANDO', sap:'BN'},
     {pozo:'504',  destino:'BSC', tipo:'BSC', estatus:'OPERANDO', sap:'BN'},
-    {pozo:'505',  destino:'BSC', tipo:'BSC', estatus:'CERRADO',  sap:'BM/FY'},
+    {pozo:'505',  destino:'BSC', tipo:'BSC', estatus:'CERRADO',  sap:'FY'},
     {pozo:'507',  destino:'BSC', tipo:'BSC', estatus:'CERRADO',  sap:'BN'},
     {pozo:'513',  destino:'BSC', tipo:'BSC', estatus:'CERRADO',  sap:'BN'},
     {pozo:'601',  destino:'FT',  tipo:'FT',  estatus:'OPERANDO', sap:'FY'},

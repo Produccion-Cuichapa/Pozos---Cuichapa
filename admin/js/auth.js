@@ -8,7 +8,25 @@ window.AdminAuth = {
   },
 
   async init(){
-    const fbUser = firebase.auth().currentUser;
+    // AUTH_READY_210: esperar restauracion de sesion Firebase.
+    const fbUser = await new Promise((resolve,reject) => {
+      let unsubscribe = null;
+      let settled = false;
+
+      const finish = (fn,value) => {
+        if(settled) return;
+        settled = true;
+        if(unsubscribe) unsubscribe();
+        fn(value);
+      };
+
+      unsubscribe = firebase.auth().onAuthStateChanged(
+        user => finish(resolve,user),
+        error => finish(reject,error)
+      );
+
+      if(settled && unsubscribe) unsubscribe();
+    });
 
     if(!fbUser){
       this.current = null;

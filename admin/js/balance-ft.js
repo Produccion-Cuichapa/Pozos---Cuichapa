@@ -438,6 +438,31 @@ function aplicarHora(fecha,hora){
 
 
 function fechaReporte(r){
+  /* BALANCE_CORRECCIONES_FT_989 */
+  const c=r?.correccionFT;
+
+  if(c && c.fecha && c.hora){
+    const f=String(c.fecha);
+    const h=String(c.hora);
+
+    if(/^\d{4}-\d{2}-\d{2}$/.test(f) &&
+       /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(h)){
+      const d=new Date(f+'T'+h+':00-06:00');
+      if(!Number.isNaN(d.getTime()) &&
+         new Date(d.getTime()-21600000)
+           .toISOString().slice(0,16)===f+'T'+h){
+        return d;
+      }
+    }
+  }
+
+  if(c && c.timestamp!==null &&
+     c.timestamp!==undefined &&
+     Number.isFinite(Number(c.timestamp)) &&
+     Number(c.timestamp)>100000000000){
+    return new Date(Number(c.timestamp));
+  }
+
 
   const timestamps = [
     r?.timestamp,
@@ -536,6 +561,13 @@ function fechaReporte(r){
    ========================================================== */
 
 function valorBls(r){
+  const corregido=r?.correccionFT?.volumenBbls;
+  if(corregido!==null && corregido!==undefined &&
+     corregido!==''){
+    const n=num(corregido);
+    if(n!==null && n>=0) return n;
+  }
+
 
   const nivel =
     r?.nivel || {};
@@ -621,6 +653,13 @@ function valorBls(r){
    ========================================================== */
 
 function valorCtm(r){
+  const corregido=r?.correccionFT?.nivelCm;
+  if(corregido!==null && corregido!==undefined &&
+     corregido!==''){
+    const n=num(corregido);
+    if(n!==null && n>=0) return n;
+  }
+
 
   const nivel =
     r?.nivel || {};
@@ -712,6 +751,13 @@ function esAforo(r){
 
 
 function valorBph(r){
+  const corregido=r?.correccionFT?.aforoBph;
+  if(corregido!==null && corregido!==undefined &&
+     corregido!==''){
+    const n=num(corregido);
+    if(n!==null && n>=0) return n;
+  }
+
 
   const a =
     r?.aforoData ||
@@ -789,6 +835,17 @@ function esNivelFT(r){
    ========================================================== */
 
 function estadoReporte(r){
+  /* BALANCE_ESTADO_CORREGIDO_990 */
+  const estadoCorregido=String(
+    r?.correccionFT?.estado ?? ''
+  ).trim().toUpperCase();
+
+  if(['ABIERTO','CERRADO','INTERMITENTE']
+      .includes(estadoCorregido)){
+    return estadoCorregido;
+  }
+
+
 
   const candidatos = [
     r?.estadoPozo,
@@ -900,10 +957,13 @@ function reconstruirCache(){
 
   for(const arr of cachePozo.values()){
 
-    arr.sort(
-      (a,b) =>
-        a.fecha - b.fecha
-    );
+    arr.sort((a,b)=>{
+      const diferencia=a.fecha-b.fecha;
+      if(diferencia!==0) return diferencia;
+
+      return String(a.r?.id ?? '')
+        .localeCompare(String(b.r?.id ?? ''));
+    });
   }
 }
 
@@ -1063,7 +1123,20 @@ function descuentosEntre(
   hasta
 ){
 
-  return retiros.reduce(
+  /* BALANCE_PROTECCIONES_1005 */
+  const idsVistos=new Set();
+
+  const retirosUnicos=retiros.filter(x=>{
+    const id=String(x?.id ?? '').trim();
+
+    if(!id) return true;
+    if(idsVistos.has(id)) return false;
+
+    idsVistos.add(id);
+    return true;
+  });
+
+  return retirosUnicos.reduce(
     (s,x) => {
 
       if(
@@ -1097,77 +1170,84 @@ function descuentosEntre(
    VOLUMEN EN UN MOMENTO
    ========================================================== */
 
-function volumenEn(
-  pozo,
-  momento
-){
 
-  const nivel =
-    nivelHasta(
-      pozo,
-      momento
-    );
+function volumenEn(pozo,momento){
+  /* BALANCE_INTERVALOS_FT_998 */
 
+  const nivel=nivelHasta(pozo,momento);
 
-  if(
-    !nivel ||
-    nivel.bls === null
-  ){
+  if(!nivel || nivel.bls===null){
     return null;
   }
 
+  const arr=datosPozo(pozo);
+  const inicio=nivel.fecha;
+  const eventos=[];
 
-  const aforo =
-    aforoHasta(
-      pozo,
-      momento
-    );
+  let bph=0;
+  let estado='SIN DATO';
 
+  const aforoInicial=aforoHasta(pozo,inicio);
+  const estadoInicial=estadoHasta(pozo,inicio);
 
-  const estado =
-    estadoHasta(
-      pozo,
-      momento
-    );
-
-
-  const bph =
-    aforo?.bph || 0;
-
-
-  const horas =
-    Math.max(
-      0,
-      (
-        momento.getTime() -
-        nivel.fecha.getTime()
-      ) /
-      3600000
-    );
-
-
-  let incremento =
-    horas * bph;
-
-
-  if(estado === 'CERRADO'){
-    incremento = 0;
+  if(aforoInicial){
+    bph=aforoInicial.bph;
   }
 
+  if(estadoInicial){
+    estado=estadoInicial;
+  }
 
-  const descuento =
-    descuentosEntre(
-      pozo,
-      nivel.fecha,
-      momento
-    );
+  for(const x of arr){
+    if(x.fecha<=inicio || x.fecha>momento){
+      continue;
+    }
 
+    eventos.push(x);
+  }
+
+  let cursor=inicio.getTime();
+  let incremento=0;
+
+  function acumular(hasta){
+    const ms=Math.max(0,hasta-cursor);
+    const horas=ms/3600000;
+
+    if(estado==='ABIERTO'){
+      incremento+=horas*bph;
+    }
+
+    cursor=hasta;
+  }
+
+  for(const x of eventos){
+    const tiempo=x.fecha.getTime();
+
+    acumular(tiempo);
+
+    if(esAforo(x.r)){
+      const nuevoBph=valorBph(x.r);
+      if(nuevoBph!==null){
+        bph=nuevoBph;
+      }
+    }
+
+    const nuevoEstado=estadoReporte(x.r);
+
+    if(nuevoEstado){
+      estado=nuevoEstado;
+    }
+  }
+
+  acumular(momento.getTime());
+
+  const descuento=descuentosEntre(
+    pozo,inicio,momento
+  );
 
   return Math.max(
     0,
-    nivel.bls +
-    incremento -
-    descuento
+    nivel.bls+incremento-descuento
   );
 }
 
@@ -1203,75 +1283,79 @@ function horasJornada(){
    FILA
    ========================================================== */
 
-function crearFila(pozo){
 
-  const horas =
-    horasJornada();
+/* BALANCE_FT_HORARIOS_1069
+ * Secuencia individual desde la última medición.
+ * No modifica horasJornada ni volumenEn.
+ */
+function horasIndividualesFT(pozo, referencia){
 
+  const base = nivelHasta(pozo, referencia);
 
-  /*
-   * Solo mostrar el pozo si existe nivel antes
-   * del cierre de la jornada.
-   */
-  const nivelFinal =
-    nivelHasta(
-      pozo,
-      horas[24]
+  if(!base){
+    return [];
+  }
+
+  const fechaBase = new Date(
+    base.fecha || base.timestamp || base.ts
+  );
+
+  if(!Number.isFinite(fechaBase.getTime())){
+    return [];
+  }
+
+  const puntos=[];
+
+  for(let i=0;i<=24;i++){
+
+    const momento=new Date(
+      fechaBase.getTime()+i*3600000
     );
 
+    puntos.push({
+      hora: momento,
+      volumen: volumenEn(pozo,momento),
+      medicionReal: i===0
+    });
+  }
 
-  if(!nivelFinal){
+  return puntos;
+}
+
+function crearFila(pozo){
+
+  /* BALANCE_FT_CELDAS_1071
+   * Cada pozo utiliza la hora de su última
+   * medición real como referencia.
+   */
+  const cierreJornada = finJornada(fechaReferencia());
+  const referencia = new Date(
+    Math.min(cierreJornada.getTime(), Date.now())
+  );
+
+  const puntos = horasIndividualesFT(
+    pozo,
+    referencia
+  );
+
+  if(!puntos.length){
     return null;
   }
 
+  const nivelFinal = nivelHasta(
+    pozo,
+    referencia
+  );
 
-  const celdas =
-    horas.map(
-      (momento,index) => {
+  const horas = puntos.map(x => x.hora);
 
-        const siguiente =
-          new Date(
-            momento.getTime() +
-            3600000
-          );
-
-
-        const real =
-          index < 24
-            ? nivelRealEnHora(
-                pozo,
-                momento,
-                siguiente
-              )
-            : null;
-
-
-        if(real){
-
-          return {
-            valor:real.bls,
-            real:true,
-            fechaReal:real.fecha,
-            ctm:real.ctm,
-            momento
-          };
-        }
-
-
-        return {
-          valor:
-            volumenEn(
-              pozo,
-              momento
-            ),
-
-          real:false,
-          fechaReal:null,
-          ctm:null,
-          momento
-        };
-      }
-    );
+  const celdas = puntos.map((punto,index) => ({
+    valor:punto.volumen,
+    real:index===0,
+    fechaReal:index===0 ? punto.hora : null,
+    ctm:index===0 ? nivelFinal.ctm : null,
+    momento:punto.hora
+  }));
 
 
   const ref =
@@ -1279,10 +1363,7 @@ function crearFila(pozo){
 
 
   const estado =
-    estadoHasta(
-      pozo,
-      finJornada(ref)
-    );
+    estadoHasta(pozo, referencia);
 
 
   /*
@@ -1290,22 +1371,15 @@ function crearFila(pozo){
    * para la proyección de este pozo.
    */
   const aforoReferencia =
-    aforoHasta(
-      pozo,
-      finJornada(ref)
-    );
+    aforoHasta(pozo, referencia);
 
 
-  const descuento =
-    retiros
-      .filter(
-        x => x.pozo === pozo
-      )
-      .reduce(
-        (s,x) =>
-          s + (num(x.bbls) || 0),
-        0
-      );
+  /* BALANCE_FT_CONSISTENCIA_1085 */
+  const descuento = descuentosEntre(
+    pozo,
+    nivelFinal.fecha,
+    horas[24]
+  );
 
 
   /*
@@ -1627,73 +1701,7 @@ function htmlFila(row){
    ========================================================== */
 
 function montar(){
-
-  let root =
-    document.getElementById(
-      'balanceFtRoot'
-    );
-
-
-  if(root){
-    return root;
-  }
-
-
-  const h2s =
-    Array.from(
-      document.querySelectorAll('h2')
-    );
-
-
-  const actividad =
-    h2s.find(
-      x =>
-        normalizar(x.textContent) ===
-        'ACTIVIDAD RECIENTE'
-    );
-
-
-  if(!actividad){
-    return null;
-  }
-
-
-  const panel =
-    actividad.closest(
-      '.panel,section,article'
-    ) ||
-    actividad.parentElement;
-
-
-  const grid =
-    panel?.parentElement;
-
-
-  if(
-    !grid ||
-    !grid.parentElement
-  ){
-    return null;
-  }
-
-
-  root =
-    document.createElement(
-      'section'
-    );
-
-
-  root.id =
-    'balanceFtRoot';
-
-
-  grid.parentElement.insertBefore(
-    root,
-    grid
-  );
-
-
-  return root;
+  return document.getElementById('balanceFtRoot');
 }
 
 
@@ -2076,9 +2084,7 @@ function render(){
         <table>
 
           <thead>
-
             <tr>
-
               <th class="bft-sticky-pozo">
                 Pozo
               </th>
@@ -2093,23 +2099,15 @@ function render(){
               </th>
 
               ${
-                horas
-                  .map(
-                    (h,i) => `
-                      <th>
-                        ${hora24(h)}
-
-                        ${
-                          i === 0
-                            ? '<small>INICIO</small>'
-                            : i === 24
-                              ? '<small>CIERRE</small>'
-                              : ''
-                        }
-                      </th>
-                    `
-                  )
-                  .join('')
+                /* BALANCE_FT_ENCABEZADOS_1073 */
+                Array.from({length:25},(_,i)=>`
+                  <th>
+                    ${i===0 ? 'Medición' : '+'+i+' h'}
+                    <small>
+                      ${i===0 ? 'REAL' : 'PROYECCIÓN'}
+                    </small>
+                  </th>
+                `).join('')
               }
 
               <th>
@@ -2121,9 +2119,7 @@ function render(){
                 Balance
                 <small>BBL</small>
               </th>
-
             </tr>
-
           </thead>
 
 
@@ -2459,7 +2455,7 @@ async function descargarBalanceFtExcel(){
 
     const filas =
       POZOS
-        .map(crearFila)
+        .map(crearFilaExcel)
         .filter(Boolean);
 
     if(!filas.length){
@@ -3346,7 +3342,9 @@ function escucharReportes(){
     )
   ){
     reportes =
-      window.AdminFirebase.reportes.slice();
+      window.CapaCorreccionesFT
+        ?.obtenerReportes(window.AdminFirebase.reportes)
+      || window.AdminFirebase.reportes.slice();
 
     reconstruirCache();
 
@@ -3554,7 +3552,7 @@ function init(){
     );
 
   if(balanceVisualExistente){
-    balanceVisualExistente.remove();
+    /* ROOT_FT_1074B: conservar contenedor */
   }
 
   /*
@@ -3564,8 +3562,8 @@ function init(){
    * Se conserva toda la lógica interna porque Documentos
    * utiliza este mismo motor para generar el Excel.
    */
-  // montar();
-  // render();
+  montar();
+  render();
 
   bindBalanceFtExcel();
 
@@ -3612,6 +3610,11 @@ if(
 
 window.BalanceFT = {
 
+  /* BALANCE_ACTUALIZAR_CORRECCIONES_1011 */
+  actualizarCorrecciones(){
+    escucharReportes();
+  },
+
   render,
 
   getReportes(){
@@ -3628,5 +3631,33 @@ window.BalanceFT = {
 
   BBL_POR_M3
 };
+
+/* BALANCE_FT_EXCEL_INDEPENDIENTE_1091 */
+function crearFilaExcel(pozo){
+  const base = crearFila(pozo);
+  if(!base) return null;
+
+  const horas = horasJornada();
+
+  const celdas = horas.map(momento => {
+    const nivel = nivelHasta(pozo,momento);
+    const real = !!nivel &&
+      nivel.fecha.getTime() === momento.getTime();
+
+    return {
+      valor: volumenEn(pozo,momento),
+      momento,
+      real,
+      fechaReal: real ? momento : null,
+      ctm: real ? nivel.ctm : null,
+      ultimoReal: real
+    };
+  });
+
+  return {
+    ...base,
+    celdas
+  };
+}
 
 })();

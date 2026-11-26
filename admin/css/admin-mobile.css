@@ -1,0 +1,215 @@
+/* ADMIN CUICHAPA — AJUSTES EXCLUSIVOS PARA CELULAR */
+/* No aplicar en escritorio ni tabletas mayores de 600px */
+
+@media screen and (max-width: 600px) {
+
+  /* Estructura principal */
+  #appView.shell {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Navegación compacta */
+  #appView .sidebar {
+    position: relative !important;
+    top: auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    padding: 12px !important;
+    box-shadow: none !important;
+  }
+
+  #appView .side-brand {
+    margin: 0 0 12px !important;
+    padding: 6px 4px 12px !important;
+  }
+
+  #appView .side-nav {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 7px !important;
+  }
+
+  #appView .side-nav .nav-btn {
+    min-width: 0;
+    min-height: 66px;
+    padding: 8px 3px !important;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    text-align: center;
+    border-radius: 11px;
+  }
+
+  #appView .side-nav .nav-icon {
+    flex: 0 0 25px;
+    width: 25px;
+    height: 25px;
+    font-size: 15px;
+  }
+
+  #appView .side-nav .nav-label {
+    font-size: 10px;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  #appView .side-footer {
+    margin-top: 10px !important;
+  }
+
+  /* Área de contenido */
+  #appView .main {
+    width: 100%;
+    min-width: 0;
+    padding: 12px !important;
+  }
+
+  #appView .main-header {
+    min-width: 0;
+    margin-bottom: 14px;
+  }
+
+  #appView .main-header h1 {
+    font-size: 23px;
+    line-height: 1.2;
+  }
+
+  #appView .main-header p {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  /* Contenedores de vistas */
+  #appView .view:not(.hidden) {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  /* Tablas: desplazamiento dentro de su contenedor */
+  #reportesView .table-wrap,
+  #reportesView .table-container,
+  #reportesView .reports-table-wrap,
+  #reportesView .data-table-wrap,
+  #reportesView [class*="table-shell"] {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Evitar que las imágenes se salgan */
+  #appView .main img {
+    max-width: 100%;
+  }
+}
+
+/* CORRECCIÓN MENÚ MÓVIL — 08/10/2026 */
+@media screen and (max-width: 600px) {
+
+  #appView .sidebar {
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+
+  #appView .side-brand {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  #appView .side-brand-copy {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+
+  #appView .side-nav {
+    display: grid !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  #appView .side-nav .nav-btn {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 48px !important;
+    padding: 9px 8px !important;
+    gap: 7px !important;
+    text-align: left !important;
+  }
+
+  #appView .side-nav .nav-label {
+    display: block !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+    white-space: normal !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+
+  #appView .side-nav .nav-icon {
+    flex: 0 0 25px !important;
+    width: 25px !important;
+    height: 25px !important;
+  }
+
+}
+
+
+/* MOBILE SHELL WIDTH FIX V1 */
+@media screen and (max-width: 600px) {
+
+  #appView.shell {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  html body #appView.shell > .sidebar {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 0 0 auto !important;
+    align-self: stretch !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  #appView.shell > .main {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  html body #appView .sidebar .side-nav {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  html body #appView .sidebar .side-nav .nav-btn {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+}

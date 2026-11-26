@@ -1143,13 +1143,7 @@ window.AdminConfigCenter = {
     }
   };
 
-  function start(){
-    window.AdminConfigCenter.init();
-  }
-
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', start);
-  }else{
-    start();
-  }
+  // CONFIG_CENTER_LIFECYCLE_241
+  // AdminApp inicia este modulo despues de Firebase DB.
+  // No iniciar durante login ni selector de plataformas.
 })();

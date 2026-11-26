@@ -555,8 +555,23 @@ window.AdminPozos = {
       ''
     );
 
+
+    /* MANIOBRA_OPERATIVA_FT247
+     * Reconocer únicamente maniobras explícitas.
+     * No inferir estados de palabras aisladas.
+     */
+    const maniobraMatch = message.match(
+      /MANIOBRA\s+REALIZADA\s*:\s*(CIERRE|APERTURA)\b/i
+    );
+
+    if(maniobraMatch){
+      return maniobraMatch[1].toUpperCase() === 'CIERRE'
+        ? 'CERRADO'
+        : 'ABIERTO';
+    }
+
     const labeledMatch = message.match(
-      /(?:ESTADO(?:\s+DEL)?\s+POZO|ESTATUS(?:\s+DEL)?\s+POZO)\s*[:=-]?\s*(ABIERTO|CERRADO|INTERMITENTE)\b/i
+      /(?:ESTADO(?:\s+ACTUAL|\s+DEL\s+POZO)?|ESTATUS(?:\s+DEL\s+POZO)?)\s*[:=-]?\s*(ABIERTO|CERRADO|INTERMITENTE)\b/i
     );
 
     if(labeledMatch){

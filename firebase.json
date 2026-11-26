@@ -23,9 +23,40 @@
       "respaldo_*",
       "*.txt",
       "Claude_Context/**",
-      "**/Claude_Context/**"
+      "**/Claude_Context/**",
+      "**/historico_pozos.json",
+      "**/historico_pozos.json.gz",
+      "**/balance_ft_inicial.json",
+      "**/balance_ft_inicial.json.gz",
+      "**/pruebas-*.html",
+      "**/pruebas-*.js",
+      "**/.env",
+      "**/.env.*",
+      "**/private/**",
+      "**/respaldos/**",
+      "**/backend-definitivo/**",
+      "**/.git/**",
+      "**/.github/**",
+      "**/backend-ft-admin/**",
+      "**/functions/**",
+      "**/pruebas-*",
+      "**/.env*"
     ],
     "rewrites": [
+      {
+        "source": "/api/historicos/**",
+        "function": {
+          "functionId": "cuichapaHistoricos",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/api/ft/correcciones",
+        "function": {
+          "functionId": "ftAdminCorrecciones",
+          "region": "us-central1"
+        }
+      },
       {
         "source": "/admin",
         "destination": "/admin/index.html"

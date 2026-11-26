@@ -68,8 +68,8 @@ window.AdminFirebase = {
         const unicos = new Map();
 
         for(const reporte of this.reportes){
-          if(!reporte || !reporte.id) continue;
-          unicos.set(reporte.id, reporte);
+          if(!reporte || reporte.id == null) continue;
+          unicos.set(String(reporte.id), reporte);
         }
 
         this.reportes = Array
@@ -91,12 +91,14 @@ window.AdminFirebase = {
 
       const index =
         this.reportes.findIndex(
-          item => item.id === id
+          item => String(item.id) === id
         );
 
+      // FIREBASE_IDS_255: la clave de Firebase prevalece
+      // sobre cualquier id incluido en el contenido.
       const row = {
-        id,
-        ...value
+        ...value,
+        id
       };
 
       if(index >= 0){
@@ -123,7 +125,7 @@ window.AdminFirebase = {
       snap => {
         this.reportes =
           this.reportes.filter(
-            item => item.id !== snap.key
+            item => String(item.id) !== snap.key
           );
 
         programarRender();

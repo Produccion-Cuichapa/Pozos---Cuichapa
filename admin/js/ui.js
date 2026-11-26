@@ -193,6 +193,8 @@ window.AdminUI = {
       dashboard: ['Dashboard', 'Resumen operativo en tiempo real.'],
       reportes: ['Reportes', 'Consulta, filtros y exportación de reportes de campo.'],
       pozos: ['Pozos', 'Estado operativo consolidado del Campo Cuichapa.'],
+      croquis: ['Croquis del Campo', 'Ubicaciones e infraestructura del Campo Cuichapa.'],
+      monitoreoFt: ['Monitoreo FT', 'Niveles reportados y alertas de Frac Tanks.'],
       alarmas: ['Alarmas', 'Control y revisión de eventos de alarma.'],
       ia: ['IA Cuichapa', 'Asistente inteligente para análisis operativo.'],
       exportaciones: ['Exportaciones', 'Generación automática de formatos Excel y reportes.'],
@@ -201,6 +203,11 @@ window.AdminUI = {
 
     document.getElementById('viewTitle').textContent = titles[view]?.[0] || view;
     document.getElementById('viewSubtitle').textContent = titles[view]?.[1] || '';
+    if (view === 'croquis') {
+      window.CroquisCampo?.iniciar();
+      window.CroquisCampo?.actualizarTamano();
+    }
+
   },
 
   bindDetail(){

@@ -1,0 +1,341 @@
+#croquisView {
+  width: 100%;
+  min-width: 0;
+}
+
+.croquis-contenedor {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #dce3ea);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+#croquisMapa {
+  width: 100%;
+  height: min(72vh, 760px);
+  min-height: 420px;
+  z-index: 1;
+}
+
+.croquis-icono {
+  background: transparent;
+  border: 0;
+}
+
+.croquis-icono span {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0,0,0,.3);
+}
+
+@media (max-width: 700px) {
+  #croquisMapa {
+    height: 65vh;
+    min-height: 350px;
+  }
+}
+
+.croquis-encabezado {
+  padding: 20px 24px 12px;
+}
+
+.croquis-encabezado h2 {
+  margin: 0 0 6px;
+  font-size: 21px;
+}
+
+.croquis-encabezado p {
+  margin: 0;
+  font-size: 13px;
+  opacity: .7;
+}
+
+.croquis-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 24px 18px;
+}
+
+.croquis-filtros label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border: 1px solid var(--border, #dce3ea);
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.croquis-filtros input {
+  accent-color: #0f766e;
+}
+
+@media (max-width: 700px) {
+  .croquis-encabezado {
+    padding: 16px;
+  }
+
+  .croquis-filtros {
+    padding: 8px 16px 14px;
+    gap: 7px;
+  }
+}
+
+
+/* CROQUIS_NEON_ANIMADO_V1 */
+
+.croquis-linea-neon {
+  filter: drop-shadow(0 0 3px currentColor);
+}
+
+.croquis-linea-movimiento {
+  animation: croquisFlujoNeon 1.8s linear infinite;
+  pointer-events: none;
+}
+
+.croquis-linea-resplandor {
+  pointer-events: none;
+}
+
+@keyframes croquisFlujoNeon {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: -36; }
+}
+
+.croquis-icono-neon span {
+  width: 19px;
+  height: 19px;
+  border: 2px solid #fff;
+  background: var(--neon-color);
+  box-shadow:
+    0 0 7px var(--neon-color),
+    0 0 15px var(--neon-color);
+  animation: croquisPulsoNeon 2s ease-in-out infinite;
+}
+
+@keyframes croquisPulsoNeon {
+  0%, 100% {
+    box-shadow: 0 0 6px var(--neon-color);
+  }
+  50% {
+    box-shadow:
+      0 0 12px var(--neon-color),
+      0 0 23px var(--neon-color);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .croquis-linea-movimiento,
+  .croquis-icono-neon span {
+    animation: none;
+  }
+}
+
+
+/* CROQUIS_PARPADEO_FOSFORESCENTE_V2 */
+
+#croquisMapa path.croquis-parpadeo {
+  animation: croquisLuzIntermitente 1.2s ease-in-out infinite;
+}
+
+@keyframes croquisLuzIntermitente {
+  0%, 100% {
+    stroke-opacity: 1;
+    filter: drop-shadow(0 0 6px currentColor);
+  }
+  50% {
+    stroke-opacity: 0.22;
+    filter: drop-shadow(0 0 1px currentColor);
+  }
+}
+
+#croquisMapa .croquis-icono-neon span {
+  animation: croquisMarcadorIntermitente 1.2s ease-in-out infinite;
+}
+
+@keyframes croquisMarcadorIntermitente {
+  0%, 100% {
+    opacity: 1;
+    box-shadow:
+      0 0 8px var(--neon-color),
+      0 0 20px var(--neon-color);
+  }
+  50% {
+    opacity: .35;
+    box-shadow: 0 0 2px var(--neon-color);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #croquisMapa path.croquis-parpadeo,
+  #croquisMapa .croquis-icono-neon span {
+    animation: none;
+  }
+}
+
+
+/* CROQUIS_ESTACIONES_NEON_V3 */
+
+#croquisMapa path.croquis-tuberia-parpadeante {
+  animation: tuberiaLuzV3 1.15s ease-in-out infinite;
+}
+
+#croquisMapa path.croquis-halo-estacion {
+  animation: haloLuzV3 1.15s ease-in-out infinite;
+  pointer-events: none;
+}
+
+#croquisMapa path.croquis-destellos-moviles {
+  animation: destellosV3 1.6s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes tuberiaLuzV3 {
+  0%, 100% {
+    stroke-opacity: 1;
+    stroke-width: 4px;
+  }
+  50% {
+    stroke-opacity: 0.25;
+    stroke-width: 3px;
+  }
+}
+
+@keyframes haloLuzV3 {
+  0%, 100% {
+    stroke-opacity: 0.65;
+    stroke-width: 9px;
+  }
+  50% {
+    stroke-opacity: 0.06;
+    stroke-width: 6px;
+  }
+}
+
+@keyframes destellosV3 {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: -44; }
+}
+
+#croquisMapa .croquis-icono-neon span {
+  animation: marcadorLuzV3 1.15s ease-in-out infinite;
+}
+
+@keyframes marcadorLuzV3 {
+  0%, 100% {
+    opacity: 1;
+    box-shadow:
+      0 0 10px var(--neon-color),
+      0 0 22px var(--neon-color);
+  }
+  50% {
+    opacity: .3;
+    box-shadow: 0 0 2px var(--neon-color);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #croquisMapa path.croquis-tuberia-parpadeante,
+  #croquisMapa path.croquis-halo-estacion,
+  #croquisMapa path.croquis-destellos-moviles,
+  #croquisMapa .croquis-icono-neon span {
+    animation: none;
+  }
+}
+
+
+/* CROQUIS_INSTALACIONES_ESTILO_V1 */
+
+/* ECO: verde con pulsos móviles */
+#croquisMapa path.croquis-instalacion-eco {
+  filter: drop-shadow(0 0 4px #00E58A);
+}
+
+#croquisMapa path.croquis-eco-pulsos {
+  animation: croquisEcoFlujo 1.5s linear infinite;
+  pointer-events: none;
+}
+
+/* PIA: turquesa segmentado */
+#croquisMapa path.croquis-instalacion-pia {
+  stroke-dasharray: 19 7;
+  filter: drop-shadow(0 0 3px #00D9FF);
+  animation: croquisPiaSegmentos 2s linear infinite;
+}
+
+#croquisMapa path.croquis-pia-flujo {
+  animation: croquisPiaFlujo 1.4s linear infinite;
+  pointer-events: none;
+}
+
+/* BSC: ámbar continuo con marcas */
+#croquisMapa path.croquis-instalacion-bsc {
+  filter: drop-shadow(0 0 3px #FFB000);
+}
+
+#croquisMapa path.croquis-bsc-marcas {
+  pointer-events: none;
+}
+
+@keyframes croquisEcoFlujo {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: -36; }
+}
+
+@keyframes croquisPiaSegmentos {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: -52; }
+}
+
+@keyframes croquisPiaFlujo {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: -50; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #croquisMapa path.croquis-eco-pulsos,
+  #croquisMapa path.croquis-instalacion-pia,
+  #croquisMapa path.croquis-pia-flujo {
+    animation: none;
+  }
+}
+
+
+/* CROQUIS_RENDIMIENTO_V1 */
+
+/* Desactivar animaciones continuas de tuberías. */
+#croquisMapa path.croquis-tuberia-parpadeante,
+#croquisMapa path.croquis-halo-estacion,
+#croquisMapa path.croquis-destellos-moviles,
+#croquisMapa path.croquis-eco-pulsos,
+#croquisMapa path.croquis-instalacion-pia,
+#croquisMapa path.croquis-pia-flujo {
+  animation: none !important;
+}
+
+/* Eliminar filtros costosos de las tuberías especiales. */
+#croquisMapa path.croquis-instalacion-eco,
+#croquisMapa path.croquis-instalacion-pia,
+#croquisMapa path.croquis-instalacion-bsc {
+  filter: none !important;
+}
+
+/* Mantener colores y patrones de identificación. */
+#croquisMapa path.croquis-instalacion-eco {
+  stroke-width: 5px;
+}
+
+#croquisMapa path.croquis-instalacion-pia {
+  stroke-width: 5px;
+  stroke-dasharray: 19 7;
+}
+
+#croquisMapa path.croquis-instalacion-bsc {
+  stroke-width: 5px;
+}

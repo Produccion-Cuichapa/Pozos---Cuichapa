@@ -1,0 +1,958 @@
+.mft-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:18px}
+.mft-heading h2{margin:0 0 6px;font-size:23px}
+.mft-heading p{margin:0;color:#64748b}
+.mft-summary{display:flex;gap:10px;flex-wrap:wrap}
+.mft-summary strong{padding:10px 13px;background:#e2e8f0;border-radius:10px;font-size:12px}
+.mft-notice{padding:13px 16px;margin-bottom:18px;border:1px solid #cbd5e1;border-radius:12px;font-size:13px}
+.mft-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:16px}
+.mft-card{padding:17px;border-radius:16px;background:#fff;border:1px solid #dbe3ee;box-shadow:0 6px 20px rgba(15,23,42,.06);text-align:center}
+.mft-card-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;text-align:left}
+.mft-card-head span{font-size:10px;font-weight:800}
+.mft-tank-wrap{display:flex;justify-content:center;margin:20px 0 13px}
+.mft-tank{height:175px;width:110px;border:4px solid #64748b;border-radius:13px 13px 20px 20px;position:relative;overflow:hidden;background:#f1f5f9}
+.mft-water{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(180deg,#38bdf8,#0369a1);transition:height .5s ease}
+.mft-tank-label{position:absolute;top:9px;left:0;right:0;font-size:10px;font-weight:800;color:#334155}
+.mft-volume{font-size:29px;font-weight:850}
+.mft-volume small{font-size:13px}
+.mft-meta{font-size:11px;color:#64748b;margin-top:7px}
+.mft-alerta{border-color:#ef4444}
+.mft-alerta .mft-water,.mft-limite .mft-water{background:linear-gradient(180deg,#fb7185,#b91c1c)}
+.mft-limite{border-color:#991b1b}
+.mft-preventivo{border-color:#f59e0b}
+.mft-preventivo .mft-water{background:linear-gradient(180deg,#fbbf24,#d97706)}
+.mft-antiguo{border-color:#94a3b8}
+.mft-antiguo .mft-water{background:linear-gradient(180deg,#cbd5e1,#64748b)}
+@media(max-width:650px){.mft-summary{width:100%}.mft-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.mft-card{padding:10px}.mft-tank{width:78px;height:140px}.mft-volume{font-size:22px}}
+
+.mft-stale{
+  margin-top:10px;
+  padding:8px;
+  border-radius:8px;
+  background:#fff7ed;
+  color:#9a3412;
+  font-size:11px;
+  font-weight:800;
+}
+
+/* BLOQUE 179 — ESTADO OPERATIVO */
+
+.mft-order{
+  display:inline-block;
+  margin-top:7px;
+  padding:6px 11px;
+  border-radius:8px;
+  background:#e8f1ff;
+  color:#164a8a;
+  font-size:12px;
+  font-weight:700;
+}
+
+.mft-well-status{
+  display:table;
+  margin:12px auto 5px;
+  padding:7px 16px;
+  border-radius:30px;
+  font-size:12px;
+  font-weight:850;
+  letter-spacing:.35px;
+}
+
+.mft-well-abierto{
+  background:#d1fae5;
+  color:#065f46;
+}
+
+.mft-well-cerrado{
+  background:#fee2e2;
+  color:#991b1b;
+}
+
+.mft-well-intermitente{
+  background:#fef3c7;
+  color:#92400e;
+}
+
+.mft-well-desconocido{
+  background:#e2e8f0;
+  color:#475569;
+}
+
+.mft-card-head strong{
+  font-size:14px;
+  font-weight:900;
+  color:#0f2748;
+}
+
+
+
+/* BLOQUE 194 — BORDES SEGUN ESTADO OPERATIVO */
+
+.mft-card.mft-borde-abierto{
+  border:2px solid #16a34a;
+}
+
+.mft-card.mft-borde-cerrado{
+  border:2px solid #dc2626;
+}
+
+.mft-card.mft-borde-intermitente{
+  border:2px solid #d97706;
+}
+
+.mft-card.mft-borde-desconocido{
+  border:2px solid #94a3b8;
+}
+
+/* Alerta visible sin reemplazar el estado operativo */
+
+.mft-card.mft-alerta .mft-card-head span,
+.mft-card.mft-limite .mft-card-head span{
+  color:#b91c1c;
+  font-weight:900;
+}
+
+.mft-card.mft-limite .mft-water,
+.mft-card.mft-alerta .mft-water{
+  background:linear-gradient(180deg,#fb7185,#b91c1c);
+}
+
+
+/* BLOQUE 197 — VOLUMEN REAL Y ESTIMADO */
+
+.mft-projection-info{
+  margin-top:13px;
+  padding:11px 9px;
+  border-radius:11px;
+  background:#f1f5f9;
+  border:1px solid #dbe3ee;
+}
+
+.mft-projection-title{
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.35px;
+  color:#164a8a;
+}
+
+.mft-projection-reason{
+  margin-top:8px;
+  font-size:10px;
+  font-weight:800;
+  color:#475569;
+}
+
+.mft-card.mft-borde-cerrado .mft-projection-title{
+  color:#b91c1c;
+}
+
+.mft-card.mft-borde-abierto .mft-projection-title{
+  color:#15803d;
+}
+
+
+/* BLOQUE 202 — ALERTAS FT */
+
+.mft-alert-panel{
+  margin:0 0 18px;
+  padding:15px;
+  background:#fff7ed;
+  border:1px solid #fdba74;
+  border-left:5px solid #ea580c;
+  border-radius:12px;
+}
+
+.mft-alert-panel-title{
+  font-size:13px;
+  font-weight:900;
+  color:#9a3412;
+  margin-bottom:10px;
+}
+
+.mft-alert-row{
+  display:flex;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px;
+  padding:10px 0;
+  border-top:1px solid #fed7aa;
+  font-size:12px;
+  color:#7c2d12;
+}
+
+.mft-alert-row:first-of-type{
+  border-top:none;
+}
+
+
+/* BLOQUE 213 — DERIVACION FT 601/602 */
+
+.mft-derivacion-especial{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  margin:10px 0;
+  padding:10px 12px;
+  border:1px solid rgba(59,130,246,.30);
+  border-radius:10px;
+  background:rgba(59,130,246,.09);
+  color:#2563eb;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.35px;
+  text-align:center;
+}
+
+.mft-derivacion-icono{
+  font-size:18px;
+  line-height:1;
+}
+
+
+
+/* BLOQUE 271 — GRAFICAS LINEALES FT */
+
+.mft-grid{
+  grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+  gap:16px;
+}
+
+.mft-card{
+  text-align:left;
+  min-width:0;
+}
+
+.mft-line-wrap{
+  margin:15px 0 12px;
+  padding:12px 8px 8px;
+  border:1px solid #e2e8f0;
+  border-radius:12px;
+  background:#f8fafc;
+}
+
+.mft-line-title{
+  font-size:11px;
+  font-weight:900;
+  color:#334155;
+  letter-spacing:.4px;
+  margin:0 0 8px 5px;
+}
+
+.mft-line-svg{
+  display:block;
+  width:100%;
+  height:auto;
+  overflow:visible;
+}
+
+.mft-line-legend{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:12px;
+  font-size:10px;
+  font-weight:700;
+  color:#64748b;
+  margin-top:5px;
+}
+
+.mft-line-empty{
+  padding:35px 10px;
+  text-align:center;
+  color:#64748b;
+  font-size:12px;
+}
+
+@media(max-width:650px){
+  .mft-grid{
+    grid-template-columns:1fr;
+    gap:12px;
+  }
+
+  .mft-card{
+    padding:12px;
+  }
+}
+
+
+/* BLOQUE 272 — TARJETAS COMPACTAS */
+
+.mft-grid{
+  grid-template-columns:repeat(auto-fill,minmax(245px,1fr));
+  gap:12px;
+}
+
+.mft-card{
+  padding:12px;
+  cursor:pointer;
+  transition:box-shadow .18s ease,transform .18s ease;
+}
+
+.mft-card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 24px rgba(15,23,42,.12);
+}
+
+.mft-card:focus-visible{
+  outline:3px solid #2563eb;
+  outline-offset:3px;
+}
+
+.mft-line-wrap{
+  margin:10px 0;
+  padding:7px 5px;
+}
+
+.mft-line-title{
+  font-size:10px;
+}
+
+.mft-line-svg{
+  max-height:130px;
+}
+
+/* VENTANA AMPLIADA */
+
+.mft-modal-272{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(15,23,42,.72);
+}
+
+.mft-modal-panel-272{
+  width:min(950px,100%);
+  max-height:92vh;
+  overflow:auto;
+  background:#fff;
+  border-radius:18px;
+  padding:22px;
+  box-shadow:0 25px 70px rgba(0,0,0,.3);
+}
+
+.mft-modal-head-272{
+  display:flex;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:18px;
+}
+
+.mft-modal-head-272 strong{
+  font-size:25px;
+  color:#0f2748;
+}
+
+.mft-modal-head-272 div div{
+  font-size:12px;
+  color:#64748b;
+  margin-top:5px;
+}
+
+.mft-modal-close-272{
+  border:0;
+  background:#e2e8f0;
+  border-radius:10px;
+  width:38px;
+  height:38px;
+  cursor:pointer;
+  font-size:19px;
+}
+
+.mft-modal-chart-272 .mft-line-svg{
+  max-height:none;
+  height:360px;
+}
+
+.mft-modal-chart-272 .mft-line-wrap{
+  padding:16px;
+}
+
+.mft-modal-data-272{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+  margin-top:18px;
+}
+
+.mft-modal-data-272>div{
+  padding:12px;
+  border-radius:10px;
+  background:#f1f5f9;
+}
+
+.mft-modal-data-272 span{
+  display:block;
+  font-size:11px;
+  color:#64748b;
+  margin-bottom:5px;
+}
+
+.mft-modal-data-272 strong{
+  font-size:15px;
+  color:#0f172a;
+}
+
+@media(max-width:650px){
+  .mft-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;
+  }
+
+  .mft-card{
+    padding:9px;
+  }
+
+  .mft-line-svg{
+    max-height:105px;
+  }
+
+  .mft-modal-272{
+    padding:8px;
+  }
+
+  .mft-modal-panel-272{
+    padding:14px;
+  }
+
+  .mft-modal-chart-272 .mft-line-svg{
+    height:250px;
+  }
+
+  .mft-modal-data-272{
+    grid-template-columns:1fr;
+  }
+}
+
+
+/* BLOQUE 274 — INFORMACIÓN AMPLIADA FT */
+
+.mft-modal-panel-272{
+  width:min(1050px,96vw);
+  padding:26px;
+}
+
+.mft-modal-head-272 strong{
+  font-size:30px;
+}
+
+.mft-modal-head-272 div div{
+  font-size:15px;
+  font-weight:700;
+}
+
+.mft-modal-data-272{
+  gap:15px;
+  margin-top:22px;
+}
+
+.mft-modal-data-272>div{
+  padding:18px 20px;
+  border-radius:13px;
+  border:1px solid #dbe3ee;
+}
+
+.mft-modal-data-272 span{
+  font-size:14px;
+  font-weight:650;
+  margin-bottom:9px;
+}
+
+.mft-modal-data-272 strong{
+  font-size:23px;
+  font-weight:900;
+  line-height:1.3;
+  overflow-wrap:anywhere;
+}
+
+.mft-modal-chart-272 .mft-line-title{
+  font-size:15px;
+}
+
+.mft-modal-chart-272 .mft-line-legend{
+  font-size:13px;
+  gap:18px;
+}
+
+@media(max-width:650px){
+
+  .mft-modal-panel-272{
+    width:100%;
+    padding:16px;
+  }
+
+  .mft-modal-head-272 strong{
+    font-size:25px;
+  }
+
+  .mft-modal-data-272{
+    gap:10px;
+  }
+
+  .mft-modal-data-272>div{
+    padding:14px 16px;
+  }
+
+  .mft-modal-data-272 span{
+    font-size:13px;
+  }
+
+  .mft-modal-data-272 strong{
+    font-size:19px;
+  }
+
+}
+
+
+/* BLOQUE 276 — TARJETAS MINIMAS */
+
+.mft-grid{
+  display:grid;
+  grid-template-columns:
+    repeat(auto-fill,minmax(170px,1fr));
+  gap:12px;
+}
+
+.mft-card-mini-276{
+  min-height:105px;
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+  text-align:center;
+  cursor:pointer;
+  border-radius:14px;
+}
+
+.mft-mini-pozo{
+  font-size:17px;
+  font-weight:900;
+  color:#0f2748;
+}
+
+.mft-mini-volumen{
+  font-size:31px;
+  font-weight:900;
+  line-height:1.1;
+  color:#0f172a;
+  font-variant-numeric:tabular-nums;
+}
+
+.mft-mini-volumen small{
+  display:block;
+  margin-top:5px;
+  font-size:12px;
+  font-weight:800;
+  color:#64748b;
+}
+
+/* VENTANA CASI A PANTALLA COMPLETA */
+
+.mft-modal-272{
+  padding:12px;
+}
+
+.mft-modal-panel-272{
+  width:calc(100vw - 24px);
+  max-width:none;
+  height:calc(100vh - 24px);
+  max-height:none;
+  overflow:auto;
+  border-radius:16px;
+  padding:28px;
+}
+
+.mft-modal-chart-272 .mft-line-svg{
+  height:45vh;
+  max-height:none;
+}
+
+.mft-modal-extra-276{
+  display:grid;
+  grid-template-columns:
+    repeat(2,minmax(0,1fr));
+  gap:14px;
+  margin-top:18px;
+}
+
+.mft-modal-extra-276>div{
+  background:#eff6ff;
+  border:1px solid #dbeafe;
+  border-radius:12px;
+  padding:16px;
+}
+
+.mft-modal-extra-276 span{
+  display:block;
+  color:#64748b;
+  font-size:14px;
+  margin-bottom:7px;
+}
+
+.mft-modal-extra-276 strong{
+  display:block;
+  color:#0f2748;
+  font-size:19px;
+  font-weight:850;
+  overflow-wrap:anywhere;
+}
+
+@media(max-width:650px){
+  .mft-grid{
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+    gap:9px;
+  }
+
+  .mft-card-mini-276{
+    min-height:95px;
+    padding:10px;
+  }
+
+  .mft-mini-pozo{
+    font-size:15px;
+  }
+
+  .mft-mini-volumen{
+    font-size:25px;
+  }
+
+  .mft-modal-272{
+    padding:5px;
+  }
+
+  .mft-modal-panel-272{
+    width:calc(100vw - 10px);
+    height:calc(100vh - 10px);
+    padding:16px;
+  }
+
+  .mft-modal-chart-272 .mft-line-svg{
+    height:34vh;
+  }
+
+  .mft-modal-extra-276{
+    grid-template-columns:1fr;
+    gap:10px;
+  }
+
+  .mft-modal-extra-276 strong{
+    font-size:17px;
+  }
+}
+
+
+/* =====================================================
+   BLOQUE 277 — OPCIÓN 1
+   TARJETAS MODERNAS CON BARRA Y MINI TANQUE
+   ===================================================== */
+
+.mft-grid{
+  display:grid;
+  grid-template-columns:
+    repeat(auto-fill,minmax(255px,1fr));
+  gap:15px;
+}
+
+.mft-card.mft-card-277{
+  --mft-accent:#2563eb;
+  --mft-soft:#eff6ff;
+  position:relative;
+  min-width:0;
+  min-height:205px;
+  padding:17px;
+  overflow:hidden;
+  border:1px solid #dbe3ee;
+  border-left:4px solid var(--mft-accent);
+  border-radius:16px;
+  background:linear-gradient(
+    135deg,
+    #ffffff 55%,
+    var(--mft-soft) 100%
+  );
+  box-shadow:0 5px 18px rgba(15,23,42,.07);
+  text-align:left;
+  cursor:pointer;
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    border-color .18s ease;
+}
+
+.mft-card.mft-card-277:hover{
+  transform:translateY(-3px);
+  box-shadow:0 12px 28px rgba(15,23,42,.13);
+}
+
+.mft-card.mft-card-277:focus-visible{
+  outline:3px solid #2563eb;
+  outline-offset:3px;
+}
+
+.mft-card-277.mft-nivel-normal{
+  --mft-accent:#16a34a;
+  --mft-soft:#f0fdf4;
+}
+
+.mft-card-277.mft-nivel-preventivo{
+  --mft-accent:#d97706;
+  --mft-soft:#fffbeb;
+}
+
+.mft-card-277.mft-nivel-alerta{
+  --mft-accent:#dc2626;
+  --mft-soft:#fef2f2;
+}
+
+.mft-card-top-277{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+}
+
+.mft-pozo-277{
+  font-size:16px;
+  font-weight:900;
+  color:#102744;
+  white-space:nowrap;
+}
+
+.mft-estado-277{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 9px;
+  border-radius:999px;
+  font-size:10px;
+  font-weight:900;
+  white-space:nowrap;
+  background:#e2e8f0;
+  color:#475569;
+}
+
+.mft-estado-277 i{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:currentColor;
+  flex-shrink:0;
+}
+
+.mft-estado-abierto{
+  background:#dcfce7;
+  color:#15803d;
+}
+
+.mft-estado-cerrado{
+  background:#fee2e2;
+  color:#b91c1c;
+}
+
+.mft-estado-intermitente{
+  background:#fef3c7;
+  color:#b45309;
+}
+
+.mft-estado-desconocido{
+  background:#e2e8f0;
+  color:#475569;
+}
+
+.mft-card-body-277{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:18px;
+}
+
+.mft-card-values-277{
+  min-width:0;
+}
+
+.mft-bbls-277{
+  font-size:33px;
+  font-weight:950;
+  letter-spacing:-1px;
+  line-height:1.1;
+  color:#0f172a;
+  font-variant-numeric:tabular-nums;
+}
+
+.mft-bbls-277 small{
+  font-size:13px;
+  font-weight:850;
+  letter-spacing:0;
+}
+
+.mft-percent-277{
+  margin-top:8px;
+  font-size:12px;
+  font-weight:700;
+  color:#64748b;
+}
+
+/* MINI TANQUE CSS — SIN IMÁGENES EXTERNAS */
+
+.mft-mini-tank-277{
+  width:61px;
+  height:74px;
+  flex-shrink:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.mft-mini-tank-glass-277{
+  width:52px;
+  height:65px;
+  position:relative;
+  overflow:hidden;
+  border:2px solid #a9b9ca;
+  border-radius:10px 10px 14px 14px;
+  background:rgba(255,255,255,.6);
+  box-shadow:
+    inset 5px 0 9px rgba(148,163,184,.13),
+    0 3px 8px rgba(15,23,42,.06);
+}
+
+.mft-mini-tank-water-277{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  background:linear-gradient(
+    180deg,
+    color-mix(in srgb,var(--mft-accent) 60%,white),
+    var(--mft-accent)
+  );
+  border-radius:4px 4px 8px 8px;
+}
+
+.mft-mini-tank-scale-277{
+  position:absolute;
+  right:5px;
+  top:7px;
+  bottom:7px;
+  width:8px;
+  border-right:1px solid #64748b;
+  background:repeating-linear-gradient(
+    to bottom,
+    #94a3b8 0 1px,
+    transparent 1px 9px
+  );
+  opacity:.7;
+}
+
+.mft-progress-277{
+  width:100%;
+  height:10px;
+  overflow:hidden;
+  margin-top:15px;
+  border-radius:999px;
+  background:#e2e8f0;
+}
+
+.mft-progress-fill-277{
+  height:100%;
+  border-radius:999px;
+  background:linear-gradient(
+    90deg,
+    var(--mft-accent),
+    color-mix(in srgb,var(--mft-accent) 70%,white)
+  );
+  transition:width .35s ease;
+}
+
+.mft-stale-277{
+  margin-top:9px;
+  font-size:10px;
+  font-weight:900;
+  color:#9a3412;
+}
+
+.mft-card-hint-277{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-top:12px;
+  font-size:10px;
+  font-weight:750;
+  color:#64748b;
+}
+
+.mft-card-hint-277 span{
+  font-size:16px;
+  color:var(--mft-accent);
+}
+
+/* Neutralizar bordes anteriores únicamente
+   en las tarjetas del nuevo diseño. */
+
+.mft-card.mft-card-277.mft-borde-abierto,
+.mft-card.mft-card-277.mft-borde-cerrado,
+.mft-card.mft-card-277.mft-borde-intermitente,
+.mft-card.mft-card-277.mft-borde-desconocido{
+  border-top:1px solid #dbe3ee;
+  border-right:1px solid #dbe3ee;
+  border-bottom:1px solid #dbe3ee;
+  border-left:4px solid var(--mft-accent);
+}
+
+@media(max-width:650px){
+  .mft-grid{
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+    gap:10px;
+  }
+
+  .mft-card.mft-card-277{
+    min-height:175px;
+    padding:11px;
+  }
+
+  .mft-pozo-277{
+    font-size:13px;
+  }
+
+  .mft-estado-277{
+    font-size:8px;
+    padding:5px 6px;
+    gap:4px;
+  }
+
+  .mft-bbls-277{
+    font-size:25px;
+  }
+
+  .mft-bbls-277 small{
+    font-size:10px;
+  }
+
+  .mft-mini-tank-277{
+    width:39px;
+    height:58px;
+  }
+
+  .mft-mini-tank-glass-277{
+    width:34px;
+    height:52px;
+  }
+
+  .mft-percent-277{
+    font-size:10px;
+  }
+}
+
+@media(max-width:390px){
+  .mft-grid{
+    grid-template-columns:1fr;
+  }
+}

@@ -1,0 +1,594 @@
+
+.quimicos-access-row { margin: 12px 0; }
+.quimicos-access-btn {
+  width:100%; display:flex; align-items:center; gap:16px;
+  padding:20px 22px; border:1px solid #dbe5ec;
+  border-radius:16px; background:#fff; text-align:left;
+  cursor:pointer; color:#17324d;
+}
+.quimicos-access-btn:hover { border-color:#0d9488; background:#f4fbfa; }
+.quimicos-access-icon {
+  display:grid; place-items:center; width:46px; height:46px;
+  border-radius:13px; background:#d9f5ee; color:#087f72;
+  font-size:25px;
+}
+.quimicos-access-btn span:nth-child(2) { flex:1; }
+.quimicos-access-btn strong { display:block; font-size:17px; }
+.quimicos-access-btn small { display:block; margin-top:5px; color:#64748b; }
+.quimicos-access-btn b { font-size:23px; }
+.quimicos-shell { padding:24px; max-width:1500px; margin:auto; }
+.quimicos-header { margin-bottom:24px; }
+.quimicos-back {
+  padding:9px 15px; border:1px solid #dbe5ec;
+  background:white; border-radius:9px; cursor:pointer;
+  margin-bottom:20px;
+}
+.quimicos-eyebrow { font-size:11px; letter-spacing:2px; color:#0f766e; font-weight:800; }
+.quimicos-header h2 { font-size:29px; margin:7px 0; color:#172d45; }
+.quimicos-header p { color:#64748b; }
+.quimicos-resumen {
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px; margin-bottom:22px;
+}
+.quimicos-kpi, .quimicos-card {
+  background:white; border:1px solid #dfe7ee;
+  border-radius:16px; padding:21px;
+}
+.quimicos-kpi span { display:block; color:#64748b; font-size:13px; }
+.quimicos-kpi strong { display:block; margin-top:9px; font-size:25px; color:#17324d; }
+.quimicos-grid {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr));
+  gap:16px;
+}
+.quimicos-card h3 { margin:0; font-size:20px; color:#17324d; }
+.quimicos-producto { color:#64748b; font-size:13px; min-height:36px; margin:8px 0; }
+.quimicos-tanque {
+  height:155px; width:112px; margin:19px auto;
+  border:3px solid #9eb6c6; border-radius:16px 16px 23px 23px;
+  background:linear-gradient(#f8fafc,#edf4f8);
+  display:flex; align-items:center; justify-content:center;
+  color:#64748b; font-size:12px; font-weight:700;
+}
+.quimicos-datos { display:flex; justify-content:space-between; gap:12px; font-size:13px; margin-top:10px; }
+.quimicos-datos span { color:#64748b; }
+.quimicos-estado {
+  display:inline-block; padding:6px 10px; border-radius:30px;
+  background:#f1f5f9; color:#475569; font-size:11px;
+  font-weight:800; margin-top:12px;
+}
+@media(max-width:650px){
+  .quimicos-shell { padding:12px; }
+  .quimicos-resumen { grid-template-columns:1fr; }
+}
+
+
+/* Medición manual y estimación — 284 */
+.quimicos-tanque-dinamico {
+  position:relative;
+  overflow:hidden;
+  background:#f8fafc;
+}
+.quimicos-liquido {
+  position:absolute;
+  left:0;
+  bottom:0;
+  width:100%;
+  background:linear-gradient(180deg,#65cbbf,#0d9488);
+  transition:height .5s ease;
+}
+.quimicos-tanque-valor {
+  position:relative;
+  z-index:1;
+  padding:6px;
+  text-align:center;
+  color:#17324d;
+  background:rgba(255,255,255,.82);
+  border-radius:8px;
+}
+.quimicos-accion {
+  width:100%;
+  margin-top:14px;
+  padding:11px;
+  border:0;
+  border-radius:9px;
+  background:#0f766e;
+  color:white;
+  font-weight:700;
+  cursor:pointer;
+}
+.quimicos-accion-secundaria {
+  background:#e2e8f0;
+  color:#17324d;
+  margin-top:8px;
+}
+.quimicos-accion:hover { filter:brightness(.94); }
+
+
+/* BLOQUE 287 — FORMULARIO PROFESIONAL */
+
+.quimicos-modal.hidden {
+  display:none !important;
+}
+
+.quimicos-modal {
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  background:rgba(15,23,42,.64);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:18px;
+  overflow-y:auto;
+}
+
+body.quimicos-modal-abierto {
+  overflow:hidden;
+}
+
+.quimicos-modal-panel {
+  width:100%;
+  max-width:850px;
+  max-height:calc(100vh - 36px);
+  overflow-y:auto;
+  background:#fff;
+  border-radius:19px;
+  box-shadow:0 25px 80px rgba(0,0,0,.25);
+  color:#172d45;
+}
+
+.quimicos-modal-header {
+  background:linear-gradient(120deg,#075e59,#0f766e);
+  color:#fff;
+  padding:24px 28px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:14px;
+}
+
+.quimicos-modal-heading {
+  display:flex;
+  align-items:center;
+  gap:15px;
+}
+
+.quimicos-modal-heading h2 {
+  color:#fff;
+  margin:0;
+  font-size:24px;
+  font-weight:800;
+}
+
+.quimicos-modal-icon {
+  width:46px;
+  height:46px;
+  display:grid;
+  place-items:center;
+  background:rgba(255,255,255,.18);
+  border-radius:13px;
+  font-size:26px;
+}
+
+.quimicos-modal-close {
+  background:transparent;
+  border:0;
+  color:#fff;
+  font-size:32px;
+  cursor:pointer;
+}
+
+.quimicos-form {
+  padding:26px 28px;
+}
+
+.quimicos-modal-info {
+  display:grid;
+  grid-template-columns:1.1fr 1fr;
+  gap:24px;
+  padding:22px;
+  background:#edf7f7;
+  border-radius:14px;
+  margin-bottom:25px;
+}
+
+.quimicos-modal-pozo {
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+
+.quimicos-modal-pozo-icon {
+  width:64px;
+  height:74px;
+  background:#d5eeee;
+  border-radius:13px;
+  display:grid;
+  place-items:center;
+  font-size:38px;
+  color:#087f72;
+}
+
+.quimicos-modal-pozo h3 {
+  margin:0 0 7px;
+  font-size:23px;
+  color:#172d45;
+}
+
+.quimicos-modal-pozo p {
+  margin:0;
+  color:#526579;
+  font-size:14px;
+}
+
+.quimicos-modal-especificaciones {
+  border-left:1px solid #c9dddd;
+  padding-left:20px;
+}
+
+.quimicos-modal-especificaciones div {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  margin:8px 0;
+  font-size:13px;
+}
+
+.quimicos-modal-especificaciones span {
+  color:#526579;
+}
+
+.quimicos-modal-especificaciones strong {
+  color:#172d45;
+  white-space:nowrap;
+}
+
+.quimicos-form-section {
+  background:#f8fafc;
+  border-radius:13px;
+  padding:20px;
+  margin-bottom:18px;
+}
+
+.quimicos-form-section label,
+.quimicos-form-campo label {
+  display:block;
+  font-weight:800;
+  color:#172d45;
+  margin-bottom:12px;
+  font-size:15px;
+}
+
+.quimicos-input-litros {
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
+
+.quimicos-input-icon,
+.quimicos-input-unidad {
+  display:grid;
+  place-items:center;
+  flex-shrink:0;
+  width:50px;
+  height:51px;
+  background:#e2e8f0;
+  border-radius:10px;
+  font-weight:800;
+  color:#172d45;
+}
+
+.quimicos-input-litros input {
+  flex:1;
+  min-width:0;
+  height:51px;
+  border:1px solid #cbd5e1;
+  border-radius:10px;
+  padding:0 15px;
+  font-size:20px;
+  color:#172d45;
+  background:#fff;
+}
+
+.quimicos-form-section small,
+.quimicos-form-campo small {
+  display:block;
+  margin-top:9px;
+  color:#64748b;
+  font-size:12px;
+}
+
+.quimicos-form-fecha {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+  margin-bottom:22px;
+}
+
+.quimicos-form-campo {
+  min-width:0;
+}
+
+.quimicos-form-campo input {
+  width:100%;
+  min-width:0;
+  height:51px;
+  border:1px solid #cbd5e1;
+  border-radius:10px;
+  padding:0 13px;
+  background:#fff;
+  color:#172d45;
+  font-size:16px;
+}
+
+.quimicos-form-aviso {
+  display:flex;
+  align-items:flex-start;
+  gap:15px;
+  padding:17px;
+  border:1px solid #bfdbfe;
+  background:#eff6ff;
+  border-radius:12px;
+  margin-bottom:20px;
+}
+
+.quimicos-aviso-icon {
+  display:grid;
+  place-items:center;
+  flex-shrink:0;
+  width:30px;
+  height:30px;
+  border-radius:50%;
+  background:#3b82f6;
+  color:white;
+  font-weight:800;
+}
+
+.quimicos-form-aviso strong {
+  color:#2563eb;
+}
+
+.quimicos-form-aviso p {
+  margin:5px 0 0;
+  font-size:13px;
+  line-height:1.6;
+  color:#475569;
+}
+
+.quimicos-form-error {
+  padding:12px;
+  margin-bottom:16px;
+  background:#fef2f2;
+  border:1px solid #fecaca;
+  color:#b91c1c;
+  border-radius:9px;
+}
+
+.quimicos-form-footer {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+.quimicos-btn-cancelar,
+.quimicos-btn-guardar {
+  border:0;
+  border-radius:10px;
+  padding:15px;
+  font-size:15px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.quimicos-btn-cancelar {
+  background:#e2e8f0;
+  color:#172d45;
+}
+
+.quimicos-btn-guardar {
+  background:#0f766e;
+  color:#fff;
+}
+
+.quimicos-btn-guardar:hover {
+  background:#0b625c;
+}
+
+@media(max-width:650px) {
+  .quimicos-modal {
+    padding:8px;
+    align-items:flex-start;
+  }
+
+  .quimicos-modal-panel {
+    max-height:calc(100dvh - 16px);
+  }
+
+  .quimicos-modal-header {
+    padding:18px;
+  }
+
+  .quimicos-modal-heading h2 {
+    font-size:19px;
+  }
+
+  .quimicos-form {
+    padding:17px;
+  }
+
+  .quimicos-modal-info,
+  .quimicos-form-fecha {
+    grid-template-columns:1fr;
+  }
+
+  .quimicos-modal-especificaciones {
+    border-left:0;
+    border-top:1px solid #c9dddd;
+    padding:12px 0 0;
+  }
+
+  .quimicos-input-icon {
+    display:none;
+  }
+}
+
+
+/* QUIMICOS_BITACORA_328 */
+.quimicos-historial.hidden {
+  display: none;
+}
+.quimicos-historial {
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid #d8dee8;
+  border-radius: 14px;
+  background: #fff;
+}
+.quimicos-historial-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.quimicos-historial-encabezado h3 {
+  margin: 0;
+}
+.quimicos-historial-scroll {
+  overflow-x: auto;
+}
+.quimicos-historial-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.quimicos-historial-tabla th,
+.quimicos-historial-tabla td {
+  padding: 11px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+.quimicos-historial-tabla th {
+  background: #f4f6f9;
+  font-weight: 700;
+}
+.quimicos-historial-aviso {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+
+/* QUIMICOS_ALERTAS_48H_342 */
+
+.quimicos-alerta{
+  margin-top:14px;
+  padding:12px 14px;
+  border-radius:12px;
+  border:1px solid transparent;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  font-size:13px;
+  line-height:1.45;
+}
+
+.quimicos-alerta strong{
+  font-size:13px;
+  font-weight:750;
+}
+
+.quimicos-alerta-normal{
+  background:#ecfdf5;
+  border-color:#a7f3d0;
+  color:#065f46;
+}
+
+.quimicos-alerta-programar{
+  background:#fffbeb;
+  border-color:#fcd34d;
+  color:#92400e;
+}
+
+.quimicos-alerta-urgente{
+  background:#fef2f2;
+  border-color:#fca5a5;
+  color:#991b1b;
+}
+
+.quimicos-alerta-detenido,
+.quimicos-alerta-sin-datos{
+  background:#f1f5f9;
+  border-color:#cbd5e1;
+  color:#475569;
+}
+
+
+
+/* QUIMICOS_TABLERO_347 */
+
+.quimicos-kpi-programar{
+  border-left:4px solid #d97706;
+}
+
+.quimicos-kpi-programar strong{
+  color:#92400e;
+}
+
+.quimicos-kpi-urgente{
+  border-left:4px solid #dc2626;
+}
+
+.quimicos-kpi-urgente strong{
+  color:#b91c1c;
+}
+
+.quimicos-kpi-sin-datos{
+  border-left:4px solid #94a3b8;
+}
+
+.quimicos-kpi-sin-datos strong{
+  color:#475569;
+}
+
+
+
+/* QUIMICOS_REINICIO_386 */
+#quimicosRecipientes article {
+  position: relative;
+}
+
+#quimicosRecipientes .quimicos-reinicio-icono {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #d9dfe7;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #64748b;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+
+#quimicosRecipientes .quimicos-reinicio-icono:hover {
+  color: #dc2626;
+  background: #fff1f2;
+  border-color: #fecdd3;
+}
+
+#quimicosRecipientes .quimicos-reinicio-icono:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+#quimicosRecipientes article > :not(.quimicos-reinicio-icono):first-of-type {
+  padding-right: 32px;
+}

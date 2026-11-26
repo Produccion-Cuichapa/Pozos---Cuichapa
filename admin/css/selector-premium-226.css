@@ -1,0 +1,112 @@
+/* SELECTOR_FUNCIONAL_231 */
+
+#platformSelector204 {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  background: #061427 !important;
+  z-index: 2147483000 !important;
+  pointer-events: auto !important;
+}
+
+#platformSelector204.hidden {
+  display: none !important;
+}
+
+#platformSelector204:not(.hidden) {
+  display: grid !important;
+  place-items: center !important;
+}
+
+#platformSelector204 .premium-anterior-231 {
+  display: none !important;
+}
+
+#platformSelector204 .premium-escenario-231 {
+  position: relative !important;
+
+  width: min(100vw, 177.6833vh) !important;
+  aspect-ratio: 1672 / 941 !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  display: block !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+
+  background:
+    url("../assets/cuichapa-selector-premium.png")
+    center / 100% 100% no-repeat !important;
+}
+
+#platformSelector204 #platformOperations204,
+#platformSelector204 #platformWorks204 {
+  position: absolute !important;
+
+  top: 40.5% !important;
+  width: 34.2% !important;
+  height: 46.7% !important;
+
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+
+  display: block !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+
+  opacity: 1 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+
+  border: 0 !important;
+  border-radius: 3vw !important;
+
+  background: transparent !important;
+  box-shadow: none !important;
+
+  cursor: pointer !important;
+  touch-action: manipulation !important;
+  z-index: 10 !important;
+}
+
+#platformSelector204 #platformOperations204 {
+  left: 14.8% !important;
+}
+
+#platformSelector204 #platformWorks204 {
+  left: 51.3% !important;
+}
+
+#platformSelector204 #platformOperations204 *,
+#platformSelector204 #platformWorks204 * {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+#platformSelector204 #platformOperations204:hover,
+#platformSelector204 #platformWorks204:hover {
+  background: rgba(65,170,255,.12) !important;
+
+  box-shadow:
+    inset 0 0 30px rgba(70,180,255,.45),
+    0 0 22px rgba(70,180,255,.35) !important;
+}
+
+#platformSelector204 #platformOperations204:active,
+#platformSelector204 #platformWorks204:active {
+  background: rgba(65,170,255,.25) !important;
+}
+
+#platformSelector204 #platformOperations204:focus-visible,
+#platformSelector204 #platformWorks204:focus-visible {
+  outline: 3px solid #69dfff !important;
+  outline-offset: -4px !important;
+}

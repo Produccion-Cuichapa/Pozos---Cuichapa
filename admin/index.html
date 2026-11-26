@@ -17,7 +17,7 @@
 <script src="./js/config.js" defer></script>
   <script src="./js/utils.js?v=1784566076" defer></script>
   <script src="./js/firebase.js?v=20260805013816" defer></script>
-  <script src="./js/auth.js" defer></script>
+  <script src="./js/auth.js?v=215" defer></script>
   <script src="./js/ui.js?v=20260805020055" defer></script>
   <script src="./js/dashboard.js?v=1784312497" defer></script>
   <script src="./js/aforo-utils.js?v=20260806005857" defer></script>
@@ -33,9 +33,9 @@
   <script src="./js/graficas-pozos.js?v=20260804151709" defer></script>
 <script src="./js/firebase-upv-admin.js" defer></script>
   <script src="./js/upv-admin.js" defer></script>
-  <script src="./js/config-center.js?v=1784657401" defer></script>
+  <script src="./js/config-center.js?v=241" defer></script>
 
-  <script src="./js/app.js?v=20260805013816" defer></script>
+  <script src="./js/app.js?v=291" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <link rel="stylesheet" href="./css/produccion-v2.css?v=1784347568">
   <link rel="stylesheet" href="./css/tema-cuichapa.css?v=1784394705">
@@ -73,6 +73,13 @@
   <link rel="stylesheet" href="./css/recorridos.css?v=20260822183909">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="./css/muestras.css?v=20260824162610">
+  <link rel="stylesheet" href="./css/admin-mobile.css?v=1">
+  <link rel="stylesheet" href="./css/croquis-campo.css?v=1">
+  <link rel="stylesheet" href="./css/monitoreo-ft.css?v=1792107263">
+  <link rel="stylesheet" href="./css/inyeccion-quimicos.css?v=386">
+<!-- SELECTOR_PREMIUM_226 -->
+<link rel="stylesheet"
+href="./css/selector-premium-226.css?v=231">
 </head>
 
 <body>
@@ -143,7 +150,19 @@
           <span class="nav-label">Producción</span>
         </button>
 
-        <button class="nav-btn" data-view="alarmas">
+        <button class="nav-btn" data-view="croquis">
+          <span class="nav-icon" aria-hidden="true">⌖</span>
+          <span class="nav-label">Croquis del Campo</span>
+        </button>
+
+
+        <button class="nav-btn" data-view="monitoreoFt">
+          <span class="nav-icon" aria-hidden="true">▥</span>
+          <span class="nav-label">Monitoreo FT</span>
+        </button>
+
+
+<button class="nav-btn" data-view="alarmas">
           <span class="nav-icon" aria-hidden="true">!</span>
           <span class="nav-label">Alertas</span>
         </button>
@@ -171,6 +190,13 @@
 
       <div class="side-footer">
         <div id="sessionUser" class="session-user"></div>
+        <!-- SELECTOR_PLATAFORMAS_207 -->
+        <button type="button"
+                id="changePlatform207"
+                class="ghost-btn"
+                style="margin-bottom:10px">
+          Cambiar plataforma
+        </button>
         <button id="logoutBtn" class="ghost-btn">Cerrar sesión</button>
       </div>
     </aside>
@@ -184,7 +210,7 @@
         <div id="connStatus" class="conn-pill">Conectando...</div>
       </header>
 
-      <section id="dashboardView" class="view">
+<section id="dashboardView" class="view">
         <div id="dashboardLoading" class="dashboard-loading">
           <div class="dashboard-loader-ring"></div>
 
@@ -491,6 +517,20 @@
           </button>
 
         </div>
+
+
+<div class="quimicos-access-row">
+  <button type="button"
+          id="btnAbrirQuimicos"
+          class="quimicos-access-btn">
+    <span class="quimicos-access-icon">◈</span>
+    <span>
+      <strong>Inyección de Químicos</strong>
+      <small>Inventarios, consumos y programación de rellenado</small>
+    </span>
+    <b>→</b>
+  </button>
+</div>
 
 <div class="muestras-access-row">
 
@@ -1022,6 +1062,38 @@
 
 
 
+
+<section id="inyeccionQuimicosSubView" class="view hidden">
+  <div class="quimicos-shell">
+    <header class="quimicos-header">
+      <button type="button" id="btnVolverProduccionQuimicos"
+              class="quimicos-back">← Producción</button>
+      <div>
+        <span class="quimicos-eyebrow">PRODUCCIÓN DE CAMPO</span>
+        <h2>Inyección de Químicos</h2>
+        <p>Control de recipientes, dosificación y abastecimiento.</p>
+      </div>
+    </header>
+    <div id="quimicosResumen" class="quimicos-resumen"></div>
+    <div id="quimicosRecipientes" class="quimicos-grid"></div>
+    <!-- QUIMICOS_BITACORA_328 -->
+    <section id="quimicosHistorial"
+             class="quimicos-historial hidden"
+             aria-label="Historial de mediciones">
+      <div class="quimicos-historial-encabezado">
+        <h3>Bitácora de mediciones</h3>
+        <button type="button"
+                id="quimicosCerrarHistorial"
+                class="quimicos-accion quimicos-accion-secundaria">
+          Cerrar historial
+        </button>
+      </div>
+      <div id="quimicosHistorialContenido"></div>
+    </section>
+
+  </div>
+</section>
+
 <section
   id="muestrasSubView"
   class="view hidden">
@@ -1145,7 +1217,33 @@
 </section>
 
 
-<section id="alarmasView" class="view hidden">
+<section id="croquisView" class="view hidden">
+  <div class="croquis-contenedor">
+    <div class="croquis-encabezado">
+      <div>
+        <h2>Croquis General del Campo Cuichapa</h2>
+        <p>Ubicación de pozos, cabezales, estaciones e infraestructura.</p>
+      </div>
+    </div>
+
+    <div id="croquisFiltros" class="croquis-filtros">
+      <label><input type="checkbox" data-croquis-capa="pozos" checked> Pozos</label>
+      <label><input type="checkbox" data-croquis-capa="cabezales" checked> Cabezales</label>
+      <label><input type="checkbox" data-croquis-capa="estaciones" checked> Estaciones</label>
+      <label><input type="checkbox" data-croquis-capa="instalaciones" checked> PIA / ECO / BSC</label>
+      <label><input type="checkbox" data-croquis-capa="tuberias" checked> Tuberías</label>
+    </div>
+
+    <div id="croquisMapa"></div>
+  </div>
+</section>
+
+
+      <section id="monitoreoFtView" class="view hidden">
+        <div id="monitoreoFtRoot"></div>
+      </section>
+
+      <section id="alarmasView" class="view hidden">
 
         <div class="alarm-kpi-grid">
           <article class="alarm-kpi-card alarm-kpi-today">
@@ -2454,7 +2552,7 @@
   <script src="./js/ia-cuichapa.js?v=20260723" defer></script>
   <script src="./js/dashboard-produccion.js?v=1784393750" defer></script>
   <script src="./js/login-v2.js?v=1784394705" defer></script>
-  <script src="./js/admin-pwa.js?v=2026.07.19.045207" defer></script>
+  <!-- LAB212: Registro PWA desactivado en pruebas -->
 
 <script src="../health-monitor.js?v=20260804235010"></script>
 
@@ -2464,5 +2562,536 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="./js/recorridos.js?v=20260822183909" defer></script>
   <script src="./js/muestras.js?v=20260824175110" defer></script>
+  <script src="./js/croquis-campo.js?v=1" defer></script>
+  <!-- EDITOR_FT_ADMIN_860 -->
+<script src="./js/motor-correcciones-ft.js?v=960" defer></script>
+<script src="./js/cliente-correcciones-ft.js?v=944" defer></script>
+<script src="./js/capa-correcciones-ft.js?v=960" defer></script>
+<script src="./js/sincronizacion-correcciones-ft.js?v=1012" defer></script>
+<script src="./js/editor-ft-admin.js?v=860" defer></script>
+<script src="./js/monitoreo-ft.js?v=1792107263" defer></script>
+  <!-- QUIMICOS_CONEXION_191_370 -->
+  <div id="quimicosConexion191Modal"
+       class="quimicos-modal hidden">
+    <div class="quimicos-modal-contenido">
+      <h3>Conectar tótem del Pozo 191</h3>
+      <p id="quimicosConexion191Nombre"></p>
+      <p>Registra cuándo se conectó realmente el tótem.</p>
+
+      <form id="quimicosConexion191Formulario"
+            class="quimicos-form">
+
+        <input type="hidden" id="quimicosConexion191Id">
+
+        <div class="quimicos-form-campo">
+          <label for="quimicosConexion191Fecha">Fecha de conexión</label>
+          <input type="date"
+                 id="quimicosConexion191Fecha"
+                 required>
+        </div>
+
+        <div class="quimicos-form-campo">
+          <label for="quimicosConexion191Hora">Hora de conexión</label>
+          <input type="time"
+                 id="quimicosConexion191Hora"
+                 required>
+        </div>
+
+        <p id="quimicosConexion191Error"
+           class="quimicos-form-error hidden"></p>
+
+        <button type="submit" class="quimicos-accion">
+          Guardar conexión
+        </button>
+
+        <button type="button"
+                id="quimicosConexion191Cancelar"
+                class="quimicos-accion quimicos-accion-secundaria">
+          Cancelar
+        </button>
+
+        <button type="button"
+                id="quimicosConexion191Cerrar"
+                class="quimicos-accion quimicos-accion-secundaria">
+          Cerrar
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script src="./js/inyeccion-quimicos.js?v=386" defer></script>
+
+
+<!-- QUIMICOS_FORM_RECARGAS_336 -->
+<!-- QUIMICOS_FORM_FO_355 -->
+<div id="quimicosFOModal"
+     class="quimicos-modal hidden"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="quimicosFOTitulo">
+
+  <div class="quimicos-modal-contenido">
+
+    <div class="quimicos-modal-header">
+      <div>
+        <h2 id="quimicosFOTitulo">
+          Registrar F/O
+        </h2>
+        <p id="quimicosFONombre"></p>
+      </div>
+
+      <button type="button"
+              id="quimicosFOCerrar"
+              class="quimicos-btn-cancelar">
+        Cerrar
+      </button>
+    </div>
+
+    <form id="quimicosFOFormulario"
+          class="quimicos-form">
+
+      <input type="hidden" id="quimicosFOId">
+      <input type="hidden" id="quimicosFOAccion">
+
+      <p id="quimicosFODescripcion"></p>
+
+      <div class="quimicos-form-campo">
+        <label for="quimicosFOFecha">
+          Fecha efectiva
+        </label>
+        <input type="date"
+               id="quimicosFOFecha"
+               required>
+      </div>
+
+      <div class="quimicos-form-campo">
+        <label for="quimicosFOHora">
+          Hora efectiva
+        </label>
+        <input type="time"
+               id="quimicosFOHora"
+               required>
+      </div>
+
+      <p id="quimicosFOError"
+         class="hidden"
+         role="alert"></p>
+
+      <div class="quimicos-form-acciones">
+        <button type="button"
+                id="quimicosFOCancelar"
+                class="quimicos-btn-cancelar">
+          Cancelar
+        </button>
+
+        <button type="submit"
+                class="quimicos-btn-guardar">
+          Confirmar movimiento
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<div id="quimicosRecargaModal"
+     class="quimicos-modal hidden"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="quimicosRecargaTitulo">
+
+  <div class="quimicos-modal-panel">
+
+    <header class="quimicos-modal-header">
+      <div class="quimicos-modal-heading">
+        <h2 id="quimicosRecargaTitulo">Registrar recarga</h2>
+      </div>
+      <button type="button"
+              id="quimicosCerrarRecarga"
+              class="quimicos-modal-close"
+              aria-label="Cerrar">×</button>
+    </header>
+
+    <form id="quimicosRecargaFormulario"
+          class="quimicos-form">
+
+      <input type="hidden" id="quimicosRecargaId">
+
+      <section class="quimicos-modal-info">
+        <div class="quimicos-modal-pozo">
+          <div>
+            <h3 id="quimicosRecargaNombre">—</h3>
+            <p id="quimicosRecargaProducto">—</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="quimicos-form-section">
+        <label for="quimicosRecargaLitros">
+          Litros añadidos al recipiente
+        </label>
+
+        <input type="number"
+               id="quimicosRecargaLitros"
+               min="0.01"
+               max="1000"
+               step="0.01"
+               placeholder="Ej. 500"
+               required>
+
+        <small>
+          Registra únicamente el volumen realmente agregado.
+        </small>
+      </section>
+
+      <section class="quimicos-form-fecha">
+        <div class="quimicos-form-campo">
+          <label for="quimicosRecargaFecha">
+            Fecha de la recarga
+          </label>
+          <input type="date"
+                 id="quimicosRecargaFecha"
+                 required>
+        </div>
+
+        <div class="quimicos-form-campo">
+          <label for="quimicosRecargaHora">
+            Hora de la recarga
+          </label>
+          <input type="time"
+                 id="quimicosRecargaHora"
+                 step="60"
+                 required>
+        </div>
+      </section>
+
+      <div class="quimicos-form-aviso">
+        <div>
+          <strong>Control de inventario</strong>
+          <p>
+            La recarga se añadirá al inventario estimado
+            desde su fecha y hora, sin modificar la última
+            medición física registrada.
+          </p>
+        </div>
+      </div>
+
+      <div id="quimicosRecargaError"
+           class="quimicos-form-error hidden"
+           role="alert"></div>
+
+      <footer class="quimicos-form-footer">
+        <button type="button"
+                id="quimicosCancelarRecarga"
+                class="quimicos-btn-cancelar">
+          Cancelar
+        </button>
+        <button type="submit"
+                class="quimicos-btn-guardar">
+          Guardar recarga
+        </button>
+      </footer>
+
+    </form>
+  </div>
+</div>
+
+<div id="quimicosModal" class="quimicos-modal hidden"
+     role="dialog" aria-modal="true"
+     aria-labelledby="quimicosModalTitulo">
+
+  <div class="quimicos-modal-panel">
+
+    <header class="quimicos-modal-header">
+      <div class="quimicos-modal-heading">
+        <span class="quimicos-modal-icon">◈</span>
+        <h2 id="quimicosModalTitulo">
+          Registrar nivel de recipiente
+        </h2>
+      </div>
+
+      <button type="button"
+              id="quimicosCerrarModal"
+              class="quimicos-modal-close"
+              aria-label="Cerrar">×</button>
+    </header>
+
+    <form id="quimicosFormulario" class="quimicos-form">
+
+      <input type="hidden" id="quimicosFormId">
+
+      <section class="quimicos-modal-info">
+        <div class="quimicos-modal-pozo">
+          <span class="quimicos-modal-pozo-icon">▤</span>
+          <div>
+            <h3 id="quimicosFormNombre">—</h3>
+            <p id="quimicosFormProducto">—</p>
+          </div>
+        </div>
+
+        <div class="quimicos-modal-especificaciones">
+          <div>
+            <span>Capacidad del recipiente</span>
+            <strong>1,000 L</strong>
+          </div>
+          <div>
+            <span>Consumo del punto</span>
+            <strong id="quimicosFormDiario">—</strong>
+          </div>
+          <div>
+            <span>Consumo horario activo</span>
+            <strong id="quimicosFormHora">—</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="quimicos-form-section">
+        <label for="quimicosFormLitros">
+          Cantidad medida
+        </label>
+
+        <div class="quimicos-input-litros">
+          <span class="quimicos-input-icon">◉</span>
+
+          <input type="number"
+                 id="quimicosFormLitros"
+                 min="0"
+                 max="1000"
+                 step="0.01"
+                 inputmode="decimal"
+                 placeholder="Ej. 750"
+                 required>
+
+          <span class="quimicos-input-unidad">L</span>
+        </div>
+
+        <small>
+          Introduce la cantidad real de líquido
+          en el recipiente (0 a 1,000 litros).
+        </small>
+      </section>
+
+      <section class="quimicos-form-fecha">
+
+        <div class="quimicos-form-campo">
+          <label for="quimicosFormFecha">
+            Fecha de la medición
+          </label>
+          <input type="date"
+                 id="quimicosFormFecha"
+                 required>
+          <small>Fecha en que se midió el nivel.</small>
+        </div>
+
+        <div class="quimicos-form-campo">
+          <label for="quimicosFormTiempo">
+            Hora de la medición
+          </label>
+          <input type="time"
+                 id="quimicosFormTiempo"
+                 step="60"
+                 required>
+          <small>Hora en que se midió el nivel.</small>
+        </div>
+
+      </section>
+
+      <div class="quimicos-form-aviso">
+        <span class="quimicos-aviso-icon">i</span>
+        <div>
+          <strong>Información importante</strong>
+          <p>
+            A partir de la fecha y hora registradas,
+            el sistema calculará el consumo horario
+            para estimar el volumen disponible.
+            No es una medición en tiempo real.
+          </p>
+        </div>
+      </div>
+
+      <div id="quimicosFormError"
+           class="quimicos-form-error hidden"
+           role="alert"></div>
+
+      <footer class="quimicos-form-footer">
+        <button type="button"
+                id="quimicosCancelar"
+                class="quimicos-btn-cancelar">
+          Cancelar
+        </button>
+
+        <button type="submit"
+                class="quimicos-btn-guardar">
+          Registrar nivel
+        </button>
+      </footer>
+
+    </form>
+  </div>
+</div>
+
+
+
+<section id="platformSelector204" class="hidden"
+ style="display:none;min-height:100vh;background:#0b1524;
+ color:#fff;align-items:center;justify-content:center;
+ padding:28px;box-sizing:border-box;font-family:inherit">
+<!-- SELECTOR_FUNCIONAL_231 -->
+<div class="premium-anterior-231" hidden>
+
+
+ <div style="width:min(100%,920px)">
+
+  <header style="display:flex;align-items:center;
+   justify-content:space-between;gap:18px;flex-wrap:wrap;
+   margin-bottom:30px">
+
+   <div style="display:flex;align-items:center;gap:15px">
+    <div style="display:grid;place-items:center;
+     width:56px;height:56px;background:#244e82;
+     border-radius:14px;font-size:21px;font-weight:900">
+     CC
+    </div>
+    <div>
+     <strong style="font-size:17px;letter-spacing:1px">
+      CUICHAPA CONTROL
+     </strong>
+     <div style="font-size:11px;color:#a4b9d2;
+      margin-top:5px;letter-spacing:1px">
+      SISTEMA INTEGRAL DE OPERACIONES
+     </div>
+    </div>
+   </div>
+
+   <span style="font-size:12px;color:#80d8b1">
+    ● SESIÓN AUTENTICADA
+   </span>
+  </header>
+
+  <div style="background:#172a42;border:1px solid #344e6d;
+   border-radius:22px;padding:clamp(22px,5vw,44px);
+   box-shadow:0 24px 70px rgba(0,0,0,.35)">
+
+   <div style="font-size:12px;color:#7eb9ff;
+    font-weight:800;letter-spacing:1.4px">
+    CUICHAPA / SISTEMA OPERATIVO
+   </div>
+
+   <h1 style="font-size:clamp(28px,4vw,42px);
+    color:#fff;margin:14px 0 8px">
+    Panel de acceso
+   </h1>
+
+   <p style="color:#b5c4d7;margin:0 0 30px">
+    Selecciona la plataforma de trabajo para continuar.
+   </p>
+
+   <div style="display:grid;gap:16px">
+
+
+
+
+
+   </div>
+  </div>
+
+  <footer style="display:flex;align-items:center;
+   justify-content:space-between;flex-wrap:wrap;gap:15px;
+   margin-top:24px;color:#91aac9;font-size:12px">
+
+   <span>OPERACIONES CUICHAPA</span>
+
+   <button id="selectorLogout215" type="button"
+    style="background:transparent;border:1px solid #425875;
+    border-radius:9px;color:#d6e2f2;
+    padding:11px 18px;cursor:pointer">
+    Cerrar sesión
+   </button>
+  </footer>
+
+ </div>
+
+</div>
+<div class="premium-escenario-231">
+<button id="platformOperations204" type="button"
+     style="width:100%;display:flex;align-items:center;
+     gap:18px;padding:24px;text-align:left;cursor:pointer;
+     background:#203a59;border:1px solid #426181;
+     border-radius:16px;color:white;font-family:inherit">
+
+     <span style="display:grid;place-items:center;
+      width:62px;height:62px;flex-shrink:0;
+      border-radius:14px;background:#244e82;
+      font-size:30px">◈</span>
+
+     <span style="flex:1;min-width:0">
+      <strong style="display:block;font-size:17px">
+       01 / CENTRO DE OPERACIONES
+      </strong>
+      <small style="display:block;color:#b5c4d7;
+       margin-top:8px;line-height:1.5">
+       Producción · Recorridos · Alertas · Monitoreo
+      </small>
+     </span>
+
+     <span style="color:#80b9ff;font-size:26px">↗</span>
+    </button>
+<a id="platformWorks204"
+     href="../balance-ft/index.html?v=294"
+     style="display:flex;align-items:center;gap:18px;
+     padding:24px;background:#203a59;
+     border:1px solid #426181;border-radius:16px;
+     color:white;text-decoration:none">
+
+     <span style="display:grid;place-items:center;
+      width:62px;height:62px;flex-shrink:0;
+      border-radius:14px;background:#80612e;
+      font-size:30px">⚒</span>
+
+     <span style="flex:1;min-width:0">
+      <strong style="display:block;font-size:17px">
+       02 / TRABAJOS A POZO
+      </strong>
+      <small style="display:block;color:#b5c4d7;
+       margin-top:8px;line-height:1.5">
+       Tablero integrado · Balance FT · Histórico
+      </small>
+     </span>
+
+     <span style="color:#f0c46e;font-size:26px">↗</span>
+    </a>
+</div>
+</section>
+<!-- INDUSTRIAL_PREMIUM_215 -->
+
+
+
+
+
+
+<script>
+/* CACHE_NAVEGACION_294 */
+document.addEventListener("click",function(event){
+
+    var enlace=event.target.closest("a[href]");
+
+    if(!enlace) return;
+
+    var destino=new URL(enlace.href,location.href);
+
+    if(destino.origin!==location.origin) return;
+
+    if(!destino.pathname.endsWith(
+        "/balance-ft/index.html"
+    )) return;
+
+    destino.searchParams.set("v","294");
+    destino.searchParams.set("_nav",String(Date.now()));
+
+    enlace.href=destino.href;
+
+},true);
+</script>
+
 </body>
 </html>
